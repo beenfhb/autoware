@@ -1,0 +1,4 @@
+<launch>
+  <arg name="files"/>
+  <node pkg="map_file" type="points_map_loader" name="points_map_loader" args="noupdate $(arg files)"/>
+</launch>
