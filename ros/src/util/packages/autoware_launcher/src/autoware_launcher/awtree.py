@@ -7,16 +7,17 @@ import yaml
 def extract_nodename(path):
     return os.path.splitext(os.path.basename(path))[0]
 
-class AwPluginNode(object):
+class AwSchemaNode(object):
     
     def __init__(self, nodename, parent = None):
         self.nodename = nodename
-        self.nodeinfo = {}
-        self.parent   = parent
+        self.schema = {}
+        self.entity = None
+        self.parent = parent
         self.children = collections.OrderedDict()
 
     def create_child(self, name):
-        self.children[name] = AwPluginNode(name, self)
+        self.children[name] = AwSchemaNode(name, self)
         return self.children[name]
 
     def dump(self, indent = 0):
@@ -28,11 +29,11 @@ class AwPluginNode(object):
         nodepath = os.path.join(path, self.nodename)
         try:
             with open(nodepath + ".yaml") as fp:
-                self.nodeinfo.update(yaml.safe_load(fp))
-            if self.nodeinfo["type"] == "node":
-                if self.nodeinfo["children"] == "scan":
+                self.schema.update(yaml.safe_load(fp))
+            if self.schema["type"] == "node":
+                if self.schema["children"] == "scan":
                     print "scan is not currently supported"
-                for subpath in self.nodeinfo["children"]:
+                for subpath in self.schema["children"]:
                     subnode = self.create_child(extract_nodename(subpath))
                     subnode.__load_node(nodepath)
         except:
@@ -40,11 +41,17 @@ class AwPluginNode(object):
 
     @staticmethod
     def load(path):
-        root = AwPluginNode("root")
+        root = AwSchemaNode("root")
         root.__load_node(path)
         return root
 
+
+class AwConfigNode(object):
+    
+    pass
+
+
 if __name__ == "__main__":
     path = os.path.join(os.path.dirname(__file__), "../../plugins/")
-    root = AwPluginNode.load(path)
+    root = AwSchemaNode.load(path)
     root.dump()
