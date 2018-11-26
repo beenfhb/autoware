@@ -2,4 +2,3 @@ type : leaf
 text : Point Cloud Map
 args :
   file : { type: filelist, filter: pcd }
-a

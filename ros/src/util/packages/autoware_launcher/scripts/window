@@ -1,11 +1,20 @@
 #! /usr/bin/env python
 
+import os
 import sys
+
+from autoware_launcher import AwPluginNode
 from autoware_launcher import AwApplication
 from autoware_launcher import AwMainWindow
+from autoware_launcher import AwNodeWidget
 from autoware_launcher import AwRootConfigWidget
 
+plugin = AwPluginNode.load(os.path.join(os.path.dirname(__file__), "../plugins/"))
+plugin.dump()
+
 application = AwApplication(sys.argv)
-window = AwMainWindow(AwRootConfigWidget)
+window = AwMainWindow()
+widget = AwNodeWidget(window, plugin, None)
+window.setCentralWidget(widget)
 window.show()
 sys.exit(application.exec_())

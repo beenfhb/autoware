@@ -5,26 +5,35 @@ from python_qt_binding.QtWidgets import QWidget
 
 class AwMainWindow(QMainWindow):
 
-    def __init__(self, widget_class):
+    def __init__(self):
 
         super(AwMainWindow, self).__init__()
-        self.setCentralWidget(widget_class())
+        #self.setCentralWidget(widget_class())
         
         settings = QSettings("Autoware", "AutowareLauncher")
-        self.restoreGeometry(settings.value("geometry"))
+        if settings.contains("geometry"):
+            self.restoreGeometry(settings.value("geometry"))
  
     def closeEvent(self, event):
 
         settings = QSettings("Autoware", "AutowareLauncher")
         settings.setValue("geometry", self.saveGeometry())
 
-class AwBasicWidget(QWidget):
+class AwNodeWidget(QWidget):
 
-    def __init__(self):
+    def __init__(self, parent, plugin, config):
 
-        super(AwBasicWidget, self).__init__()
-        self.config = None
-        self.frames = {}
+        super(AwNodeWidget, self).__init__(parent)
+        self.__plugin = plugin
+        self.__config = config
+        self.__frames = {}
+
+        print "=================================="
+        self.window().setWindowTitle("Window Name")
+        print self.__plugin.nodename
+        for child in self.__plugin.children.values():
+            print child.nodename
+
 
     def addFrameWidget(name, widget):
 
@@ -38,3 +47,4 @@ class AwBasicWidget(QWidget):
             child_name = child.getNodeName()
             if child_name in self.frames.keys():
                 self.frames[child_name].loadConfig(child_config)
+

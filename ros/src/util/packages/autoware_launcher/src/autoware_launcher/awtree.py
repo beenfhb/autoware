@@ -10,28 +10,29 @@ def extract_nodename(path):
 class AwPluginNode(object):
     
     def __init__(self, nodename, parent = None):
-        self.__nodename = nodename
-        self.__parent   = parent
-        self.__children = collections.OrderedDict()
-        self.__nodeinfo   = {}
+        self.nodename = nodename
+        self.nodeinfo = {}
+        self.parent   = parent
+        self.children = collections.OrderedDict()
 
     def create_child(self, name):
-        self.__children[name] = AwPluginNode(name, self)
-        return self.__children[name]
+        self.children[name] = AwPluginNode(name, self)
+        return self.children[name]
 
     def dump(self, indent = 0):
-        print((" " * indent) + self.__nodename)
-        for child in self.__children.values():
+        print((" " * indent) + self.nodename)
+        for child in self.children.values():
             child.dump(indent + 2)
 
     def __load_node(self, path):
-        nodepath = os.path.join(path, self.__nodename)
-        print "NodePath: " + nodepath 
+        nodepath = os.path.join(path, self.nodename)
         try:
             with open(nodepath + ".yaml") as fp:
-                self.__nodeinfo.update(yaml.safe_load(fp))
-            if self.__nodeinfo["type"] == "node":
-                for subpath in glob.glob(os.path.join(nodepath, "*.yaml")):
+                self.nodeinfo.update(yaml.safe_load(fp))
+            if self.nodeinfo["type"] == "node":
+                if self.nodeinfo["children"] == "scan":
+                    print "scan is not currently supported"
+                for subpath in self.nodeinfo["children"]:
                     subnode = self.create_child(extract_nodename(subpath))
                     subnode.__load_node(nodepath)
         except:
@@ -47,8 +48,3 @@ if __name__ == "__main__":
     path = os.path.join(os.path.dirname(__file__), "../../plugins/")
     root = AwPluginNode.load(path)
     root.dump()
-
-
-    #root = AwConfigNode("root")
-    #root.create_child("map")
-    #root.dump()tree/../../../plugins/root.yaml

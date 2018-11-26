@@ -1,1 +1,3 @@
 type : node
+text : Map Config
+children : [transform, points, vector]
