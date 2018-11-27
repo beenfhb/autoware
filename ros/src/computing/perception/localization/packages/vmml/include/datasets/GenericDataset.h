@@ -93,6 +93,8 @@ public:
 
 	virtual float getZoomRatio () const = 0;
 
+	virtual float hertz() const;
+
 	/*
 	 * Duration of the dataset in seconds
 	 */

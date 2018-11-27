@@ -61,3 +61,10 @@ GenericDataset::length() const
 
 	return double((tlast - t0).total_microseconds()) / 1e6;
 }
+
+
+float
+GenericDataset::hertz() const
+{
+	// XXX: Stub
+}

@@ -357,6 +357,9 @@ Localizer::detect_mt (cv::Mat &frmImg, kfid &srcMapKfId, Pose &computedPose)
 	bool gotValidPose = false;
 	Pose currentFramePose;
 
+	kfid bestKfMatch;
+	int bestNumValidMatches=-1;
+
 	const int numCpu = omp_get_num_procs();
 	const int numRepeatSearch = (placeCandidates.size() + numCpu - 1) / numCpu;
 	vector<int> numValidMatches (numCpu, 0);
@@ -384,6 +387,11 @@ Localizer::detect_mt (cv::Mat &frmImg, kfid &srcMapKfId, Pose &computedPose)
 		// Join. (only using single thread here)
 		vector<int> inliers;
 		for (int c=0; c<numProc; c++) {
+
+			if (numValidMatches[c] > bestNumValidMatches) {
+				bestNumValidMatches = numValidMatches[c];
+				bestKfMatch = placeCandidates[r*numCpu + c];
+			}
 
 			if (numValidMatches[c] >= 15) {
 
