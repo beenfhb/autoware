@@ -321,6 +321,13 @@ void createCrossWalks(std::vector<autoware_map_msgs::LaneAttrRelation> awm_lane_
         }
     }
 }
+double convertDecimalToDDMMSS(const double decimal){
+    int degree, minutes,seconds;
+    degree = floor(decimal);
+    minutes = floor( (decimal - degree )*60);
+    seconds = floor( (decimal - degree - minutes*1.0/60) * 3600);
+    return degree + minutes * 0.01 + seconds * 0.0001;
+}
 
 void createPoints(std::vector<autoware_map_msgs::Point> awm_points, std::vector<vector_map_msgs::Point> &vmap_points)
 {
@@ -329,8 +336,8 @@ void createPoints(std::vector<autoware_map_msgs::Point> awm_points, std::vector<
     {
         vector_map_msgs::Point vmap_point;
         vmap_point.pid = awm_pt.point_id;
-        vmap_point.b =  awm_pt.lat;
-        vmap_point.l =  awm_pt.lng;
+        vmap_point.b =  convertDecimalToDDMMSS( awm_pt.lat );
+        vmap_point.l =  convertDecimalToDDMMSS( awm_pt.lng );
         vmap_point.h = awm_pt.z;
         vmap_point.bx = awm_pt.x;
         vmap_point.ly = awm_pt.y;
@@ -484,7 +491,7 @@ void createDTLanes(const std::vector<autoware_map_msgs::WaypointRelation> awm_wa
         double horizontal_dist = hypot(pt2.x - pt1.x, pt2.y - pt1.y);
         double vertical_dist = pt2.z - pt1.z;
 
-        vmap_dtlane.slope = vertical_dist / horizontal_dist * 100;
+        vmap_dtlane.slope = vertical_dist / horizontal_dist * 100; //decimal to percentage value
         vmap_dtlane.cant = 0;
         vmap_dtlane.lw = awm_waypoint.width / 2;
         vmap_dtlane.rw = awm_waypoint.width / 2;
@@ -501,8 +508,8 @@ void createDTLanes(const std::vector<autoware_map_msgs::WaypointRelation> awm_wa
         std::vector<int> branching_idx = findBranchingIdx(awm_waypoint_relations, id);
 
         //change order of branch/merge lanes according to blinkers. (staright < left turn < right turn)
-        sort(merging_idx.begin(), merging_idx.end(), [&awm_waypoint_relations](const int x, const int y){ return awm_waypoint_relations.at(x).blinker < awm_waypoint_relations.at(y).blinker; });
-        sort(branching_idx.begin(), branching_idx.end(), [&awm_waypoint_relations](const int x, const int y){ return awm_waypoint_relations.at(x).blinker < awm_waypoint_relations.at(y).blinker; });
+        sort(merging_idx.begin(), merging_idx.end(), [&](const int x, const int y){ return awm_waypoint_relations.at(x).blinker < awm_waypoint_relations.at(y).blinker; });
+        sort(branching_idx.begin(), branching_idx.end(), [&](const int x, const int y){ return awm_waypoint_relations.at(x).blinker < awm_waypoint_relations.at(y).blinker; });
 
         vmap_lane.jct = getJunctionType(awm_waypoint_relations, branching_idx, merging_idx);
         vmap_lane.blid = 0;
@@ -596,8 +603,8 @@ void createSignals(     std::vector<autoware_map_msgs::SignalLight> awm_signal_l
         vector_map_msgs::Vector vmap_vector;
         vmap_vector.vid = vector_id;
         vmap_vector.pid = awm_signal_light.point_id;
-        vmap_vector.hang =  awm_signal_light.horizontal_angle;
-        vmap_vector.vang =  awm_signal_light.vertical_angle;
+        vmap_vector.hang =  convertDecimalToDDMMSS( awm_signal_light.horizontal_angle );
+        vmap_vector.vang =  convertDecimalToDDMMSS( awm_signal_light.vertical_angle );
         vmap_vectors.push_back(vmap_vector);
         vmap_signal.vid = vector_id;
         vector_id += 1;
@@ -750,12 +757,14 @@ int main(int argc, char **argv)
 
     autoware_map::category_t awm_required_category =  autoware_map::Category::AREA |
                                                     autoware_map::Category::POINT |
+                                                    autoware_map::Category::LANE |
                                                     autoware_map::Category::LANE_ATTR_RELATION |
                                                     autoware_map::Category::LANE_SIGNAL_LIGHT_RELATION |
                                                     autoware_map::Category::SIGNAL_LIGHT |
                                                     autoware_map::Category::WAYAREA |
                                                     autoware_map::Category::WAYPOINT |
-                                                    autoware_map::Category::WAYPOINT_RELATION;
+                                                    autoware_map::Category::WAYPOINT_RELATION |
+                                                    autoware_map::Category::WAYPOINT_LANE_RELATION;
 
 
     awm.subscribe(nh, awm_required_category , ros::Duration(5));
