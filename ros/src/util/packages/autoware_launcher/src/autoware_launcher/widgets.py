@@ -2,26 +2,30 @@ from python_qt_binding import QtCore
 from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
+import os
+
+
+
 class AwBasicWindow(QtWidgets.QMainWindow):
 
-    def __init__(self, guimgr, parent, awnode):
+    def __init__(self, guimgr, parent, config):
 
         super(AwBasicWindow, self).__init__(parent)
         self.guimgr = guimgr
-        self.awnode = awnode
+        self.config = config
         self.widget = None
 
     def load_plugin(self):
 
-        awnode = self.awnode
+        config = self.config
         window = self
         widget = QtWidgets.QWidget()
 
         window.setCentralWidget(widget)
-        window.setWindowTitle(awnode.plugin["text"])
+        window.setWindowTitle(config.plugin.schema["text"])
         
         layout = QtWidgets.QVBoxLayout()
-        for child in awnode.children.values():
+        for child in config.children.values():
             frame = self.guimgr.create_frame(self, child)
             layout.addWidget(frame)
         layout.addStretch()
@@ -43,11 +47,11 @@ class AwBasicWindow(QtWidgets.QMainWindow):
 
 class AwBasicFrame(QtWidgets.QWidget):
 
-    def __init__(self, guimgr, parent, awnode):
+    def __init__(self, guimgr, parent, config):
 
     	super(AwBasicFrame, self).__init__(parent)
         self.guimgr = guimgr
-        self.awnode = awnode
+        self.config = config
         self.menu = None
         self.body = None
 
@@ -60,7 +64,7 @@ class AwBasicFrame(QtWidgets.QWidget):
 
     def set_widgets(self, header, detail):
 
-        awnode = self.awnode
+        config = self.config
         widget = self
 
         layout = QtWidgets.QVBoxLayout()
@@ -77,33 +81,121 @@ class AwBasicFrame(QtWidgets.QWidget):
 
     def open_window(self):
 
-        window = self.guimgr.create_window(self, self.awnode)
+        window = self.guimgr.create_window(self, self.config)
         window.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
         window.setWindowModality(QtCore.Qt.ApplicationModal)
         window.show()
 
 
 
-class AwBasicFrameMenu(QtWidgets.QWidget):
+class AwBasicFrameHeader(QtWidgets.QWidget):
 
-    def __init__(self, title = "[No Title]"):
+    def __init__(self):
 
-    	super(AwNodeFrameMenu, self).__init__()
-        self.mylayout = QHBoxLayout()
-        self.setLayout(self.mylayout)
+    	super(AwBasicFrameHeader, self).__init__()
 
-        label = QLabel(title)
-        label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        self.mylayout.addWidget(label)
+        self.__title = QtWidgets.QLabel()
+        self.__title.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
 
-    def addMenuButton(self, button):
-
-        self.mylayout.addWidget(button)
+        self.__layout = QtWidgets.QHBoxLayout()
+        self.__layout.addWidget(self.__title)
+        self.setLayout(self.__layout)
 
     def paintEvent(self, event):
 
-        style_option = QStyleOption()
+        style_option = QtWidgets.QStyleOption()
         style_option.initFrom(self)
-        painter = QPainter(self)
-        self.style().drawPrimitive(QStyle.PE_Widget, style_option, painter, self)
+        painter = QtGui.QPainter(self)
+        self.style().drawPrimitive(QtWidgets.QStyle.PE_Widget, style_option, painter, self)
 
+    def setHeaderTitle(self, text):
+
+        self.__title.setText(text)
+
+    def addHeaderButton(self, button):
+
+        self.__layout.addWidget(button)
+
+
+
+class AwRootWindow(AwBasicWindow):
+
+    def __init__(self, guimgr, parent, config):
+
+        super(AwRootWindow, self).__init__(guimgr, parent, config)
+        self.load_plugin()
+        self.load_geometry()
+
+    def closeEvent(self, event):
+
+        self.save_geometry()
+
+
+
+class AwNodeFrame(AwBasicFrame):
+
+    def __init__(self, guimgr, parent, config):
+
+        super(AwNodeFrame, self).__init__(guimgr, parent, config)
+        self.load_plugin()
+
+    def load_plugin(self):
+
+        header = QtWidgets.QLabel("Menu")
+        header.setText(self.config.plugin.schema["text"])
+
+        detail = QtWidgets.QPushButton("Config")
+        detail.clicked.connect(self.open_window)
+
+        self.set_widgets(header, detail)
+
+
+
+class AwNodeWindow(AwBasicWindow):
+
+    def __init__(self, guimgr, parent, config):
+
+        super(AwNodeWindow, self).__init__(guimgr, parent, config)
+        self.load_plugin()
+
+        self.load_geometry()
+
+
+
+class AwFileSelectFrame(AwBasicFrame):
+
+    def __init__(self, guimgr, parent, config):
+
+        super(AwFileSelectFrame, self).__init__(guimgr, parent, config)
+        self.load_plugin()
+
+    def load_plugin(self):
+
+        button = QtWidgets.QPushButton("Browse")
+        button.clicked.connect(self.browse_file)
+
+        header = AwBasicFrameHeader()
+        header.setHeaderTitle(self.config.plugin.schema["text"])
+        header.addHeaderButton(button)
+
+        detail = QtWidgets.QLabel("BODY")
+    
+        self.set_widgets(header, detail)
+
+    def browse_file(self):
+
+        #default_path = os.path.join( RosPack().get_path("autoware_launcher"), "profiles")
+        filename, filetype =  QtWidgets.QFileDialog.getOpenFileName(self, "Select Profile", os.path.expanduser("~"))
+        if filename:
+            print filename
+
+
+
+class AwFileSelectWindow(AwBasicWindow):
+
+    def __init__(self, guimgr, parent, config):
+
+        super(AwFileSelectWindow, self).__init__(guimgr, parent, config)
+        self.load_plugin()
+
+        self.load_geometry()

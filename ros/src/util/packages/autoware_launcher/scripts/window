@@ -1,16 +1,16 @@
 #! /usr/bin/env python
 
-import os
 import sys
 
-from autoware_launcher.awtree import AwSchemaNode
+from autoware_launcher.awtree import AwLaunchTree
 from autoware_launcher.window import AwWindowManager
 
-awtree = AwSchemaNode.load(os.path.join(os.path.dirname(__file__), "../plugins/"))
+awtree = AwLaunchTree()
+print("============================================================")
+awtree.plugin.dump()
+print("============================================================")
+awtree.config.dump()
+print("============================================================")
+
 window = AwWindowManager()
-
-print("============================================================")
-awtree.dump()
-print("============================================================")
-
 sys.exit(window.run(sys.argv, awtree))
