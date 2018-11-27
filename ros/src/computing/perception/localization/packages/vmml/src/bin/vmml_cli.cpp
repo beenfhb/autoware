@@ -13,6 +13,7 @@
 #include <iomanip>
 #include <fstream>
 #include <histedit.h>
+#include <unistd.h>
 #include <editline/readline.h>
 #include <opencv2/highgui.hpp>
 #include <pcl/io/pcd_io.h>
@@ -66,36 +67,48 @@ const string TestPrompt = "OX>";
 class LineEditor
 {
 public:
-LineEditor(const char *argv0, const string &askPrompt="")
-{
-	prompt = askPrompt + ' ';
-	el = el_init("test_localizer", stdin, stdout, stderr);
-	rl_initialize();
-	tokenizer = tok_init(NULL);
-}
-
-~LineEditor()
-{
-	tok_end(tokenizer);
-	el_end(el);
-}
-
-stringTokens getLine ()
-{
-	int nt;
-	const char **stoklist;
-	char *sline = readline(prompt.c_str());
-	tok_str(tokenizer, sline, &nt, &stoklist);
-
-	stringTokens st;
-	for (int i=0; i<nt; i++) {
-		string s(stoklist[i]);
-		st.push_back(s);
+	LineEditor(const char *argv0, const string &askPrompt="")
+	{
+		prompt = askPrompt + ' ';
+		el = el_init("test_localizer", stdin, stdout, stderr);
+		rl_initialize();
+		tokenizer = tok_init(NULL);
 	}
-	free(sline);
-	tok_reset(tokenizer);
-	return st;
-}
+
+
+	~LineEditor()
+	{
+		tok_end(tokenizer);
+		el_end(el);
+	}
+
+
+	stringTokens parseLine (const char *sline)
+	{
+		int nt;
+		const char **stoklist;
+		tok_str(tokenizer, sline, &nt, &stoklist);
+
+		stringTokens st;
+		for (int i=0; i<nt; i++) {
+			string s(stoklist[i]);
+			st.push_back(s);
+		}
+		tok_reset(tokenizer);
+
+//		free(stoklist);
+		return st;
+	}
+
+
+	stringTokens getLine ()
+	{
+		char *sline = readline(prompt.c_str());
+		stringTokens st = parseLine(sline);
+		free(sline);
+
+		return st;
+	}
 
 protected:
 	EditLine *el;
@@ -198,6 +211,100 @@ public:
 	}
 
 
+	void processCommand (const stringTokens &command)
+	{
+		if (command[0][0]=='#' or command[0].size()==0)
+			return;
+
+		else if (command[0]=="map")
+			{ RecordRuntime("MapOpen", map_open_cmd(command[1]) ); }
+
+		else if (command[0]=="dataset")
+			{ RecordRuntime("DatasetOpen", dataset_open_cmd(command[1], command[2])); }
+
+		else if (command[0]=="map_pcl")
+			map_dump_pcl();
+
+		else if (command[0]=="dataset_trajectory")
+			dataset_trajectory_dump(command[1]);
+
+		else if (command[0]=="map_trajectory")
+			map_trajectory_dump();
+
+//			else if (command[0]=="find")
+//				map_find_cmd(command[1]);
+
+		else if (command[0]=="save")
+			dataset_save_dsecond(command[1]);
+
+		else if (command[0]=="savei")
+			dataset_save_id(command[1]);
+
+		else if (command[0]=="zoom")
+			dataset_set_zoom(command[1]);
+
+//			else if (command[0]=="dataset_simulate_seqslam")
+//				dataset_simulate_seqslam(command[1]);
+
+		else if (command[0]=="dataset_view")
+			dataset_view(command[1]);
+
+		else if (command[0]=="detect")
+			{ RecordRuntime("PlaceDetection", map_detect_cmd(command[1]) ); }
+
+		// To ask a subset, specify `start' and `stop' offset from beginning
+		// as optional parameters
+		else if (command[0]=="map_create")
+			{ RecordRuntime("MapCreate", map_create_cmd(stringTokens(command.begin()+1, command.end())) ); }
+
+		else if (command[0]=="map_info")
+			map_info_cmd();
+
+		else if (command[0]=="dataset_info")
+			dataset_info_cmd();
+
+		else if (command[0]=="mask")
+			mask_set_cmd(command[1]);
+
+		else if (command[0]=="velodyne" or command[0]=="pcdmap")
+			dataset_set_param(command);
+
+		else if (command[0]=="build")
+			{ RecordRuntime("DatasetBuild", dataset_build(command) ); }
+
+		else if (command[0]=="map_images")
+			map_dump_images();
+
+		else if (command[0]=="cd" or command[0]=="chdir")
+			changeWorkingDirectory(command[1]);
+	}
+
+
+	static void fromScript(int argc, char *argv[])
+	{
+		LocalizerApp scriptIterpreter (argc, argv);
+		string scriptName(argv[1]);
+
+		std::ifstream fd;
+		fd.open(scriptName);
+		if (fd.good()==false)
+			throw std::runtime_error("Unable to open file "+scriptName);
+
+		while(fd.eof()==false) {
+			std::string curLine;
+			std::getline(fd, curLine);
+
+			if (curLine[0]=='#')
+				continue;
+
+			stringTokens command = scriptIterpreter.mLineEditor.parseLine(curLine.c_str());
+			scriptIterpreter.processCommand(command);
+		}
+
+		cerr << "\nDone\n";
+	}
+
+
 	void loop()
 	{
 		bool doExit=false;
@@ -205,70 +312,10 @@ public:
 
 			stringTokens command = mLineEditor.getLine();
 
-			if (command[0][0]=='#')
-				continue;
-
 			if (command[0]=="quit")
-				doExit = true;
+				break;
 
-			else if (command[0]=="map")
-				{ RecordRuntime("MapOpen", map_open_cmd(command[1]) ); }
-
-			else if (command[0]=="dataset")
-				{ RecordRuntime("DatasetOpen", dataset_open_cmd(command[1], command[2])); }
-
-			else if (command[0]=="map_pcl")
-				map_dump_pcl();
-
-			else if (command[0]=="dataset_trajectory")
-				dataset_trajectory_dump(command[1]);
-
-			else if (command[0]=="map_trajectory")
-				map_trajectory_dump();
-
-//			else if (command[0]=="find")
-//				map_find_cmd(command[1]);
-
-			else if (command[0]=="save")
-				dataset_save_dsecond(command[1]);
-
-			else if (command[0]=="savei")
-				dataset_save_id(command[1]);
-
-			else if (command[0]=="zoom")
-				dataset_set_zoom(command[1]);
-
-//			else if (command[0]=="dataset_simulate_seqslam")
-//				dataset_simulate_seqslam(command[1]);
-
-			else if (command[0]=="dataset_view")
-				dataset_view(command[1]);
-
-			else if (command[0]=="detect")
-				{ RecordRuntime("PlaceDetection", map_detect_cmd(command[1]) ); }
-
-			// To ask a subset, specify `start' and `stop' offset from beginning
-			// as optional parameters
-			else if (command[0]=="map_create")
-				{ RecordRuntime("MapCreate", map_create_cmd(stringTokens(command.begin()+1, command.end())) ); }
-
-			else if (command[0]=="map_info")
-				map_info_cmd();
-
-			else if (command[0]=="dataset_info")
-				dataset_info_cmd();
-
-			else if (command[0]=="mask")
-				mask_set_cmd(command[1]);
-
-			else if (command[0]=="velodyne" or command[0]=="pcdmap")
-				dataset_set_param(command);
-
-			else if (command[0]=="build")
-				{ RecordRuntime("DatasetBuild", dataset_build(command) ); }
-
-			else if (command[0]=="map_images")
-				map_dump_images();
+			processCommand(command);
 		}
 	}
 
@@ -332,6 +379,13 @@ protected:
 private:
 
 
+	void changeWorkingDirectory (const string &toDir)
+	{
+		chdir(toDir.c_str());
+		return;
+	}
+
+
 	void map_open_cmd(const string &mapPathInput)
 	{
 		try {
@@ -378,7 +432,7 @@ private:
 	}
 
 
-	void dataset_build(stringTokens &cmd)
+	void dataset_build(const stringTokens &cmd)
 	{
 		if (slDatasourceType==MEIDAI_DATASET_TYPE) {
 			if (meidaiNdtParameters.pcdMapPath.empty() or meidaiNdtParameters.velodyneCalibrationPath.empty()) {
@@ -617,6 +671,7 @@ private:
 		Pose computedPose;
 		bool gotplace = localizer->detect_mt(img, kmap, computedPose);
 
+		debug("Detecting " + detectionStr);
 		if (gotplace) {
 			debug(computedPose.str(true));
 			debug("Result: "+to_string(kmap));
@@ -816,8 +871,14 @@ private:
 
 int main (int argc, char *argv[])
 {
-	LocalizerApp mainApp(argc, argv);
-	mainApp.loop();
+	if (argc > 1) {
+		LocalizerApp::fromScript(argc, argv);
+	}
+
+	else {
+		LocalizerApp mainApp(argc, argv);
+		mainApp.loop();
+	}
 
 	return 0;
 }
