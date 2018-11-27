@@ -510,8 +510,6 @@ private:
 			MeidaiBagDataset::Ptr meidaiDs = static_pointer_cast<MeidaiBagDataset>(loadedDataset);
 			auto cameraTrack = meidaiDs->getCameraTrajectory();
 
-			debug("# of images:" + to_string(meidaiDs->size()));
-
 			if (cameraTrack.size() != 0) {
 				debug ("Dataset contains camera trajectory");
 				if (meidaiDs->isSubset()) {
@@ -525,6 +523,12 @@ private:
 				debug ("Dataset does not contain camera trajectory; must be built");
 			}
 		}
+
+		debug("# of images:" + to_string(loadedDataset->size()));
+
+		debug("Frequency (Hz): " + to_string(loadedDataset->hertz()));
+
+		debug("Duration (sec): " + to_string(loadedDataset->length()));
 	}
 
 

@@ -66,5 +66,6 @@ GenericDataset::length() const
 float
 GenericDataset::hertz() const
 {
-	// XXX: Stub
+	auto duration = length();
+	return float(size()) / length();
 }
