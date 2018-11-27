@@ -135,9 +135,9 @@ TTransform::str(bool simple) const
 			<< P.y() << ' '
 			<< P.z() << ' ';
 		ss << Q.x() << ' '
-			<< Q.x() << ' '
-			<< Q.x() << ' '
-			<< Q.x() << ' ';
+			<< Q.y() << ' '
+			<< Q.z() << ' '
+			<< Q.w() << ' ';
 	}
 
 	return ss.str();
