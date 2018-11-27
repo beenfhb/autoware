@@ -1,114 +1,90 @@
-from python_qt_binding.QtCore import QSettings
-from python_qt_binding.QtWidgets import QApplication as AwApplication
-from python_qt_binding.QtWidgets import QMainWindow
-from python_qt_binding.QtWidgets import QWidget
-from python_qt_binding.QtWidgets import QVBoxLayout
-
 from python_qt_binding import QtCore
-from python_qt_binding.QtGui import QPainter
-from python_qt_binding.QtWidgets import QSizePolicy
-from python_qt_binding.QtWidgets import QStyle
-from python_qt_binding.QtWidgets import QStyleOption
-from python_qt_binding.QtWidgets import QLabel
-from python_qt_binding.QtWidgets import QPushButton
-from python_qt_binding.QtWidgets import QHBoxLayout
+from python_qt_binding import QtGui
+from python_qt_binding import QtWidgets
 
+class AwBasicWindow(QtWidgets.QMainWindow):
 
+    def __init__(self, guimgr, parent, awnode):
 
-class AwMainWindow(QMainWindow):
+        super(AwBasicWindow, self).__init__(parent)
+        self.guimgr = guimgr
+        self.awnode = awnode
+        self.widget = None
 
-    def __init__(self):
+    def load_plugin(self):
 
-        super(AwMainWindow, self).__init__()
-        #self.setCentralWidget(widget_class())
+        awnode = self.awnode
+        window = self
+        widget = QtWidgets.QWidget()
+
+        window.setCentralWidget(widget)
+        window.setWindowTitle(awnode.plugin["text"])
         
-        settings = QSettings("Autoware", "AutowareLauncher")
+        layout = QtWidgets.QVBoxLayout()
+        for child in awnode.children.values():
+            frame = self.guimgr.create_frame(self, child)
+            layout.addWidget(frame)
+        layout.addStretch()
+        widget.setLayout(layout)
+
+    def load_geometry(self):
+        
+        settings = QtCore.QSettings("Autoware", "AutowareLauncher")
         if settings.contains("geometry"):
             self.restoreGeometry(settings.value("geometry"))
  
-    def closeEvent(self, event):
+    def save_geometry(self):
 
-        settings = QSettings("Autoware", "AutowareLauncher")
+        print "Save geometry"
+        settings = QtCore.QSettings("Autoware", "AutowareLauncher")
         settings.setValue("geometry", self.saveGeometry())
 
 
 
-class AwNodeWidget(QWidget):
+class AwBasicFrame(QtWidgets.QWidget):
 
-    def __init__(self, parent, awnode):
+    def __init__(self, guimgr, parent, awnode):
 
-        super(AwNodeWidget, self).__init__(parent)
-        #self.__awnode = awnode
-        self.__frames = {}
+    	super(AwBasicFrame, self).__init__(parent)
+        self.guimgr = guimgr
+        self.awnode = awnode
+        self.menu = None
+        self.body = None
 
-        # Apply plugin
-        self.window().setWindowTitle(awnode.schema["text"])
-        mylayout = QVBoxLayout()
-        for child in awnode.children.values():
-            frame = AwNodeFrame(child)
-            mylayout.addWidget(frame)
-            self.__frames[child.nodename] = frame
-        mylayout.addStretch()
-        self.setLayout(mylayout)
-    
-    #@QtSlot(AwConfigNode)
-    def loadConfig(self, config):
-
-        self.config = config
-        for child_config in config.children:
-            child_name = child.getNodeName()
-            if child_name in self.frames.keys():
-                self.frames[child_name].loadConfig(child_config)
-
-
-
-class AwNodeFrame(QWidget):
-
-    def __init__(self, awnode):
-
-    	super(AwNodeFrame, self).__init__()
-        self.__awnode = awnode
-
-        self.mylayout = QVBoxLayout()
-        self.mylayout.setContentsMargins(0, 0, 0, 0)
-        self.mylayout.setSpacing(0)
-        self.setLayout(self.mylayout)
-
-        button = QPushButton("Config")
-        button.clicked.connect(self.openSubConfig)
-
-        menu = AwNodeFrameMenu(awnode.schema["text"])
-        menu.addMenuButton(button)
-      
-        body = QLabel("Details")
-        self.setFrameWidgets(menu, body)
-
-    def setFrameWidgets(self, menu, body):
-
-        self.setObjectName("FrameWidget")
-        menu.setObjectName("FrameMenu")
-        body.setObjectName("FrameBody")
-        self.setStyleSheet("#FrameWidget { border: 1px solid; } #FrameMenu { padding: 3px; border-bottom: 1px solid; } #FrameBody { padding: 3px; }")
-        self.mylayout.addWidget(menu)
-        self.mylayout.addWidget(body)
-        
     def paintEvent(self, event):
 
-        style_option = QStyleOption()
+        style_option = QtWidgets.QStyleOption()
         style_option.initFrom(self)
-        painter = QPainter(self)
-        self.style().drawPrimitive(QStyle.PE_Widget, style_option, painter, self)
+        painter = QtGui.QPainter(self)
+        self.style().drawPrimitive(QtWidgets.QStyle.PE_Widget, style_option, painter, self)
 
-    def openSubConfig(self):
+    def set_widgets(self, header, detail):
 
-        window = QMainWindow(self)
-        widget = AwNodeWidget(window, self.__awnode)
-        window.setCentralWidget(widget)
+        awnode = self.awnode
+        widget = self
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(header)
+        layout.addWidget(detail)
+        widget.setLayout(layout)
+
+        header.setObjectName("FrameMenu")
+        detail.setObjectName("FrameBody")
+        widget.setObjectName("FrameWidget")
+        widget.setStyleSheet("#FrameWidget { border: 1px solid; } #FrameMenu { padding: 3px; border-bottom: 1px solid; } #FrameBody { padding: 3px; }")
+
+    def open_window(self):
+
+        window = self.guimgr.create_window(self, self.awnode)
         window.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
         window.setWindowModality(QtCore.Qt.ApplicationModal)
         window.show()
 
-class AwNodeFrameMenu(QWidget):
+
+
+class AwBasicFrameMenu(QtWidgets.QWidget):
 
     def __init__(self, title = "[No Title]"):
 

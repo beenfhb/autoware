@@ -3,20 +3,14 @@
 import os
 import sys
 
-from autoware_launcher import AwSchemaNode
-from autoware_launcher import AwApplication
-from autoware_launcher import AwMainWindow
-from autoware_launcher import AwNodeWidget
-from autoware_launcher import AwRootConfigWidget
+from autoware_launcher.awtree import AwSchemaNode
+from autoware_launcher.window import AwWindowManager
 
 awtree = AwSchemaNode.load(os.path.join(os.path.dirname(__file__), "../plugins/"))
+window = AwWindowManager()
+
 print("============================================================")
 awtree.dump()
 print("============================================================")
 
-application = AwApplication(sys.argv)
-window = AwMainWindow()
-widget = AwNodeWidget(window, awtree)
-window.setCentralWidget(widget)
-window.show()
-sys.exit(application.exec_())
+sys.exit(window.run(sys.argv, awtree))

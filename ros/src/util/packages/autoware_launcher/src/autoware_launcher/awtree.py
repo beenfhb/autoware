@@ -11,7 +11,7 @@ class AwSchemaNode(object):
     
     def __init__(self, nodename, parent = None):
         self.nodename = nodename
-        self.schema = {}
+        self.plugin = {}
         self.entity = None
         self.parent = parent
         self.children = collections.OrderedDict()
@@ -29,11 +29,11 @@ class AwSchemaNode(object):
         nodepath = os.path.join(path, self.nodename)
         try:
             with open(nodepath + ".yaml") as fp:
-                self.schema.update(yaml.safe_load(fp))
-            if self.schema["type"] == "node":
-                if self.schema["children"] == "scan":
+                self.plugin.update(yaml.safe_load(fp))
+            if self.plugin["type"] == "node":
+                if self.plugin["children"] == "scan":
                     print "scan is not currently supported"
-                for subpath in self.schema["children"]:
+                for subpath in self.plugin["children"]:
                     subnode = self.create_child(extract_nodename(subpath))
                     subnode.__load_node(nodepath)
         except:
