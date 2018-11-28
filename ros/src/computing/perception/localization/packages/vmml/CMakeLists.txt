@@ -108,7 +108,8 @@ add_library(
 		src/triangulation.cpp
 		src/Optimizer.cpp
 		src/utilities.cpp
-		src/SequenceSLAM.cpp	
+		src/SequenceSLAM.cpp
+		src/ImagePreprocessor.cpp
 		src/datasets/GenericDataset.cpp
 		src/datasets/OxfordDataset.cpp
 #		src/datasets/CustomDataset.cpp

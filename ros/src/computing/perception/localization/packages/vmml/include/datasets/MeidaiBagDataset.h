@@ -255,6 +255,8 @@ public:
 	inline void getSubsetRange (ptime &beg_, ptime &end_) const
 	{ beg_ = subsetBeginTime.toBoost(); end_ = subsetEndTime.toBoost(); }
 
+	cv::Mat computeImagePreprocessorMask() const;
+
 
 protected:
 	static std::string dSetName;

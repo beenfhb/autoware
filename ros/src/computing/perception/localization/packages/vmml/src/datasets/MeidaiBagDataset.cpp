@@ -381,6 +381,14 @@ MeidaiBagDataset::getLidarScanBag ()
 }
 
 
+cv::Mat
+MeidaiBagDataset::computeImagePreprocessorMask()
+const
+{
+	// XXX: Stub
+}
+
+
 void
 Trajectory::push_back(const PoseTimestamp &pt)
 {
