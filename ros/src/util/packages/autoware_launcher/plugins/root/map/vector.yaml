@@ -1,4 +1,4 @@
-type : leaf
-text : Vector Map
-args :
-  file : { type: filelist, filter: csv }
+xml : {}
+
+gui :
+  text : Transform

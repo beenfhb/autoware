@@ -1,4 +1,8 @@
-type : leaf
-text : Transform
-args :
-  file : { type: file, filter: launch }
+xml :
+  args :
+    - { name: file, type: list str }
+
+gui :
+  text : Transform
+  args :
+    file: { type: file_select }

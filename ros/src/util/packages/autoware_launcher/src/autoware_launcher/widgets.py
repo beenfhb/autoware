@@ -15,29 +15,19 @@ class AwBasicWindow(QtWidgets.QMainWindow):
         self.config = config
         self.widget = None
 
-    def load_plugin(self):
+    def load_basic_gui(self):
 
-        config = self.config
-        window = self
-        widget = QtWidgets.QWidget()
+        class_name = " ( " + self.__class__.__name__ + " )"
+        self.setWindowTitle(self.config.plugin.gui["text"] + class_name)
 
-        window.setCentralWidget(widget)
-        window.setWindowTitle(config.plugin.schema["text"])
+    def load_basic_geometry(self):
         
-        layout = QtWidgets.QVBoxLayout()
-        for child in config.children.values():
-            frame = self.guimgr.create_frame(self, child)
-            layout.addWidget(frame)
-        layout.addStretch()
-        widget.setLayout(layout)
-
-    def load_geometry(self):
-        
+        print "Load geometry"
         settings = QtCore.QSettings("Autoware", "AutowareLauncher")
         if settings.contains("geometry"):
             self.restoreGeometry(settings.value("geometry"))
  
-    def save_geometry(self):
+    def save_basic_geometry(self):
 
         print "Save geometry"
         settings = QtCore.QSettings("Autoware", "AutowareLauncher")
@@ -47,13 +37,15 @@ class AwBasicWindow(QtWidgets.QMainWindow):
 
 class AwBasicFrame(QtWidgets.QWidget):
 
+    window_closed = QtCore.Signal()
+
     def __init__(self, guimgr, parent, config):
 
     	super(AwBasicFrame, self).__init__(parent)
         self.guimgr = guimgr
         self.config = config
-        self.menu = None
-        self.body = None
+        #self.menu = None
+        #self.body = None
 
     def paintEvent(self, event):
 
@@ -79,13 +71,14 @@ class AwBasicFrame(QtWidgets.QWidget):
         widget.setObjectName("FrameWidget")
         widget.setStyleSheet("#FrameWidget { border: 1px solid; } #FrameMenu { padding: 3px; border-bottom: 1px solid; } #FrameBody { padding: 3px; }")
 
+    @QtCore.Slot()
     def open_window(self):
 
         window = self.guimgr.create_window(self, self.config)
         window.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
         window.setWindowModality(QtCore.Qt.ApplicationModal)
+        window.destroyed.connect(lambda: self.window_closed.emit())
         window.show()
-
 
 
 class AwBasicFrameHeader(QtWidgets.QWidget):
@@ -98,6 +91,8 @@ class AwBasicFrameHeader(QtWidgets.QWidget):
         self.__title.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
 
         self.__layout = QtWidgets.QHBoxLayout()
+        self.__layout.setContentsMargins(5, 2, 2, 2)
+        self.__layout.setSpacing(0)
         self.__layout.addWidget(self.__title)
         self.setLayout(self.__layout)
 
@@ -118,20 +113,6 @@ class AwBasicFrameHeader(QtWidgets.QWidget):
 
 
 
-class AwRootWindow(AwBasicWindow):
-
-    def __init__(self, guimgr, parent, config):
-
-        super(AwRootWindow, self).__init__(guimgr, parent, config)
-        self.load_plugin()
-        self.load_geometry()
-
-    def closeEvent(self, event):
-
-        self.save_geometry()
-
-
-
 class AwNodeFrame(AwBasicFrame):
 
     def __init__(self, guimgr, parent, config):
@@ -141,11 +122,14 @@ class AwNodeFrame(AwBasicFrame):
 
     def load_plugin(self):
 
-        header = QtWidgets.QLabel("Menu")
-        header.setText(self.config.plugin.schema["text"])
+        config = QtWidgets.QPushButton("Config")
+        config.clicked.connect(self.open_window)
 
-        detail = QtWidgets.QPushButton("Config")
-        detail.clicked.connect(self.open_window)
+        header = AwBasicFrameHeader()
+        header.setHeaderTitle(self.config.plugin.gui["text"])
+        header.addHeaderButton(config)
+
+        detail = QtWidgets.QLabel("Data")
 
         self.set_widgets(header, detail)
 
@@ -157,37 +141,127 @@ class AwNodeWindow(AwBasicWindow):
 
         super(AwNodeWindow, self).__init__(guimgr, parent, config)
         self.load_plugin()
+        self.load_basic_gui()
+        self.load_basic_geometry()
+        
+    def closeEvent(self, event):
 
-        self.load_geometry()
+        if self.config.plugin.gui.get("type") == "root":
+            self.save_basic_geometry()
+
+    def load_plugin(self):
+
+        config = self.config
+        window = self
+        widget = QtWidgets.QWidget()
+
+        window.setCentralWidget(widget)
+        
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(16)
+        for child in config.children.values():
+            frame = self.guimgr.create_frame(self, child)
+            layout.addWidget(frame)
+        layout.addStretch()
+        widget.setLayout(layout)
 
 
 
-class AwFileSelectFrame(AwBasicFrame):
+class AwLeafFrame(AwBasicFrame):
 
     def __init__(self, guimgr, parent, config):
 
-        super(AwFileSelectFrame, self).__init__(guimgr, parent, config)
+        super(AwLeafFrame, self).__init__(guimgr, parent, config)
         self.load_plugin()
 
     def load_plugin(self):
 
-        button = QtWidgets.QPushButton("Browse")
-        button.clicked.connect(self.browse_file)
+        config = QtWidgets.QPushButton("Config")
+        config.clicked.connect(self.open_window)
+        self.window_closed.connect(self.update_config)
 
         header = AwBasicFrameHeader()
-        header.setHeaderTitle(self.config.plugin.schema["text"])
+        header.setHeaderTitle(self.config.plugin.gui["text"])
+        header.addHeaderButton(config)
+
+        self.detail = QtWidgets.QLabel("__NO_DATA__")
+
+        self.set_widgets(header, self.detail)
+
+    def update_config(self):
+
+        self.detail.setText(str(self.config.data))
+
+
+class AwLeafWindow(AwBasicWindow):
+
+    def __init__(self, guimgr, parent, config):
+
+        super(AwLeafWindow, self).__init__(guimgr, parent, config)
+        self.load_basic_gui()
+        self.load_basic_geometry()
+
+        window = self
+        widget = QtWidgets.QWidget()
+
+        window.setCentralWidget(widget)
+        
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(16)
+        for child in config.plugin.data:
+            frame = self.guimgr.create_data_frame(self, child)
+            #frame = self.guimgr.create_class(self, arg_info, AwTextEditFrame)
+            layout.addWidget(frame)
+        layout.addStretch()
+        widget.setLayout(layout)
+
+
+
+class AwTextEditFrame(AwBasicFrame):
+
+    def __init__(self, guimgr, parent, config_plugin):
+
+        super(AwTextEditFrame, self).__init__(guimgr, parent, None)
+
+        header = AwBasicFrameHeader()
+        header.setHeaderTitle("Arg: " + config_plugin.name)
+
+        detail = QtWidgets.QTextEdit()
+
+        self.set_widgets(header, detail)
+
+
+class AwFileSelectFrame(AwBasicFrame):
+
+    def __init__(self, guimgr, parent, config_plugin):
+
+        super(AwFileSelectFrame, self).__init__(guimgr, parent, None)
+
+        button = QtWidgets.QPushButton("Browse")
+
+        header = AwBasicFrameHeader()
+        header.setHeaderTitle("Arg: " + config_plugin.name)
         header.addHeaderButton(button)
 
-        detail = QtWidgets.QLabel("BODY")
+        if not config_plugin.gui.get("list", False):
+            self.detail = QtWidgets.QLineEdit()
+            self.detail.setReadOnly(True)
+            button.clicked.connect(self.browse_file)
+        else:
+            self.detail = QtWidgets.QTextEdit()
+            self.detail.setReadOnly(True)
+            button.clicked.connect(self.browse_file_list)
     
-        self.set_widgets(header, detail)
+        self.set_widgets(header, self.detail)
 
     def browse_file(self):
 
         #default_path = os.path.join( RosPack().get_path("autoware_launcher"), "profiles")
         filename, filetype =  QtWidgets.QFileDialog.getOpenFileName(self, "Select Profile", os.path.expanduser("~"))
         if filename:
-            print filename
+            self.detail.setText(filename)
 
 
 
@@ -197,5 +271,4 @@ class AwFileSelectWindow(AwBasicWindow):
 
         super(AwFileSelectWindow, self).__init__(guimgr, parent, config)
         self.load_plugin()
-
-        self.load_geometry()
+        self.load_basic_geometry()

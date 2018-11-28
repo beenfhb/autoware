@@ -1,3 +1,5 @@
-type : node
-text : Map Config
-children : [transform, points, vector]
+xml :
+  includes : [transform, points, vector]
+
+gui :
+  text : Map

@@ -1,3 +1,6 @@
-type : node
-text : Autoware Launcher
-children : [map, vehicle, sensors, rviz]
+xml :
+  includes : [map, vehicle, sensors, rviz]
+
+gui :
+  type : root
+  text : Autoware Launcher

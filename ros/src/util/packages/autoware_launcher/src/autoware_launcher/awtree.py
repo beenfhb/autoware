@@ -23,68 +23,93 @@ class AwLaunchTree(object):
 
         #config = AwConfigNode.load(os.path.join(os.path.dirname(__file__), "../profiles/default/"), plugin)
 
+class AwPluginXml(object):
 
+    def __init__(self):
+        self.params  = []
+        self.args    = []
+        self.include = []
+
+    def load_obj(self, obj):
+        self.params   = obj.get("params",   [])
+        self.args     = obj.get("args",     [])
+        self.includes = obj.get("includes", [])
+
+class AwPluginGuiNode(object):
+    pass
 
 class AwPluginNode(object):
     
-    def __init__(self, nodename, parent):
-        self.nodename = nodename
-        self.children = collections.OrderedDict()
+    def __init__(self, name, parent):
+        self.type = None
+        self.name = name
+        self.data = []
+        self.xml = AwPluginXml()
+        self.gui = {"text":"===== "+name+" ====="}
         self.parent = parent
-        self.schema = {"text":"__NO_TITLE__"}
+        self.children = collections.OrderedDict()
+
+    def isnode(self):
+        return self.type == "node"
 
     def create_child(self, name):
         self.children[name] = AwPluginNode(name, self)
         return self.children[name]
 
     def dump(self, indent = 0):
-        print((" " * indent) + self.nodename + " " + str(self.schema))
+        print((" " * indent) + self.type + " " + self.name + " GUI:" + str(self.gui))
+        for child in self.data:
+            child.dump(indent + 2)
         for child in self.children.values():
             child.dump(indent + 2)
 
     def load(self, path):
-        nodepath = os.path.join(path, self.nodename)
+        path = os.path.join(path, self.name)
+        self.type = "leaf" if os.path.exists(path + ".xml") else "node"
         try:
-            with open(nodepath + ".yaml") as fp:
-                self.schema.update(yaml.safe_load(fp))
-            if self.schema["type"] == "node":
-                if self.schema["children"] == "scan":
-                    print "scan is not currently supported"
-                for subpath in self.schema["children"]:
-                    child = self.create_child(subpath)
-                    child.load(nodepath)
-            elif self.schema["type"] == "leaf":
-                for arg_name, arg_info in self.schema["args"].items():
-                    child = self.create_child(arg_name)
-                    child.schema.update(arg_info)
+            with open(path + ".yaml") as fp:
+                yaml_data = yaml.safe_load(fp)
+                self.xml.load_obj(yaml_data.get("xml", {}))
+                self.gui.update( yaml_data.get("gui", {}) )
+            if self.isnode():
+                for inc_name in self.xml.includes:
+                    child = self.create_child(inc_name)
+                    child.load(path)
+            else:
+                for arg_info in self.xml.args:
+                    child = AwPluginNode(arg_info["name"], self)
+                    child.type = "arg"
+                    child.gui.update(self.gui.get("args", {}).get(arg_info["name"], {}))
+                    self.data.append(child)
         except:
-            sys.stderr.write("failed to load yaml file for plugin: " + nodepath + "\n")
+            sys.stderr.write("failed to load yaml file for plugin: " + path + "\n")
+            import traceback
+            traceback.print_exc()
 
 
 
 class AwConfigNode(object):
 
-    def __init__(self, nodename, parent, plugin):
-        self.nodename = nodename
-        self.children = collections.OrderedDict()
-        self.parent = parent
+    def __init__(self, name, parent, plugin):
+        self.name = name
+        self.data = None
         self.plugin = plugin
-        self.params = {}
+        self.parent = parent
+        self.children = collections.OrderedDict()
 
     def create_child(self, name, plugin):
         self.children[name] = AwConfigNode(name, self, plugin)
         return self.children[name]
 
     def dump(self, indent = 0):
-        print((" " * indent) + self.nodename)
+        print((" " * indent) + self.name + " " + str(self.data))
         for child in self.children.values():
             child.dump(indent + 2)
 
     def init(self):
-        if self.plugin.schema["type"] == "node":
-            for cp in self.plugin.children.values():
-                child = self.create_child(cp.nodename, cp)
-                child.init()
+        for pnode in self.plugin.children.values():
+            child = self.create_child(pnode.name, pnode)
+            child.init()
 
     def save(self, path):
         pass
