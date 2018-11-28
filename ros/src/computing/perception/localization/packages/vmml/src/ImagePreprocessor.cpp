@@ -6,25 +6,77 @@
  */
 
 #include <vector>
-#include <src/ImagePreprocessor.h>
+#include "ImagePreprocessor.h"
 
 
 using namespace std;
 
+ImagePreprocessor::ImagePreprocessor() :
+	pMode(ProcessMode::AS_IS),
+	rgbImageBuf(3)
+{}
 
 ImagePreprocessor::ImagePreprocessor(ProcessMode m) :
 	pMode(m)
-{
-	// TODO Auto-generated constructor stub
-}
+{}
 
 ImagePreprocessor::~ImagePreprocessor()
 {
 	// TODO Auto-generated destructor stub
 }
 
+void ImagePreprocessor::setMask (const cv::Mat &maskSrc)
+{
+	assert(maskSrc.type()==CV_8UC1);
+	mask = maskSrc.clone();
 
-float ImagePreprocessor::detectSmear(cv::Mat &rgbImage, const float tolerance)
+	rgbImageBuf[0] = cv::Mat(mask.rows, mask.cols, CV_8UC1);
+	rgbImageBuf[1] = cv::Mat(mask.rows, mask.cols, CV_8UC1);
+	rgbImageBuf[2] = cv::Mat(mask.rows, mask.cols, CV_8UC1);
+}
+
+
+/*
+cv::Mat
+ImagePreprocessor::preprocess(const cv::Mat &src)
+{
+
+}
+*/
+
+
+void
+ImagePreprocessor::preprocess(cv::Mat &srcInplace)
+const
+{
+	switch(pMode) {
+	case AS_IS:
+		break;
+	case AGC:
+		srcInplace = autoAdjustGammaRGB(srcInplace, mask);
+		break;
+	case ILLUMINATI:
+		srcInplace = toIlluminatiInvariant(srcInplace, iAlpha);
+		break;
+	}
+}
+
+
+cv::Mat
+ImagePreprocessor::histogram (cv::Mat &inputMono, cv::Mat mask)
+{
+	cv::MatND hist;
+	int histSize = 256;
+	float range[] = {0,255};
+	const float *ranges[] = {range};
+//	uint8_t
+	cv::calcHist (&inputMono, 1, 0, mask, hist, 1, &histSize, ranges, true, false);
+	return hist;
+}
+
+
+float
+ImagePreprocessor::detectSmear(cv::Mat &rgbImage, const float tolerance)
 {
 	// 1. Convert image to HSV and take V channel -> V
 	cv::Mat imgHsv, V;
@@ -79,7 +131,7 @@ cv::Mat ImagePreprocessor::toIlluminatiInvariant (const cv::Mat &rgbImage, const
 }
 
 
-cv::Mat ImagePreprocessor::setGamma (cv::Mat &grayImage, const float gamma, bool LUT_only)
+cv::Mat ImagePreprocessor::setGamma (const cv::Mat &grayImage, const float gamma, bool LUT_only)
 {
 	cv::Mat grayOut;
 	cv::Mat LUT = cv::Mat::zeros(1,256,CV_8UC1);
@@ -122,7 +174,7 @@ cv::Mat ImagePreprocessor::autoAdjustGammaMono(cv::Mat &grayImg, float *gamma, c
 }
 
 
-cv::Mat ImagePreprocessor::autoAdjustGammaRGB (cv::Mat &rgbImg, std::vector<cv::Mat> &rgbBuf, cv::Mat mask)
+cv::Mat ImagePreprocessor::autoAdjustGammaRGB (const cv::Mat &rgbImg, const cv::Mat &mask)
 {
 	cv::Mat res;
 	cv::Mat monoImg;
@@ -144,6 +196,7 @@ cv::Mat ImagePreprocessor::autoAdjustGammaRGB (cv::Mat &rgbImg, std::vector<cv::
 		u = a*u + b;
 	}
 
+	vector<cv::Mat> rgbBuf;
 	cv::split (rgbImg, rgbBuf);
 //	cv::LUT(rgbBuf[0], LUT, rgbBuf[0]);
 //	cv::LUT(rgbBuf[1], LUT, rgbBuf[1]);
@@ -164,6 +217,7 @@ cv::Mat ImagePreprocessor::autoAdjustGammaRGB (cv::Mat &rgbImg, std::vector<cv::
 /**
  * Don't use this
  */
+/*
 cv::Mat ImagePreprocessor::autoAdjustGammaRGB(cv::Mat &rgbImg, cv::Mat mask)
 {
 	cv::Mat res;
@@ -184,6 +238,7 @@ cv::Mat ImagePreprocessor::autoAdjustGammaRGB(cv::Mat &rgbImg, cv::Mat mask)
 	cv::merge(BGRimg, BGRres);
 	return BGRres;
 }
+*/
 
 
 cv::Mat ImagePreprocessor::cdf (cv::Mat &grayImage, cv::Mat mask)

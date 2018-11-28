@@ -22,23 +22,30 @@ public:
 		ILLUMINATI = 2
 	};
 
+	ImagePreprocessor();
 	ImagePreprocessor(ProcessMode m);
 	virtual ~ImagePreprocessor();
 
-	cv::Mat preprocess(const cv::Mat &src);
-	void preprocess(cv::Mat &srcInplace);
+//	cv::Mat preprocess(const cv::Mat &src);
+	void preprocess(cv::Mat &srcInplace) const;
 
-	void setMask (cv::Mat &maskSrc);
+	void setMask (const cv::Mat &maskSrc);
+
 	inline void setIAlpha (const float &a)
 	{ iAlpha = a; }
 
+	inline void setMode (ProcessMode m)
+	{ pMode = m; }
+
 	static float detectSmear (cv::Mat &rgbImage, const float tolerance);
 	static cv::Mat cdf (cv::Mat &grayImage, cv::Mat mask=cv::Mat());
-	static cv::Mat setGamma (cv::Mat &grayImage, const float gamma, bool LUT_only=false);
-	static cv::Mat autoAdjustGammaRGB (cv::Mat &rgbImage, cv::Mat mask=cv::Mat());
-	static cv::Mat autoAdjustGammaRGB (cv::Mat &rgbImage, std::vector<cv::Mat> &rgbBuf, cv::Mat mask=cv::Mat());
+	static cv::Mat setGamma (const cv::Mat &grayImage, const float gamma, bool LUT_only=false);
+//	static cv::Mat autoAdjustGammaRGB (cv::Mat &rgbImage, cv::Mat mask=cv::Mat());
+	static cv::Mat autoAdjustGammaRGB (const cv::Mat &rgbImage, const cv::Mat &mask=cv::Mat());
 	static cv::Mat autoAdjustGammaMono (cv::Mat &grayImage, float *gamma=NULL, cv::Mat mask=cv::Mat());
 	static cv::Mat toIlluminatiInvariant (const cv::Mat &rgbImage, const float alpha);
+
+	static cv::Mat histogram (cv::Mat &inputMono, cv::Mat mask=cv::Mat());
 
 protected:
 
@@ -46,6 +53,9 @@ protected:
 	cv::Mat mask;
 
 	float iAlpha;
+
+	// Color image buffer
+	std::vector<cv::Mat> rgbImageBuf;
 };
 
 

@@ -115,3 +115,32 @@ BaseFrame::perturb (PerturbationMode mode,
 	movement = displacement * movement;
 }
 
+
+std::vector<BaseFrame::PointXYI>
+BaseFrame::projectLidarScan
+(pcl::PointCloud<pcl::PointXYZ>::ConstPtr lidarScan, const TTransform &lidarToCameraTransform, const CameraPinholeParams &cameraParams)
+{
+	std::vector<PointXYI> projections;
+
+	// Create fake frame
+	BaseFrame frame;
+	frame.setPose(lidarToCameraTransform);
+	frame.setCameraParam(&cameraParams);
+
+	projections.resize(lidarScan->size());
+	int i=0, j=0;
+	for (auto it=lidarScan->begin(); it!=lidarScan->end(); ++it) {
+		auto &pts = *it;
+		Vector3d pt3d (pts.x, pts.y, pts.z);
+
+		auto p3cam = frame.externalParamMatrix4() * pt3d.homogeneous();
+		if (p3cam.z() >= 0) {
+			auto p2d = frame.project(pt3d);
+			projections[i] = PointXYI(p2d.x(), p2d.y(), j);
+			++i;
+		}
+		j++;
+	}
+
+	return projections;
+}

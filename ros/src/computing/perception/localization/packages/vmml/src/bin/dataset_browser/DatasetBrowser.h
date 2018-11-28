@@ -18,6 +18,7 @@
 #include "ui_dataset_browser.h"
 #include "ratio_layouted_frame.h"
 
+#include "BaseFrame.h"
 #include "datasets/GenericDataset.h"
 #include "datasets/LidarScanBag.h"
 
@@ -62,11 +63,11 @@ private:
 	void stopPlayBag();
 	void disableControlsOnPlaying (bool state);
 
-	std::vector<cv::Point2f> projectScan
+	std::vector<BaseFrame::PointXYI> projectScan
 	(pcl::PointCloud<pcl::PointXYZ>::ConstPtr lidarScan)
 	const;
 
-	static void drawPoints (cv::Mat &target, const std::vector<cv::Point2f> &pointList);
+	static void drawPoints (cv::Mat &target, const std::vector<BaseFrame::PointXYI> &pointList);
 
 	GenericDataItem::ConstPtr dataItem0;
 

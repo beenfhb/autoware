@@ -13,6 +13,9 @@
 #include <opencv2/core.hpp>
 #include <opencv2/features2d.hpp>
 
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
 #include "CameraPinholeParams.h"
 #include "utilities.h"
 
@@ -102,6 +105,28 @@ public:
 		PerturbationMode h,
 		bool useRandomMotion,
 		double displacement=0, double rotationAngle=0);
+
+
+	struct PointXYI : public pcl::PointXY
+	{
+		inline PointXYI() {}
+
+		inline PointXYI(const float &_x, const float &_y, const unsigned int &_i) :
+			i(_i)
+		{
+			x=_x; y=_y;
+		}
+
+		unsigned int i;
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	};
+
+
+	static std::vector<PointXYI>
+	projectLidarScan
+	(pcl::PointCloud<pcl::PointXYZ>::ConstPtr lidarScan,
+	const TTransform &lidarToCameraTransform,
+	const CameraPinholeParams &cameraParams);
 
 
 protected:

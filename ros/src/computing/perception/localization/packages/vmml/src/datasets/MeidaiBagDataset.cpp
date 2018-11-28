@@ -13,7 +13,13 @@
 #include <algorithm>
 #include <fstream>
 #include <string>
+
 #include <ros/ros.h>
+#include <ros/package.h>
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui.hpp>
+
 #include "datasets/MeidaiBagDataset.h"
 
 
@@ -23,6 +29,10 @@ using namespace Eigen;
 namespace bfs = boost::filesystem;
 
 string MeidaiBagDataset::dSetName = "Nagoya University";
+
+#define _DashboardMask "conf/meidai_mask.png"
+#define _ExposureAdjustmentMask "conf/meidai_exposure_adjust.png"
+
 
 const string
 	meidaiBagImageTopic = "/camera1/image_raw",
@@ -51,6 +61,20 @@ MeidaiBagDataset::MeidaiBagDataset(
 
 	if (loadPositions==true)
 		loadCache();
+
+	// try to load mask image
+	bfs::path myPath(ros::package::getPath("vmml"));
+	auto mask1Path = myPath / _DashboardMask;
+	auto mask2Path = myPath / _ExposureAdjustmentMask;
+	dashBoardMask = cv::imread(mask1Path.string(), cv::IMREAD_GRAYSCALE);
+	if (dashBoardMask.empty())
+		throw runtime_error("Unable to load Meidai car image");
+	exposureMask = cv::imread(mask2Path.string(), cv::IMREAD_GRAYSCALE);
+	if (exposureMask.empty())
+		throw runtime_error("Unable to load Meidai exposure mask");
+
+	mPreprocessor.setMode(ImagePreprocessor::ProcessMode::AGC);
+	mPreprocessor.setMask(exposureMask);
 }
 
 
@@ -586,14 +610,20 @@ MeidaiDataItem::getOrientation() const
 cv::Mat
 MeidaiDataItem::getImage() const
 {
-	auto imgPtr = cv_bridge::toCvShare(bImageMsg, sensor_msgs::image_encodings::BGR8);
+	auto imgPtr = cv_bridge::toCvCopy(bImageMsg, sensor_msgs::image_encodings::BGR8);
+
+	if (parent.isPreprocessed) {
+		parent.mPreprocessor.preprocess(imgPtr->image);
+	}
+
+	cv::Mat imgrs;
 	if (parent.zoomRatio==1.0)
 		return imgPtr->image;
 	else {
-		cv::Mat imgrs;
 		cv::resize(imgPtr->image, imgrs, cv::Size(), parent.zoomRatio, parent.zoomRatio, cv::INTER_CUBIC);
-		return imgrs;
 	}
+
+	return imgrs;
 }
 
 

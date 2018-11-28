@@ -124,6 +124,7 @@ DatasetBrowser::changeDataset(GenericDataset::Ptr ds, datasetType ty)
 		MeidaiBagDataset::Ptr meidaiDs = static_pointer_cast<MeidaiBagDataset>(ds);
 		meidaiDs->setLidarParameters(lidarCalibrationParams, string(), defaultLidarToCameraTransform);
 		meidaiPointClouds = meidaiDs->getLidarScanBag();
+		meidaiDs->isPreprocessed = true;
 	}
 
 	setImageOnPosition(0);
@@ -228,45 +229,31 @@ DatasetBrowser::on_playButton_clicked(bool checked)
 }
 
 
-std::vector<cv::Point2f>
+std::vector<BaseFrame::PointXYI>
 DatasetBrowser::projectScan
 (pcl::PointCloud<pcl::PointXYZ>::ConstPtr lidarScan)
 const
 {
-	std::vector<cv::Point2f> projections;
-
-	// Create fake frame
-	BaseFrame frame;
-	frame.setPose(defaultLidarToCameraTransform);
-	frame.setCameraParam(&meidaiCamera1Params);
-
-	projections.resize(lidarScan->size());
-	int i=0;
-	for (auto it=lidarScan->begin(); it!=lidarScan->end(); ++it) {
-		auto &pts = *it;
-		Vector3d pt3d (pts.x, pts.y, pts.z);
-
-		auto p3cam = frame.externalParamMatrix4() * pt3d.homogeneous();
-		if (p3cam.z() >= 0) {
-			auto p2d = frame.project(pt3d);
-			projections[i] = cv::Point2f(p2d.x(), p2d.y());
-			++i;
-		}
-	}
-
-	return projections;
+	return BaseFrame::projectLidarScan(lidarScan, defaultLidarToCameraTransform, meidaiCamera1Params);
 }
 
 
 const cv::Scalar projectionColor (255,0,0);
 
+
+cv::Point2f convertPoint(const BaseFrame::PointXYI &pt)
+{
+	return cv::Point2f(pt.x, pt.y);
+}
+
+
 void
 DatasetBrowser::drawPoints
-(cv::Mat &target, const std::vector<cv::Point2f> &pointList)
+(cv::Mat &target, const std::vector<BaseFrame::PointXYI> &pointList)
 {
 	for (auto &pt2d: pointList) {
 		if ((pt2d.x>=0 and pt2d.x<target.cols) and (pt2d.y>=0 and pt2d.y<target.rows)) {
-			cv::circle(target, pt2d, 2, projectionColor, -1);
+			cv::circle(target, convertPoint(pt2d), 2, projectionColor, -1);
 		}
 	}
 }

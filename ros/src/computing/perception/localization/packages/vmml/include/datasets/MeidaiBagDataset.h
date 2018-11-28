@@ -24,6 +24,7 @@
 #include <boost/date_time/posix_time/time_serialize.hpp>
 
 #include "utilities.h"
+#include "ImagePreprocessor.h"
 #include "datasets/GenericDataset.h"
 #include "datasets/RandomAccessBag.h"
 #include "datasets/LidarScanBag.h"
@@ -257,6 +258,8 @@ public:
 
 	cv::Mat computeImagePreprocessorMask() const;
 
+	// Flag to request preprocessed image
+	bool isPreprocessed = false;
 
 protected:
 	static std::string dSetName;
@@ -275,6 +278,11 @@ protected:
 		subsetEndTime = ros::TIME_MIN;
 
 	CameraPinholeParams cameraParams;
+
+	// Masks for mapping and exposure adjustment
+	cv::Mat dashBoardMask;
+	cv::Mat exposureMask;
+	ImagePreprocessor mPreprocessor;
 
 private:
 	void loadCache ();
