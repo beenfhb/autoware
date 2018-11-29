@@ -1,4 +1,0 @@
-<launch>
-  <arg name=""/>
-  <node pkg="" type="" name="" args=""/>
-</launch>

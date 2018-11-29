@@ -1,8 +1,0 @@
-xml :
-  args :
-    - { name: file, type: list str }
-
-gui :
-  text : Transform
-  args :
-    file: { type: file_select }

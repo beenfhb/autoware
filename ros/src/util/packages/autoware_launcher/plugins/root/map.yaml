@@ -1,5 +1,0 @@
-xml :
-  includes : [transform, points, vector]
-
-gui :
-  text : Map

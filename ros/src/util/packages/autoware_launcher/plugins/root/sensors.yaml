@@ -1,6 +1,0 @@
-type : node
-text : Sensor Config
-rule :
-  - { type: include, name: lidar  }
-#  - { type: include, name: camera }
-#  - { type: include, name: gnss   }

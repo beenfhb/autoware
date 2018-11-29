@@ -6,6 +6,95 @@ import os
 
 
 
+class AwLaunchWidgetItem(QtWidgets.QTreeWidgetItem):
+
+    def __init__(self, node):
+        super(AwLaunchWidgetItem, self).__init__()
+        self.user = True
+        self.node = node
+        self.node.bind_viewitem(self)
+
+        self.setText(0, self.node.nodepath)
+        self.setText(1, "")
+        self.setData(1, QtCore.Qt.CheckStateRole, QtCore.Qt.Unchecked)
+
+    def request_exec(self):
+        if self.user:
+            self.node.request_exec()
+        else:
+            self.user = True
+
+    def request_term(self):
+        if self.user:
+            self.node.request_term()
+        else:
+            self.user = True
+
+    def exec_requested(self):
+        if self.checkState(1) != QtCore.Qt.Checked:
+            self.user = False
+            self.setCheckState(1,  QtCore.Qt.Checked)
+
+    def term_requested(self):
+        if self.checkState(1) != QtCore.Qt.Unchecked:
+            self.user = False
+            self.setCheckState(1,  QtCore.Qt.Unchecked)
+
+
+
+class AwLaunchExecutor(QtCore.QProcess):
+
+    def __init__(self, node, parent):
+        super(AwLaunchExecutor, self).__init__(parent)
+        self.node = node
+        self.node.bind_executor(self)
+
+
+    def request_exec(self):
+        command = "roslaunch " + self.node.generate_launch()
+        print "Execute: " + command
+        self.start(command)
+
+    def request_term(self):
+        print "Term: " + self.node.nodepath
+        self.terminate()
+
+
+class AwLaunchWidget(QtWidgets.QTreeWidget):
+
+    def __init__(self, tree):
+        super(AwLaunchWidget, self).__init__()
+        self.executors = []
+
+        self.setColumnCount(2)
+        self.setHeaderLabels(["Node", "Exec"])
+        for node in tree.children:
+            self.create_executor(node)
+            self.addTopLevelItem(self.create_viewitem(node))
+        self.expandToDepth(0)
+        self.itemChanged.connect(self.item_checked)
+
+    def create_executor(self, node):
+        if node.isleaf():
+            self.executors.append(AwLaunchExecutor(node, self))
+        for child in node.children:
+            self.create_executor(child)
+
+    def create_viewitem(self, node):
+        item = AwLaunchWidgetItem(node)
+        for child in node.children:
+            item.addChild(self.create_viewitem(child))
+        return item
+
+    def item_checked(self, item, column):
+        state = item.checkState(column)
+        if state == QtCore.Qt.Checked:
+            item.request_exec()
+        elif state == QtCore.Qt.Unchecked:
+            item.request_term()
+
+
+
 class AwBasicWindow(QtWidgets.QMainWindow):
 
     def __init__(self, guimgr, parent, config):

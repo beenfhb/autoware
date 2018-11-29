@@ -1,0 +1,9 @@
+<launch>
+
+    <arg name="transform_file"/>
+    <arg name="pointsmap_file"/>
+
+    <include file="$(arg transform_file)"/>   
+    <node pkg="map_file" type="points_map_loader" name="points_map_loader" args="noupdate $(arg pointsmap_file)"/>
+
+</launch>

@@ -1,4 +1,0 @@
-type : node
-text : Lidar Config
-rule :
-  - { type: array, element: scan }

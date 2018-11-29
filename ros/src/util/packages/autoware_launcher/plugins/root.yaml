@@ -1,6 +1,0 @@
-xml :
-  includes : [map, vehicle, sensors, rviz]
-
-gui :
-  type : root
-  text : Autoware Launcher
