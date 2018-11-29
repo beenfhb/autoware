@@ -22,34 +22,33 @@
 //headers for std libs
 #include <math.h>
 
-topview_publisher::topview_publisher() : it(nh)
+topview_publisher::topview_publisher() : it_(nh_)
 {
-  camera_info_recieved = false;
-  nh.getParam(ros::this_node::getName()+"/camera_topic_name", camera_topic_name);
-  nh.getParam(ros::this_node::getName()+"/camera_info_topic_name", camera_info_topic_name);
-  nh.getParam(ros::this_node::getName()+"/camera_frame_name", camera_frame_name);
-  image_pub =  it.advertise(ros::this_node::getName()+"/top_view", 1);
-  camera_info_sub = nh.subscribe(camera_info_topic_name, 1, &topview_publisher::camera_info_callback, this);
-  image_sub = it.subscribe(camera_topic_name, 1, &topview_publisher::image_callback, this);
+  camera_info_recieved_ = false;
+  nh_.getParam(ros::this_node::getName()+"/camera_topic_name_", camera_topic_name_);
+  nh_.getParam(ros::this_node::getName()+"/camera_info_topic_name_", camera_info_topic_name_);
+  image_pub_ =  it_.advertise(ros::this_node::getName()+"/top_view", 1);
+  camera_info_sub_ = nh_.subscribe(camera_info_topic_name_, 1, &topview_publisher::camera_info_callback_, this);
+  image_sub_ = it_.subscribe(camera_topic_name_, 1, &topview_publisher::image_callback_, this);
 }
 
 topview_publisher::~topview_publisher()
 {
 }
 
-void topview_publisher::camera_info_callback(const sensor_msgs::CameraInfoConstPtr& msg)
+void topview_publisher::camera_info_callback_(const sensor_msgs::CameraInfoConstPtr& msg)
 {
-  K_matrix = cv::Matx33d(msg->K[0],msg->K[1],msg->K[2],msg->K[3],msg->K[4],msg->K[5],msg->K[6],msg->K[7],msg->K[8]);
-  D_vec = cv::Vec4d(msg->D[0],msg->D[1],msg->D[2],msg->D[3]);
+  K_matrix_ = cv::Matx33d(msg->K[0],msg->K[1],msg->K[2],msg->K[3],msg->K[4],msg->K[5],msg->K[6],msg->K[7],msg->K[8]);
+  D_vec_ = cv::Vec4d(msg->D[0],msg->D[1],msg->D[2],msg->D[3]);
 }
 
-void topview_publisher::image_callback(const sensor_msgs::ImageConstPtr& msg)
+void topview_publisher::image_callback_(const sensor_msgs::ImageConstPtr& msg)
 {
   try
   {
     cv_bridge::CvImagePtr cv_ptr;
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-    cv_ptr->image = create_top_view(cv_ptr->image,pitch,camera_height);
+    cv_ptr->image = create_top_view_(cv_ptr->image,pitch_,camera_height_,simulated_camera_height_);
   }
   catch (cv_bridge::Exception& e)
   {
@@ -57,15 +56,15 @@ void topview_publisher::image_callback(const sensor_msgs::ImageConstPtr& msg)
   }
 }
 
-cv::Mat topview_publisher::create_top_view(cv::Mat src,double theta,double height)
+cv::Mat topview_publisher::create_top_view_(cv::Mat src,double theta,double height,double simulated_height)
 {
   cv::Mat undistorted_image = cv::Mat::zeros(src.rows, src.cols, CV_8UC3);
-  cv::undistort(src, undistorted_image, K_matrix, D_vec);
+  cv::undistort(src, undistorted_image, K_matrix_, D_vec_);
   cv::Mat top_image = cv::Mat::zeros(undistorted_image.rows, undistorted_image.cols, CV_8UC3);
-  double Hvc = simulated_camera_height;
+  double Hvc = simulated_height;
   double Hc = height;
   double Dvc = 0.0;
-  double f = K_matrix(0,0);
+  double f = K_matrix_(0,0);
   double fp = f;
   double s = sin(theta);
   double c = cos(theta);
