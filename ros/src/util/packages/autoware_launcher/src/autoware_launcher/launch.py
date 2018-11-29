@@ -82,24 +82,34 @@ class AwLaunchNode(object):
 
     def request_exec(self):
         if self.isnode():
-            self.viewitem.exec_requested()
+            self.send_exec_requested()
             for child_node in self.children:
                 child_node.request_exec()
         else:
-            self.viewitem.exec_requested()
+            self.send_exec_requested()
             self.executor.request_exec()
 
     def request_term(self):
         if self.isnode():
-            self.viewitem.term_completed()
+            self.send_term_completed()
             for child_node in self.children:
                 child_node.request_term()
         else:
-            self.viewitem.term_requested()
+            self.send_term_requested()
             self.executor.request_term()
 
-    def term_completed(self):
+    # ToDo: apply state check of executor
+    def send_exec_requested(self):
+        self.viewitem.exec_requested()
+
+    # ToDo: apply state check of executor
+    def send_term_requested(self):
+        self.viewitem.term_requested()
+
+    # ToDo: apply state check of executor
+    def send_term_completed(self):
         self.viewitem.term_completed()
+
 
     def load(self, treepath, nodepath):
         self.nodepath = nodepath
@@ -121,7 +131,7 @@ class AwLaunchNode(object):
             for arg_name, arg_data in self.setting["args"].items():
                 if type(arg_data) is list:
                     arg_data = " ".join(arg_data)
-                fp.write('    <arg name="' + arg_name + '" value="' + arg_data + '"/>\n')
+                fp.write('    <arg name="' + arg_name + '" value="' + str(arg_data) + '"/>\n')
             fp.write('  </include>\n')
             fp.write('</launch>\n')
         return xml_path

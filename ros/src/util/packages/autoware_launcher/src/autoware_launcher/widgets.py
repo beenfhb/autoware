@@ -8,9 +8,10 @@ import os
 
 class AwLaunchWidgetItem(QtWidgets.QTreeWidgetItem):
 
-    def __init__(self, node):
+    def __init__(self, node, area):
         super(AwLaunchWidgetItem, self).__init__()
         self.user = True
+        self.area = area
         self.node = node
         self.node.bind_viewitem(self)
 
@@ -59,59 +60,97 @@ class AwLaunchWidgetItem(QtWidgets.QTreeWidgetItem):
 
 
 
-class AwLaunchExecutor(QtCore.QProcess):
+class AwLaunchExecutor(QtWidgets.QPlainTextEdit):
 
-    def __init__(self, node, parent):
-        super(AwLaunchExecutor, self).__init__(parent)
+    STOP_STATE = 1
+    EXEC_STATE = 2
+    TERM_STATE = 3
+
+    def __init__(self, node):
+        super(AwLaunchExecutor, self).__init__()
+        self.status = AwLaunchExecutor.STOP_STATE
         self.node = node
         self.node.bind_executor(self)
 
-        self.finished.connect(self.on_finished)
+        self.setReadOnly(True)
+        self.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
 
+        self.proc = QtCore.QProcess(self)
+        self.proc.finished.connect(self.on_finished)
+        self.proc.readyReadStandardOutput.connect(self.on_ready_stdout)
+        self.proc.readyReadStandardError.connect(self.on_ready_stderr)
+
+    # ToDo: add state check
     def request_exec(self):
+        self.status = AwLaunchExecutor.EXEC_STATE
         command = "roslaunch " + self.node.generate_launch()
-        print "Execute: " + command
-        self.start(command)
+        #print "Execute: " + command
+        self.proc.start(command)
 
+    # ToDo: add state check
     def request_term(self):
-        print "Term: " + self.node.nodepath
-        self.terminate()
+        self.status = AwLaunchExecutor.TERM_STATE
+        self.proc.terminate()
 
+    # ToDo: add state check
     # QtCore.Slot
     def on_finished(self):
-        self.node.term_completed()
+        self.status = AwLaunchExecutor.STOP_STATE
+        self.node.send_term_completed()
+
+    # QtCore.Slot
+    def on_ready_stdout(self):
+        byte = self.proc.readAllStandardOutput()
+        text = QtCore.QTextStream(byte).readAll()
+        self.moveCursor(QtGui.QTextCursor.End)
+        self.insertPlainText(text)
+
+    # QtCore.Slot
+    def on_ready_stderr(self):
+        byte = self.proc.readAllStandardError()
+        text = QtCore.QTextStream(byte).readAll()
+        self.moveCursor(QtGui.QTextCursor.End)
+        self.insertPlainText(text)
 
 
-
-class AwLaunchWidget(QtWidgets.QTreeWidget):
+class AwLaunchWidget(QtWidgets.QSplitter):
 
     def __init__(self, tree):
-        super(AwLaunchWidget, self).__init__()
-        self.executors = []
+        super(AwLaunchWidget, self).__init__(QtCore.Qt.Horizontal)
+        self.dummyarea = QtWidgets.QLabel()
+        self.executors = QtWidgets.QStackedWidget()
+        self.executors.addWidget(self.dummyarea)
 
-        self.setColumnCount(2)
-        self.setHeaderLabels(["Node", "Exec", "Status"])
+        view = QtWidgets.QTreeWidget()
+        view.setColumnCount(2)
+        view.setHeaderLabels(["Node", "Exec", "Status"])
         for node in tree.children:
-            self.create_executor(node)
-            self.addTopLevelItem(self.create_viewitem(node))
-        self.expandToDepth(0)
-        self.itemChanged.connect(self.on_item_changed)
+            view.addTopLevelItem(self.construct(node))
+        view.expandToDepth(0)
+        view.itemChanged.connect(self.on_item_changed)
+        view.itemClicked.connect(self.on_item_clicked)
+        view.itemActivated.connect(self.on_item_clicked)
 
-    def create_executor(self, node):
+        self.addWidget(view)
+        self.addWidget(self.executors)
+
+    def construct(self, node):
+        area = self.dummyarea
         if node.isleaf():
-            self.executors.append(AwLaunchExecutor(node, self))
+            area = AwLaunchExecutor(node)
+            self.executors.addWidget(area)
+        item = AwLaunchWidgetItem(node, area)
         for child in node.children:
-            self.create_executor(child)
-
-    def create_viewitem(self, node):
-        item = AwLaunchWidgetItem(node)
-        for child in node.children:
-            item.addChild(self.create_viewitem(child))
+            item.addChild(self.construct(child))
         return item
 
     # QtCore.Slot
     def on_item_changed(self, item, column):
         item.changed(column)
+
+    # QtCore.Slot
+    def on_item_clicked(self, item, column):
+        self.executors.setCurrentWidget(item.area)
 
 
 

@@ -1,3 +1,6 @@
 children :
+  - rviz
   - map
-  - sensors
+  - vehicle
+  - sensing
+  - localization
