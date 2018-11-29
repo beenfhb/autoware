@@ -47,5 +47,7 @@ private:
   double pitch_;
   double camera_height_;
   double simulated_camera_height_;
+  dynamic_reconfigure::Server<image_processor::topview_publisherConfig> dynamic_params_server_;
+  dynamic_reconfigure::Server<image_processor::topview_publisherConfig>::CallbackType dynamic_params_callback_type_;
 };
 #endif

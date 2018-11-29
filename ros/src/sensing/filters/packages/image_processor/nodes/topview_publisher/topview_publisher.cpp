@@ -28,6 +28,8 @@ topview_publisher::topview_publisher() : it_(nh_)
   nh_.getParam(ros::this_node::getName()+"/camera_topic_name_", camera_topic_name_);
   nh_.getParam(ros::this_node::getName()+"/camera_info_topic_name_", camera_info_topic_name_);
   image_pub_ =  it_.advertise(ros::this_node::getName()+"/top_view", 1);
+  dynamic_params_callback_type_ = boost::bind(&topview_publisher::callback_config_, this, _1, _2);
+  dynamic_params_server_.setCallback(dynamic_params_callback_type_);
   camera_info_sub_ = nh_.subscribe(camera_info_topic_name_, 1, &topview_publisher::camera_info_callback_, this);
   image_sub_ = it_.subscribe(camera_topic_name_, 1, &topview_publisher::image_callback_, this);
 }
@@ -40,6 +42,14 @@ void topview_publisher::camera_info_callback_(const sensor_msgs::CameraInfoConst
 {
   K_matrix_ = cv::Matx33d(msg->K[0],msg->K[1],msg->K[2],msg->K[3],msg->K[4],msg->K[5],msg->K[6],msg->K[7],msg->K[8]);
   D_vec_ = cv::Vec4d(msg->D[0],msg->D[1],msg->D[2],msg->D[3]);
+}
+
+void topview_publisher::callback_config_(image_processor::topview_publisherConfig &config, uint32_t level)
+{
+    simulated_camera_height_ = config.simulated_camera_height;
+    camera_height_ = config.camera_height;
+    pitch_ = config.camera_pitch_angle;
+    return;
 }
 
 void topview_publisher::image_callback_(const sensor_msgs::ImageConstPtr& msg)
