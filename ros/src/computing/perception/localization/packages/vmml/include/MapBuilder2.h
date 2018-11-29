@@ -16,6 +16,7 @@
 #include <functional>
 #include "VMap.h"
 #include "utilities.h"
+
 #include "datasets/GenericDataset.h"
 
 
@@ -83,7 +84,7 @@ public:
 	void registerFrameCallback (frameCallback& f)
 	{ inputCallback = f; }
 
-	void runFromDataset (GenericDataset *ds);
+	void runFromDataset (GenericDataset::Ptr sourceDs, const ptime startTime, const ptime stopTime);
 
 	void setMask (const cv::Mat &m);
 
@@ -100,7 +101,7 @@ protected:
 
 	bool initialized = false;
 
-	GenericDataset *sourceDataset=NULL;
+	GenericDataset::Ptr sourceDataset=nullptr;
 	frameCallback inputCallback;
 
 	InputFrame frame0;

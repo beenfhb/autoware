@@ -149,9 +149,13 @@ MapBuilder2::build ()
 
 
 void
-MapBuilder2::runFromDataset(GenericDataset *ds)
+MapBuilder2::runFromDataset(GenericDataset::Ptr sourceDs, const ptime startTime, const ptime stopTime)
 {
-	sourceDataset = ds;
+	if (startTime < sourceDs->first()->getTimestamp()
+		or stopTime > sourceDs->last()->getTimestamp())
+		throw runtime_error("Requested times are outside of dataset range");
+
+	sourceDataset = sourceDs;
 	if (initialized != false)
 		throw runtime_error("Map process has been running; aborted");
 

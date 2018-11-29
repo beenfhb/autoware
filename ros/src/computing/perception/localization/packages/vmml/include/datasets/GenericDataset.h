@@ -95,6 +95,12 @@ public:
 
 	virtual float hertz() const;
 
+	inline GenericDataItem::ConstPtr last() const
+	{ return get(size()-1); }
+
+	inline GenericDataItem::ConstPtr first() const
+	{ return get(0); }
+
 	/*
 	 * Duration of the dataset in seconds
 	 */
