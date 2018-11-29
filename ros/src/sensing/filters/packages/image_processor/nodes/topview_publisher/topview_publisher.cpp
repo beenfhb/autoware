@@ -24,10 +24,10 @@
 
 topview_publisher::topview_publisher() : it_(nh_) {
   camera_info_recieved_ = false;
-  nh_.getParam(ros::this_node::getName() + "/camera_topic_name_",
-               camera_topic_name_);
-  nh_.getParam(ros::this_node::getName() + "/camera_info_topic_name_",
-               camera_info_topic_name_);
+  nh_.param<std::string>(ros::this_node::getName() + "/camera_topic_name",
+               camera_topic_name_,"/image_raw");
+  nh_.param<std::string>(ros::this_node::getName() + "/camera_info_topic_name",
+               camera_info_topic_name_,"/camera_info");
   image_pub_ = it_.advertise(ros::this_node::getName() + "/top_view", 1);
   dynamic_params_callback_type_ =
       boost::bind(&topview_publisher::callback_config_, this, _1, _2);
