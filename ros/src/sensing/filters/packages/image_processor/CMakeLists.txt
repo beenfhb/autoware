@@ -6,11 +6,13 @@ find_package(catkin REQUIRED COMPONENTS
         roscpp
         sensor_msgs
         cv_bridge
+        image_transport
         )
 
 catkin_package(CATKIN_DEPENDS
         sensor_msgs
         cv_bridge
+        image_transport
         )
 
 find_package(OpenCV REQUIRED)
@@ -56,16 +58,17 @@ target_link_libraries(image_rectifier
 
 #Topview publisher
 add_executable(topview_publisher_node
-nodes/topview_publisher/topview_publisher_node.cpp
+        nodes/topview_publisher/topview_publisher_node.cpp
+        nodes/topview_publisher/topview_publisher.cpp
 )
 
 target_include_directories(topview_publisher_node PRIVATE
-${OpenCV_INCLUDE_DIR}
+        ${OpenCV_INCLUDE_DIR}
 )
 
 target_link_libraries(topview_publisher_node
-${catkin_LIBRARIES}
-${OpenCV_LIBS}
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
 )
 
 #Image Stitcher

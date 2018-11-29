@@ -1,5 +1,5 @@
 //headers in robocup_localization package
-//#include "topview_publisher.h"
+#include "topview_publisher.h"
 
 //headers for ROS
 #include <ros/ros.h>
