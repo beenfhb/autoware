@@ -54,6 +54,20 @@ target_link_libraries(image_rectifier
         ${OpenCV_LIBS}
         )
 
+#Topview publisher
+add_executable(topview_publisher_node
+nodes/topview_publisher/topview_publisher_node.cpp
+)
+
+target_include_directories(topview_publisher_node PRIVATE
+${OpenCV_INCLUDE_DIR}
+)
+
+target_link_libraries(topview_publisher_node
+${catkin_LIBRARIES}
+${OpenCV_LIBS}
+)
+
 #Image Stitcher
 
 #Image Blender
@@ -62,7 +76,7 @@ target_link_libraries(image_rectifier
 ## Install ##
 #############
 
-install(TARGETS image_rotator image_rectifier
+install(TARGETS image_rotator image_rectifier topview_publisher_node
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -73,5 +87,6 @@ install(FILES
         launch/image_rotator_ladybug.launch
         launch/image_rectifier.launch
         launch/image_rectifier_ladybug.launch
+        launch/topview_publisher.launch
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
