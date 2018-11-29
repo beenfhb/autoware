@@ -326,6 +326,10 @@ private:
   void entryLaneChangeState(cstring_t& state_name, int status);
   void entryDriveEmergencyState(cstring_t& state_name, int status);
   void entryStopState(cstring_t& state_name, int status);
+  void entryBusStopState(cstring_t& state_name, int status);
+  void entryArrivedBusStopState(cstring_t& state_name, int status);
+  void entryPullOverState(cstring_t& state_name, int status);
+  void entryPullOutState(cstring_t& state_name, int status);
   // update callback
   void updateWaitReadyState(cstring_t& state_name, int status);
   void updateWaitEngageState(cstring_t& state_name, int status);
@@ -342,6 +346,7 @@ private:
   void updateBackState(cstring_t& state_name, int status);
   void updateLeftLaneChangeState(cstring_t& state_name, int status);
   void updateRightLaneChangeState(cstring_t& state_name, int status);
+  void updateArrivedBusStopState(cstring_t& state_name, int status);
   void updatePullOverState(cstring_t& state_name, int status);
   void updatePullOutState(cstring_t& state_name, int status);
   void updateStoplineState(cstring_t& state_name, int status);
@@ -359,6 +364,10 @@ private:
   // exit callback
   void exitStopState(cstring_t& state_name, int status);
   void exitDriveEmergencyState(cstring_t& state_name, int status);
+  void exitBusStopState(cstring_t& state_name, int status);
+  void exitArrivedBusStopState(cstring_t& state_name, int status);
+  void exitPullOverState(cstring_t& state_name, int status);
+  void exitPullOutState(cstring_t& state_name, int status);
 
   // callback by topic subscribing
   void callbackFromFilteredPoints(const sensor_msgs::PointCloud2::ConstPtr& msg);

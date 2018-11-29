@@ -61,6 +61,9 @@ autoware_states_drive:
     StateName: BusStop
     Transition:
       -
+        Key: on_arrived_bus_stop
+        Target: ArrivedBusStop
+      -
         Key: on_pull_over
         Target: PullOver
       -
@@ -68,13 +71,123 @@ autoware_states_drive:
         Target: PullOut
     Parent: LaneArea
   -
-    StateName: PullOver
-    Transition: []
+    StateName: ArrivedBusStop
+    Transition:
+      -
+        Key: found_stopline
+        Target: ABStop_StopLine
+      -
+        Key: found_obstacle_in_stopped_area
+        Target: ABStop_Stop
     Parent: BusStop
   -
-    StateName: PullOut
+    StateName: ABStop_StopLine
     Transition: []
+    Parent: ArrivedBusStop
+  -
+    StateName: ABStop_Stop
+    Transition: []
+    Parent: ArrivedBusStop
+  -
+    StateName: PullOver
+    Transition:
+      -
+        Key: clear
+        Target: POver_Go
+      -
+        Key: found_stopline
+        Target: POver_StopLine
+      -
+        Key: wait
+        Target: POver_Wait
+      -
+        Key: found_obstacle_in_stopped_area
+        Target: POver_Stop
     Parent: BusStop
+  -
+    StateName: POver_Stop
+    Transition:
+      -
+        Key: stopped
+        Target: POver_Wait
+    Parent: PullOver
+  -
+    StateName: POver_StopLine
+    Transition:
+      -
+        Key: clear
+        Target: POver_Go
+      -
+        Key: found_risk
+        Target: POver_Wait
+    Parent: PullOver
+  -
+    StateName: POver_Wait
+    Transition:
+      -
+        Key: clear
+        Target: POver_Go
+    Parent: PullOver
+  -
+    StateName: POver_Go
+    Transition:
+      -
+        Key: found_obstacle_in_stopped_area
+        Target: POver_Stop
+      -
+        Key: found_stopline
+        Target: POver_StopLine
+    Parent: PullOver
+  -
+    StateName: PullOut
+    Transition:
+      -
+        Key: clear
+        Target: POut_Go
+      -
+        Key: found_stopline
+        Target: POut_StopLine
+      -
+        Key: wait
+        Target: POut_Wait
+      -
+        Key: found_obstacle_in_stopped_area
+        Target: POut_Stop
+    Parent: BusStop
+  -
+    StateName: POut_Stop
+    Transition:
+      -
+        Key: stopped
+        Target: POut_Wait
+    Parent: PullOut
+  -
+    StateName: POut_StopLine
+    Transition:
+      -
+        Key: clear
+        Target: POut_Go
+      -
+        Key: found_risk
+        Target: POut_Wait
+    Parent: PullOut
+  -
+    StateName: POut_Wait
+    Transition:
+      -
+        Key: clear
+        Target: POut_Go
+    Parent: PullOut
+  -
+    StateName: POut_Go
+    Transition:
+      -
+        Key: found_obstacle_in_stopped_area
+        Target: POut_Stop
+      -
+        Key: found_stopline
+        Target: POut_StopLine
+    Parent: PullOut
   -
     StateName: Cruise
     Transition:
@@ -321,7 +434,8 @@ autoware_states_drive:
       -
         Key: clear
         Target: B_Go
-      - Key: found_risk
+      -
+        Key: found_risk
         Target: B_Wait
     Parent: Back
   -

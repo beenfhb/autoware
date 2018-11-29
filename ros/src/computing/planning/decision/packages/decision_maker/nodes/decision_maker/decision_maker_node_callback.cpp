@@ -229,7 +229,7 @@ bool DecisionMakerNode::drivingMissionCheck()
       wp.wpstate.accel_state = autoware_msgs::WaypointState::NULLSTATE;
       wp.wpstate.stop_state = autoware_msgs::WaypointState::NULLSTATE;
       wp.wpstate.lanechange_state = autoware_msgs::WaypointState::NULLSTATE;
-      wp.wpstate.event_state = 0;
+      // wp.wpstate.event_state = autoware_msgs::WaypointState::TYPE_EVENT_NULL;
       wp.gid = gid++;
       wp.lid = lid++;
       if (!isEventFlagTrue("received_back_state_waypoint") && wp.twist.twist.linear.x < 0.0)

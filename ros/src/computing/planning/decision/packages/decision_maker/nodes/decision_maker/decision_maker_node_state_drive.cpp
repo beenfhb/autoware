@@ -69,7 +69,7 @@ uint8_t DecisionMakerNode::getSteeringStateFromWaypoint(void)
 }
 uint8_t DecisionMakerNode::getEventStateFromWaypoint(void)
 {
-  static const double distance_to_target = param_num_of_steer_behind_;
+  static const double distance_to_target = 3.0;
   static const size_t ignore_idx = 0;
 
   double distance = 0.0;
@@ -87,7 +87,7 @@ uint8_t DecisionMakerNode::getEventStateFromWaypoint(void)
 
     state = current_status_.finalwaypoints.waypoints.at(idx).wpstate.event_state;
 
-    if (state && distance >= distance_to_target)
+    if (distance >= distance_to_target)
     {
       break;
     }
@@ -161,6 +161,12 @@ void DecisionMakerNode::updateLaneAreaState(cstring_t& state_name, int status)
     return;
   }
 
+  if (isEventFlagTrue("bus_stop_state"))
+  {
+    tryNextState("on_bus_stop");
+    return;
+  }
+
   switch (getEventStateFromWaypoint())
   {
     case autoware_msgs::WaypointState::TYPE_EVENT_BUS_STOP:
@@ -214,18 +220,103 @@ void DecisionMakerNode::updateFreeAreaState(cstring_t& state_name, int status)
 {
 }
 
+void DecisionMakerNode::entryBusStopState(cstring_t& state_name, int status)
+{
+  setEventFlag("bus_stop_state", true);
+  tryNextState("on_pull_over");
+}
 void DecisionMakerNode::updateBusStopState(cstring_t& state_name, int status)
 {
+  if (isEventFlagTrue("arrived_bus_stop_state"))
+    tryNextState("on_arrived_bus_stop");
+  else if (isEventFlagTrue("pull_over_state"))
+    tryNextState("on_pull_over");
+  else if (isEventFlagTrue("pull_out_state"))
+    tryNextState("on_pull_out");
+}
+void DecisionMakerNode::exitBusStopState(cstring_t& state_name, int status)
+{
+  setEventFlag("bus_stop_state", false);
 }
 
+void DecisionMakerNode::entryArrivedBusStopState(cstring_t& state_name, int status)
+{
+  setEventFlag("arrived_bus_stop_state", true);
+
+  std::pair<uint8_t, int> get_stopsign = getStopSignStateFromWaypoint();
+  if (get_stopsign.first != 0)
+  {
+    current_status_.found_stopsign_idx = get_stopsign.second;
+    tryNextState("found_stopline");
+    return;
+  }
+  else if (isEventFlagTrue("entry_stop_state"))
+  {
+    tryNextState("found_obstacle_in_stopped_area");
+    return;
+  }
+}
+void DecisionMakerNode::updateArrivedBusStopState(cstring_t& state_name, int status)
+{
+  publishLampCmd(E_Lamp::LAMP_HAZARD);
+}
+void DecisionMakerNode::exitArrivedBusStopState(cstring_t& state_name, int status)
+{
+  setEventFlag("arrived_bus_stop_state", false);
+}
+
+void DecisionMakerNode::entryPullOverState(cstring_t& state_name, int status)
+{
+  setEventFlag("pull_over_state", true);
+
+  std::pair<uint8_t, int> get_stopsign = getStopSignStateFromWaypoint();
+  if (get_stopsign.first != 0)
+  {
+    current_status_.found_stopsign_idx = get_stopsign.second;
+    tryNextState("found_stopline");
+    return;
+  }
+  else if (isEventFlagTrue("entry_stop_state"))
+  {
+    tryNextState("found_obstacle_in_stopped_area");
+    return;
+  }
+  tryNextState("clear");
+}
 void DecisionMakerNode::updatePullOverState(cstring_t& state_name, int status)
 {
   publishLampCmd(E_Lamp::LAMP_LEFT);
 }
+void DecisionMakerNode::exitPullOverState(cstring_t& state_name, int status)
+{
+  setEventFlag("pull_over_state", false);
+}
 
+void DecisionMakerNode::entryPullOutState(cstring_t& state_name, int status)
+{
+  setEventFlag("pull_out_state", true);
+
+  std::pair<uint8_t, int> get_stopsign = getStopSignStateFromWaypoint();
+  if (get_stopsign.first != 0)
+  {
+    current_status_.found_stopsign_idx = get_stopsign.second;
+    tryNextState("found_stopline");
+    return;
+  }
+  else if (isEventFlagTrue("entry_stop_state"))
+  {
+    tryNextState("found_obstacle_in_stopped_area");
+    return;
+  }
+  tryNextState("clear");
+}
 void DecisionMakerNode::updatePullOutState(cstring_t& state_name, int status)
 {
   publishLampCmd(E_Lamp::LAMP_RIGHT);
+}
+void DecisionMakerNode::exitPullOutState(cstring_t& state_name, int status)
+{
+  setEventFlag("pull_out_state", false);
 }
 
 void DecisionMakerNode::entryTurnState(cstring_t& state_name, int status)
