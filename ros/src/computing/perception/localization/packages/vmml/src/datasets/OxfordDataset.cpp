@@ -481,6 +481,14 @@ const
 }
 
 
+dataItemId
+OxfordDataset::getLowerBound (const ptime &t) const
+{
+	auto it = std::lower_bound(stereoTimestamps.begin(), stereoTimestamps.end(), toOxfordTimestamp(t));
+	return (dataItemId)(it-stereoTimestamps.begin());
+}
+
+
 void
 OxfordDataset::setZoomRatio(float r)
 {

@@ -41,6 +41,10 @@ typedef decltype(cv::DMatch::trainIdx) kpid;
 typedef boost::posix_time::ptime ptime;
 typedef boost::posix_time::time_duration tduration;
 
+const auto
+	MIN_TIME = boost::posix_time::special_values::min_date_time,
+	MAX_TIME = boost::posix_time::special_values::max_date_time;
+
 
 template<typename P, typename Q>
 map<Q,P> reverseMap (const map<P,Q> &smap)

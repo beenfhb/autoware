@@ -28,8 +28,8 @@ const double
 
 
 
-class InputFrame {
-public:
+struct InputFrame
+{
 	cv::Mat image;
 	Eigen::Vector3d position = Eigen::Vector3d::Zero();
 	Eigen::Quaterniond orientation = Eigen::Quaterniond::Identity();
@@ -81,10 +81,13 @@ public:
 	void resetMap();
 
 	typedef std::function<void(const InputFrame&)> frameCallback;
-	void registerFrameCallback (frameCallback& f)
+	inline void registerFrameCallback (frameCallback& f)
 	{ inputCallback = f; }
 
-	void runFromDataset (GenericDataset::Ptr sourceDs, const ptime startTime, const ptime stopTime);
+	void runFromDataset
+		(GenericDataset::Ptr sourceDs,
+		const ptime startTime = MIN_TIME,
+		const ptime stopTime = MAX_TIME);
 
 	void setMask (const cv::Mat &m);
 

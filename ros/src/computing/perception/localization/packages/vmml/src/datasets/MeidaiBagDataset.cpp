@@ -385,6 +385,15 @@ const
 }
 
 
+dataItemId
+MeidaiBagDataset::getLowerBound (const ptime &t) const
+{
+	auto rt = ros::Time::fromBoost(t);
+	return (dataItemId)cameraRawBag->getPositionAtTime(rt);
+}
+
+
+
 LidarScanBag::Ptr
 MeidaiBagDataset::getLidarScanBag ()
 {

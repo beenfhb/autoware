@@ -215,6 +215,8 @@ public:
 
 	GenericDataItem::ConstPtr get(dataItemId i) const;
 
+	virtual
+	dataItemId getLowerBound (const ptime &t) const;
 
 protected:
 	CameraPinholeParams oxfCamera;

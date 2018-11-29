@@ -256,6 +256,9 @@ public:
 	inline void getSubsetRange (ptime &beg_, ptime &end_) const
 	{ beg_ = subsetBeginTime.toBoost(); end_ = subsetEndTime.toBoost(); }
 
+	virtual
+	dataItemId getLowerBound (const ptime &t) const;
+
 	cv::Mat computeImagePreprocessorMask() const;
 
 	// Flag to request preprocessed image

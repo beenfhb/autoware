@@ -184,7 +184,7 @@ InputFrame createInputFrame(MeidaiDataItem::ConstPtr &DI)
 }
 
 
-class LocalizerApp
+class VmmlCliApp
 {
 public:
 	enum datasetType {
@@ -193,7 +193,7 @@ public:
 	} ;
 
 
-	LocalizerApp (int argc, char *argv[]):
+	VmmlCliApp (int argc, char *argv[]):
 		mLineEditor(argv[0], TestPrompt),
 		mapPath("")
 
@@ -202,7 +202,7 @@ public:
 	}
 
 
-	~LocalizerApp ()
+	~VmmlCliApp ()
 	{
 		if (mapSrc)
 			delete(mapSrc);
@@ -282,7 +282,7 @@ public:
 
 	static void fromScript(int argc, char *argv[])
 	{
-		LocalizerApp scriptIterpreter (argc, argv);
+		VmmlCliApp scriptIterpreter (argc, argv);
 		string scriptName(argv[1]);
 
 		std::ifstream fd;
@@ -332,8 +332,8 @@ public:
 		MapBuilder2::frameCallback frmCallback =
 		[&] (const InputFrame &f)
 		{
-			imgViewer->update(currentItemId, builder.getCurrentKeyFrameId());
-			cout << currentItemId << " / " << datasetSrc->size() << endl;
+			imgViewer->update(f.sourceId, builder.getCurrentKeyFrameId());
+			cout << f.sourceId << " / " << datasetSrc->size() << endl;
 		};
 		builder.registerFrameCallback(frmCallback);
 
@@ -736,8 +736,47 @@ private:
 	}
 
 
+	/*
+	 * Replacement for the below function
+	 * XXX: Unfinished
+	 */
+	void map_create_cmd2 (const stringTokens &cmd)
+	{
+		ptime ptstart, ptstop;
+		double start, stop, duration;
+
+		MapBuilder2 mapBld;
+
+		if (slDatasourceType == OXFORD_DATASET_TYPE) {
+			OxfordDataset::ConstPtr ods = static_pointer_cast<OxfordDataset>(loadedDataset);
+			// Put dataset information here
+
+		}
+		else if (slDatasourceType == MEIDAI_DATASET_TYPE) {
+			MeidaiBagDataset::ConstPtr mds = static_pointer_cast<MeidaiBagDataset>(loadedDataset);
+			// Put dataset nformation here
+
+			mapBld.setMask(mds->dashBoardMask);
+		}
+
+		if (cmd.size() >= 2) {
+			start = stod(cmd[0]);
+			stop = stod(cmd[1]);
+			duration = stop - start;
+
+			loadedDataset->convertStartDurationToTime(start, duration, ptstart, ptstop);
+		}
+		else {
+			ptstart = MIN_TIME;
+			ptstop = MAX_TIME;
+		}
+	}
+
+
 	void map_create_cmd (const stringTokens &cmd)
 	{
+		ptime ptstart, ptstop;
+
 		GenericDataset::Ptr targetDataset;
 		double duration;
 		uint32_t numOfFrames;
@@ -783,6 +822,9 @@ private:
 				start = stod(cmd[0]);
 				stop = stod(cmd[1]);
 				duration = stop - start;
+
+				loadedDataset->convertStartDurationToTime(start, duration, ptstart, ptstop);
+
 				MeidaiBagDataset::Ptr meidaiSub = meidaiDs->subset(start, stop);
 				numOfFrames = meidaiSub->size();
 				targetDataset = meidaiSub;
@@ -876,11 +918,11 @@ private:
 int main (int argc, char *argv[])
 {
 	if (argc > 1) {
-		LocalizerApp::fromScript(argc, argv);
+		VmmlCliApp::fromScript(argc, argv);
 	}
 
 	else {
-		LocalizerApp mainApp(argc, argv);
+		VmmlCliApp mainApp(argc, argv);
 		mainApp.loop();
 	}
 

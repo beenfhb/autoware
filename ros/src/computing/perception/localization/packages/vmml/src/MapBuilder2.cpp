@@ -19,8 +19,14 @@ using namespace std;
 using namespace Eigen;
 
 
+MapBuilder2::frameCallback defaultFrameCallback =
+[&] (const InputFrame &f)
+{};
+
+
 MapBuilder2::MapBuilder2() :
-	kfAnchor(0)
+	kfAnchor(0),
+	inputCallback(defaultFrameCallback)
 {
 	cMap = new VMap();
 //	imageView = new Viewer;
@@ -148,18 +154,47 @@ MapBuilder2::build ()
 }
 
 
+InputFrame createInputFrameX (GenericDataItem::ConstPtr DI)
+{
+	// We prefer gray images
+	cv::Mat img=DI->getImage();
+	cv::cvtColor(img, img, CV_BGR2GRAY, 1);
+
+	InputFrame f(
+		img,
+		DI->getPosition(),
+		DI->getOrientation(),
+		// Force Keyframe ID using data Item ID
+		DI->getId()
+	);
+	f.tm = DI->getTimestamp();
+
+	return f;
+
+}
+
+
 void
 MapBuilder2::runFromDataset(GenericDataset::Ptr sourceDs, const ptime startTime, const ptime stopTime)
 {
+	if (initialized != false)
+		throw runtime_error("Map process has been running; aborted");
+
 	if (startTime < sourceDs->first()->getTimestamp()
 		or stopTime > sourceDs->last()->getTimestamp())
 		throw runtime_error("Requested times are outside of dataset range");
 
 	sourceDataset = sourceDs;
-	if (initialized != false)
-		throw runtime_error("Map process has been running; aborted");
+	dataItemId
+		startId = sourceDataset->getLowerBound(startTime),
+		stopId = sourceDataset->getLowerBound(stopTime);
 
 	initialized = true;
+
+	for (auto currentId=startId; currentId<=stopId; ++currentId) {
+		InputFrame cFrame = createInputFrameX (sourceDataset->get(currentId));
+		this->input(cFrame);
+	}
 
 	this->build();
 }

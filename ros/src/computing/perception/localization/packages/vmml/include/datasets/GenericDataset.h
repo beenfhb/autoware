@@ -101,10 +101,16 @@ public:
 	inline GenericDataItem::ConstPtr first() const
 	{ return get(0); }
 
+	virtual
+	dataItemId getLowerBound (const ptime &t) const = 0;
+
 	/*
 	 * Duration of the dataset in seconds
 	 */
 	virtual double length() const;
+
+	virtual void convertStartDurationToTime
+	(const double startTimeSec, const double duration, ptime &start, ptime &stop) const;
 
 protected:
 	static std::string dSetName;

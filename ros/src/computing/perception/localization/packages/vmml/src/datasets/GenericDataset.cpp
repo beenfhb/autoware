@@ -69,3 +69,20 @@ GenericDataset::hertz() const
 	auto duration = length();
 	return float(size()) / length();
 }
+
+
+void GenericDataset::convertStartDurationToTime
+(const double startTimeSec, const double duration, ptime &start, ptime &stop)
+const
+{
+	auto recordingLength = this->length();
+	if (startTimeSec > recordingLength or startTimeSec+duration > recordingLength)
+		throw runtime_error("Time conversion error: outside dataset range");
+
+	tduration
+		tstart = boost::posix_time::microsec(startTimeSec * 1e6),
+		tdstop = boost::posix_time::microsec(duration * 1e6);
+
+	start = this->get(0)->getTimestamp() + tstart;
+	stop = start + tdstop;
+}
