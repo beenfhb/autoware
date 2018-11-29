@@ -188,6 +188,7 @@ private:
   double time_to_avoidance_;
   double goal_threshold_dist_;
   double goal_threshold_vel_;
+  int stopline_reset_count_;
 
   // for vectormap server
   // ros::ServiceClient cross_road_cli;
@@ -235,7 +236,6 @@ private:
   bool isArrivedGoal(void);
   bool isCrossRoadByVectorMapServer(const autoware_msgs::Lane& lane_msg, const geometry_msgs::PoseStamped& pose_msg);
   bool isLocalizationConvergence(const geometry_msgs::Point& _current_point);
-  bool handleStateCmd(const uint64_t _state_num);
   void insertPointWithinCrossRoad(const std::vector<CrossRoadArea>& _intersects, autoware_msgs::LaneArray& lane_array);
   void setWaypointState(autoware_msgs::LaneArray& lane_array);
   bool waitForEvent(cstring_t& key, const bool& flag);
@@ -372,7 +372,6 @@ private:
   void callbackFromTwistCmd(const geometry_msgs::TwistStamped& msg);
   void callbackFromSimPose(const geometry_msgs::PoseStamped& msg);
   void callbackFromConfig(const autoware_config_msgs::ConfigDecisionMaker& msg);
-  void callbackFromObjectDetector(const autoware_msgs::CloudClusterArray& msg);
   void callbackFromStateCmd(const std_msgs::String& msg);
   void callbackFromObstacleWaypoint(const std_msgs::Int32& msg);
 
@@ -416,6 +415,8 @@ public:
     init();
     setupStateCallback();
 
+    stopline_reset_count_ = 20;
+    private_nh_.getParam("stopline_reset_count", stopline_reset_count_);
     current_status_.prev_stopped_wpidx = -1;
   }
 

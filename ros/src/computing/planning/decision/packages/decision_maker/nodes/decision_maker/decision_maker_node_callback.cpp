@@ -22,9 +22,6 @@ namespace decision_maker
 void DecisionMakerNode::callbackFromFilteredPoints(const sensor_msgs::PointCloud2::ConstPtr& msg)
 {
   setEventFlag("received_pointcloud_for_NDT", true);
-
-  /* todo */
-  /* create timer for flags reset   */
 }
 
 void DecisionMakerNode::callbackFromSimPose(const geometry_msgs::PoseStamped& msg)
@@ -62,53 +59,6 @@ void DecisionMakerNode::callbackFromConfig(const autoware_config_msgs::ConfigDec
 void DecisionMakerNode::callbackFromLightColor(const ros::MessageEvent<autoware_msgs::TrafficLight const>& event)
 {
   ROS_WARN("%s is not implemented", __func__);
-}
-
-void DecisionMakerNode::callbackFromObjectDetector(const autoware_msgs::CloudClusterArray& msg)
-{
-#if 0
-  // This function is a quick hack implementation.
-  // If detection result exists in DetectionArea, decisionmaker sets object
-  // detection
-  // flag(foundOthervehicleforintersectionstop).
-  // The flag is referenced in the stopline state, and if it is true it will
-  // continue to stop.
-
-  static double setFlagTime = 0.0;
-  bool l_detection_flag = false;
-  if (ctx->isCurrentState(state_machine::DRIVE_STATE))
-  {
-    if (msg.clusters.size())
-    {
-      // if euclidean_cluster does not use wayarea, it may always founded.
-      for (const auto cluster : msg.clusters)
-      {
-        geometry_msgs::PoseStamped cluster_pose;
-        geometry_msgs::PoseStamped baselink_pose;
-        cluster_pose.pose = cluster.bounding_box.pose;
-        cluster_pose.header = cluster.header;
-
-        tflistener_baselink.transformPose(cluster.header.frame_id, cluster.header.stamp, cluster_pose, "base_link",
-                                          baselink_pose);
-
-        if (detectionArea_.x1 * param_detection_area_rate_ >= baselink_pose.pose.position.x &&
-            baselink_pose.pose.position.x >= detectionArea_.x2 * param_detection_area_rate_ &&
-            detectionArea_.y1 * param_detection_area_rate_ >= baselink_pose.pose.position.y &&
-            baselink_pose.pose.position.y >= detectionArea_.y2 * param_detection_area_rate_)
-        {
-          l_detection_flag = true;
-          setFlagTime = ros::Time::now().toSec();
-          break;
-        }
-      }
-    }
-  }
-  /* The true state continues for more than 1 second. */
-  if (l_detection_flag || (ros::Time::now().toSec() - setFlagTime) >= 1.0 /*1.0sec*/)
-  {
-    foundOtherVehicleForIntersectionStop_ = l_detection_flag;
-  }
-#endif
 }
 
 void DecisionMakerNode::insertPointWithinCrossRoad(const std::vector<CrossRoadArea>& _intersects,
