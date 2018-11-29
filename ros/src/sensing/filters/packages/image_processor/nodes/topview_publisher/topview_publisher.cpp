@@ -52,7 +52,7 @@ void topview_publisher::callback_config_(
     image_processor::topview_publisherConfig &config, uint32_t level) {
   simulated_camera_height_ = config.simulated_camera_height;
   camera_height_ = config.camera_height;
-  pitch_ = config.camera_pitch_angle;
+  pitch_ = -1*(config.camera_pitch_angle - M_PI/2);
   return;
 }
 
@@ -62,6 +62,7 @@ void topview_publisher::image_callback_(const sensor_msgs::ImageConstPtr &msg) {
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
     cv_ptr->image = create_top_view_(cv_ptr->image, pitch_, camera_height_,
                                      simulated_camera_height_);
+    image_pub_.publish(cv_ptr->toImageMsg());
   } catch (cv_bridge::Exception &e) {
     ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
   }
@@ -69,7 +70,7 @@ void topview_publisher::image_callback_(const sensor_msgs::ImageConstPtr &msg) {
 
 cv::Mat topview_publisher::create_top_view_(cv::Mat src, double theta,
                                             double height,
-                                            double simulated_height) {
+                                            double simulated_height){
   cv::Mat undistorted_image = cv::Mat::zeros(src.rows, src.cols, CV_8UC3);
   cv::undistort(src, undistorted_image, K_matrix_, D_vec_);
   cv::Mat top_image =
@@ -145,5 +146,38 @@ cv::Mat topview_publisher::create_top_view_(cv::Mat src, double theta,
       }
     }
   }
+  /*
+  cv::Mat top_image = cv::Mat::zeros(src.rows, src.cols, CV_8UC3);
+  double Hvc = simulated_height;
+  double Hc = height;
+  double Dvc = 0.0;
+  double f = K_matrix_(0, 0);
+  double fp = f;
+  double s = sin(theta);
+  double c = cos(theta);
+  int cx = src.cols / 2;
+  int cy = src.rows;
+  int cxp = src.cols / 2;
+  int cyp = src.rows;
+  for (int y = 0; y < top_image.rows; y++) {
+    for (int x = 0; x < top_image.cols; x++) {
+      int xOrg = x - cx;
+      int yOrg = - y + cy;
+
+      int newX = fp / Hvc * Hc * xOrg / (f * s - yOrg * c);
+      int newY = fp / Hvc * (Hc * (f * c + yOrg * s) / (f * s - yOrg * c) - Dvc);
+
+      newX = newX + cxp;
+      newY = -newY + cyp;
+
+      if (newX < 0 || top_image.cols - 1 < newX || newY < 0 || top_image.rows - 1 < newY ) {
+        continue;
+      }
+      top_image.data[(newY * top_image.cols + newX) * top_image.channels()] = src.data[(y * top_image.cols + x) * top_image.channels()];
+      top_image.data[(newY * top_image.cols + newX) * top_image.channels() + 1] = src.data[(y * top_image.cols + x) * top_image.channels() + 1];
+      top_image.data[(newY * top_image.cols + newX) * top_image.channels() + 2] = src.data[(y * top_image.cols + x) * top_image.channels() + 2];
+      }
+  }
+  */
   return top_image;
 }
