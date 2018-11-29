@@ -406,15 +406,20 @@ int getJunctionType(const std::vector<autoware_map_msgs::WaypointRelation> awm_w
                     std::vector<int> branching_idx,
                     std::vector<int> merging_idx)
 {
+
+    // if(merging_idx.size() > 1) return vector_map_msgs::Lane::RIGHT_MERGING;
+    // else         return vector_map_msgs::Lane::NORMAL;
+
     if(branching_idx.size() <= 1 && merging_idx.size() <= 1 )
     {
         return vector_map_msgs::Lane::NORMAL;
     }
-
     int left_branching_cnt = 0;
     int right_branching_cnt = 0;
+    int straight_branching_cnt = 0;
     int left_merging_cnt = 0;
     int right_merging_cnt = 0;
+    int straight_merging_cnt = 0;
 
     for(auto idx : branching_idx)
     {
@@ -425,6 +430,8 @@ int getJunctionType(const std::vector<autoware_map_msgs::WaypointRelation> awm_w
         if( awm_waypoint_relations.at(idx).blinker == 2 )
         {
             right_branching_cnt++;
+        }else{
+            straight_branching_cnt++;
         }
     }
     for(auto idx : merging_idx)
@@ -436,10 +443,12 @@ int getJunctionType(const std::vector<autoware_map_msgs::WaypointRelation> awm_w
         if( awm_waypoint_relations.at(idx).blinker == 2 )
         {
             right_merging_cnt++;
+        }else{
+            straight_merging_cnt++;
         }
     }
 
-    if( branching_idx.size() >= 3 || merging_idx.size() >= 3 || (branching_idx.size() >= 2 && merging_idx.size() >= 2) )
+    if(branching_idx.size() >= 2 && merging_idx.size() >= 2 )
     {
         return vector_map_msgs::Lane::COMPOSITION;
     }
@@ -451,12 +460,18 @@ int getJunctionType(const std::vector<autoware_map_msgs::WaypointRelation> awm_w
     {
         return vector_map_msgs::Lane::LEFT_BRANCHING;
     }
+    if( straight_branching_cnt >= 2){
+        return vector_map_msgs::Lane::LEFT_BRANCHING;
+    }
     if ( right_merging_cnt >= 1 )
     {
         return vector_map_msgs::Lane::RIGHT_MERGING;
     }
     if ( left_merging_cnt >= 1 )
     {
+        return vector_map_msgs::Lane::LEFT_MERGING;
+    }
+    if( straight_merging_cnt >= 2){
         return vector_map_msgs::Lane::LEFT_MERGING;
     }
 
@@ -474,7 +489,7 @@ void createDTLanes(const std::vector<autoware_map_msgs::WaypointRelation> awm_wa
     for ( auto awm_waypoint_relation : awm_waypoint_relations)
     {
         vector_map_msgs::DTLane vmap_dtlane;
-        vmap_dtlane.did = id++;
+        vmap_dtlane.did = id;
         vmap_dtlane.dist = awm_waypoint_relation.distance;
         vmap_dtlane.pid = awm_waypoint_relation.waypoint_id;
 
@@ -504,8 +519,9 @@ void createDTLanes(const std::vector<autoware_map_msgs::WaypointRelation> awm_wa
         vmap_lane.lnid = id;
         vmap_lane.did = id;
 
-        std::vector<int> merging_idx = findMergingIdx(awm_waypoint_relations, id);
-        std::vector<int> branching_idx = findBranchingIdx(awm_waypoint_relations, id);
+        std::vector<int> merging_idx = findMergingIdx(awm_waypoint_relations, awm_waypoint_relation.waypoint_id);
+
+        std::vector<int> branching_idx = findBranchingIdx(awm_waypoint_relations, awm_waypoint_relation.next_waypoint_id);
 
         //change order of branch/merge lanes according to blinkers. (staright < left turn < right turn)
         sort(merging_idx.begin(), merging_idx.end(), [&](const int x, const int y){ return awm_waypoint_relations.at(x).blinker < awm_waypoint_relations.at(y).blinker; });
@@ -530,13 +546,13 @@ void createDTLanes(const std::vector<autoware_map_msgs::WaypointRelation> awm_wa
         if(merging_idx.size() >= 4)
             vmap_lane.blid4 = merging_idx.at(3) + 1;
         if(branching_idx.size() >= 1)
-            vmap_lane.flid = merging_idx.at(0) + 1;
+            vmap_lane.flid = branching_idx.at(0) + 1;
         if(branching_idx.size() >= 2)
-            vmap_lane.flid2 = merging_idx.at(1) + 1;
+            vmap_lane.flid2 = branching_idx.at(1) + 1;
         if(branching_idx.size() >= 3)
-            vmap_lane.flid3 = merging_idx.at(2) + 1;
+            vmap_lane.flid3 = branching_idx.at(2) + 1;
         if(branching_idx.size() >= 4)
-            vmap_lane.flid4 = merging_idx.at(3) + 1;
+            vmap_lane.flid4 = branching_idx.at(3) + 1;
 
         vmap_lane.bnid = awm_waypoint.point_id;
         vmap_lane.fnid = awm_next_waypoint.point_id;
@@ -554,6 +570,7 @@ void createDTLanes(const std::vector<autoware_map_msgs::WaypointRelation> awm_wa
         vmap_lane.roadsecid = 0;
         vmap_lane.linkwaid = 0;
         vmap_lanes.push_back(vmap_lane);
+        id++;
     }
 }
 
@@ -913,7 +930,7 @@ int main(int argc, char **argv)
     insertMarkerArray(marker_array, createSignalMarkerArray(vmap, vector_map::Color::RED, vector_map::Color::BLUE, vector_map::Color::YELLOW, vector_map::Color::CYAN, vector_map::Color::GRAY));
     insertMarkerArray(marker_array, createCrossRoadMarkerArray(vmap, vector_map::Color::LIGHT_GREEN));
     // insertMarkerArray(marker_array, createAreaMarkerArray(vmap, vector_map::Color::WHITE));
-    // insertMarkerArray(marker_array, createLaneMarkerArray(vmap, vector_map::Color::YELLOW));
+    insertMarkerArray(marker_array, createLaneMarkerArray(vmap, vector_map::Color::YELLOW));
 
     marker_array_pub.publish(marker_array);
 
