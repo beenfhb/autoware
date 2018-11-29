@@ -7,12 +7,18 @@ find_package(catkin REQUIRED COMPONENTS
         sensor_msgs
         cv_bridge
         image_transport
+        dynamic_reconfigure
         )
+
+generate_dynamic_reconfigure_options(
+        cfg/topview_publisher.cfg
+)
 
 catkin_package(CATKIN_DEPENDS
         sensor_msgs
         cv_bridge
         image_transport
+        dynamic_reconfigure
         )
 
 find_package(OpenCV REQUIRED)
@@ -70,6 +76,8 @@ target_link_libraries(topview_publisher_node
         ${catkin_LIBRARIES}
         ${OpenCV_LIBS}
 )
+
+add_dependencies(topview_publisher_node ${catkin_EXPORTED_TARGETS})
 
 #Image Stitcher
 
