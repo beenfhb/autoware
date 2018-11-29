@@ -17,6 +17,15 @@ class AwLaunchWidgetItem(QtWidgets.QTreeWidgetItem):
         self.setText(0, self.node.nodepath)
         self.setText(1, "")
         self.setData(1, QtCore.Qt.CheckStateRole, QtCore.Qt.Unchecked)
+        self.setText(2, "stop")
+
+    def changed(self, column):
+        if column == 1:
+            state = self.checkState(column)
+            if state == QtCore.Qt.Checked:
+                self.request_exec()
+            elif state == QtCore.Qt.Unchecked:
+                self.request_term()
 
     def request_exec(self):
         if self.user:
@@ -31,11 +40,19 @@ class AwLaunchWidgetItem(QtWidgets.QTreeWidgetItem):
             self.user = True
 
     def exec_requested(self):
+        self.setText(2, "running")
         if self.checkState(1) != QtCore.Qt.Checked:
             self.user = False
             self.setCheckState(1,  QtCore.Qt.Checked)
 
     def term_requested(self):
+        self.setText(2, "terminating")
+        if self.checkState(1) != QtCore.Qt.Unchecked:
+            self.user = False
+            self.setCheckState(1,  QtCore.Qt.Unchecked)
+
+    def term_completed(self):
+        self.setText(2, "stop")
         if self.checkState(1) != QtCore.Qt.Unchecked:
             self.user = False
             self.setCheckState(1,  QtCore.Qt.Unchecked)
@@ -49,6 +66,7 @@ class AwLaunchExecutor(QtCore.QProcess):
         self.node = node
         self.node.bind_executor(self)
 
+        self.finished.connect(self.on_finished)
 
     def request_exec(self):
         command = "roslaunch " + self.node.generate_launch()
@@ -59,6 +77,11 @@ class AwLaunchExecutor(QtCore.QProcess):
         print "Term: " + self.node.nodepath
         self.terminate()
 
+    # QtCore.Slot
+    def on_finished(self):
+        self.node.term_completed()
+
+
 
 class AwLaunchWidget(QtWidgets.QTreeWidget):
 
@@ -67,12 +90,12 @@ class AwLaunchWidget(QtWidgets.QTreeWidget):
         self.executors = []
 
         self.setColumnCount(2)
-        self.setHeaderLabels(["Node", "Exec"])
+        self.setHeaderLabels(["Node", "Exec", "Status"])
         for node in tree.children:
             self.create_executor(node)
             self.addTopLevelItem(self.create_viewitem(node))
         self.expandToDepth(0)
-        self.itemChanged.connect(self.item_checked)
+        self.itemChanged.connect(self.on_item_changed)
 
     def create_executor(self, node):
         if node.isleaf():
@@ -86,12 +109,9 @@ class AwLaunchWidget(QtWidgets.QTreeWidget):
             item.addChild(self.create_viewitem(child))
         return item
 
-    def item_checked(self, item, column):
-        state = item.checkState(column)
-        if state == QtCore.Qt.Checked:
-            item.request_exec()
-        elif state == QtCore.Qt.Unchecked:
-            item.request_term()
+    # QtCore.Slot
+    def on_item_changed(self, item, column):
+        item.changed(column)
 
 
 

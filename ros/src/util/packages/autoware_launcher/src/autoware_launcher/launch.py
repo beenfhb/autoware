@@ -68,7 +68,8 @@ class AwLaunchNode(object):
         return self.parent.tree()
 
     def dump(self, indent):
-        print((" " * indent) + str((self.isnode(), self.nodepath)))
+        nodetype = "node" if self.isnode() else "leaf"
+        print((" " * indent) + str((nodetype, self.nodepath)))
         if self.isnode():
             for child_node in self.children:
                 child_node.dump(indent + 2)
@@ -90,15 +91,17 @@ class AwLaunchNode(object):
 
     def request_term(self):
         if self.isnode():
-            self.viewitem.term_requested()
+            self.viewitem.term_completed()
             for child_node in self.children:
                 child_node.request_term()
         else:
             self.viewitem.term_requested()
             self.executor.request_term()
 
+    def term_completed(self):
+        self.viewitem.term_completed()
+
     def load(self, treepath, nodepath):
-        print (treepath, nodepath)
         self.nodepath = nodepath
         with open(os.path.join(treepath, nodepath + ".yaml")) as fp:
             ydata = yaml.safe_load(fp)
@@ -111,7 +114,7 @@ class AwLaunchNode(object):
                     child_node.load(treepath, child_name)
 
     def generate_launch(self):
-        xml_path = os.path.join(self.tree().profile_path,           self.nodepath + ".xml")
+        xml_path = os.path.join(self.tree().profile_path, self.nodepath + ".xml")
         with open(xml_path, mode="w") as fp:
             fp.write('<launch>\n')
             fp.write('  <include file="' + os.path.join("$(find autoware_launcher)", "plugins", self.nodepath + ".xml") + '">\n')
