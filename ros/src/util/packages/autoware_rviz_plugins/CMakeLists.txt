@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(autoware_rviz_plugins)
+add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
   autoware_build_flags
@@ -9,14 +10,14 @@ find_package(catkin REQUIRED COMPONENTS
 
 if(rviz_QT_VERSION VERSION_LESS "5")
   message(STATUS "Using Qt4 based on the rviz_QT_VERSION: ${rviz_QT_VERSION}")
-  find_package(Qt4 ${rviz_QT_VERSION} EXACT REQUIRED QtCore QtGui)
+  find_package(Qt4 ${rviz_QT_VERSION} EXACT REQUIRED QtCore QtGui QtNetwork)
   ## pull in all required include dirs, define QT_LIBRARIES, etc.
   include(${QT_USE_FILE})
 else()
   message(STATUS "Using Qt5 based on the rviz_QT_VERSION: ${rviz_QT_VERSION}")
-  find_package(Qt5 ${rviz_QT_VERSION} EXACT REQUIRED Core Widgets)
+  find_package(Qt5 ${rviz_QT_VERSION} EXACT REQUIRED Core Widgets Network)
   ## make target_link_libraries(${QT_LIBRARIES}) pull in all required dependencies
-  set(QT_LIBRARIES Qt5::Widgets)
+  set(QT_LIBRARIES Qt5::Widgets Qt5::Network)
 endif()
 
 ###################################
@@ -54,7 +55,8 @@ set(CMAKE_AUTOMOC ON)
 set(SOURCE_FILES
   src/state_panel/state_panel.cpp
   src/sim_object/autoware_flag_tool.cpp
-  )
+  src/autoware_launcher/rviz_controller.cpp    
+)
 
 add_library(autoware_rviz_plugins ${SOURCE_FILES} ${UIC_FILES})
 target_link_libraries(autoware_rviz_plugins ${QT_LIBRARIES} ${catkin_LIBRARIES} ${rviz_DEFAULT_PLUGIN_LIBRARIES})
