@@ -2,7 +2,7 @@ from python_qt_binding import QtCore
 from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
-import os
+from autoware_launcher.server import AwQtTcpServer
 
 
 
@@ -15,7 +15,7 @@ class AwLaunchWidgetItem(QtWidgets.QTreeWidgetItem):
         self.node = node
         self.node.bind_viewitem(self)
 
-        self.setText(0, self.node.nodepath)
+        self.setText(0, self.node.nodename)
         self.setText(1, "")
         self.setData(1, QtCore.Qt.CheckStateRole, QtCore.Qt.Unchecked)
         self.setText(2, "stop")
@@ -117,6 +117,7 @@ class AwLaunchWidget(QtWidgets.QSplitter):
 
     def __init__(self, tree):
         super(AwLaunchWidget, self).__init__(QtCore.Qt.Horizontal)
+        self.tcpserver = AwQtTcpServer(tree)
         self.dummyarea = QtWidgets.QLabel()
         self.executors = QtWidgets.QStackedWidget()
         self.executors.addWidget(self.dummyarea)

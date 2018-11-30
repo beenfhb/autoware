@@ -1,0 +1,22 @@
+#! /usr/bin/env python
+
+import socket
+import time
+import contextlib
+
+@contextlib.contextmanager
+def socketcontext(*args, **kw):
+    client = socket.socket(*args, **kw)
+    try:
+        yield client
+    finally:
+        client.close()
+
+with socketcontext(socket.AF_INET, socket.SOCK_STREAM) as client:
+    client.connect(("localhost", 33136))
+    client.sendall('{"command":"launch", "pa')
+    time.sleep(1)
+    client.sendall('th":["root", "map"]}\0{"aaa":"bbb"}\0')
+
+    data = client.recv(1024)
+    print(repr(data))
