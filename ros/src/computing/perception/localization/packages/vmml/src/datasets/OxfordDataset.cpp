@@ -13,14 +13,21 @@
 #include <Eigen/Eigen>
 #include <opencv2/highgui.hpp>
 #include <yaml-cpp/yaml.h>
+#include <boost/filesystem.hpp>
 
 #include "csv.h"
 #include "datasets/OxfordDataset.h"
 #include "utilities.h"
 
+#include <ros/package.h>
+
 
 using namespace std;
 using namespace Eigen;
+
+namespace bfs = boost::filesystem;
+
+#define _OxfordDashboardMask "conf/oxford_mask.png"
 
 
 static const set<int> GpsColumns ({0,9,8,4,2,3});
@@ -85,6 +92,11 @@ OxfordDataset::OxfordDataset(const OxfordDataset &cp):
 	insPoseTable(cp.insPoseTable)
 {
 	zoomRatio = cp.zoomRatio;
+
+	// try to load mask image
+	bfs::path myPath(ros::package::getPath("vmml"));
+	auto mask1Path = myPath / _OxfordDashboardMask;
+	dashboardMask = cv::imread(mask1Path.string(), cv::IMREAD_GRAYSCALE);
 }
 
 
@@ -419,7 +431,13 @@ OxfordDataset::undistort (cv::Mat &src)
 cv::Mat
 OxfordDataset::getMask()
 {
-	throw exception();
+	cv::Mat imgrs;
+	if (zoomRatio==1.0)
+		return dashboardMask.clone();
+	else {
+		cv::resize(dashboardMask, imgrs, cv::Size(), zoomRatio, zoomRatio, cv::INTER_CUBIC);
+		return imgrs;
+	}
 }
 
 

@@ -86,3 +86,12 @@ const
 	start = this->get(0)->getTimestamp() + tstart;
 	stop = start + tdstop;
 }
+
+
+size_t
+GenericDataset::size(const ptime &start, const ptime &stop) const
+{
+	auto n1 = getLowerBound(start);
+	auto n2 = getLowerBound(stop);
+	return n2 - n1;
+}

@@ -164,7 +164,6 @@ InputFrame createInputFrameX (GenericDataItem::ConstPtr DI)
 		img,
 		DI->getPosition(),
 		DI->getOrientation(),
-		// Force Keyframe ID using data Item ID
 		DI->getId()
 	);
 	f.tm = DI->getTimestamp();
@@ -188,8 +187,6 @@ MapBuilder2::runFromDataset(GenericDataset::Ptr sourceDs, const ptime startTime,
 	dataItemId
 		startId = sourceDataset->getLowerBound(startTime),
 		stopId = sourceDataset->getLowerBound(stopTime);
-
-	initialized = true;
 
 	for (auto currentId=startId; currentId<=stopId; ++currentId) {
 		InputFrame cFrame = createInputFrameX (sourceDataset->get(currentId));

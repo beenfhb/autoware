@@ -239,6 +239,8 @@ protected:
 
 	const OxfordDataItem &at(dataItemId i) const;
 
+	cv::Mat dashboardMask;
+
 private:
 	void loadIns ();
 	void loadGps ();

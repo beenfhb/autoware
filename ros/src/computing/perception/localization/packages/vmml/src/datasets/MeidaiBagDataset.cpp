@@ -199,7 +199,13 @@ MeidaiBagDataset::addCameraParameter(const CameraPinholeParams &c)
 cv::Mat
 MeidaiBagDataset::getMask()
 {
-	return cv::Mat();
+	cv::Mat imgrs;
+	if (zoomRatio==1.0)
+		return dashBoardMask.clone();
+	else {
+		cv::resize(dashBoardMask, imgrs, cv::Size(), zoomRatio, zoomRatio, cv::INTER_CUBIC);
+		return imgrs;
+	}
 }
 
 

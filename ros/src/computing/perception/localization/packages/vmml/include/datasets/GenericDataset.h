@@ -77,6 +77,11 @@ public:
 
 	virtual size_t size() const = 0;
 
+	/*
+	 * Number of data item (frames) from start time to stop
+	 */
+	virtual size_t size(const ptime &start, const ptime &stop) const;
+
 	virtual CameraPinholeParams getCameraParameter() const = 0;
 
 	virtual cv::Mat getMask() = 0;

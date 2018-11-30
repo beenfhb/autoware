@@ -130,58 +130,6 @@ int localize_seq_slam (SequenceSLAM *seqSl, OxfordImagePreprocessor &proc, const
 }
 
 
-InputFrame createInputFrame(const OxfordDataItem &d)
-{
-	cv::Mat i=d.getImage();
-	// Oxford datasets output is RGB
-	cv::cvtColor(i, i, CV_BGR2GRAY, 1);
-	InputFrame f(
-		i,
-		d.groundTruth.position(),
-		d.groundTruth.orientation(),
-		// Force Keyframe ID using timestamp. This way, we can refer to original
-		// image for display purpose (which is the case for Oxford Dataset)
-		static_cast<kfid>(d.timestamp));
-	f.tm = d.getTimestamp();
-
-	return f;
-}
-
-
-InputFrame createInputFrame(OxfordDataItem::ConstPtr &DI)
-{
-	cv::Mat img=DI->getImage();
-	cv::cvtColor(img, img, CV_BGR2GRAY, 1);
-
-	InputFrame f(
-		img,
-		DI->getPosition(),
-		DI->getOrientation(),
-		// Force Keyframe ID using timestamp. This way, we can refer to original
-		// image for display purpose (which is the case for Oxford Dataset)
-		static_cast<dataItemId>(DI->timestamp));
-	f.tm = DI->getTimestamp();
-
-	return f;
-}
-
-
-InputFrame createInputFrame(MeidaiDataItem::ConstPtr &DI)
-{
-	cv::Mat img=DI->getImage();
-	cv::cvtColor(img, img, CV_BGR2GRAY, 1);
-
-	InputFrame f(
-		img,
-		DI->getPosition(),
-		DI->getOrientation(),
-		// Force Keyframe ID using data Item ID
-		DI->getId()
-	);
-	f.tm = DI->getTimestamp();
-
-	return f;
-}
 
 
 class VmmlCliApp
@@ -320,45 +268,6 @@ public:
 	}
 
 
-	void buildMap
-	(GenericDataset::Ptr datasetSrc, MapBuilder2 &builder)
-	{
-		builder.addCameraParam(datasetSrc->getCameraParameter());
-
-		Viewer *imgViewer = new Viewer (datasetSrc);
-		imgViewer->setMap(builder.getMap());
-		dataItemId currentItemId;
-
-		MapBuilder2::frameCallback frmCallback =
-		[&] (const InputFrame &f)
-		{
-			imgViewer->update(f.sourceId, builder.getCurrentKeyFrameId());
-			cout << f.sourceId << " / " << datasetSrc->size() << endl;
-		};
-		builder.registerFrameCallback(frmCallback);
-
-		int N = datasetSrc->size();
-		for (int framePtr=0; framePtr<N; framePtr++) {
-
-			InputFrame frame;
-			if (slDatasourceType==OXFORD_DATASET_TYPE) {
-				OxfordDataItem::ConstPtr dx = static_pointer_cast<OxfordDataItem const> (datasetSrc->get(framePtr));
-				frame = createInputFrame(dx);
-				currentItemId = dx->getId();
-			}
-			else if (slDatasourceType==MEIDAI_DATASET_TYPE) {
-				MeidaiDataItem::ConstPtr dx = static_pointer_cast<MeidaiDataItem const> (datasetSrc->get(framePtr));
-				frame = createInputFrame(dx);
-				currentItemId = dx->getId();
-			}
-			builder.input(frame);
-		}
-
-		builder.build();
-		delete(imgViewer);
-	}
-
-
 protected:
 	LineEditor mLineEditor;
 
@@ -371,7 +280,8 @@ protected:
 
 	datasetType slDatasourceType;
 	GenericDataset::Ptr loadedDataset;
-
+	MeidaiBagDataset::Ptr meidaiDsPtr = nullptr;
+	OxfordDataset::Ptr oxfordDsPtr = nullptr;
 
 	cv::Mat mask;
 
@@ -617,11 +527,13 @@ private:
 		if (boost::filesystem::is_directory(datasetPath)) {
 			loadedDataset = OxfordDataset::load(datasetPath.string(), modelDir);
 			slDatasourceType = OXFORD_DATASET_TYPE;
+			oxfordDsPtr = static_pointer_cast<OxfordDataset> (loadedDataset);
 			debug ("Oxford-type Dataset Loaded");
 		}
 
 		else if (datasetPath.extension()==".bag") {
 			loadedDataset = MeidaiBagDataset::load(datasetPath.string());
+			meidaiDsPtr = static_pointer_cast<MeidaiBagDataset>(loadedDataset);
 			slDatasourceType = MEIDAI_DATASET_TYPE;
 			debug ("Nagoya University Dataset Loaded");
 		}
@@ -736,27 +648,23 @@ private:
 	}
 
 
-	/*
-	 * Replacement for the below function
-	 * XXX: Unfinished
-	 */
-	void map_create_cmd2 (const stringTokens &cmd)
+	void map_create_cmd (const stringTokens &cmd)
 	{
 		ptime ptstart, ptstop;
 		double start, stop, duration;
 
-		MapBuilder2 mapBld;
+		MapBuilder2 mapBuilder;
+		mapBuilder.setMask(loadedDataset->getMask());
 
 		if (slDatasourceType == OXFORD_DATASET_TYPE) {
-			OxfordDataset::ConstPtr ods = static_pointer_cast<OxfordDataset>(loadedDataset);
-			// Put dataset information here
-
+			mapBuilder.getMap()->setInfo("sourceType", "Oxford");
+			mapBuilder.getMap()->setInfo("originalPath", oxfordDsPtr->getPath());
 		}
-		else if (slDatasourceType == MEIDAI_DATASET_TYPE) {
-			MeidaiBagDataset::ConstPtr mds = static_pointer_cast<MeidaiBagDataset>(loadedDataset);
-			// Put dataset nformation here
 
-			mapBld.setMask(mds->dashBoardMask);
+		else if (slDatasourceType == MEIDAI_DATASET_TYPE) {
+			meidaiDsPtr->addCameraParameter(meidaiCamera1Params);
+			mapBuilder.getMap()->setInfo("sourceType", "Meidai");
+			mapBuilder.getMap()->setInfo("originalPath", meidaiDsPtr->getPath());
 		}
 
 		if (cmd.size() >= 2) {
@@ -767,99 +675,41 @@ private:
 			loadedDataset->convertStartDurationToTime(start, duration, ptstart, ptstop);
 		}
 		else {
-			ptstart = MIN_TIME;
-			ptstop = MAX_TIME;
-		}
-	}
-
-
-	void map_create_cmd (const stringTokens &cmd)
-	{
-		ptime ptstart, ptstop;
-
-		GenericDataset::Ptr targetDataset;
-		double duration;
-		uint32_t numOfFrames;
-
-		MapBuilder2 mapBld;
-
-		if (slDatasourceType==OXFORD_DATASET_TYPE) {
-			OxfordDataset::Ptr oxfSubset;
-			OxfordDataset::Ptr oxfAll = static_pointer_cast<OxfordDataset>(loadedDataset);
-			bool isSubset;
-
-			double start, stop;
-			if (cmd.size() >= 2) {
-				start = stod(cmd[0]);
-				stop = stod(cmd[1]);
-				duration = stop - start;
-				oxfSubset = oxfAll->timeSubset(start, duration);
-				isSubset = true;
-			}
-			else {
-				oxfSubset = oxfAll;
-				start = 0;
-				duration = double(oxfSubset->getTimeLength().total_microseconds())/1e6;
-				isSubset = false;
-			}
-
-			targetDataset = oxfSubset;
-			numOfFrames = oxfSubset->size();
-
-			// Information
-			mapBld.getMap()->setInfo("sourceType", "Oxford");
-			mapBld.getMap()->setInfo("originalPath", oxfSubset->getPath());
+			ptstart = loadedDataset->get(0)->getTimestamp();
+			ptstop = loadedDataset->last()->getTimestamp();
 		}
 
-		else if (slDatasourceType==MEIDAI_DATASET_TYPE) {
-
-			// Meidai Dataset does not have integrated camera parameters (yet)
-			MeidaiBagDataset::Ptr meidaiDs = static_pointer_cast<MeidaiBagDataset>(loadedDataset);
-			meidaiDs->addCameraParameter(meidaiCamera1Params);
-
-			if (cmd.size() >= 2) {
-				double start, stop;
-				start = stod(cmd[0]);
-				stop = stod(cmd[1]);
-				duration = stop - start;
-
-				loadedDataset->convertStartDurationToTime(start, duration, ptstart, ptstop);
-
-				MeidaiBagDataset::Ptr meidaiSub = meidaiDs->subset(start, stop);
-				numOfFrames = meidaiSub->size();
-				targetDataset = meidaiSub;
-			}
-
-			else {
-				targetDataset = meidaiDs;
-				numOfFrames = meidaiDs->size();
-				duration = meidaiDs->length();
-			}
-
-			// Information
-			mapBld.getMap()->setInfo("sourceType", "Meidai");
-			mapBld.getMap()->setInfo("originalPath", meidaiDs->getPath());
-		}
-
+		int numOfFrames = loadedDataset->size(ptstart, ptstop);
 		debug ("About to run mapping with duration "+to_string(duration) +" seconds, " +to_string(numOfFrames) + " frames");
 
-		if (mask.empty()==false) {
-			float zr = loadedDataset->getZoomRatio();
-			cv::Mat mapMask;
-			cv::resize(mask, mapMask, cv::Size(), zr, zr, cv::INTER_CUBIC);
-			mapBld.setMask(mapMask);
-		}
+		// build map here
+		mapBuilder.addCameraParam(loadedDataset->getCameraParameter());
 
-		buildMap(targetDataset, mapBld);
+		Viewer *imgViewer = new Viewer (loadedDataset);
+		imgViewer->setMap(mapBuilder.getMap());
+		dataItemId currentItemId;
+
+		MapBuilder2::frameCallback frmCallback =
+		[&] (const InputFrame &f)
+		{
+			imgViewer->update(f.sourceId, mapBuilder.getCurrentKeyFrameId());
+			cout << f.sourceId << " / " << loadedDataset->size() << endl;
+		};
+		mapBuilder.registerFrameCallback(frmCallback);
+
+		mapBuilder.runFromDataset(loadedDataset, ptstart, ptstop);
+
+		delete(imgViewer);
+		// Stop here
 
 		const string mapFilePath = createMapFilename();
-		mapBld.getMap()->save(mapFilePath);
+		mapBuilder.getMap()->save(mapFilePath);
 
 		debug ("Mapping done");
 		debug ("Dataset time elapsed: " + to_string(duration) + " seconds");
 		debug ("Path: " + mapFilePath);
-
 	}
+
 
 	void mask_set_cmd(const string &maskpath)
 	{
