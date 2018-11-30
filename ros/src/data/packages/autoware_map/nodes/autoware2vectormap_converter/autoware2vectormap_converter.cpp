@@ -668,14 +668,25 @@ double addAngles(double angle1, double angle2)
     while( sum < M_PI ) sum += 2 * M_PI;
     return sum;
 }
+int createDummyRoadSign(std::vector<vector_map_msgs::RoadSign> &vmap_road_signs)
+{
+    vector_map_msgs::RoadSign road_sign;
+    road_sign.id = vmap_road_signs.size()+1;
+    road_sign.vid = 0;
+    road_sign.plid = 0;
+    road_sign.type = 1;
+    road_sign.linkid = 0;
+    vmap_road_signs.push_back(road_sign);
+    return road_sign.id;
+}
 
 void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoints,
                       const std::vector<autoware_map_msgs::Point> awm_points,
                       const std::vector<autoware_map_msgs::WaypointRelation> awm_waypoint_relations,
                       std::vector<vector_map_msgs::Line> &vmap_lines,
                       std::vector<vector_map_msgs::Point> &vmap_points,
-                      std::vector<vector_map_msgs::StopLine> &vmap_stop_lines
-
+                      std::vector<vector_map_msgs::StopLine> &vmap_stop_lines,
+                      std::vector<vector_map_msgs::RoadSign> &vmap_road_signs
                       )
 {
     int line_id = vmap_lines.size() + 1;
@@ -703,11 +714,16 @@ void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoin
             double angle_to_right = addAngles(yaw, M_PI/2);
             double r = wp.width / 2;
 
+            double magnitude = hypot(awm_pt->x, awm_pt->y);
+            double epsilon_x = awm_pt->x / magnitude * 0.001;
+            double epsilon_y = awm_pt->x / magnitude * 0.001;
+
+
             vector_map_msgs::Point start_point, end_point;
             start_point.pid = point_id++;
             //stop line must intersect with waypoints left side of the line
-            start_point.bx = awm_pt->x + (r+0.1) * cos(angle_to_left);
-            start_point.ly = awm_pt->y + (r+0.1) * sin(angle_to_left);
+            start_point.bx = awm_pt->x + (r+0.1) * cos(angle_to_left) + epsilon_x;
+            start_point.ly = awm_pt->y + (r+0.1) * sin(angle_to_left) + epsilon_y;
             start_point.h = awm_pt->z;
             //followings cannot be calculated from given information
             start_point.b = 0;
@@ -720,8 +736,8 @@ void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoin
 
             end_point.pid = point_id++;
             //stop line must intersect with waypoints left side of the line
-            end_point.bx = awm_pt->x + r * cos(angle_to_right);
-            end_point.ly = awm_pt->y + r * sin(angle_to_right);
+            end_point.bx = awm_pt->x + r * cos(angle_to_right) + epsilon_x;
+            end_point.ly = awm_pt->y + r * sin(angle_to_right) + epsilon_y;
             end_point.h = awm_pt->z;
             //followings cannot be calculated from given information
             end_point.b = 0;
@@ -743,7 +759,7 @@ void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoin
             vmap_stop_line.id = stop_line_id++;
             vmap_stop_line.lid = vmap_line.lid;
             vmap_stop_line.tlid = 0;
-            vmap_stop_line.signid = 1; //point to dummy road_sign
+            vmap_stop_line.signid = createDummyRoadSign(vmap_road_signs); //point to dummy road_sign
 
             auto relation = std::find_if(awm_waypoint_relations.begin(),
                                          awm_waypoint_relations.end(),
@@ -753,16 +769,6 @@ void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoin
             vmap_stop_lines.push_back(vmap_stop_line);
         }
     }
-}
-void createDummyRoadSign(std::vector<vector_map_msgs::RoadSign> &vmap_road_signs)
-{
-    vector_map_msgs::RoadSign road_sign;
-    road_sign.id = 1;
-    road_sign.vid = 0;
-    road_sign.plid = 0;
-    road_sign.type = 1;
-    road_sign.linkid = 0;
-    vmap_road_signs.push_back(road_sign);
 }
 
 int main(int argc, char **argv)
@@ -822,8 +828,8 @@ int main(int argc, char **argv)
     createCrossWalks(awm_lane_attr_relations, vmap_cross_walks);
     createWayAreas(awm_wayareas, vmap_way_areas);
     createSignals(  awm_signal_lights, awm_lane_signal_relations, vmap_signals, vmap_vectors,vmap_dummy_poles, awm_waypoint_relations, awm);
-    createStopLines( awm_waypoints, awm_points, awm_waypoint_relations, vmap_lines, vmap_points, vmap_stop_lines);
-    createDummyRoadSign(vmap_road_signs);
+    createStopLines( awm_waypoints, awm_points, awm_waypoint_relations, vmap_lines, vmap_points, vmap_stop_lines, vmap_road_signs);
+    // createDummyRoadSign(vmap_road_signs);
 
     ros::Publisher point_pub = nh.advertise<vector_map_msgs::PointArray>("vector_map_info/point", 1, true);
     ros::Publisher vector_pub = nh.advertise<vector_map_msgs::VectorArray>("vector_map_info/vector", 1, true);
