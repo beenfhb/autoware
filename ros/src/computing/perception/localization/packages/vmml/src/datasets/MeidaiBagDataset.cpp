@@ -15,7 +15,6 @@
 #include <string>
 
 #include <ros/ros.h>
-#include <ros/package.h>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
@@ -63,7 +62,7 @@ MeidaiBagDataset::MeidaiBagDataset(
 		loadCache();
 
 	// try to load mask image
-	bfs::path myPath(ros::package::getPath("vmml"));
+	bfs::path myPath = getMyPath();
 	auto mask1Path = myPath / _DashboardMask;
 	auto mask2Path = myPath / _ExposureAdjustmentMask;
 	dashBoardMask = cv::imread(mask1Path.string(), cv::IMREAD_GRAYSCALE);
@@ -330,7 +329,7 @@ MeidaiBagDataset::createCache(bool useNdt)
 	if (useNdt==true) {
 		cout << "Creating NDT Trajectory\n";
 		auto lidarBag = getLidarScanBag();
-		createTrajectoryFromNDT(*lidarBag, ndtTrack, gnssTrack, velodyneCalibrationFilePath, pcdMapFilePath);
+		createTrajectoryFromNDT(*lidarBag, ndtTrack, gnssTrack, pcdMapFilePath);
 		trajectorySrc = &ndtTrack;
 	}
 

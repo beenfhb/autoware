@@ -41,7 +41,7 @@ createTrajectoryFromNDT (
 	LidarScanBag &bagsrc,
 	Trajectory &resultTrack,
 	const Trajectory &gnssTrack,
-	const string &velodyneParamFile,
+//	const string &velodyneParamFile,
 	const string &pcdMapFile)
 {
 	if (bagsrc.getTopic() != "/velodyne_packets")
@@ -103,8 +103,59 @@ createTrajectoryFromNDT2(
 	LidarScanBag &bagsrc,
 	Trajectory &resultTrack,
 	const Trajectory &gnssTrack,
-	const string &velodyneParamFile,
 	const string &pcdMapFile )
 {
+	bagsrc.filtered = true;
+	NdtLocalizer lidarLocalizer(NuInitialConfig);
+	lidarLocalizer.loadMap(pcdMapFile);
+	resultTrack.clear();
 
+	bool initialized=false;
+	auto time0 = bagsrc.timeAt(0);
+
+	// XXX: How to catch NDT's failure ?
+	uint32_t N = bagsrc.size();
+	for (uint32_t ip=0; ip<N; ++ip) {
+
+		Pose cNdtPose;
+		auto cscan = bagsrc.at(ip);
+		auto scanTime = bagsrc.timeAt(ip);
+		cout << ip+1 << " / " << N << "   \r" << flush;
+
+		try {
+
+			if (!initialized) {
+				auto cGnssPos = gnssTrack.at(scanTime);
+				if (lidarLocalizer.isPointInsideMap(cGnssPos.position())==false)
+//					throw out_of_range("Initialization point lies outside map");
+					throw 1;
+
+				lidarLocalizer.putEstimation(cGnssPos);
+				cNdtPose = lidarLocalizer.localize(cscan);
+				initialized = true;
+
+			}
+
+			else {
+				cNdtPose = lidarLocalizer.localize(cscan);
+				if (lidarLocalizer.isPointInsideMap(cNdtPose.position())==false)
+//					throw out_of_range("Continuation point lies outside map; resetting");
+					throw 2;
+			}
+
+			PoseTimestamp tpose (cNdtPose);
+			tpose.timestamp = scanTime;
+			resultTrack.push_back(tpose);
+
+		} /*catch (out_of_range &e) {
+			cerr << "Error: " << e.what() << endl;
+			resultTrack.clear();
+			initialized = false;
+		}*/
+		catch (int e) {
+			return;
+		}
+	}
+
+	return;
 }

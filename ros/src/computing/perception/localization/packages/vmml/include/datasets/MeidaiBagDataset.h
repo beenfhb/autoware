@@ -322,8 +322,13 @@ void createTrajectoryFromNDT (
 	LidarScanBag &bagsrc,
 //	RandomAccessBag &bagsrc,
 	Trajectory &resultTrack, const Trajectory &gnssTrack,
-	const std::string &velodyneParamFile, const std::string &pcdMapFile);
+//	const std::string &velodyneParamFile,
+	const std::string &pcdMapFile);
 
+void createTrajectoryFromNDT2 (
+	LidarScanBag &bagsrc,
+	Trajectory &resultTrack, const Trajectory &gnssTrack,
+	const std::string &pcdMapFile);
 
 
 #endif /* _MEIDAIBAG_H_ */

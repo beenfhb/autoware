@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <Eigen/Eigen>
 
+#include <boost/filesystem.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/split_member.hpp>
@@ -24,6 +25,9 @@
 #include <boost/serialization/array.hpp>
 
 #include <opencv2/core.hpp>
+
+#include <ros/package.h>
+
 
 using std::pair;
 using std::set;
@@ -311,5 +315,8 @@ void debugMsg(const std::string &s, double is_error=false);
 	tduration _td_ = _t2_ - _t1_ ; \
 	debugMsg(string(funcDef) + " (seconds): " + to_string(double(_td_.total_microseconds()) / 1e6)); \
 
+
+inline boost::filesystem::path getMyPath()
+{ return boost::filesystem::path(ros::package::getPath("vmml")); }
 
 #endif /* UTILITIES_H_ */
