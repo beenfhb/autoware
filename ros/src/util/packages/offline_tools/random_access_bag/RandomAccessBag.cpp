@@ -39,7 +39,6 @@ RandomAccessBag::RandomAccessBag
 	bagStartTime = getBeginTime();
 	bagStopTime = getEndTime();
 
-	conn = getConnections()[0];
 	createCache();
 }
 
@@ -53,7 +52,6 @@ RandomAccessBag::RandomAccessBag(
 	rosbag::View::View(_bag)
 
 {
-	conn = getConnections()[0];
 	bagStartTime = getBeginTime();
 	bagStopTime = getEndTime();
 
@@ -72,7 +70,6 @@ RandomAccessBag::RandomAccessBag(
 	rosbag::View::View(_bag)
 
 {
-	conn = getConnections()[0];
 	bagStartTime = getBeginTime();
 	bagStopTime = getEndTime();
 
@@ -92,6 +89,7 @@ RandomAccessBag::createCache()
 	rosbag::View::size();
 	iterator it = begin();
 	size_t sz = this->size();
+	conn = getConnections()[0];
 	msgPtr.resize(sz);
 
 	for (uint32_t p=0; p<sz; p++) {
