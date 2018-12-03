@@ -55,7 +55,11 @@ RandomAccessBag::RandomAccessBag(
 	bagStartTime = getBeginTime();
 	bagStopTime = getEndTime();
 
-	setTimeConstraint(t1, t2);
+	ros::Time t1x, t2x;
+	t1x = (t1==ros::TIME_MIN ? bagStartTime : t1);
+	t2x = (t2==ros::TIME_MAX ? bagStopTime : t2);
+
+	setTimeConstraint(t1x, t2x);
 }
 
 
