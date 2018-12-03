@@ -23,6 +23,9 @@ find_package(catkin REQUIRED COMPONENTS
 	cv_bridge
 	rosbag_storage
 	
+	# For RandomAccessBag
+	offline_tools
+	
 	# Test offline GNSS localization
 	nmea_msgs
 	gnss
@@ -55,12 +58,8 @@ endif()
 
 
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES vmml
-#  CATKIN_DEPENDS other_catkin_pkg
 	LIBRARIES vmml
-	CATKIN_DEPENDS libg2o
-#  DEPENDS system_lib
+	CATKIN_DEPENDS roscpp libg2o offline_tools
 )
 
 ###########
@@ -74,13 +73,13 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	DBoW2
 	
+	${catkin_INCLUDE_DIRS}
 	${EIGEN3_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIRS}
 	${PCL_INCLUDE_DIRS}
 	${PYTHON_INCLUDE_DIRS}
 	${Boost_INCLUDE_DIRS}
 	${G2O_INCLUDE_DIR}	
-	${catkin_INCLUDE_DIRS}
 	${LIBEDIT_INCLUDE_DIRS}
 )
 
@@ -113,7 +112,6 @@ add_library(
 		src/datasets/GenericDataset.cpp
 		src/datasets/OxfordDataset.cpp
 #		src/datasets/CustomDataset.cpp
-		src/datasets/RandomAccessBag.cpp
 		src/datasets/MeidaiBagDataset.cpp
 		src/datasets/MeidaiLocalizerGNSS.cpp
 		src/datasets/MeidaiLocalizerNDT.cpp

@@ -26,7 +26,7 @@
 #include "utilities.h"
 #include "ImagePreprocessor.h"
 #include "datasets/GenericDataset.h"
-#include "datasets/RandomAccessBag.h"
+#include "RandomAccessBag.h"
 #include "datasets/LidarScanBag.h"
 
 

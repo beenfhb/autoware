@@ -11,7 +11,9 @@
 
   <depend>rviz</depend>
   
+  <depend>roscpp</depend>
   <depend>vector_map</depend>
+  <depend>rosbag_storage</depend>
 
   <buildtool_depend>catkin</buildtool_depend>
 

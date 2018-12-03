@@ -6,29 +6,38 @@
  */
 
 #include <algorithm>
+#include <exception>
 #include <rosbag/query.h>
-#include "datasets/RandomAccessBag.h"
+
+#include "RandomAccessBag.h"
 
 #include "access_private.hpp"
 
 
+using std::runtime_error;
+
 
 ACCESS_PRIVATE_FIELD(rosbag::MessageInstance, rosbag::IndexEntry const, index_entry_);
 
+
+/*
+ * A Notes about ROS Bags:
+ */
 
 
 /*
  * Only allows one single topic
  */
 RandomAccessBag::RandomAccessBag
-	(rosbag::Bag const &bag, const std::string &topic,
-	const ros::Time &startTime, const ros::Time &stopTime):
+	(const rosbag::Bag &_bag, const std::string &topic):
 
-	rosbag::View::View(),
-	bagstore(const_cast<rosbag::Bag&>(bag))
+	bagstore(_bag),
+	viewTopic(topic),
+	rosbag::View::View(_bag, rosbag::TopicQuery(topic))
 
 {
-	addQuery(bag, rosbag::TopicQuery(topic), startTime, stopTime);
+	bagStartTime = getBeginTime();
+	bagStopTime = getEndTime();
 
 	conn = getConnections()[0];
 	createCache();
@@ -36,18 +45,38 @@ RandomAccessBag::RandomAccessBag
 
 
 RandomAccessBag::RandomAccessBag(
-	rosbag::Bag const &bag, const std::string &topic,
-	const double seconds1FromOffset,
-	const double seconds2FromOffset) :
+	const rosbag::Bag &_bag, const std::string &topic,
+	const ros::Time &t1, const ros::Time &t2) :
 
-	RandomAccessBag(bag, topic)
+	bagstore(_bag),
+	viewTopic(topic),
+	rosbag::View::View(_bag)
+
 {
-	assert (seconds1FromOffset <= seconds2FromOffset);
+	conn = getConnections()[0];
+	bagStartTime = getBeginTime();
+	bagStopTime = getEndTime();
 
-	ros::Time st1 = timeFromOffset(seconds1FromOffset),
-		st2 = timeFromOffset(seconds2FromOffset);
-	addQuery(bag, st1, st2);
-	createCache();
+	setTimeConstraint(t1, t2);
+}
+
+
+
+RandomAccessBag::RandomAccessBag(
+	rosbag::Bag const &_bag, const std::string &topic,
+	const double seconds1,
+	const double seconds2) :
+
+	bagstore(_bag),
+	viewTopic(topic),
+	rosbag::View::View(_bag)
+
+{
+	conn = getConnections()[0];
+	bagStartTime = getBeginTime();
+	bagStopTime = getEndTime();
+
+	setTimeConstraint(seconds1, seconds2);
 }
 
 
@@ -59,6 +88,7 @@ RandomAccessBag::~RandomAccessBag()
 void
 RandomAccessBag::createCache()
 {
+	update();
 	rosbag::View::size();
 	iterator it = begin();
 	size_t sz = this->size();
@@ -70,6 +100,42 @@ RandomAccessBag::createCache()
 		msgPtr.at(p) = ie;
 		++it;
 	}
+}
+
+
+void
+RandomAccessBag::setTimeConstraint(
+	const double seconds1,
+	const double seconds2)
+{
+	assert (seconds1 <= seconds2);
+
+	ros::Duration td1(seconds1),
+		td2(seconds2);
+
+	assert(bagStartTime + td2 <= bagStopTime);
+
+	ros::Time
+		t1 = bagStartTime + td1,
+		t2 = bagStartTime + td2;
+
+	setTimeConstraint(t1, t2);
+}
+
+
+void
+RandomAccessBag::setTimeConstraint(const ros::Time &t1, const ros::Time &t2)
+{
+	if (t1 < bagStartTime or t1 > bagStopTime)
+		throw runtime_error("Requested start time is out of range");
+
+	if (t2 < bagStartTime or t2 > bagStopTime)
+		throw runtime_error("Requested stop time is out of range");
+
+	queries_.clear();
+	ranges_.clear();
+	addQuery(bagstore, rosbag::TopicQuery(viewTopic), t1, t2);
+	createCache();
 }
 
 

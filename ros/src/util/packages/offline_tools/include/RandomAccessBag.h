@@ -18,20 +18,6 @@
 #include <exception>
 
 
-//ACCESS_PRIVATE_FUN(rosbag::Bag,
-//	void(uint64_t) const,
-//	decompressChunk);
-//
-//ACCESS_PRIVATE_FIELD(rosbag::Bag, rosbag::Buffer*, current_buffer_);
-//ACCESS_PRIVATE_FUN(rosbag::Bag,
-//	void (rosbag::Buffer&, uint32_t, ros::Header&, uint32_t&, uint32_t&) const,
-//	readMessageDataHeaderFromBuffer);
-//
-//ACCESS_PRIVATE_FUN(rosbag::Bag,
-//	ros::M_string::const_iterator (ros::M_string const&, std::string const&, unsigned int, unsigned int, bool) const,
-//	checkField);
-
-
 class time_exception: public std::runtime_error
 {
 	virtual const char* what() const throw()
@@ -45,9 +31,11 @@ public:
 	typedef std::shared_ptr<RandomAccessBag> Ptr;
 
 	RandomAccessBag(
-		rosbag::Bag const &bag, const std::string &topic,
-		const ros::Time &startTime = ros::TIME_MIN,
-		const ros::Time &endTime = ros::TIME_MAX);
+		const rosbag::Bag &bag, const std::string &topic);
+
+	RandomAccessBag(
+		const rosbag::Bag &bag, const std::string &topic,
+		const ros::Time &t1, const ros::Time &t2);
 
 	RandomAccessBag(
 		rosbag::Bag const &bag, const std::string &topic,
@@ -57,6 +45,7 @@ public:
 	virtual ~RandomAccessBag();
 
 	void setTimeConstraint(const double seconds1FromOffset, const double seconds2FromOffset);
+	void setTimeConstraint(const ros::Time &t1, const ros::Time &t2);
 
 	template<typename T>
 	boost::shared_ptr<T>
@@ -110,7 +99,7 @@ public:
 protected:
 	void createCache();
 
-	rosbag::Bag &bagstore;
+	const rosbag::Bag &bagstore;
 	const rosbag::ConnectionInfo* conn;
 	std::vector<rosbag::IndexEntry> msgPtr;
 
@@ -122,7 +111,10 @@ protected:
 		return m->instantiate<T>();
 	}
 
-	rosbag::Query timeQuery;
+	ros::Time
+		bagStartTime,
+		bagStopTime;
+	const std::string viewTopic;
 
 };
 
