@@ -54,9 +54,9 @@ MeidaiBagDataset::MeidaiBagDataset(
 	const std::string &calibrationPath,
 	bool loadPositions) :
 
-		bagPath(path)
+		bagPath(path),
+		bagfd(new rosbag::Bag(path))
 {
-	bagfd = new rosbag::Bag(path);
 	prepareBag();
 
 	if (loadPositions==true)
@@ -164,7 +164,6 @@ MeidaiBagDataset::loadPosition()
 
 MeidaiBagDataset::~MeidaiBagDataset()
 {
-	delete(bagfd);
 }
 
 

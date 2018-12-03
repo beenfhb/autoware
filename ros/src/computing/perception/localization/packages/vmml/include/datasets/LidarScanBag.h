@@ -36,6 +36,12 @@ public:
 		const ros::Time &startTime = ros::TIME_MIN,
 		const ros::Time &endTime = ros::TIME_MAX);
 
+	LidarScanBag(
+		rosbag::Bag const &bag, const std::string &topic,
+		const std::string &lidarCalibFile,
+		const double seconds1FromOffset,
+		const double seconds2FromOffset);
+
 	LidarScanBag subset(const ros::Time &start, ros::Duration &d) const;
 
 	pcl::PointCloud<pcl::PointXYZ>::ConstPtr
@@ -46,7 +52,8 @@ public:
 	atDurationSecond (const double S)
 	{ return at (getPositionAtDurationSecond(S)); }
 
-
+	static
+	bool save(pcl::PointCloud<pcl::PointXYZ>::ConstPtr, const std::string &filename);
 
 	bool filtered = false;
 
@@ -62,6 +69,7 @@ protected:
 		double voxel_leaf_size,
 		double measurement_range);
 
+	void prepare(const std::string &lidarCalibFile);
 };
 
 

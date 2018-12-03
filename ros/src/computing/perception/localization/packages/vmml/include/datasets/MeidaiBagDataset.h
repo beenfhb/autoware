@@ -268,7 +268,7 @@ protected:
 	static std::string dSetName;
 
 	// Bag Handler
-	rosbag::Bag *bagfd;
+	std::shared_ptr<rosbag::Bag> bagfd;
 	RandomAccessBag::Ptr cameraRawBag;
 	RandomAccessBag::Ptr gnssBag;
 	RandomAccessBag::Ptr velodyneBag;

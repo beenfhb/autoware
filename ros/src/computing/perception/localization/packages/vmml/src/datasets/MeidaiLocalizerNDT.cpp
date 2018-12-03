@@ -37,7 +37,12 @@ const NdtLocalizerInitialConfig NuInitialConfig = {
 
 
 void
-createTrajectoryFromNDT (LidarScanBag &bagsrc, Trajectory &resultTrack, const Trajectory &gnssTrack, const string &velodyneParamFile, const string &pcdMapFile)
+createTrajectoryFromNDT (
+	LidarScanBag &bagsrc,
+	Trajectory &resultTrack,
+	const Trajectory &gnssTrack,
+	const string &velodyneParamFile,
+	const string &pcdMapFile)
 {
 	if (bagsrc.getTopic() != "/velodyne_packets")
 		throw runtime_error("Not Velodyne bag");
@@ -81,7 +86,6 @@ createTrajectoryFromNDT (LidarScanBag &bagsrc, Trajectory &resultTrack, const Tr
 			PoseTimestamp tpose (cNdtPose);
 			tpose.timestamp = scanTime;
 			resultTrack.push_back(tpose);
-
 
 		} catch (out_of_range &e) {
 			cerr << "Error: " << e.what() << endl;

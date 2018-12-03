@@ -35,6 +35,22 @@ RandomAccessBag::RandomAccessBag
 }
 
 
+RandomAccessBag::RandomAccessBag(
+	rosbag::Bag const &bag, const std::string &topic,
+	const double seconds1FromOffset,
+	const double seconds2FromOffset) :
+
+	RandomAccessBag(bag, topic)
+{
+	assert (seconds1FromOffset <= seconds2FromOffset);
+
+	ros::Time st1 = timeFromOffset(seconds1FromOffset),
+		st2 = timeFromOffset(seconds2FromOffset);
+	addQuery(bag, st1, st2);
+	createCache();
+}
+
+
 RandomAccessBag::~RandomAccessBag()
 {
 }
@@ -83,10 +99,16 @@ RandomAccessBag::getPositionAtTime (const ros::Time &tx) const
 }
 
 
-//ros::Duration
-//RandomAccessBag::length() const
-//{
-//	return msgPtr.back().time - msgPtr.at(0).time;
-//}
+/*
+ * Convert time as represented by seconds from offset
+ */
+ros::Time
+RandomAccessBag::timeFromOffset(const double secondsFromStart) const
+{
+	assert(secondsFromStart >= 0
+		and secondsFromStart <= length().toSec());
 
+	ros::Duration td(secondsFromStart);
+	return msgPtr.at(0).time + td;
+}
 

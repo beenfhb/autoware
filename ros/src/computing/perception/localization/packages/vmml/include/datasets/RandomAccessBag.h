@@ -49,7 +49,14 @@ public:
 		const ros::Time &startTime = ros::TIME_MIN,
 		const ros::Time &endTime = ros::TIME_MAX);
 
+	RandomAccessBag(
+		rosbag::Bag const &bag, const std::string &topic,
+		const double seconds1FromOffset,
+		const double seconds2FromOffset);
+
 	virtual ~RandomAccessBag();
+
+	void setTimeConstraint(const double seconds1FromOffset, const double seconds2FromOffset);
 
 	template<typename T>
 	boost::shared_ptr<T>
@@ -95,6 +102,11 @@ public:
 	 ros::Time stopTime() const
 	 { return msgPtr.back().time; }
 
+	 /*
+	  * Convert time as represented by seconds from offset
+	  */
+	 ros::Time timeFromOffset(const double secondsFromStart) const;
+
 protected:
 	void createCache();
 
@@ -110,6 +122,7 @@ protected:
 		return m->instantiate<T>();
 	}
 
+	rosbag::Query timeQuery;
 
 };
 

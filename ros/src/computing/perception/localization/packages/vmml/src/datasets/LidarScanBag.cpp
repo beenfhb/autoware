@@ -61,7 +61,26 @@ LidarScanBag::LidarScanBag(
 
 		RandomAccessBag(bag, topic, startTime, endTime),
 		data_(new velodyne_rawdata::RawData())
+{
+	prepare(lidarCalibFile);
+}
 
+
+LidarScanBag::LidarScanBag(
+	rosbag::Bag const &bag, const std::string &topic,
+	const std::string &lidarCalibFile,
+	const double seconds1FromOffset,
+	const double seconds2FromOffset) :
+
+		RandomAccessBag(bag, topic, seconds1FromOffset, seconds2FromOffset),
+		data_(new velodyne_rawdata::RawData())
+{
+	prepare(lidarCalibFile);
+}
+
+
+void
+LidarScanBag::prepare(const string &lidarCalibFile)
 {
 	if (data_->setupOffline(lidarCalibFile, velodyneMaxRange, velodyneMinRange)
 		== -1)
@@ -69,6 +88,7 @@ LidarScanBag::LidarScanBag(
 
 	data_->setParameters(velodyneMinRange, velodyneMaxRange, velodyneViewDirection, velodyneViewWidth);
 }
+
 
 
 LidarScanBag
@@ -122,4 +142,13 @@ LidarScanBag::VoxelGridFilter (
 	voxel_grid_filter.filter(*filteredGridCLoud);
 
 	return filteredGridCLoud;
+}
+
+
+#include <pcl/io/pcd_io.h>
+
+bool
+LidarScanBag::save(pcl::PointCloud<pcl::PointXYZ>::ConstPtr pclPtr, const std::string &filename)
+{
+	return pcl::io::savePCDFileBinary(filename, *pclPtr);
 }
