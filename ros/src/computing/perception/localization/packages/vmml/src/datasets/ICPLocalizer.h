@@ -34,6 +34,8 @@ public:
 protected:
 
 	pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> mIcp;
+
+	pcl::PointCloud<pcl::PointXYZ>::Ptr pcMap = nullptr;
 };
 
 #endif /* _ICPLOCALIZER_H_ */

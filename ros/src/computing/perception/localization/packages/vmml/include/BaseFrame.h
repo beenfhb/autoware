@@ -16,6 +16,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <g2o/types/sba/types_sba.h>
+
 #include "CameraPinholeParams.h"
 #include "utilities.h"
 
@@ -128,6 +130,7 @@ public:
 	const TTransform &lidarToCameraTransform,
 	const CameraPinholeParams &cameraParams);
 
+	g2o::SBACam forG2O () const;
 
 protected:
 	cv::Mat image;

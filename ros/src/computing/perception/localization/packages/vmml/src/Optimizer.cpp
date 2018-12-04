@@ -15,7 +15,8 @@
 #include "g2o/core/optimization_algorithm_levenberg.h"
 #include "g2o/solvers/eigen/linear_solver_eigen.h"
 #include "g2o/solvers/dense/linear_solver_dense.h"
-#include "g2o/types/sba/types_six_dof_expmap.h"
+//#include "g2o/types/sba/types_six_dof_expmap.h"
+#include "g2o/types/sba/types_sba.h"
 #include "g2o/core/robust_kernel_impl.h"
 #include "g2o/types/sim3/types_seven_dof_expmap.h"
 
@@ -101,7 +102,8 @@ void debugVector (const VectorXd &v)
 }
 
 
-void bundle_adjustment (VMap *orgMap)
+/*
+void bundle_adjustment_original (VMap *orgMap)
 {
 	vector<kfid> keyframeList = orgMap->allKeyFrames();
 	vector<mpid> mappointList = orgMap->allMapPoints();
@@ -198,6 +200,105 @@ void bundle_adjustment (VMap *orgMap)
 		mp->setPosition(vMp->estimate());
 	}
 }
+*/
+void bundle_adjustment (VMap *orgMap)
+{
+	vector<kfid> keyframeList = orgMap->allKeyFrames();
+	vector<mpid> mappointList = orgMap->allMapPoints();
+
+	g2o::SparseOptimizer optimizer;
+	optimizer.setVerbose(true);
+	g2o::BlockSolver_6_3::LinearSolverType * linearSolver;
+	linearSolver = new g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>();
+	g2o::BlockSolver_6_3 * solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
+	g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+	optimizer.setAlgorithm(solver);
+
+	// XXX: This routine does not support multiple camera
+	const CameraPinholeParams cp = orgMap->getCameraParameter(0);
+	g2o::CameraParameters *camParams =
+		new g2o::CameraParameters(cp.fx, Vector2d(cp.cx,cp.cy), 0);
+	camParams->setId(0);
+	optimizer.addParameter(camParams);
+
+	map<oid, kfid> vertexKfMap;
+	map<kfid, g2o::VertexCam*> vertexKfMapInv;
+	map<oid, mpid> vertexMpMap;
+	map<mpid, g2o::VertexSBAPointXYZ*> vertexMpMapInv;
+	oid vId = 1;
+
+	for (kfid &kId: keyframeList) {
+
+		g2o::VertexCam *vKf = new g2o::VertexCam();
+		KeyFrame *kf = orgMap->keyframe(kId);
+		vKf->setEstimate (kf->forG2O());
+		vKf->setId(vId);
+		vKf->setFixed(kId<2);
+		optimizer.addVertex(vKf);
+		vertexKfMap.insert(pair<oid, kfid> (vId, kId));
+		vertexKfMapInv[kId] = vKf;
+		vId ++;
+
+		for (auto &ptr: orgMap->allMapPointsAtKeyFrame(kId)) {
+
+			const MapPoint *mp = orgMap->mappoint(ptr.first);
+			const cv::KeyPoint p2K = kf->keypoint(ptr.second);
+
+			g2o::VertexSBAPointXYZ *vMp = new g2o::VertexSBAPointXYZ();
+
+			// What effect if we run this line ?
+			vMp->setFixed(false);
+
+			vMp->setEstimate(mp->getPosition());
+			vMp->setMarginalized(true);
+			vMp->setId(vId);
+			optimizer.addVertex(vMp);
+			vertexMpMap.insert(pair<oid,mpid> (vId, mp->getId()));
+			vertexMpMapInv[mp->getId()] = vMp;
+			vId++;
+
+			// Edges
+			g2o::EdgeProjectP2MC *edge = new g2o::EdgeProjectP2MC();
+			edge->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(vMp));
+			edge->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(vKf));
+			edge->setMeasurement(Vector2d(p2K.pt.x, p2K.pt.y));
+			Matrix2d uncertainty = Matrix2d::Identity() * (1.2*(p2K.octave+1));
+			edge->setInformation(uncertainty);
+//			edge->setParameterId(0, 0);
+
+			// XXX: Should we add a robust kernel for the edge here, ie. like pose optimization below ?
+
+			optimizer.addEdge(edge);
+		}
+	}
+
+	optimizer.initializeOptimization();
+	// XXX: Determine number of iterations
+	optimizer.optimize(baIteration);
+
+	// Recovery of optimized data
+	// KeyFrames
+	for (auto &kVpt: vertexKfMap) {
+
+		oid vId = kVpt.first;
+		kfid kId = kVpt.second;
+		KeyFrame *kf = orgMap->keyframe(kId);
+		g2o::VertexCam *vKfSE3 = static_cast<g2o::VertexCam*> (optimizer.vertex(vId));
+
+		g2o::SE3Quat kfPoseSE3 = vKfSE3->estimate();
+		fromSE3Quat(kfPoseSE3, *kf);
+	}
+
+	// MapPoints
+	for (auto &mVpt: vertexMpMap) {
+		oid vId = mVpt.first;
+		mpid mid = mVpt.second;
+		MapPoint *mp = orgMap->mappoint(mid);
+		g2o::VertexSBAPointXYZ *vMp = static_cast<g2o::VertexSBAPointXYZ*> (optimizer.vertex(vId));
+		mp->setPosition(vMp->estimate());
+	}
+}
+
 
 
 /*

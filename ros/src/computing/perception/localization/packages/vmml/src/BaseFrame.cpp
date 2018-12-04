@@ -144,3 +144,14 @@ BaseFrame::projectLidarScan
 
 	return projections;
 }
+
+
+g2o::SBACam
+BaseFrame::forG2O () const
+{
+	// XXX: Verify this
+	g2o::SBACam mycam(orientation(), position());
+	mycam.setKcam(cameraParam->fx, cameraParam->fy, cameraParam->cx, cameraParam->cy, 0);
+
+	return mycam;
+}
