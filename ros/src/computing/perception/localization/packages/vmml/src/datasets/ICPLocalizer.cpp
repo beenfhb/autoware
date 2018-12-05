@@ -12,16 +12,15 @@
 using namespace Eigen;
 
 
+#define PREDICT_POSE_THRESHOLD 0.5
+
+
 ICPLocalizer::ICPLocalizer()
-{
-	// TODO Auto-generated constructor stub
-}
+{}
 
 
 ICPLocalizer::~ICPLocalizer()
-{
-	// TODO Auto-generated destructor stub
-}
+{}
 
 
 void
@@ -49,10 +48,29 @@ ICPLocalizer::localize (pcl::PointCloud<pcl::PointXYZ>::ConstPtr scan)
 {
 	mIcp.setInputSource(scan);
 
-	Translation3f init_translation();
-	AngleAxisf init_rotation_x;
-	AngleAxisf init_rotation_y;
-	AngleAxisf init_rotation_z;
+	Pose predictPose = current_pose;
+	predictPose.translation() += offset;
+
+	pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+
+	mIcp.setMaximumIterations(mParams.maximum_iterations);
+	mIcp.setTransformationEpsilon(mParams.transformation_epsilon);
+	mIcp.setMaxCorrespondenceDistance(mParams.max_correspondence_distance);
+	mIcp.setEuclideanFitnessEpsilon(mParams.euclidean_fitness_epsilon);
+	mIcp.setRANSACOutlierRejectionThreshold(mParams.ransac_outlier_rejection_threshold);
+
+	// XXX: Benchmark here ?
+	mIcp.align(*output_cloud, predictPose.matrix().cast<float>());
+	auto _localizerPose = mIcp.getFinalTransformation();
+	Pose localizerPose (_localizerPose);
+
+	// Calculate errors
+	double predictPoseError = (localizerPose.position() - predictPose.position()).norm();
+	if (predictPoseError <= PREDICT_POSE_THRESHOLD) {
+
+	}
+
+	// Calculate velocity and acceleration
 
 	return Pose::Identity();
 }
