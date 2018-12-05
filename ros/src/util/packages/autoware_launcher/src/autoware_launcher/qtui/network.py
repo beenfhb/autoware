@@ -1,10 +1,10 @@
 from python_qt_binding import QtNetwork
 
-class AwQtTcpServer(QtNetwork.QTcpServer):
+class AwTcpServer(QtNetwork.QTcpServer):
 
     def __init__(self, tree, port = 33136):
 
-        super(AwQtTcpServer, self).__init__()
+        super(AwTcpServer, self).__init__()
         self.tree = tree
         self.port = port
         self.connections = []

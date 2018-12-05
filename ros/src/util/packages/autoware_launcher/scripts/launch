@@ -4,7 +4,7 @@ import sys
 
 from python_qt_binding import QtCore, QtWidgets
 from autoware_launcher.core import AwLaunchTree
-from autoware_launcher.widgets import AwLaunchWidget
+from autoware_launcher.qtui import AwLaunchWidget
 
 tree = AwLaunchTree()
 tree.dump()

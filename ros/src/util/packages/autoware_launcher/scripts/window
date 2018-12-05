@@ -2,15 +2,13 @@
 
 import sys
 
-from autoware_launcher.awtree import AwLaunchTree
-from autoware_launcher.window import AwWindowManager
 
-awtree = AwLaunchTree()
+from python_qt_binding import QtCore, QtWidgets
+from autoware_launcher.core import AwLaunchTree
+from autoware_launcher.qtui import AwLaunchWidget
+
+tree = AwLaunchTree()
 print("============================================================")
-awtree.plugin.dump()
-print("============================================================")
-awtree.config.dump()
+tree.dump()
 print("============================================================")
 
-window = AwWindowManager()
-sys.exit(window.run(sys.argv, awtree))

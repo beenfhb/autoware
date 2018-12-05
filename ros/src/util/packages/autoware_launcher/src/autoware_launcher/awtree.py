@@ -125,6 +125,9 @@ class AwConfigNode(object):
 
 
 if __name__ == "__main__":
-    path = os.path.join(os.path.dirname(__file__), "../../plugins/")
-    root = AwPluginNode.load(path)
-    root.dump()
+    awtree = AwLaunchTree()
+    print("============================================================")
+    awtree.plugin.dump()
+    print("============================================================")
+    awtree.config.dump()
+    print("============================================================")
