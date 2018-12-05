@@ -5,10 +5,12 @@
  *      Author: sujiwo
  */
 
+#include <iostream>
+
 #include <pcl/io/pcd_io.h>
 #include "src/datasets/ICPLocalizer.h"
 
-
+using namespace std;
 using namespace Eigen;
 
 
@@ -36,7 +38,7 @@ ICPLocalizer::loadMap (const std::string &pcdFilename)
 void
 ICPLocalizer::putEstimation (const Pose &pEst)
 {
-
+	current_pose = pEst;
 }
 
 
@@ -44,7 +46,7 @@ ICPLocalizer::putEstimation (const Pose &pEst)
  * We wish the input to be filtered before entering this function
  */
 Pose
-ICPLocalizer::localize (pcl::PointCloud<pcl::PointXYZ>::ConstPtr scan)
+ICPLocalizer::localize (pcl::PointCloud<pcl::PointXYZ>::ConstPtr scan, ptime curTime)
 {
 	mIcp.setInputSource(scan);
 
@@ -62,7 +64,9 @@ ICPLocalizer::localize (pcl::PointCloud<pcl::PointXYZ>::ConstPtr scan)
 	// XXX: Benchmark here ?
 	mIcp.align(*output_cloud, predictPose.matrix().cast<float>());
 	auto _localizerPose = mIcp.getFinalTransformation();
-	Pose localizerPose (_localizerPose);
+	Pose localizerPose = _localizerPose.cast<double>();
+
+	double fitnessScore = mIcp.getFitnessScore();
 
 	// Calculate errors
 	double predictPoseError = (localizerPose.position() - predictPose.position()).norm();
@@ -71,6 +75,72 @@ ICPLocalizer::localize (pcl::PointCloud<pcl::PointXYZ>::ConstPtr scan)
 	}
 
 	// Calculate velocity and acceleration
+	Vector3d diffPos;
 
-	return Pose::Identity();
+	// Update offset
+	if (mParams.offsetMode==Parameters::Linear) {
+		offset = diffPos;
+	}
+
+	else if (mParams.offsetMode==Parameters::Quadratic) {
+
+	}
+
+	else if (mParams.offsetMode==Parameters::Zero) {
+		offset << 0, 0, 0;
+	}
+
+	return localizerPose;
 }
+
+
+void
+createTrajectoryFromICP (
+	LidarScanBag &bagsrc,
+	Trajectory &resultTrack,
+	const Trajectory &gnssTrack,
+	const std::string &pcdMapFile)
+{
+	bagsrc.filtered = true;
+	ICPLocalizer lidarLocalizer;
+	lidarLocalizer.loadMap(pcdMapFile);
+	resultTrack.clear();
+
+	bool initialized=false;
+
+	uint32_t N = bagsrc.size();
+	for (uint32_t ip=0; ip<N; ++ip) {
+
+		Pose cIcpPose;
+		auto cscan = bagsrc.at(ip);
+		auto scanTime = bagsrc.timeAt(ip);
+		cout << ip+1 << " / " << N << "   \r" << flush;
+
+		if (!initialized) {
+			auto cGnssPos = gnssTrack.at(scanTime);
+//			if (lidarLocalizer.isPointInsideMap(cGnssPos.position())==false)
+//				throw 1;
+
+			lidarLocalizer.putEstimation(cGnssPos);
+			cIcpPose = lidarLocalizer.localize(cscan);
+			initialized = true;
+
+		}
+
+		else {
+			cIcpPose = lidarLocalizer.localize(cscan);
+//			if (lidarLocalizer.isPointInsideMap(cNdtPose.position())==false)
+//				throw 2;
+		}
+
+		PoseTimestamp tpose (cIcpPose);
+		tpose.timestamp = scanTime;
+		resultTrack.push_back(tpose);
+
+	}
+
+	cout << "Finished all scan points" << endl;
+}
+
+
+

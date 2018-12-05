@@ -40,13 +40,13 @@ int main (int argc, char *argv[])
 
 	lidarBag->setTimeConstraint(315.49, 932.16);
 
-	Trajectory ndtTrack;
-	createTrajectoryFromNDT2(*lidarBag,
-		ndtTrack,
+	Trajectory icpTrack;
+	createTrajectoryFromICP(*lidarBag,
+			icpTrack,
 		meidaiDs->getGnssTrajectory(),
 		"/home/sujiwo/Data/NagoyaUniversityMap/bin_meidai_ndmap.pcd");
 
-	dumpTrajectory("/tmp/testndt.txt", ndtTrack);
+	dumpTrajectory("/tmp/test_icp.txt", icpTrack);
 
 	return 0;
 }

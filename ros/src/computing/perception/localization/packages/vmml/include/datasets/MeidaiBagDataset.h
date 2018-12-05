@@ -330,5 +330,12 @@ void createTrajectoryFromNDT2 (
 	Trajectory &resultTrack, const Trajectory &gnssTrack,
 	const std::string &pcdMapFile);
 
+void
+createTrajectoryFromICP (
+	LidarScanBag &bagsrc,
+	Trajectory &resultTrack,
+	const Trajectory &gnssTrack,
+	const std::string &pcdMapFile);
+
 
 #endif /* _MEIDAIBAG_H_ */

@@ -261,6 +261,7 @@ protected:
 	std::map<kfid,KeyFrameGraph::vertex_descriptor> kfVtxMap;
 	std::map<KeyFrameGraph::vertex_descriptor,kfid> kfVtxInvMap;
 
+	// Information about this map
 	mapKeyValueInfo keyValueInfo;
 
 	void updateCovisibilityGraph(const kfid k);

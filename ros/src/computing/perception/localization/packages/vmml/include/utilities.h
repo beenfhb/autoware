@@ -208,6 +208,17 @@ struct TTransform : public Eigen::Affine3d
 	TTransform(const Eigen::Affine3d &a)
 	{ m_matrix = a.matrix(); }
 
+	template <typename Derived>
+	TTransform(const Eigen::MatrixBase<Derived> &M)
+	{
+		assert(M.cols()==4 and M.rows()==4);
+		// XXX: Check singularity of rotation part
+		for(int j=0; j<4; ++j) {
+			for (int i=0; i<4; ++i) {
+				m_matrix(i,j) = M(i,j);
+		}}
+	}
+
 	TTransform(
 		const double X, const double Y, const double Z,
 		const double QX, const double QY, const double QZ, const double QW);

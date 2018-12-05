@@ -227,6 +227,7 @@ void bundle_adjustment (VMap *orgMap)
 	map<mpid, g2o::VertexSBAPointXYZ*> vertexMpMapInv;
 	oid vId = 1;
 
+	// Stage #1: Build vertices and edges from-KF-to-MP
 	for (kfid &kId: keyframeList) {
 
 		g2o::VertexCam *vKf = new g2o::VertexCam();
@@ -271,6 +272,33 @@ void bundle_adjustment (VMap *orgMap)
 			optimizer.addEdge(edge);
 		}
 	}
+
+	// Stage #2: Build edges for inter-keyframe edges
+	for (kfid &kId: keyframeList) {
+
+		vector<kfid> kfFriends = orgMap->getKeyFramesComeInto(kId);
+		if (kfFriends.empty()==true)
+			continue;
+
+		for (auto &kfriend: kfFriends) {
+			g2o::EdgeSBACam *edgeKf = new g2o::EdgeSBACam;
+			edgeKf->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>( vertexKfMapInv[kfriend] ));
+			edgeKf->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>( vertexKfMapInv[kId] ));
+
+			// Measurement
+			// P2 = T * T1 ==> T = P2 * inverse(T1)
+			TTransform T = orgMap->keyframe(kId)->pose() * orgMap->keyframe(kfriend)->pose().inverse();
+			edgeKf->setMeasurement(g2o::SE3Quat(T.orientation(), T.position()));
+
+			// Uncertainty
+			// XXX: Unfinished
+//			edgeKf->setInformation()
+
+			optimizer.addEdge(edgeKf);
+		}
+
+	}
+
 
 	optimizer.initializeOptimization();
 	// XXX: Determine number of iterations
