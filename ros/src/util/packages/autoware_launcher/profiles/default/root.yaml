@@ -1,6 +1,10 @@
 children :
-  - rviz
+  - rosbag
   - map
   - vehicle
   - sensing
+  - rviz
   - localization
+
+info :
+  title : Default

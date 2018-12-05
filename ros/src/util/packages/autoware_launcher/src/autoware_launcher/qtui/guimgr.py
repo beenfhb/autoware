@@ -1,6 +1,39 @@
+from python_qt_binding import QtCore
+from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
-import widgets
+from . import widgets
+from . import procmgr
+
+class AwGuiManager(object):
+
+    def __init__(self, sys_argv):
+        self.sys_argv = sys_argv
+
+    def start_autoware_launcher(self, tree):
+
+        application = QtWidgets.QApplication(self.sys_argv)
+        screen = application.desktop().screenGeometry()
+        screen = min(screen.width(), screen.height())
+
+        window = QtWidgets.QMainWindow()
+        widget = QtWidgets.QTabWidget()
+        viewer = widgets.AwQuickStartWidget(tree)
+        server = procmgr.AwLaunchWidget(tree)
+        
+        widget.addTab(viewer, "Profile")
+        widget.addTab(server, "Process")
+        window.setCentralWidget(widget)
+
+        window.setStyleSheet("font-size: " + str(screen/100) + "px;")
+
+        settings = QtCore.QSettings("Autoware", "AutowareLauncher")
+        if settings.contains("geometry"):
+            window.restoreGeometry(settings.value("geometry"))
+        window.show()
+        return application.exec_()
+
+
 
 class AwWindowManager(object):
 

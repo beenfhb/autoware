@@ -76,8 +76,8 @@ class AwLaunchNode(object):
             parent.childmap[name] = self
 
         self.setting  = {}
+        self.listener = [] #AwLaunchNodeViewItem
         self.executor = AwLaunchNodeExecutor()
-        self.viewitem = AwLaunchNodeViewItem()
 
     # Move to AwBaseNode
     def isleaf(self):
@@ -111,9 +111,9 @@ class AwLaunchNode(object):
     def nodepath(self):
         return os.path.join(self.parent.nodepath(), self.nodename)
 
-    def bind_viewitem(self, viewitem):
+    def bind_listener(self, listener):
         #isinstance
-        self.viewitem = viewitem
+        self.listener.append(listener)
 
     def bind_executor(self, executor):
         #isinstance
@@ -139,20 +139,21 @@ class AwLaunchNode(object):
 
     # ToDo: apply state check of executor
     def send_exec_requested(self):
-        self.viewitem.exec_requested()
+        for item in self.listener: item.exec_requested()
 
     # ToDo: apply state check of executor
     def send_term_requested(self):
-        self.viewitem.term_requested()
+        for item in self.listener: item.term_requested()
 
     # ToDo: apply state check of executor
     def send_term_completed(self):
-        self.viewitem.term_completed()
+        for item in self.listener: item.term_completed()
 
     def load(self, fpath):
         fpath = os.path.join(fpath, self.nodename) 
         with open(fpath + ".yaml") as fp:
             ydata = yaml.safe_load(fp)
+        self.setting["info"] = ydata.get("info", {})
         if ydata.get("children") is None:
             self.nodetype = False
             self.setting["args"] = ydata.get("args", {})

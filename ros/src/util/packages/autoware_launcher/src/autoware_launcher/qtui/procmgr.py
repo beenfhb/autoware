@@ -13,7 +13,7 @@ class AwLaunchWidgetItem(QtWidgets.QTreeWidgetItem):
         self.user = True
         self.area = area
         self.node = node
-        self.node.bind_viewitem(self)
+        self.node.bind_listener(self)
 
         self.setText(0, self.node.nodename)
         self.setText(1, "")

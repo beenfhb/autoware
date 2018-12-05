@@ -33,51 +33,6 @@ class AwBasicWindow(QtWidgets.QMainWindow):
 
 
 
-class AwBasicFrame(QtWidgets.QWidget):
-
-    window_closed = QtCore.Signal()
-
-    def __init__(self, guimgr, parent, config):
-
-    	super(AwBasicFrame, self).__init__(parent)
-        self.guimgr = guimgr
-        self.config = config
-        #self.menu = None
-        #self.body = None
-
-    def paintEvent(self, event):
-
-        style_option = QtWidgets.QStyleOption()
-        style_option.initFrom(self)
-        painter = QtGui.QPainter(self)
-        self.style().drawPrimitive(QtWidgets.QStyle.PE_Widget, style_option, painter, self)
-
-    def set_widgets(self, header, detail):
-
-        config = self.config
-        widget = self
-
-        layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        layout.addWidget(header)
-        layout.addWidget(detail)
-        widget.setLayout(layout)
-
-        header.setObjectName("FrameMenu")
-        detail.setObjectName("FrameBody")
-        widget.setObjectName("FrameWidget")
-        widget.setStyleSheet("#FrameWidget { border: 1px solid; } #FrameMenu { padding: 3px; border-bottom: 1px solid; } #FrameBody { padding: 3px; }")
-
-    @QtCore.Slot()
-    def open_window(self):
-
-        window = self.guimgr.create_window(self, self.config)
-        window.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
-        window.setWindowModality(QtCore.Qt.ApplicationModal)
-        window.destroyed.connect(lambda: self.window_closed.emit())
-        window.show()
-
 
 class AwBasicFrameHeader(QtWidgets.QWidget):
 
