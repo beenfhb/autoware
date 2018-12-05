@@ -19,6 +19,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/conversion.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/split_member.hpp>
 #include <boost/serialization/vector.hpp>
@@ -314,6 +315,9 @@ inline double td_seconds (const tduration &td)
 { return (double(td.total_microseconds()) / 1e6); }
 
 double toSeconds (const ptime &pt);
+
+inline double toSeconds (const tduration &td)
+{ return (double(td.total_microseconds()) / 1e6); }
 
 
 void debugMsg(const std::string &s, double is_error=false);

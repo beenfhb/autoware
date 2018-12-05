@@ -5,6 +5,9 @@
  *      Author: sujiwo
  */
 
+#ifndef _MEIDAIBAG_H_
+#define _MEIDAIBAG_H_
+
 
 #include <string>
 #include <memory>
@@ -28,10 +31,6 @@
 #include "datasets/GenericDataset.h"
 #include "RandomAccessBag.h"
 #include "datasets/LidarScanBag.h"
-
-
-#ifndef _MEIDAIBAG_H_
-#define _MEIDAIBAG_H_
 
 
 extern const TTransform defaultLidarToCameraTransform;
