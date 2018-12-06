@@ -113,7 +113,7 @@ createTrajectoryFromICP (
 
 		Pose cIcpPose;
 		auto cscan = bagsrc.at(ip);
-		auto scanTime = bagsrc.timeAt(ip);
+		auto scanTime = bagsrc.timeAt(ip).toBoost();
 		cout << ip+1 << " / " << N << "   \r" << flush;
 
 		if (!initialized) {
@@ -133,8 +133,7 @@ createTrajectoryFromICP (
 //				throw 2;
 		}
 
-		PoseTimestamp tpose (cIcpPose);
-		tpose.timestamp = scanTime;
+		PoseStamped tpose (cIcpPose, scanTime);
 		resultTrack.push_back(tpose);
 
 	}

@@ -50,6 +50,9 @@ const auto
 	MIN_TIME = boost::posix_time::special_values::min_date_time,
 	MAX_TIME = boost::posix_time::special_values::max_date_time;
 
+const ptime
+	unixTime0(boost::gregorian::date(1970,1,1));
+
 
 template<typename P, typename Q>
 map<Q,P> reverseMap (const map<P,Q> &smap)
@@ -319,6 +322,7 @@ double toSeconds (const ptime &pt);
 inline double toSeconds (const tduration &td)
 { return (double(td.total_microseconds()) / 1e6); }
 
+ptime fromSeconds (const double s);
 
 void debugMsg(const std::string &s, double is_error=false);
 

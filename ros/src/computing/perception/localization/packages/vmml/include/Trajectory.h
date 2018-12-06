@@ -30,13 +30,13 @@ struct PoseStamped : public Pose
 		Pose()
 	{ timestamp = ros::Time(0).toBoost(); }
 
-	PoseStamped(const Pose &p, const ptime &t=ros::Time(0))
+	PoseStamped(const Pose &p, const ptime &t=unixTime0)
 	{
 		m_matrix = p.matrix();
 		timestamp = t;
 	}
 
-	inline PoseStamped (const Eigen::Vector3d &p, const Quaterniond &q, const ptime &t=ros::Time(0))
+	inline PoseStamped (const Eigen::Vector3d &p, const Quaterniond &q, const ptime &t=unixTime0)
 	{
 		m_matrix = Pose::from_Pos_Quat(p, q).matrix();
 		timestamp = t;
@@ -88,8 +88,6 @@ public:
 	// Return nearest element of provided time
 	PoseStamped at(const ptime&) const;
 
-	PoseStamped at(const ptime &t) const;
-
 	PoseStamped at(const int idx) const
 	{ return std::vector<PoseStamped>::at(idx); }
 
@@ -103,8 +101,10 @@ private:
 	uint32_t
 	find_lower_bound(const ptime&) const;
 
+/*
 	uint32_t
 	find_lower_bound(const ros::Time&) const;
+*/
 
 	typedef std::vector<PoseStamped> Parent;
 

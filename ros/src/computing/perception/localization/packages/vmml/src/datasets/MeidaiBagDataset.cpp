@@ -45,12 +45,18 @@ const TTransform defaultLidarToCameraTransform =
 		-1.520777, -0.015, -1.5488);
 
 
+class cache_error : public runtime_error
+{};
+
+
 MeidaiBagDataset::MeidaiBagDataset(
 
 	const string &path,
+/*
 	double startTimeOffsetSecond,
 	double mappingDurationSecond,
 	const std::string &calibrationPath,
+*/
 	bool loadPositions) :
 
 		bagPath(path),
@@ -66,11 +72,15 @@ MeidaiBagDataset::MeidaiBagDataset(
 	auto mask1Path = myPath / _DashboardMask;
 	auto mask2Path = myPath / _ExposureAdjustmentMask;
 	dashBoardMask = cv::imread(mask1Path.string(), cv::IMREAD_GRAYSCALE);
+/*
 	if (dashBoardMask.empty())
 		throw runtime_error("Unable to load Meidai car image");
+*/
 	exposureMask = cv::imread(mask2Path.string(), cv::IMREAD_GRAYSCALE);
+/*
 	if (exposureMask.empty())
 		throw runtime_error("Unable to load Meidai exposure mask");
+*/
 
 	mPreprocessor.setMode(ImagePreprocessor::ProcessMode::AGC);
 	mPreprocessor.setMask(exposureMask);
@@ -80,17 +90,19 @@ MeidaiBagDataset::MeidaiBagDataset(
 MeidaiBagDataset::Ptr
 MeidaiBagDataset::load (
 		const string &path,
+/*
 		double startTimeOffsetSecond,
 		double mappingDurationSecond,
 		const std::string &calibrationPath,
+*/
 		bool loadPositions
 )
 {
 	MeidaiBagDataset::Ptr nuDatasetMem(new MeidaiBagDataset(
 		path,
-		startTimeOffsetSecond,
-		mappingDurationSecond,
-		calibrationPath,
+//		startTimeOffsetSecond,
+//		mappingDurationSecond,
+//		calibrationPath,
 		loadPositions));
 	return nuDatasetMem;
 }
@@ -101,10 +113,14 @@ MeidaiBagDataset::MeidaiBagDataset
 	bagPath(cp.bagPath),
 	bagfd(cp.bagfd),
 	cameraParams(cp.cameraParams),
-	zoomRatio(cp.zoomRatio)
+	zoomRatio(cp.zoomRatio),
+	dashBoardMask(cp.dashBoardMask),
+	exposureMask(cp.exposureMask),
+	mPreprocessor(cp.mPreprocessor)
 {}
 
 
+/*
 MeidaiBagDataset::Ptr
 MeidaiBagDataset::subset(const ros::Time &startTime, const ros::Duration &lengthInSecond) const
 {
@@ -130,15 +146,6 @@ finish:
 }
 
 
-void
-MeidaiBagDataset::prepareBag (const ros::Time &beginTime, const ros::Time &stopTime)
-{
-	cameraRawBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagImageTopic, beginTime, stopTime));
-	gnssBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagGnssTopic, beginTime, stopTime));
-	velodyneBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagVelodyne, beginTime, stopTime));
-}
-
-
 MeidaiBagDataset::Ptr
 MeidaiBagDataset::subset(const double startTimeOffsetSecond, const double endOffsetFromBeginning) const
 {
@@ -151,7 +158,16 @@ MeidaiBagDataset::subset(const double startTimeOffsetSecond, const double endOff
 
 	return subset(t1, d1);
 }
+*/
 
+
+void
+MeidaiBagDataset::prepareBag (const ros::Time &beginTime, const ros::Time &stopTime)
+{
+	cameraRawBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagImageTopic, beginTime, stopTime));
+	gnssBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagGnssTopic, beginTime, stopTime));
+	velodyneBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagVelodyne, beginTime, stopTime));
+}
 
 
 void
@@ -224,13 +240,6 @@ const
 }
 
 
-void
-MeidaiBagDataset::setZoomRatio (float r)
-{
-	zoomRatio = r;
-}
-
-
 float
 MeidaiBagDataset::getZoomRatio () const
 { return zoomRatio; }
@@ -275,11 +284,13 @@ MeidaiBagDataset::forceCreateCache (bool resetSubset, bool useNdt)
 	bfs::path bagCachePath = bagPath;
 	bagCachePath += ".cache";
 
+/*
 	if (resetSubset==true) {
 		isSubset_ = false;
 		subsetBeginTime = ros::TIME_MIN;
 		subsetEndTime = ros::TIME_MIN;
 	}
+*/
 
 	gnssTrack.clear();
 	ndtTrack.clear();
@@ -299,6 +310,7 @@ MeidaiBagDataset::doLoadCache(const string &path)
 
 	boost::archive::binary_iarchive cacheIArc (cacheFd);
 
+/*
 	cacheIArc >> isSubset_;
 	ptime tx;
 	cacheIArc >> tx;
@@ -309,6 +321,7 @@ MeidaiBagDataset::doLoadCache(const string &path)
 	if (isSubset_) {
 		prepareBag(subsetBeginTime, subsetEndTime);
 	}
+*/
 
 	cacheIArc >> gnssTrack;
 	cacheIArc >> ndtTrack;
@@ -319,14 +332,14 @@ MeidaiBagDataset::doLoadCache(const string &path)
 
 
 void
-MeidaiBagDataset::createCache(bool useNdt)
+MeidaiBagDataset::createCache(bool useLidar)
 {
 	Trajectory *trajectorySrc;
 
 	cout << "Creating GNSS Trajectory\n";
 	createTrajectoryFromGnssBag(*gnssBag, gnssTrack);
 
-	if (useNdt==true) {
+	if (useLidar==true) {
 		cout << "Creating NDT Trajectory\n";
 		auto lidarBag = getLidarScanBag();
 		createTrajectoryFromNDT(*lidarBag, ndtTrack, gnssTrack, pcdMapFilePath);
@@ -339,17 +352,17 @@ MeidaiBagDataset::createCache(bool useNdt)
 	cout << "Creating Camera Trajectory\n";
 	// XXX: It is possible that camera recording may have started earlier than lidar's
 	for (int i=0; i<cameraRawBag->size(); i++) {
-		auto tm = cameraRawBag->timeAt(i);
+		auto tm = cameraRawBag->timeAt(i).toBoost();
 
 		// in both cases; extrapolate
-		PoseTimestamp poseX;
+		PoseStamped poseX;
 		if (tm < trajectorySrc->at(0).timestamp or tm>=trajectorySrc->back().timestamp) {
 			poseX = trajectorySrc->extrapolate(tm);
 		}
 		else
 			poseX = trajectorySrc->interpolate(tm);
 		// XXX: Check this value
-		PoseTimestamp poseX1 = poseX * lidarToCameraTransform;
+		PoseStamped poseX1 = poseX * lidarToCameraTransform;
 		cameraTrack.push_back(poseX1);
 
 		cout << i+1 << " / " << cameraRawBag->size() << "  \r";
@@ -366,11 +379,13 @@ void MeidaiBagDataset::writeCache(const string &path)
 
 	boost::archive::binary_oarchive cacheOArc (cacheFd);
 
+/*
 	cacheOArc << isSubset_;
 	ptime tx = subsetBeginTime.toBoost();
 	cacheOArc << tx;
 	tx = subsetEndTime.toBoost();
 	cacheOArc << tx;
+*/
 
 	cacheOArc << gnssTrack;
 	cacheOArc << ndtTrack;
@@ -404,15 +419,15 @@ MeidaiBagDataset::getLidarScanBag ()
 	if (velodyneCalibrationFilePath.empty())
 		throw runtime_error("Velodyne calibration file not set");
 
-	ros::Time tstart, tstop;
+	ros::Time
+		tstart = ros::TIME_MIN,
+		tstop = ros::TIME_MAX;
+/*
 	if (isSubset()) {
 		tstart = subsetBeginTime;
 		tstart = subsetEndTime;
 	}
-	else {
-		tstart = ros::TIME_MIN;
-		tstop = ros::TIME_MAX;
-	}
+*/
 
 	return LidarScanBag::Ptr (new LidarScanBag(*bagfd, meidaiBagVelodyne, velodyneCalibrationFilePath, tstart, tstop));
 }
@@ -553,6 +568,7 @@ double normalizeAngle(const double &r)
 }
 
 
+/*
 Quaterniond
 PoseTimestamp::extrapolate(const PoseTimestamp &p1, const PoseTimestamp &p2, const decltype(PoseTimestamp::timestamp) &txinp)
 {
@@ -588,6 +604,7 @@ PoseTimestamp::extrapolate(const PoseTimestamp &p1, const PoseTimestamp &p2, con
 
 	return fromRPY(eulerx.x(), eulerx.y(), eulerx.z());
 }
+*/
 
 
 void
@@ -649,6 +666,21 @@ MeidaiDataItem::getTimestamp() const
 }
 
 
+bool
+MeidaiBagDataset::isCameraTrajectoryComplete() const
+{
+	if (cameraTrack.empty())
+		return false;
+
+	if (cameraTrack[0].timestamp > cameraRawBag->startTime().toBoost() or
+		cameraTrack.back().timestamp < cameraRawBag->stopTime().toBoost())
+	return false;
+
+	return true;
+}
+
+
+/*
 PoseTimestamp
 PoseTimestamp::operator* (const Pose &transform)
 {
@@ -668,4 +700,5 @@ PoseTimestamp::interpolate(
 	double r = (t - p1.timestamp).toSec() / (p2.timestamp - p1.timestamp).toSec();
 	return PoseTimestamp (Pose::interpolate(p1, p2, r), t);
 }
+*/
 

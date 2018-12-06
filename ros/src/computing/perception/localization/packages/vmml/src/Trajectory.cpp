@@ -82,13 +82,13 @@ Trajectory::push_back(const PoseStamped &pt)
 
 
 uint32_t
-Trajectory::find_lower_bound(const ros::Time &t) const
+Trajectory::find_lower_bound(const ptime &t) const
 {
 	if ( t < front().timestamp or t > back().timestamp )
 		throw out_of_range("Time out of range");
 
 	auto it = std::lower_bound(begin(), end(), t,
-		[](const PoseStamped &el, const ros::Time& tv)
+		[](const PoseStamped &el, const ptime tv)
 			-> bool {return el.timestamp < tv;}
 	);
 	uint32_t x = it-begin();
@@ -96,19 +96,14 @@ Trajectory::find_lower_bound(const ros::Time &t) const
 }
 
 
+/*
 uint32_t
-Trajectory::find_lower_bound(const ptime &t) const
+Trajectory::find_lower_bound(const ros::Time &t) const
 {
-	ros::Time tx = ros::Time::fromBoost(t);
+	ptime tx = t.toBoost();
 	return find_lower_bound(tx);
 }
-
-
-PoseStamped
-Trajectory::at(const ptime& t) const
-{
-	return Parent::at(find_lower_bound(t));
-}
+*/
 
 
 PoseStamped

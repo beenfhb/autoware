@@ -61,7 +61,7 @@ createTrajectoryFromNDT (
 
 		Pose cNdtPose;
 		auto cscan = bagsrc.at(ip);
-		auto scanTime = bagsrc.timeAt(ip);
+		auto scanTime = bagsrc.timeAt(ip).toBoost();
 		cout << ip+1 << " / " << N << "   \r" << flush;
 
 		try {
@@ -83,8 +83,7 @@ createTrajectoryFromNDT (
 					throw out_of_range("Continuation point lies outside map; resetting");
 			}
 
-			PoseTimestamp tpose (cNdtPose);
-			tpose.timestamp = scanTime;
+			PoseStamped tpose (cNdtPose, scanTime);
 			resultTrack.push_back(tpose);
 
 		} catch (out_of_range &e) {
@@ -119,7 +118,7 @@ createTrajectoryFromNDT2(
 
 		Pose cNdtPose;
 		auto cscan = bagsrc.at(ip);
-		auto scanTime = bagsrc.timeAt(ip);
+		auto scanTime = bagsrc.timeAt(ip).toBoost();
 		cout << ip+1 << " / " << N << "   \r" << flush;
 
 		try {
@@ -143,8 +142,7 @@ createTrajectoryFromNDT2(
 					throw 2;
 			}
 
-			PoseTimestamp tpose (cNdtPose);
-			tpose.timestamp = scanTime;
+			PoseStamped tpose (cNdtPose, scanTime);
 			resultTrack.push_back(tpose);
 
 		} /*catch (out_of_range &e) {

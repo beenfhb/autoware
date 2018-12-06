@@ -123,7 +123,7 @@ void convertNMEASentenceToState (nmea_msgs::SentencePtr &msg, GnssLocalizerState
 }
 
 
-PoseTimestamp createFromState(const GnssLocalizerState &state)
+PoseStamped createFromState(const GnssLocalizerState &state)
 {
 	if (state.latitude==positionInvalid or state.longitude==positionInvalid)
 		throw invalid_gnss_position();
@@ -171,14 +171,14 @@ void createTrajectoryFromGnssBag (RandomAccessBag &bagsrc, Trajectory &trajector
 				state.roll_ = 0;
 				state.pitch_ = 0;
 
-				PoseTimestamp px;
+				PoseStamped px;
 				try {
 					px = createFromState(state);
 				} catch (invalid_gnss_position &e) {
 					continue;
 				}
 
-				px.timestamp = current_time;
+				px.timestamp = current_time.toBoost();
 				trajectory.push_back(px);
 				state.last_geo = state.geo;
 				continue;
@@ -188,14 +188,14 @@ void createTrajectoryFromGnssBag (RandomAccessBag &bagsrc, Trajectory &trajector
 		double e = 1e-2;
 		if (fabs(state.orientation_time_ - state.position_time_) < e) {
 
-			PoseTimestamp px;
+			PoseStamped px;
 			try {
 				px = createFromState(state);
 			} catch (invalid_gnss_position &e) {
 				continue;
 			}
 
-			px.timestamp = current_time;
+			px.timestamp = current_time.toBoost();
 			trajectory.push_back(px);
 			continue;
 		}

@@ -28,6 +28,7 @@
 
 #include "utilities.h"
 #include "ImagePreprocessor.h"
+#include "Trajectory.h"
 #include "datasets/GenericDataset.h"
 #include "RandomAccessBag.h"
 #include "datasets/LidarScanBag.h"
@@ -183,23 +184,25 @@ public:
 
 	MeidaiBagDataset(
 		const std::string &filePath,
-		double startTimeOffsetSecond=0,
-		double mappingDurationSecond=-1,
-		const std::string &calibrationPath=std::string(),
+//		double startTimeOffsetSecond=0,
+//		double mappingDurationSecond=-1,
+//		const std::string &calibrationPath=std::string(),
 		bool loadPositions=true
 	);
 
+/*
 	MeidaiBagDataset::Ptr
 	subset(const ros::Time &startTime, const ros::Duration &lengthInSecond) const;
 
 	MeidaiBagDataset::Ptr
 	subset(const double startTimeOffsetSecond, const double endOffsetFromBeginning) const;
+*/
 
 	static MeidaiBagDataset::Ptr load (
 		const std::string &filePath,
-		double startTimeOffsetSecond=0,
-		double mappingDurationSecond=-1,
-		const std::string &calibrationPath=std::string(),
+//		double startTimeOffsetSecond=0,
+//		double mappingDurationSecond=-1,
+//		const std::string &calibrationPath=std::string(),
 		bool loadPositions=true
 	);
 
@@ -230,6 +233,8 @@ public:
 	const Trajectory& getCameraTrajectory() const
 	{ return cameraTrack; }
 
+	bool isCameraTrajectoryComplete() const;
+
 	GenericDataItem::ConstPtr get(dataItemId i) const;
 
 	GenericDataItem::ConstPtr atDurationSecond (const double second) const;
@@ -239,7 +244,8 @@ public:
 
 	void forceCreateCache (bool resetSubset=false, bool useNdt=true);
 
-	void setZoomRatio (float r);
+	inline void setZoomRatio (float r)
+	{ zoomRatio = r; }
 
 	float getZoomRatio () const;
 
@@ -253,11 +259,13 @@ public:
 		const std::string &pmeidaiPCDMapFile,
 		const TTransform &plidarToCameraTransform=TTransform::Identity());
 
+/*
 	bool isSubset() const
 	{ return isSubset_; }
 
 	inline void getSubsetRange (ptime &beg_, ptime &end_) const
 	{ beg_ = subsetBeginTime.toBoost(); end_ = subsetEndTime.toBoost(); }
+*/
 
 	virtual
 	dataItemId getLowerBound (const ptime &t) const;
@@ -278,10 +286,12 @@ protected:
 
 	const boost::filesystem::path bagPath;
 
+/*
 	bool isSubset_ = false;
 
 	ros::Time subsetBeginTime = ros::TIME_MIN,
 		subsetEndTime = ros::TIME_MIN;
+*/
 
 	CameraPinholeParams cameraParams;
 
@@ -310,6 +320,7 @@ private:
 		pcdMapFilePath;
 	TTransform lidarToCameraTransform;
 
+	// Copy constructor. Reserved for subset, thus made private
 	MeidaiBagDataset(const MeidaiBagDataset &cp);
 
 	void prepareBag (const ros::Time &beginTime=ros::TIME_MIN, const ros::Time &stopTime=ros::TIME_MAX);

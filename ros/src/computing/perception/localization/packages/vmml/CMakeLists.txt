@@ -108,6 +108,7 @@ add_library(
 		src/Optimizer.cpp
 		src/utilities.cpp
 		src/SequenceSLAM.cpp
+		src/Trajectory.cpp
 		src/ImagePreprocessor.cpp
 		src/datasets/GenericDataset.cpp
 		src/datasets/OxfordDataset.cpp
@@ -122,26 +123,26 @@ add_library(
 
 
 # Dataset Browser
-add_executable(dataset_browser
-	src/bin/dataset_browser/main.cpp
-	src/bin/dataset_browser/DatasetBrowser.cpp	
-	src/bin/dataset_browser/ratio_layouted_frame.cpp
-	src/bin/dataset_browser/dataset_browser.ui
-# this header must be included in order to be processed by MOC & UIC
-	src/bin/dataset_browser/ratio_layouted_frame.h
-)
+#add_executable(dataset_browser
+#	src/bin/dataset_browser/main.cpp
+#	src/bin/dataset_browser/DatasetBrowser.cpp	
+#	src/bin/dataset_browser/ratio_layouted_frame.cpp
+#	src/bin/dataset_browser/dataset_browser.ui
+## this header must be included in order to be processed by MOC & UIC
+#	src/bin/dataset_browser/ratio_layouted_frame.h
+#)
 
-target_include_directories(dataset_browser
-	PUBLIC src/bin/dataset_browser 
-)
-
-target_link_libraries(
-	dataset_browser
-		Qt5::Widgets
-		vmml
-		${REQUIRED_LIBS}
-		${catkin_LIBRARIES}
-)
+#target_include_directories(dataset_browser
+#	PUBLIC src/bin/dataset_browser 
+#)
+#
+#target_link_libraries(
+#	dataset_browser
+#		Qt5::Widgets
+#		vmml
+#		${REQUIRED_LIBS}
+#		${catkin_LIBRARIES}
+#)
 
 
 #add_executable(test_bag
@@ -156,39 +157,28 @@ target_link_libraries(
 #)
 
 
-add_executable(vmml_cli
-	src/bin/vmml_cli.cpp
-)
+#add_executable(vmml_cli
+#	src/bin/vmml_cli.cpp
+#)
+#
+#target_link_libraries(vmml_cli
+#	vmml
+#	${REQUIRED_LIBS}
+#	${LIBEDIT_LIBRARIES}
+#	${catkin_LIBRARIES}
+#)
 
-target_link_libraries(vmml_cli
-	vmml
-	${REQUIRED_LIBS}
-	${LIBEDIT_LIBRARIES}
-	${catkin_LIBRARIES}
-)
 
-#add_executable(test_bag2
-#	src/bin/test_bag2.cpp
+#add_executable(test_tf
+#	src/bin/temporaries/test_tf.cpp
 #)
 #
 #target_link_libraries(
-#	test_bag2
+#	test_tf
 #		vmml
 #		${REQUIRED_LIBS}
 #		${catkin_LIBRARIES}
 #)
-
-
-add_executable(test_tf
-	src/bin/temporaries/test_tf.cpp
-)
-
-target_link_libraries(
-	test_tf
-		vmml
-		${REQUIRED_LIBS}
-		${catkin_LIBRARIES}
-)
 
 
 
