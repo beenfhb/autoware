@@ -1,4 +1,6 @@
 #include "rviz_controller.hpp"
+#include <QApplication>
+#include <QDesktopWidget>
 #include <QGridLayout>
 #include <QPushButton>
 
@@ -22,14 +24,18 @@ namespace autoware_rviz_plugins {
 
 RvizController::RvizController(QWidget* parent) : rviz::Panel(parent)
 {
+    QRect screen = QApplication::desktop()->screenGeometry();
+    int font_size = min(screen.width(), screen.height()) / 100;
+    this->setStyleSheet(QString("font-size: %1px;").arg(font_size));
+    
     auto layout = new QGridLayout();
     setLayout(layout);
 
-    vector<const char*> titles = {"map", "localization"};
+    vector<const char*> titles = {"localization", "detection", "prediction", "decision", "mission", "motion"};
     for(size_t i = 0; i < titles.size(); ++i)
     {
         auto button = create_push_button(titles[i]);
-        layout->addWidget(button, 0, i);
+        layout->addWidget(button, i/3, i%3);
         connect(button, &QPushButton::toggled, this, &RvizController::launch_button_toggled);
     }
 
@@ -44,13 +50,10 @@ RvizController::RvizController(QWidget* parent) : rviz::Panel(parent)
 void RvizController::launch_button_toggled(bool checked)
 {
     auto button = static_cast<QPushButton*>(sender());
-    if(checked)
-    {
-        QString json = R"({"command":"launch", "path":["root","%1"]})";
-        json = json.arg(button->text());
-        cout << json.toStdString() << endl;
-        socket->write(json.toUtf8().append('\0'));
-    }
+    QString json = R"({"command":"%1", "path":["root","%2"]})";
+    json = json.arg(checked ? "launch" : "terminate").arg(button->text());
+    cout << json.toStdString() << endl;
+    socket->write(json.toUtf8().append('\0'));
 }
 
 void RvizController::server_connected()
