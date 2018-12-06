@@ -36,6 +36,7 @@
 extern const TTransform defaultLidarToCameraTransform;
 
 
+/*
 struct PoseTimestamp : public Pose
 {
 	PoseTimestamp():
@@ -95,8 +96,10 @@ struct PoseTimestamp : public Pose
 
 	BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
+*/
 
 
+/*
 class Trajectory : public std::vector<PoseTimestamp>
 {
 public:
@@ -133,6 +136,7 @@ private:
 	{ ar & boost::serialization::base_object<Parent>(*this);}
 
 };
+*/
 
 
 class MeidaiBagDataset;

@@ -426,6 +426,7 @@ const
 }
 
 
+/*
 void
 Trajectory::push_back(const PoseTimestamp &pt)
 {
@@ -535,6 +536,7 @@ Trajectory::subset(const ros::Time &start, const ros::Time &stop) const
 
 	return ssub;
 }
+*/
 
 
 double normalizeAngle(const double &r)
