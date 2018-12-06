@@ -441,6 +441,12 @@ const
 }
 
 
+Trajectory
+MeidaiBagDataset::getCameraTrajectory(const ptime timeStart, const ptime timeStop) const
+{
+
+}
+
 /*
 void
 Trajectory::push_back(const PoseTimestamp &pt)

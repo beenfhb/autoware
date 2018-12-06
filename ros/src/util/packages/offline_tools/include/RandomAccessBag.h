@@ -44,8 +44,16 @@ public:
 
 	virtual ~RandomAccessBag();
 
-	void setTimeConstraint(const double seconds1FromOffset, const double seconds2FromOffset);
 	void setTimeConstraint(const ros::Time &t1, const ros::Time &t2);
+
+	// Set time constraint to default (start & stop bag)
+	void resetTimeConstraint();
+
+	/*
+	 * A note about seconds in this function:
+	 * These parameters are time (in seconds) from start of the bag
+	 */
+	void setTimeConstraint(const double seconds1FromOffset, const double seconds2FromOffset);
 
 	template<typename T>
 	boost::shared_ptr<T>
@@ -55,7 +63,7 @@ public:
 		return instantiate<T>(msgPtr.at(position));
 	}
 
-	RandomAccessBag subset(const ros::Time &start, ros::Duration &d) const;
+//	RandomAccessBag subset(const ros::Time &start, ros::Duration &d) const;
 
 	ros::Time timeAt (const int i) const
 	{

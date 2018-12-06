@@ -5,12 +5,30 @@
  *      Author: sujiwo
  */
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #include <stdexcept>
 
 #include "Trajectory.h"
 
 
 using namespace std;
+
+
+#define dPrecision 3
+
+
+class PoseDumpStream: public std::stringstream
+{
+public:
+PoseDumpStream(int precision=dPrecision)
+{
+	setf(ios::fixed, ios::floatfield);
+	precision(precision);
+}
+};
+
 
 
 PoseStamped
@@ -70,6 +88,21 @@ PoseStamped::extrapolate(const PoseStamped &p1, const PoseStamped &p2, const dec
 	return fromRPY(eulerx.x(), eulerx.y(), eulerx.z());
 }
 
+
+string
+PoseStamped::dump()
+const
+{
+	PoseDumpStream s;
+
+	s << toSeconds(timestamp) << ' ';
+	Vector3d v = position();
+	s << v.x() << " " << v.y() << " " << v.z() << " ";
+	Quaterniond q = orientation();
+	s << v.x() << " " << v.y() << " " << v.z() << ' ' << v.w();
+
+	return s.str();
+}
 
 
 void
@@ -175,4 +208,22 @@ Trajectory::subset(const ptime &start, const ptime &stop) const
 	}
 
 	return ssub;
+}
+
+
+bool
+Trajectory::dump(const std::string &filename) const
+{
+	fstream dsTrFd (filename, ios_base::out|ios_base::trunc);
+	if (!dsTrFd.is_open()) {
+		throw runtime_error("Unable to create "+filename);
+	}
+
+	for (int i=0; i<size(); ++i) {
+		dsTrFd << at(i).dump() << endl;
+	}
+
+	dsTrFd.close();
+
+	return true;
 }

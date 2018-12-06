@@ -89,14 +89,10 @@ OxfordDataset::OxfordDataset(const OxfordDataset &cp):
 	stereoTimestamps(cp.stereoTimestamps),
 	stereoRecords(cp.stereoRecords),
 	gpsPoseTable(cp.gpsPoseTable),
-	insPoseTable(cp.insPoseTable)
+	insPoseTable(cp.insPoseTable),
+	dashboardMask(cp.dashboardMask)
 {
 	zoomRatio = cp.zoomRatio;
-
-	// try to load mask image
-	bfs::path myPath(ros::package::getPath("vmml"));
-	auto mask1Path = myPath / _OxfordDashboardMask;
-	dashboardMask = cv::imread(mask1Path.string(), cv::IMREAD_GRAYSCALE);
 }
 
 
@@ -117,6 +113,12 @@ OxfordDataset::OxfordDataset(
 	loadIns();
 
 	createStereoGroundTruths();
+
+	// try to load mask image
+	bfs::path myPath(ros::package::getPath("vmml"));
+	auto mask1Path = myPath / _OxfordDashboardMask;
+	dashboardMask = cv::imread(mask1Path.string(), cv::IMREAD_GRAYSCALE);
+
 	return;
 }
 
@@ -528,6 +530,14 @@ OxfordDataset::atApproximate(timestamp_t t) const
 {
 	auto it = std::lower_bound(stereoTimestamps.begin(), stereoTimestamps.end(), t);
 	return atTime(*it);
+}
+
+
+Trajectory
+OxfordDataset::getCameraTrajectory(const ptime timeStart, const ptime timeStop) const
+{
+	// XXX: Stub
+//	if (timeStart==)
 }
 
 

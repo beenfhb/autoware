@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <exception>
+#include <stdexcept>
 #include <rosbag/query.h>
 
 #include "RandomAccessBag.h"
@@ -14,7 +15,7 @@
 #include "access_private.hpp"
 
 
-using std::runtime_error;
+using namespace std;
 
 
 ACCESS_PRIVATE_FIELD(rosbag::MessageInstance, rosbag::IndexEntry const, index_entry_);
@@ -61,7 +62,6 @@ RandomAccessBag::RandomAccessBag(
 
 	setTimeConstraint(t1x, t2x);
 }
-
 
 
 RandomAccessBag::RandomAccessBag(
@@ -129,14 +129,24 @@ void
 RandomAccessBag::setTimeConstraint(const ros::Time &t1, const ros::Time &t2)
 {
 	if (t1 < bagStartTime or t1 > bagStopTime)
-		throw runtime_error("Requested start time is out of range");
+		throw out_of_range("Requested start time is out of range");
 
 	if (t2 < bagStartTime or t2 > bagStopTime)
-		throw runtime_error("Requested stop time is out of range");
+		throw out_of_range("Requested stop time is out of range");
 
 	queries_.clear();
 	ranges_.clear();
 	addQuery(bagstore, rosbag::TopicQuery(viewTopic), t1, t2);
+	createCache();
+}
+
+
+void
+RandomAccessBag::resetTimeConstraint()
+{
+	queries_.clear();
+	ranges_.clear();
+	addQuery(bagstore, rosbag::TopicQuery(viewTopic));
 	createCache();
 }
 
@@ -146,7 +156,8 @@ RandomAccessBag::getPositionAtDurationSecond (const double S) const
 {
 	ros::Duration Sd (S);
 	ros::Time Tx = msgPtr.at(0).time + Sd;
-	assert (Tx>= msgPtr.at(0).time and Tx<=msgPtr.back().time);
+	if (Tx < msgPtr.at(0).time or Tx > msgPtr.back().time)
+		throw out_of_range("Requested time is out of bag");
 
 	return getPositionAtTime (Tx);
 }
@@ -156,14 +167,21 @@ uint32_t
 RandomAccessBag::getPositionAtTime (const ros::Time &tx) const
 {
 	if (tx<=msgPtr.at(0).time or tx>msgPtr.back().time)
-		throw std::runtime_error("Specified time is outside the range");
+		throw std::out_of_range("Requested time is outside the range");
 
 	auto it = std::lower_bound(msgPtr.begin(), msgPtr.end(), tx,
 		[](const rosbag::IndexEntry &iptr, const ros::Time &t)
 		{ return (iptr.time < t); }
 	);
 
-	return it - msgPtr.begin();
+	uint32_t p = it - msgPtr.begin();
+	if (p>0 and p<size()-1) {
+		auto td1 = msgPtr.at(p).time - tx,
+			td0 = tx - msgPtr.at(p-1).time;
+		return (td1 > td0 ? p-1 : p);
+	}
+
+	else return p;
 }
 
 

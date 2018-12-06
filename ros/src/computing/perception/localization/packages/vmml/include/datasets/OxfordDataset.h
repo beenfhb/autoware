@@ -218,6 +218,8 @@ public:
 	virtual
 	dataItemId getLowerBound (const ptime &t) const;
 
+	virtual Trajectory getCameraTrajectory(const ptime timeStart=MIN_TIME, const ptime timeStop=MAX_TIME) const;
+
 protected:
 	CameraPinholeParams oxfCamera;
 

@@ -230,7 +230,7 @@ public:
 	const Trajectory& getNdtTrajectory() const
 	{ return ndtTrack; }
 
-	const Trajectory& getCameraTrajectory() const
+	const Trajectory& getCompleteCameraTrajectory() const
 	{ return cameraTrack; }
 
 	bool isCameraTrajectoryComplete() const;
@@ -253,6 +253,8 @@ public:
 	{ return velodyneBag; }
 
 	LidarScanBag::Ptr getLidarScanBag ();
+
+	virtual Trajectory getCameraTrajectory(const ptime timeStart=MIN_TIME, const ptime timeStop=MAX_TIME) const;
 
 	void setLidarParameters (
 		const std::string &pvelodyneCalibrationFile,

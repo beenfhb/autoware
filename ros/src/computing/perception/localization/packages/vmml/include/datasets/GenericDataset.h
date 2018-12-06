@@ -17,6 +17,7 @@
 #include <opencv2/core.hpp>
 
 #include "utilities.h"
+#include "Trajectory.h"
 #include "CameraPinholeParams.h"
 
 
@@ -116,6 +117,8 @@ public:
 
 	virtual void convertStartDurationToTime
 	(const double startTimeSec, const double duration, ptime &start, ptime &stop) const;
+
+	virtual Trajectory getCameraTrajectory(const ptime timeStart=MIN_TIME, const ptime timeStop=MAX_TIME) const = 0;
 
 protected:
 	static std::string dSetName;

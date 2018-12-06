@@ -72,6 +72,8 @@ struct PoseStamped : public Pose
 		ar >> timestamp;
 	}
 
+	std::string dump() const;
+
 	BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
 
@@ -96,6 +98,8 @@ public:
 	PoseStamped extrapolate (const ptime&) const;
 
 	Trajectory subset(const ptime &start, const ptime &stop) const;
+
+	bool dump(const std::string &filename) const;
 
 private:
 	uint32_t
