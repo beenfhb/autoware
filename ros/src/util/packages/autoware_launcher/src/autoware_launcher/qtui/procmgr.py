@@ -15,7 +15,7 @@ class AwLaunchWidgetItem(QtWidgets.QTreeWidgetItem):
         self.node = node
         self.node.bind_listener(self)
 
-        self.setText(0, self.node.nodename)
+        self.setText(0, self.node.nodename())
         self.setText(1, "")
         self.setData(1, QtCore.Qt.CheckStateRole, QtCore.Qt.Unchecked)
         self.setText(2, "stop")
@@ -116,7 +116,7 @@ class AwLaunchExecutor(QtWidgets.QPlainTextEdit):
 
 class AwLaunchWidget(QtWidgets.QSplitter):
 
-    def __init__(self, tree):
+    def __init__(self, guimgr, tree):
         super(AwLaunchWidget, self).__init__(QtCore.Qt.Horizontal)
         self.tcpserver = AwTcpServer(tree)
         self.dummyarea = QtWidgets.QLabel()
@@ -124,9 +124,14 @@ class AwLaunchWidget(QtWidgets.QSplitter):
         self.executors.addWidget(self.dummyarea)
 
         view = QtWidgets.QTreeWidget()
-        view.setColumnCount(2)
+        view.setColumnCount(3)
         view.setHeaderLabels(["Node", "Exec", "Status"])
-        for node in tree.children:
+        view.header().setStretchLastSection(False)
+        view.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        view.header().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
+        view.header().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
+
+        for node in tree.children():
             view.addTopLevelItem(self.construct(node))
         view.expandToDepth(0)
         view.itemChanged.connect(self.on_item_changed)
@@ -142,7 +147,7 @@ class AwLaunchWidget(QtWidgets.QSplitter):
             area = AwLaunchExecutor(node)
             self.executors.addWidget(area)
         item = AwLaunchWidgetItem(node, area)
-        for child in node.children:
+        for child in node.children():
             item.addChild(self.construct(child))
         return item
 

@@ -1,0 +1,4 @@
+<launch>
+    <arg name="file"/>
+    <node pkg="map_file" type="vector_map_loader" name="vector_map_loader" args="$(arg file)"/>
+</launch>

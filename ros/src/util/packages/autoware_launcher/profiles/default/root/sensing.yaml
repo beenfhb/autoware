@@ -1,1 +1,6 @@
+plugin : debug/sensing
+
 args : {}
+
+info :
+  title : Prius Default

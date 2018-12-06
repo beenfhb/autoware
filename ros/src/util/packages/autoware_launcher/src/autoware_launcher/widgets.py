@@ -4,36 +4,6 @@ from python_qt_binding import QtWidgets
 
 
 
-class AwBasicWindow(QtWidgets.QMainWindow):
-
-    def __init__(self, guimgr, parent, config):
-
-        super(AwBasicWindow, self).__init__(parent)
-        self.guimgr = guimgr
-        self.config = config
-        self.widget = None
-
-    def load_basic_gui(self):
-
-        class_name = " ( " + self.__class__.__name__ + " )"
-        self.setWindowTitle(self.config.plugin.gui["text"] + class_name)
-
-    def load_basic_geometry(self):
-        
-        print "Load geometry"
-        settings = QtCore.QSettings("Autoware", "AutowareLauncher")
-        if settings.contains("geometry"):
-            self.restoreGeometry(settings.value("geometry"))
- 
-    def save_basic_geometry(self):
-
-        print "Save geometry"
-        settings = QtCore.QSettings("Autoware", "AutowareLauncher")
-        settings.setValue("geometry", self.saveGeometry())
-
-
-
-
 class AwBasicFrameHeader(QtWidgets.QWidget):
 
     def __init__(self):
@@ -184,44 +154,3 @@ class AwTextEditFrame(AwBasicFrame):
         detail = QtWidgets.QTextEdit()
 
         self.set_widgets(header, detail)
-
-
-class AwFileSelectFrame(AwBasicFrame):
-
-    def __init__(self, guimgr, parent, config_plugin):
-
-        super(AwFileSelectFrame, self).__init__(guimgr, parent, None)
-
-        button = QtWidgets.QPushButton("Browse")
-
-        header = AwBasicFrameHeader()
-        header.setHeaderTitle("Arg: " + config_plugin.name)
-        header.addHeaderButton(button)
-
-        if not config_plugin.gui.get("list", False):
-            self.detail = QtWidgets.QLineEdit()
-            self.detail.setReadOnly(True)
-            button.clicked.connect(self.browse_file)
-        else:
-            self.detail = QtWidgets.QTextEdit()
-            self.detail.setReadOnly(True)
-            button.clicked.connect(self.browse_file_list)
-    
-        self.set_widgets(header, self.detail)
-
-    def browse_file(self):
-
-        #default_path = os.path.join( RosPack().get_path("autoware_launcher"), "profiles")
-        filename, filetype =  QtWidgets.QFileDialog.getOpenFileName(self, "Select Profile", os.path.expanduser("~"))
-        if filename:
-            self.detail.setText(filename)
-
-
-
-class AwFileSelectWindow(AwBasicWindow):
-
-    def __init__(self, guimgr, parent, config):
-
-        super(AwFileSelectWindow, self).__init__(guimgr, parent, config)
-        self.load_plugin()
-        self.load_basic_geometry()

@@ -1,1 +1,6 @@
+plugin : debug/rviz
+
 args : {}
+
+info :
+  title : Autoware Default

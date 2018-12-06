@@ -1,0 +1,4 @@
+plugin : map/transform
+
+args :
+  file : $(env HOME)/.autoware/data/tf/tf.launch

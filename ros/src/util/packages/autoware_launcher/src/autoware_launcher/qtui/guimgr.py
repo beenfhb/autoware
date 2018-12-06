@@ -5,68 +5,88 @@ from python_qt_binding import QtWidgets
 from . import widgets
 from . import procmgr
 
+
+
 class AwGuiManager(object):
 
     def __init__(self, sys_argv):
         self.sys_argv = sys_argv
+        self.panels = {}
+        self.frames = {}
+
+        self.panels["default"] = widgets.AwDefaultNodePanel
+        self.frames["default"] = widgets.AwDefaultNodeFrame
+
+        self.panels["file_select"] = None
+        self.frames["file_select"] = widgets.AwFileSelectFrame
 
     def start_autoware_launcher(self, tree):
 
         application = QtWidgets.QApplication(self.sys_argv)
-        screen = application.desktop().screenGeometry()
-        screen = min(screen.width(), screen.height())
+        resolution = application.desktop().screenGeometry()
+        resolution = min(resolution.width(), resolution.height())
 
-        window = QtWidgets.QMainWindow()
+        stylesheet = []
+        stylesheet.append("#FrameHeader { border-top: 1px solid; } #FrameHeader, #FrameWidget { padding: 5px; border-bottom: 1px solid; border-left: 1px solid; border-right: 1px solid; }")
+        stylesheet.append("* { font-size: " + str(resolution/100) + "px; }")
+        application.setStyleSheet(" ".join(stylesheet))
+
+        window = AwMainWindow()
+        window.set_panel(self.create_main_panel(window, tree))
+        window.show()
+        return application.exec_()
+    
+    def create_frame(self, launch):
+
+        gui_type = launch.plugin.gui.get("type", "default")
+        print "Create Frame: " + launch.nodename() + " " + gui_type
+        return self.frames[gui_type](self, launch)
+
+    def create_node_panel(self, window, launch):
+
+        gui_type = launch.plugin.gui.get("type", "default")
+        print "Create Panel: " + launch.nodename() + " " + gui_type
+        return widgets.AwDefaultNodePanel(self, window, launch)
+
+    def create_main_panel(self, window, tree):
+
+        profile = widgets.AwQuickStartPanel(self, window, tree.root)
+        process = procmgr.AwLaunchWidget(self, tree)
         widget = QtWidgets.QTabWidget()
-        viewer = widgets.AwQuickStartWidget(tree)
-        server = procmgr.AwLaunchWidget(tree)
-        
-        widget.addTab(viewer, "Profile")
-        widget.addTab(server, "Process")
-        window.setCentralWidget(widget)
+        widget.addTab(profile, "Profile")
+        widget.addTab(process, "Process")
+        return widget
 
-        window.setStyleSheet("font-size: " + str(screen/100) + "px;")
+    def create_window_open_event(self, frame):
+        def config_event(): # @QtCore.Slot
+            window = AwNodeWindow(frame)
+            window.load_geomerty()
+            window.set_panel(self.create_node_panel(window, frame.launch))
+            window.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+            window.setWindowModality(QtCore.Qt.ApplicationModal)
+            window.show()
+        return config_event
 
+
+class AwNodeWindow(QtWidgets.QMainWindow):
+
+    def load_geomerty(self):
         settings = QtCore.QSettings("Autoware", "AutowareLauncher")
         if settings.contains("geometry"):
-            window.restoreGeometry(settings.value("geometry"))
-        window.show()
-        return application.exec_()
+            self.restoreGeometry(settings.value("geometry"))
+
+    def save_geometry(self):
+        settings = QtCore.QSettings("Autoware", "AutowareLauncher")
+        settings.setValue("geometry", self.saveGeometry())
+
+    def set_panel(self, panel):
+        self.setCentralWidget(panel)
+        self.setWindowTitle(panel.__class__.__name__)
 
 
 
-class AwWindowManager(object):
+class AwMainWindow(AwNodeWindow):
 
     def __init__(self):
-
-        self.classes = {}
-        self.classes["root"] = ( widgets.AwNodeWindow,       None                      )
-        self.classes["node"] = ( widgets.AwNodeWindow,       widgets.AwNodeFrame       )
-        self.classes["leaf"] = ( widgets.AwLeafWindow,       widgets.AwLeafFrame       )
-        self.classes["arg" ] = ( None,                       widgets.AwTextEditFrame   )
-        self.classes["file_select"] = ( widgets.AwFileSelectWindow, widgets.AwFileSelectFrame )
-
-    def run(self, sysarg, awtree):
-
-        application = QtWidgets.QApplication(sysarg)
-        window = self.create_window(None, awtree.config)
-        window.show()
-        return application.exec_()
-
-    def create_window(self, parent, config):
-
-        print "Create window" + str((config.name, config.plugin.name, config.plugin.type, config.plugin.gui))
-        gui_type = config.plugin.gui.get("type", config.plugin.type)
-        return self.classes[gui_type][0](self, parent, config)
-
-    def create_frame(self, parent, config):
-
-        print "Create frame" + str((config.name, config.plugin.name, config.plugin.type, config.plugin.gui))
-        gui_type = config.plugin.gui.get("type", config.plugin.type)
-        return self.classes[gui_type][1](self, parent, config)
-
-    def create_data_frame(self, parent, plugin):
-
-        print "Create data flame" + str((plugin.name, plugin.type, plugin.gui))
-        gui_type = plugin.gui.get("type", plugin.type)
-        return self.classes[gui_type][1](self, parent, plugin)
+        super(AwMainWindow, self).__init__()
+        self.load_geomerty()
