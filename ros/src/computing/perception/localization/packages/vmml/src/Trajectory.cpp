@@ -22,10 +22,10 @@ using namespace std;
 class PoseDumpStream: public std::stringstream
 {
 public:
-PoseDumpStream(int precision=dPrecision)
+PoseDumpStream(int sprecision=dPrecision)
 {
 	setf(ios::fixed, ios::floatfield);
-	precision(precision);
+	precision(sprecision);
 }
 };
 

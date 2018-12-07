@@ -157,16 +157,16 @@ target_link_libraries(
 #)
 
 
-#add_executable(vmml_cli
-#	src/bin/vmml_cli.cpp
-#)
-#
-#target_link_libraries(vmml_cli
-#	vmml
-#	${REQUIRED_LIBS}
-#	${LIBEDIT_LIBRARIES}
-#	${catkin_LIBRARIES}
-#)
+add_executable(vmml_cli
+	src/bin/vmml_cli.cpp
+)
+
+target_link_libraries(vmml_cli
+	vmml
+	${REQUIRED_LIBS}
+	${LIBEDIT_LIBRARIES}
+	${catkin_LIBRARIES}
+)
 
 
 #add_executable(test_tf

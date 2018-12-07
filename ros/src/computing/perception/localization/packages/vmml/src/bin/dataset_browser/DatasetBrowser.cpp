@@ -111,7 +111,7 @@ void DatasetBrowser::on_saveImageButton_clicked(bool checked)
 
 
 // XXX: Change this
-const string lidarCalibrationParams("/home/sujiwo/Autoware/ros/src/computing/perception/localization/packages/vmml/params/64e-S2.yaml");
+const string lidarCalibrationParams("/home/sujiwo/Autoware/ros/src/computing/perception/localization/packages/vmml/params/meidai-64e-S2.yaml");
 
 void
 DatasetBrowser::changeDataset(GenericDataset::Ptr ds, datasetType ty)

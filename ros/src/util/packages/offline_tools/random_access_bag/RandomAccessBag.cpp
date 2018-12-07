@@ -138,6 +138,7 @@ RandomAccessBag::setTimeConstraint(const ros::Time &t1, const ros::Time &t2)
 	ranges_.clear();
 	addQuery(bagstore, rosbag::TopicQuery(viewTopic), t1, t2);
 	createCache();
+	mIsTimeConstrained = true;
 }
 
 
@@ -148,6 +149,7 @@ RandomAccessBag::resetTimeConstraint()
 	ranges_.clear();
 	addQuery(bagstore, rosbag::TopicQuery(viewTopic));
 	createCache();
+	mIsTimeConstrained = false;
 }
 
 
@@ -198,3 +200,15 @@ RandomAccessBag::timeFromOffset(const double secondsFromStart) const
 	return msgPtr.at(0).time + td;
 }
 
+
+/*
+ * Convert time as represented by seconds from start of bag
+ */
+ros::Time
+RandomAccessBag::timeFromStart(const double seconds) const
+{
+	assert (seconds>=0 and seconds<=(bagStopTime-bagStartTime).toSec());
+
+	ros::Duration td(seconds);
+	return bagStartTime + td;
+}

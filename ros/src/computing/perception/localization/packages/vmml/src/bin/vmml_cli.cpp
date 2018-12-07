@@ -343,8 +343,60 @@ private:
 	}
 
 
+	/*
+	 * Building a `ground truth' for Meidai dataset accepts start and stop time,
+	 * expressed in seconds after recording started
+	 */
 	void dataset_build(const stringTokens &cmd)
 	{
+		if (slDatasourceType!=MEIDAI_DATASET_TYPE) {
+			debug("Oxford datasets need not to be built");
+			return;
+		}
+
+		if (meidaiNdtParameters.pcdMapPath.empty()) {
+			debug ("Point cloud map must be set with commands `pcdmap'");
+			return;
+		}
+
+		string velodyneCalibrationPath;
+		if (meidaiNdtParameters.velodyneCalibrationPath.empty()) {
+			boost::filesystem::path myPath = getMyPath();
+			myPath /= "params/meidai-64e-S2.yaml";
+			velodyneCalibrationPath = myPath.string();
+		}
+		else
+			velodyneCalibrationPath = meidaiNdtParameters.velodyneCalibrationPath;
+
+		meidaiNdtParameters.lidarToCamera = defaultLidarToCameraTransform;
+		meidaiDsPtr->setLidarParameters(meidaiNdtParameters.velodyneCalibrationPath, meidaiNdtParameters.pcdMapPath, meidaiNdtParameters.lidarToCamera);
+
+		bool useLidar=true;
+		if (cmd.size() == 2) {
+			if (cmd[1]=="gnss")
+				useLidar = false;
+		}
+
+		else if (cmd.size()>=3) {
+
+			double startPos = stod(cmd[1]),
+				stopPos = stod(cmd[2]);
+
+			if (cmd.size()==4 and cmd[3]=="gnss")
+				useLidar = false;
+
+			debug ("Building from "+to_string(startPos) + " to " + to_string(stopPos));
+			auto
+				t1 = meidaiDsPtr->timeFromStart(startPos),
+				t2 = meidaiDsPtr->timeFromStart(stopPos);
+			meidaiDsPtr->setTimeConstraint(t1, t2);
+		}
+
+		if (useLidar==false)
+			debug ("Not using NDT; camera positions are estimated from GNSS");
+
+//		meidaiDsPtr->fo
+/*
 		if (slDatasourceType==MEIDAI_DATASET_TYPE) {
 			if (meidaiNdtParameters.pcdMapPath.empty() or meidaiNdtParameters.velodyneCalibrationPath.empty()) {
 				debug ("Parameters must be set with commands `velodyne' and `pcdmap'");
@@ -387,6 +439,7 @@ private:
 		else {
 			debug("Oxford datasets need not to be built");
 		}
+*/
 	}
 
 

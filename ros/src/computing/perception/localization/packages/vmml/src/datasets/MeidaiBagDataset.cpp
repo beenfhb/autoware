@@ -164,9 +164,21 @@ MeidaiBagDataset::subset(const double startTimeOffsetSecond, const double endOff
 void
 MeidaiBagDataset::prepareBag (const ros::Time &beginTime, const ros::Time &stopTime)
 {
+/*
 	cameraRawBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagImageTopic, beginTime, stopTime));
 	gnssBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagGnssTopic, beginTime, stopTime));
 	velodyneBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagVelodyne, beginTime, stopTime));
+*/
+	cameraRawBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagImageTopic));
+	gnssBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagGnssTopic));
+	velodyneBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagVelodyne));
+}
+
+
+void
+MeidaiBagDataset::setTimeConstraint(const ptime &start, const ptime &stop)
+{
+//	cameraRawBag->
 }
 
 
@@ -278,19 +290,18 @@ MeidaiBagDataset::setLidarParameters (
 }
 
 
+/*
 void
 MeidaiBagDataset::forceCreateCache (bool resetSubset, bool useNdt)
 {
 	bfs::path bagCachePath = bagPath;
 	bagCachePath += ".cache";
 
-/*
 	if (resetSubset==true) {
 		isSubset_ = false;
 		subsetBeginTime = ros::TIME_MIN;
 		subsetEndTime = ros::TIME_MIN;
 	}
-*/
 
 	gnssTrack.clear();
 	ndtTrack.clear();
@@ -298,10 +309,21 @@ MeidaiBagDataset::forceCreateCache (bool resetSubset, bool useNdt)
 	createTrajectories(useNdt);
 	writeCache(bagCachePath.string());
 }
+*/
 
 
 void
-MeidaiBagDataset::forceCreateCache (const double startOffset, const double stopOffset, bool useLidar)
+MeidaiBagDataset::forceCreateCache (bool useLidar, const double startOffset, const double stopOffset)
+{
+	ptime
+		t1 = cameraRawBag->timeFromStart(startOffset).toBoost(),
+		t2 = cameraRawBag->timeFromStart(stopOffset).toBoost();
+	return forceCreateCache(useLidar, t1, t2);
+}
+
+
+void
+MeidaiBagDataset::forceCreateCache (bool useLidar, const ptime &t1, const ptime &t2)
 {
 	bfs::path bagCachePath = bagPath;
 	bagCachePath += ".cache";
@@ -310,7 +332,11 @@ MeidaiBagDataset::forceCreateCache (const double startOffset, const double stopO
 	ndtTrack.clear();
 	cameraTrack.clear();
 
-	createTrajectories(useLidar);
+	ros::Time
+		tr1 = (t1==MIN_TIME ? ros::TIME_MIN : ros::Time::fromBoost(t1)),
+		tr2 = (t2==MAX_TIME ? ros::TIME_MAX : ros::Time::fromBoost(t2)),
+
+	createTrajectories(tr1, tr2, useLidar);
 	writeCache(bagCachePath.string());
 }
 

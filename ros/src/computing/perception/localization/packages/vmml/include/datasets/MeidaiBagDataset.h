@@ -206,6 +206,8 @@ public:
 		bool loadPositions=true
 	);
 
+	void setTimeConstraint(const ptime &start, const ptime &stop);
+
 	void loadPosition();
 
 	virtual ~MeidaiBagDataset();
@@ -242,9 +244,10 @@ public:
 	bool hasPositioning() const
 	{ return !gnssTrack.empty(); }
 
-	void forceCreateCache (bool resetSubset=false, bool useNdt=true);
+//	void forceCreateCache (bool resetSubset=false, bool useNdt=true);
 
-	void forceCreateCache (const double startOffset, const double stopOffset, bool useLidar=true);
+	void forceCreateCache (bool useLidar=true, const double startOffset, const double stopOffset);
+	void forceCreateCache (bool useLidar=true, const ptime &t1=MIN_TIME, const ptime &t2=MAX_TIME);
 
 	inline void setZoomRatio (float r)
 	{ zoomRatio = r; }
@@ -262,6 +265,12 @@ public:
 		const std::string &pvelodyneCalibrationFile,
 		const std::string &pmeidaiPCDMapFile,
 		const TTransform &plidarToCameraTransform=TTransform::Identity());
+
+	/*
+	* Convert time as represented by seconds from start of bag
+	*/
+	inline ptime timeFromStart(const double seconds) const
+	{ return cameraRawBag->timeFromStart(seconds).toBoost(); }
 
 /*
 	bool isSubset() const
@@ -307,7 +316,7 @@ protected:
 private:
 	void loadCache ();
 	void doLoadCache (const std::string &);
-	void createTrajectories (ros::Time startTime, ros::Time stopTime, bool useNdt=true);
+	void createTrajectories (ros::Time startTime=ros::TIME_MIN, ros::Time stopTime=ros::TIME_MAX, bool useNdt=true);
 	void writeCache (const std::string&);
 
 	Trajectory gnssTrack;

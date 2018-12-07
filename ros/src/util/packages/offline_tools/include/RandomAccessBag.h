@@ -100,14 +100,27 @@ public:
 	 { return msgPtr.back().time; }
 
 	 inline bool isTimeInside(const ros::Time &t) const
-	 {
-		 return (t>=startTime and t<=stopTime);
-	 }
+	 { return (t>=msgPtr.front().time and t<=msgPtr.back().time); }
 
 	 /*
 	  * Convert time as represented by seconds from offset
 	  */
 	 ros::Time timeFromOffset(const double secondsFromStart) const;
+
+	 /*
+	  * Convert time as represented by seconds from start of bag
+	  */
+	 ros::Time timeFromStart(const double seconds) const;
+
+
+	 inline ros::Time getBagStartTime() const
+	 { return bagStartTime; }
+
+	 inline ros::Time getBagStopTime() const
+	 { return bagStopTime; }
+
+	 inline bool isTimeConstrained() const
+	 { return mIsTimeConstrained; }
 
 protected:
 	void createCache();
@@ -115,6 +128,7 @@ protected:
 	const rosbag::Bag &bagstore;
 	const rosbag::ConnectionInfo* conn;
 	std::vector<rosbag::IndexEntry> msgPtr;
+	bool mIsTimeConstrained = false;
 
 	template<class T>
 	boost::shared_ptr<T>
