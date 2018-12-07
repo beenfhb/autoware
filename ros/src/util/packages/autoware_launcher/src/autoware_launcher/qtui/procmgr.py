@@ -2,11 +2,11 @@ from python_qt_binding import QtCore
 from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
+from autoware_launcher.core import AwLaunchNodeListenerIF
+from autoware_launcher.core import AwLaunchNodeExecutorIF
 from .network import AwTcpServer
 
-
-
-class AwLaunchWidgetItem(QtWidgets.QTreeWidgetItem):
+class AwLaunchWidgetItem(QtWidgets.QTreeWidgetItem, AwLaunchNodeListenerIF):
 
     def __init__(self, node, area):
         super(AwLaunchWidgetItem, self).__init__()
@@ -60,7 +60,7 @@ class AwLaunchWidgetItem(QtWidgets.QTreeWidgetItem):
 
 
 
-class AwLaunchExecutor(QtWidgets.QPlainTextEdit):
+class AwLaunchExecutor(QtWidgets.QPlainTextEdit, AwLaunchNodeExecutorIF):
 
     STOP_STATE = 1
     EXEC_STATE = 2

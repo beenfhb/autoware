@@ -6,15 +6,13 @@ import yaml
 
 
 
-# class AwBaseTree(object):
-# class AwBaseNode(object):
-
-class AwLaunchNodeListener(object): #interface
+class AwLaunchNodeListenerIF(object):
     def exec_requested(self): pass 
     def term_requested(self): pass
     def term_completed(self): pass
+    def config_updated(self): pass
 
-class AwLaunchNodeExecutor(object): #interface
+class AwLaunchNodeExecutorIF(object):
     def request_exec(self): pass 
     def request_term(self): pass
 
@@ -125,7 +123,7 @@ class AwLaunchNode(AwBaseNode):
         self.widget   = None
         self.__config = {}
         self.listener = [] #AwLaunchNodeListener
-        self.executor = AwLaunchNodeExecutor()
+        self.executor = AwLaunchNodeExecutorIF()
 
     # Move to AwBaseNode
     def dump(self, indent):
@@ -136,16 +134,18 @@ class AwLaunchNode(AwBaseNode):
                 child_node.dump(indent + 2)
 
     def bind_listener(self, listener):
-        #isinstance
+        if not isinstance(listener, AwLaunchNodeListenerIF):
+            raise TypeError(listener.__class__.__name__ + " does not inherit to AwLaunchNodeListenerIF")
         self.listener.append(listener)
+    
+    def bind_executor(self, executor):
+        if not isinstance(executor, AwLaunchNodeExecutorIF):
+            raise TypeError(executor.__class__.__name__ + " does not inherit to AwLaunchNodeExecutorIF")
+        self.executor = executor
     
     def unbind_listener(self, listener):
         self.listener.remove(listener)
 
-    def bind_executor(self, executor):
-        #isinstance
-        self.executor = executor
-    
     def unbind_executor(self, executor):
         self.executor = AwLaunchNodeExecutor()
 

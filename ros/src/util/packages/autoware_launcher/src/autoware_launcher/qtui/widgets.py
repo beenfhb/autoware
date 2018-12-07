@@ -2,6 +2,8 @@ from python_qt_binding import QtCore
 from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
+from autoware_launcher.core import AwLaunchNodeListenerIF
+
 
 
 class AwQuickStartPanel(QtWidgets.QWidget):
@@ -78,7 +80,7 @@ class AwAbstructFrame(QtWidgets.QWidget):
     def add_button(self, button):
         self.header.layout().addWidget(button)
 
-    def add_launch_button(self, button):
+    def add_launch_button(self):
         self.add_button(AwLaunchButton(self.launch))
 
     def add_config_button(self):
@@ -106,10 +108,12 @@ class AwDefaultNodeFrame(AwAbstructFrame):
         super(AwDefaultNodeFrame, self).__init__(guimgr, launch)
         self.set_title(launch.nodename().capitalize())
         self.add_config_button()
+        self.add_launch_button()
         self.add_widget(self.create_dummy_widget(launch.get_data("info", "title")))
 
 
-class AwFileSelectFrame(AwAbstructFrame):
+
+class AwFileSelectFrame(AwAbstructFrame, AwLaunchNodeListenerIF):
 
     def __init__(self, guimgr, launch):
         super(AwFileSelectFrame, self).__init__(guimgr, launch)
@@ -134,11 +138,13 @@ class AwFileSelectFrame(AwAbstructFrame):
 
     def browse(self):
 
-        import os
+        import os, re
         if self.launch.plugin.gui.get("list") is not True:
             filename, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Select File", os.path.expanduser("~"))
+            filename = re.sub("^" + os.environ['HOME'], "$(env HOME)", filename)
         else:
             filename, filetype = QtWidgets.QFileDialog.getOpenFileNames(self, "Select Files", os.path.expanduser("~"))
+            filename = map(lambda v: re.sub("^" + os.environ['HOME'], "$(env HOME)", v), filename)
 
         if filename:
             grp, key = self.launch.plugin.gui.get("data").split(".")
@@ -153,19 +159,16 @@ class AwFileSelectFrame(AwAbstructFrame):
 
 
 
-
-
-
-
-
-class AwLaunchButton(QtWidgets.QPushButton):
+class AwLaunchButton(QtWidgets.QPushButton, AwLaunchNodeListenerIF):
 
     def __init__(self, node):
         super(AwLaunchButton, self).__init__()
         self.node = node
-        self.node.bind_listener(self) # need unbind in destructor
         self.setText("Launch")
         self.clicked.connect(self.on_clicked)
+
+        self.node.bind_listener(self)
+        self.destroyed.connect(lambda: self.node.unbind_listener(self))
 
     def exec_requested(self):
         self.setText("Terminate")
