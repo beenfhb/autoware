@@ -538,6 +538,9 @@ OxfordDataset::getCameraTrajectory(const ptime timeStart, const ptime timeStop) 
 {
 	// XXX: Stub
 //	if (timeStart==)
+	for (uint i=0; i<stereoTimestamps; ++i) {
+		auto ts = stereoTimestamps[i];
+	}
 }
 
 

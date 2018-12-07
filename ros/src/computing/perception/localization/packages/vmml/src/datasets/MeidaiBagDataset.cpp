@@ -316,8 +316,8 @@ void
 MeidaiBagDataset::forceCreateCache (bool useLidar, const double startOffset, const double stopOffset)
 {
 	ptime
-		t1 = cameraRawBag->timeFromStart(startOffset).toBoost(),
-		t2 = cameraRawBag->timeFromStart(stopOffset).toBoost();
+		t1 = (startOffset==-1 ? MIN_TIME : cameraRawBag->timeFromStart(startOffset).toBoost()),
+		t2 = (stopOffset==-1 ? MAX_TIME : cameraRawBag->timeFromStart(stopOffset).toBoost());
 	return forceCreateCache(useLidar, t1, t2);
 }
 
@@ -332,11 +332,7 @@ MeidaiBagDataset::forceCreateCache (bool useLidar, const ptime &t1, const ptime 
 	ndtTrack.clear();
 	cameraTrack.clear();
 
-	ros::Time
-		tr1 = (t1==MIN_TIME ? ros::TIME_MIN : ros::Time::fromBoost(t1)),
-		tr2 = (t2==MAX_TIME ? ros::TIME_MAX : ros::Time::fromBoost(t2)),
-
-	createTrajectories(tr1, tr2, useLidar);
+	createTrajectories(t1, t2, useLidar);
 	writeCache(bagCachePath.string());
 }
 
@@ -373,12 +369,16 @@ MeidaiBagDataset::doLoadCache(const string &path)
 
 
 void
-MeidaiBagDataset::createTrajectories(ros::Time startTime, ros::Time stopTime, bool useLidar)
+MeidaiBagDataset::createTrajectories(ptime startTimep, ptime stopTimep, bool useLidar)
 {
 	Trajectory *trajectorySrc;
 	bool doCompensateTime = false;
 
-	if (startTime==ros::TIME_MIN and stopTime==ros::TIME_MAX) {
+	ros::Time
+		startTime = (startTimep==MIN_TIME ? ros::TIME_MIN : ros::Time::fromBoost(startTimep)),
+		stopTime = (stopTimep==MAX_TIME ? ros::TIME_MAX : ros::Time::fromBoost(stopTimep));
+
+	if (startTime!=ros::TIME_MIN and stopTime!=ros::TIME_MAX) {
 		ros::Duration td(0.25);
 		doCompensateTime = true;
 		startTime -= td;

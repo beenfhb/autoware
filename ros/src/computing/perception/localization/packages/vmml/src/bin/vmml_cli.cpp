@@ -346,6 +346,8 @@ private:
 	/*
 	 * Building a `ground truth' for Meidai dataset accepts start and stop time,
 	 * expressed in seconds after recording started
+	 * Syntax:
+	 * build [startOffset] [stopOffset] [gnss]
 	 */
 	void dataset_build(const stringTokens &cmd)
 	{
@@ -354,22 +356,9 @@ private:
 			return;
 		}
 
-		if (meidaiNdtParameters.pcdMapPath.empty()) {
-			debug ("Point cloud map must be set with commands `pcdmap'");
-			return;
-		}
-
-		string velodyneCalibrationPath;
-		if (meidaiNdtParameters.velodyneCalibrationPath.empty()) {
-			boost::filesystem::path myPath = getMyPath();
-			myPath /= "params/meidai-64e-S2.yaml";
-			velodyneCalibrationPath = myPath.string();
-		}
-		else
-			velodyneCalibrationPath = meidaiNdtParameters.velodyneCalibrationPath;
-
-		meidaiNdtParameters.lidarToCamera = defaultLidarToCameraTransform;
-		meidaiDsPtr->setLidarParameters(meidaiNdtParameters.velodyneCalibrationPath, meidaiNdtParameters.pcdMapPath, meidaiNdtParameters.lidarToCamera);
+		ptime
+			t1 = MIN_TIME,
+			t2 = MAX_TIME;
 
 		bool useLidar=true;
 		if (cmd.size() == 2) {
@@ -386,60 +375,37 @@ private:
 				useLidar = false;
 
 			debug ("Building from "+to_string(startPos) + " to " + to_string(stopPos));
-			auto
-				t1 = meidaiDsPtr->timeFromStart(startPos),
-				t2 = meidaiDsPtr->timeFromStart(stopPos);
-			meidaiDsPtr->setTimeConstraint(t1, t2);
+			t1 = meidaiDsPtr->timeFromStart(startPos);
+			t2 = meidaiDsPtr->timeFromStart(stopPos);
+//			meidaiDsPtr->setTimeConstraint(t1, t2);
 		}
 
-		if (useLidar==false)
+		if (useLidar==false) {
 			debug ("Not using NDT; camera positions are estimated from GNSS");
+		}
 
-//		meidaiDsPtr->fo
-/*
-		if (slDatasourceType==MEIDAI_DATASET_TYPE) {
-			if (meidaiNdtParameters.pcdMapPath.empty() or meidaiNdtParameters.velodyneCalibrationPath.empty()) {
-				debug ("Parameters must be set with commands `velodyne' and `pcdmap'");
+		else if (useLidar==true) {
+			if (meidaiNdtParameters.pcdMapPath.empty()) {
+				debug ("Point cloud map must be set with commands `pcdmap'");
 				return;
 			}
 
-			MeidaiBagDataset::Ptr nuDataset;
-			bool resetSubset;
-			bool useNdt = true;
-
-			if (cmd.size()<=2) {
-				nuDataset = static_pointer_cast<MeidaiBagDataset>(loadedDataset);
-				resetSubset = true;
-				if (cmd.size()==2 and cmd[1]=="gnss")
-					useNdt = false;
-			}
-
-			else {
-
-				double startPos = stod(cmd[1]),
-					stopPos = stod(cmd[2]);
-
-				if (cmd.size()==4 and cmd[3]=="gnss")
-					useNdt = false;
-
-				debug ("Building from "+to_string(startPos) + " to " + to_string(stopPos));
-				MeidaiBagDataset::Ptr nTmp = static_pointer_cast<MeidaiBagDataset>(loadedDataset);
-				nuDataset = nTmp->subset(startPos, stopPos);
-				resetSubset = false;
-			}
-
-			if (useNdt==false)
-				debug ("Not using NDT; camera positions are estimated from GNSS");
-
 			meidaiNdtParameters.lidarToCamera = defaultLidarToCameraTransform;
-			nuDataset->setLidarParameters(meidaiNdtParameters.velodyneCalibrationPath, meidaiNdtParameters.pcdMapPath, meidaiNdtParameters.lidarToCamera);
-			nuDataset->forceCreateCache(resetSubset, useNdt);
+			string velodyneCalibrationPath;
+			if (meidaiNdtParameters.velodyneCalibrationPath.empty()) {
+				boost::filesystem::path myPath = getMyPath();
+				myPath /= "params/meidai-64e-S2.yaml";
+				velodyneCalibrationPath = myPath.string();
+			}
+			else
+				velodyneCalibrationPath = meidaiNdtParameters.velodyneCalibrationPath;
+
+			meidaiDsPtr->setLidarParameters(velodyneCalibrationPath, meidaiNdtParameters.pcdMapPath, meidaiNdtParameters.lidarToCamera);
 		}
 
-		else {
-			debug("Oxford datasets need not to be built");
-		}
-*/
+		meidaiDsPtr->forceCreateCache(useLidar, t1, t2);
+
+		debug ("Done");
 	}
 
 
@@ -471,11 +437,14 @@ private:
 	void dataset_info_cmd()
 	{
 		if (slDatasourceType==MEIDAI_DATASET_TYPE) {
-			MeidaiBagDataset::Ptr meidaiDs = static_pointer_cast<MeidaiBagDataset>(loadedDataset);
-			auto cameraTrack = meidaiDs->getCameraTrajectory();
+			auto cameraTrack = meidaiDsPtr->getCameraTrajectory();
 
-			if (meidaiDs->isCameraTrajectoryComplete()) {
-				debug("Camera trajectory is complete");
+			if (cameraTrack.empty()==false) {
+				if (meidaiDsPtr->isCameraTrajectoryComplete()) {
+					debug("Camera trajectory is complete");
+				}
+				else
+					debug("Camera trajectory is partial");
 			}
 
 			else {

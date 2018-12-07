@@ -246,7 +246,7 @@ public:
 
 //	void forceCreateCache (bool resetSubset=false, bool useNdt=true);
 
-	void forceCreateCache (bool useLidar=true, const double startOffset, const double stopOffset);
+	void forceCreateCache (bool useLidar=true, const double startOffset=-1, const double stopOffset=-1);
 	void forceCreateCache (bool useLidar=true, const ptime &t1=MIN_TIME, const ptime &t2=MAX_TIME);
 
 	inline void setZoomRatio (float r)
@@ -316,7 +316,7 @@ protected:
 private:
 	void loadCache ();
 	void doLoadCache (const std::string &);
-	void createTrajectories (ros::Time startTime=ros::TIME_MIN, ros::Time stopTime=ros::TIME_MAX, bool useNdt=true);
+	void createTrajectories (ptime startTime=MIN_TIME, ptime stopTime=MAX_TIME, bool useNdt=true);
 	void writeCache (const std::string&);
 
 	Trajectory gnssTrack;
