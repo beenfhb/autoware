@@ -295,7 +295,22 @@ MeidaiBagDataset::forceCreateCache (bool resetSubset, bool useNdt)
 	gnssTrack.clear();
 	ndtTrack.clear();
 	cameraTrack.clear();
-	createCache(useNdt);
+	createTrajectories(useNdt);
+	writeCache(bagCachePath.string());
+}
+
+
+void
+MeidaiBagDataset::forceCreateCache (const double startOffset, const double stopOffset, bool useLidar)
+{
+	bfs::path bagCachePath = bagPath;
+	bagCachePath += ".cache";
+
+	gnssTrack.clear();
+	ndtTrack.clear();
+	cameraTrack.clear();
+
+	createTrajectories(useLidar);
 	writeCache(bagCachePath.string());
 }
 
@@ -332,16 +347,35 @@ MeidaiBagDataset::doLoadCache(const string &path)
 
 
 void
-MeidaiBagDataset::createCache(bool useLidar)
+MeidaiBagDataset::createTrajectories(ros::Time startTime, ros::Time stopTime, bool useLidar)
 {
 	Trajectory *trajectorySrc;
+	bool doCompensateTime = false;
 
+	if (startTime==ros::TIME_MIN and stopTime==ros::TIME_MAX) {
+		ros::Duration td(0.25);
+		doCompensateTime = true;
+		startTime -= td;
+		stopTime += td;
+	}
+
+	/*
+	 * Create full-bag trajectory for GNSS. It will be used as fallback
+	 * when LIDAR localization fails
+	 */
 	cout << "Creating GNSS Trajectory\n";
 	createTrajectoryFromGnssBag(*gnssBag, gnssTrack);
 
+	/*
+	 * As of December 2018, NDT localization still could fail undetected (unless it drifts out-of-the-map)
+	 */
 	if (useLidar==true) {
 		cout << "Creating NDT Trajectory\n";
 		auto lidarBag = getLidarScanBag();
+
+		if (doCompensateTime)
+			lidarBag->setTimeConstraint(startTime, stopTime);
+
 		createTrajectoryFromNDT(*lidarBag, ndtTrack, gnssTrack, pcdMapFilePath);
 		trajectorySrc = &ndtTrack;
 	}
@@ -351,6 +385,10 @@ MeidaiBagDataset::createCache(bool useLidar)
 
 	cout << "Creating Camera Trajectory\n";
 	// XXX: It is possible that camera recording may have started earlier than lidar's
+
+	if (doCompensateTime)
+		cameraRawBag->setTimeConstraint(startTime, stopTime);
+
 	for (int i=0; i<cameraRawBag->size(); i++) {
 		auto tm = cameraRawBag->timeAt(i).toBoost();
 

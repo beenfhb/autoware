@@ -99,6 +99,11 @@ public:
 	 ros::Time stopTime() const
 	 { return msgPtr.back().time; }
 
+	 inline bool isTimeInside(const ros::Time &t) const
+	 {
+		 return (t>=startTime and t<=stopTime);
+	 }
+
 	 /*
 	  * Convert time as represented by seconds from offset
 	  */

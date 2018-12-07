@@ -244,6 +244,8 @@ public:
 
 	void forceCreateCache (bool resetSubset=false, bool useNdt=true);
 
+	void forceCreateCache (const double startOffset, const double stopOffset, bool useLidar=true);
+
 	inline void setZoomRatio (float r)
 	{ zoomRatio = r; }
 
@@ -305,7 +307,7 @@ protected:
 private:
 	void loadCache ();
 	void doLoadCache (const std::string &);
-	void createCache (bool useNdt=true);
+	void createTrajectories (ros::Time startTime, ros::Time stopTime, bool useNdt=true);
 	void writeCache (const std::string&);
 
 	Trajectory gnssTrack;
