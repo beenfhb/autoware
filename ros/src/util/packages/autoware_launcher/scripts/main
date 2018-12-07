@@ -19,4 +19,5 @@ print("============================================================")
 print
 
 guimgr = AwGuiManager(sys.argv)
+guimgr.loader = loader #temporary
 sys.exit(guimgr.start_autoware_launcher(launch))

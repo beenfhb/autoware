@@ -7,14 +7,14 @@ import yaml
 
 
 class AwLaunchNodeListenerIF(object):
-    def exec_requested(self): pass 
-    def term_requested(self): pass
-    def term_completed(self): pass
-    def config_updated(self): pass
+    def exec_requested(self): pass  #raise NotImplementedError()
+    def term_requested(self): pass  #raise NotImplementedError()
+    def term_completed(self): pass  #raise NotImplementedError()
+    def config_updated(self): pass  #raise NotImplementedError()
 
 class AwLaunchNodeExecutorIF(object):
-    def request_exec(self): pass 
-    def request_term(self): pass
+    def request_exec(self): pass  #raise NotImplementedError()
+    def request_term(self): pass  #raise NotImplementedError()
 
 
 
@@ -50,6 +50,7 @@ class AwLaunchTree(object):
     def nodepath(self):
         return ""
 
+    # Move to Server
     def request_json(self, json_string):
         request = json.loads(json_string)
         if request.get("command") == "launch":
@@ -101,10 +102,14 @@ class AwBaseNode(object):
     def getchild(self, name):
         return self.__childmap[name]
 
+    def haschild(self, name):
+        return name in self.__childmap
+
     def addchild(self, name, child):
         self.__children.append(child)
         self.__childmap[name] = child
 
+    # Move to Server ?
     def find(self, path):
         if not path:
             return self
@@ -120,7 +125,6 @@ class AwLaunchNode(AwBaseNode):
     def __init__(self, parent, name):
         super(AwLaunchNode, self).__init__(parent, name)
         self.plugin   = None
-        self.widget   = None
         self.__config = {}
         self.listener = [] #AwLaunchNodeListener
         self.executor = AwLaunchNodeExecutorIF()
@@ -128,7 +132,7 @@ class AwLaunchNode(AwBaseNode):
     # Move to AwBaseNode
     def dump(self, indent):
         nodetype = "node" if self.isnode() else "leaf"
-        print((" " * indent) + str((nodetype, self.nodename(), self.plugin.nodepath(), self.widget)))
+        print((" " * indent) + str((nodetype, self.nodename(), self.plugin.nodepath())))
         if self.isnode():
             for child_node in self.children():
                 child_node.dump(indent + 2)
@@ -148,6 +152,18 @@ class AwLaunchNode(AwBaseNode):
 
     def unbind_executor(self, executor):
         self.executor = AwLaunchNodeExecutor()
+
+    # temporary
+    def create_child(self, name, plugin):
+        if not name:
+            return "key empty"
+        if self.haschild(name):
+            return "key exist"
+        child = AwLaunchNode(self, name)
+        child.plugin = plugin
+        child.__config["info"] = {}
+        child.__config["args"] = {}
+        return child
 
     def set_data(self, grp, key, value):
         self.__config[grp][key] = value
@@ -194,7 +210,6 @@ class AwLaunchNode(AwBaseNode):
         with open(fpath + ".yaml") as fp:
             ydata = yaml.safe_load(fp)
         self.plugin = loader.find(ydata.get("plugin", "node/default"))
-        self.widget = ydata.get("widget")
         self.__config["info"] = ydata.get("info", {})
         self.__config["args"] = ydata.get("args", {})
         if ydata.get("children") is None:

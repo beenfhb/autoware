@@ -137,6 +137,7 @@ class AwLaunchWidget(QtWidgets.QSplitter):
         view.itemChanged.connect(self.on_item_changed)
         view.itemClicked.connect(self.on_item_clicked)
         view.itemActivated.connect(self.on_item_clicked)
+        #view.selectionModel().selectionChanged
 
         self.addWidget(view)
         self.addWidget(self.executors)

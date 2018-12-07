@@ -46,11 +46,11 @@ class AwGuiManager(object):
 
         gui_type = launch.plugin.gui.get("type", "default")
         print "Create Panel: " + launch.nodename() + " " + gui_type
-        return widgets.AwDefaultNodePanel(self, window, launch)
+        return widgets.AwDefaultNodePanel(self, launch, window)
 
     def create_main_panel(self, window, tree):
 
-        profile = widgets.AwQuickStartPanel(self, window, tree.root)
+        profile = widgets.AwQuickStartPanel(self, tree.root, window)
         process = procmgr.AwLaunchWidget(self, tree)
         widget = QtWidgets.QTabWidget()
         widget.addTab(profile, "Profile")

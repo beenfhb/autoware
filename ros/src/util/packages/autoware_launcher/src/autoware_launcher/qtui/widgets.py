@@ -6,42 +6,136 @@ from autoware_launcher.core import AwLaunchNodeListenerIF
 
 
 
-class AwQuickStartPanel(QtWidgets.QWidget):
+class AwAbstructPanel(QtWidgets.QWidget):
 
-    def __init__(self, guimgr, window, launch):
-        super(AwQuickStartPanel, self).__init__()
+    def __init__(self, guimgr, launch, window):
+        super(AwAbstructPanel, self).__init__()
         self.guimgr = guimgr
-        self.window = window
         self.launch = launch
-        
+        self.window = window
+
+        # Panel Footer
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setSpacing(2)
+        layout.addStretch()
+        self.footer = QtWidgets.QWidget()
+        self.footer.setLayout(layout)
+
+        # Panel Layout
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(16)
-        layout.addWidget(AwDefaultNodeFrame(guimgr, launch))
-        for child in launch.children():
-            layout.addWidget(guimgr.create_frame(child))
         layout.addStretch()
-
+        layout.addWidget(self.footer)
         self.setLayout(layout)
 
 
+    def add_frame(self, launch):
+        index = self.layout().count() - 2
+        self.layout().insertWidget(index, self.guimgr.create_frame(launch))
 
-class AwDefaultNodePanel(QtWidgets.QWidget):
+    def add_node_button(self):
+        button = QtWidgets.QPushButton("Add Node")
+        self.footer.layout().addWidget(button)
+        def temp():
+            window = AwPluginSelectWindow(self.guimgr, self.launch, self)
+            window.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+            window.setWindowModality(QtCore.Qt.ApplicationModal)
+            window.show()
+        button.clicked.connect(temp)
 
-    def __init__(self, guimgr, window, launch):
-        super(AwDefaultNodePanel, self).__init__()
+
+
+#temporary
+class AwPluginSelectWindow(QtWidgets.QMainWindow):
+
+    def __init__(self, guimgr, launch, parent):
+        super(AwPluginSelectWindow, self).__init__(parent)
         self.guimgr = guimgr
-        self.window = window
         self.launch = launch
-        
-        layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(16)
-        for child in launch.children():
-            layout.addWidget(guimgr.create_frame(child))
-        layout.addStretch()
 
-        self.setLayout(layout)
+        settings = QtCore.QSettings("Autoware", "AutowareLauncher")
+        if settings.contains("geometry"):
+            self.restoreGeometry(settings.value("geometry"))
+
+        widget = QtWidgets.QWidget()
+        self.group   = QtWidgets.QListWidget()
+        self.plugins = QtWidgets.QStackedWidget()
+        self.info   = QtWidgets.QLabel()
+        layout = QtWidgets.QGridLayout()
+        layout.addWidget(self.group,   0, 0, 2, 1)
+        layout.addWidget(self.plugins, 0, 1, 2, 1)
+        layout.addWidget(self.info ,   2, 0, 1, 2)
+
+        layout2 = QtWidgets.QHBoxLayout()
+        layout2.addWidget(QtWidgets.QLabel("Node Name"))
+
+        self.edit = QtWidgets.QLineEdit()
+        layout2.addWidget(self.edit)
+
+        button2 = QtWidgets.QPushButton("Cancel")
+        button2.clicked.connect(self.close)
+        layout2.addWidget(button2)
+
+        button1 = QtWidgets.QPushButton("OK")
+        button1.clicked.connect(self.create_launch_node)
+        layout2.addWidget(button1)
+
+        vlayout = QtWidgets.QVBoxLayout()
+        vlayout.addLayout(layout)
+        vlayout.addLayout(layout2)
+        widget.setLayout(vlayout)
+        
+        self.setCentralWidget(widget)
+        self.setWindowTitle("Select Plugin")
+        self.group.currentRowChanged.connect(lambda index: self.plugins.setCurrentIndex(index))
+
+        for group_name, group_data in self.guimgr.loader._AwPluginLoader__plugins.items():
+            plugin = QtWidgets.QListWidget()
+            self.group.addItem(group_name)
+            self.plugins.addWidget(plugin)
+            for plugin_name in group_data:
+                plugin.addItem(plugin_name)
+
+    def create_launch_node(self):
+        plugin = None
+        group_index = self.group.currentRow()
+        if group_index != -1:
+            plugin_index = self.plugins.widget(group_index).currentRow()
+            if plugin_index != -1:
+                group_name  =  self.group.item(group_index).text()
+                plugin_name =  self.plugins.widget(group_index).item(plugin_index).text()
+                plugin = self.guimgr.loader.find(group_name + "/" + plugin_name)
+
+        print plugin
+
+        result = self.launch.create_child(self.edit.text(), plugin)
+        if type(result) is not str:
+            self.close()
+        else:
+            print result
+
+
+
+class AwQuickStartPanel(AwAbstructPanel):
+
+    def __init__(self, guimgr, launch, window):
+        super(AwQuickStartPanel, self).__init__(guimgr, launch, window)
+        self.add_node_button()
+        self.add_frame(self.launch)
+        for child in self.launch.children():
+            self.add_frame(child)
+
+
+
+
+class AwDefaultNodePanel(AwAbstructPanel):
+
+    def __init__(self, guimgr, launch, window):
+        super(AwDefaultNodePanel, self).__init__(guimgr, launch, window)
+        for child in self.launch.children():
+            self.add_frame(child)
 
 
 
@@ -52,18 +146,18 @@ class AwAbstructFrame(QtWidgets.QWidget):
         self.guimgr = guimgr
         self.launch = launch
 
+        # Frame Header
         self.title = QtWidgets.QLabel("No Title")
         self.title.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
-
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(5, 2, 2, 2)
         layout.setSpacing(0)
         layout.addWidget(self.title)
-
         self.header = QtWidgets.QWidget()
         self.header.setObjectName("FrameHeader")
         self.header.setLayout(layout)
 
+        # Frame Layout
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
