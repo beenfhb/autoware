@@ -322,6 +322,9 @@ double toSeconds (const ptime &pt);
 inline double toSeconds (const tduration &td)
 { return (double(td.total_microseconds()) / 1e6); }
 
+/*
+ * Convert UNIX timestamp in seconds to ptime
+ */
 ptime fromSeconds (const double s);
 
 void debugMsg(const std::string &s, double is_error=false);

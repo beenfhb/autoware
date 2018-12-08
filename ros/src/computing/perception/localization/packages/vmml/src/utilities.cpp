@@ -19,6 +19,9 @@ using namespace Eigen;
 #define dPrecision 3
 
 
+const ptime epoch(boost::gregorian::date(1970,1,1));
+
+
 class VStream: public std::stringstream
 {
 public:
@@ -253,7 +256,14 @@ void debugMsg(const string &s, double is_error)
 
 double toSeconds (const ptime &pt)
 {
-	ptime epoch(boost::gregorian::date(1970,1,1));
 	tduration td = pt - epoch;
 	return td_seconds(td);
+}
+
+
+ptime fromSeconds (const double s)
+{
+	long micro_ts = s*1e6;
+	tduration td = boost::posix_time::microseconds(micro_ts);
+	return epoch + td;
 }

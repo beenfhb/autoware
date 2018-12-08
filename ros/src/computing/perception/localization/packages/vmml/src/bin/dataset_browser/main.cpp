@@ -10,6 +10,8 @@
 #include <string>
 #include <boost/filesystem.hpp>
 
+#include <ros/package.h>
+
 #include <QApplication>
 #include "DatasetBrowser.h"
 #include "datasets/OxfordDataset.h"

@@ -168,7 +168,7 @@ public:
 			{ RecordRuntime("MapOpen", map_open_cmd(command[1]) ); }
 
 		else if (command[0]=="dataset")
-			{ RecordRuntime("DatasetOpen", dataset_open_cmd(command[1], command[2])); }
+			{ RecordRuntime("DatasetOpen", dataset_open_cmd(command)); }
 
 		else if (command[0]=="map_pcl")
 			map_dump_pcl();
@@ -515,12 +515,19 @@ private:
 	}
 
 
-	void dataset_open_cmd(const string &dsPath, const string &modelDir)
+//	void dataset_open_cmd(const string &dsPath, const string &modelDir)
+	void dataset_open_cmd(const stringTokens &cmd)
 	{
-		datasetPath = boost::filesystem::path (dsPath);
+		datasetPath = boost::filesystem::path (cmd[0]);
 
 		if (boost::filesystem::is_directory(datasetPath)) {
-			loadedDataset = OxfordDataset::load(datasetPath.string(), modelDir);
+
+			if (cmd.size()==2) {
+				debug("Oxford SDK Model Directory not specified");
+				return;
+			}
+
+			loadedDataset = OxfordDataset::load(datasetPath.string(), cmd[1]);
 			slDatasourceType = OXFORD_DATASET_TYPE;
 			oxfordDsPtr = static_pointer_cast<OxfordDataset> (loadedDataset);
 			debug ("Oxford-type Dataset Loaded");

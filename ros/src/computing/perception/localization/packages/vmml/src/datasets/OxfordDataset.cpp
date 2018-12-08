@@ -536,11 +536,23 @@ OxfordDataset::atApproximate(timestamp_t t) const
 Trajectory
 OxfordDataset::getCameraTrajectory(const ptime timeStart, const ptime timeStop) const
 {
-	// XXX: Stub
-//	if (timeStart==)
-	for (uint i=0; i<stereoTimestamps; ++i) {
+	timestamp_t
+		t1 = (timeStart==MIN_TIME ? stereoTimestamps.front() : toOxfordTimestamp(timeStart)),
+		t2 = (timeStop ==MAX_TIME ? stereoTimestamps.back()  : toOxfordTimestamp(timeStop) );
+
+	Trajectory egoTrack;
+
+	for (uint i=0; i<stereoTimestamps.size(); ++i) {
 		auto ts = stereoTimestamps[i];
+		if (t1 <= ts and ts <= t2) {
+			auto px = stereoRecords.at(ts);
+			ptime t = fromSeconds(double(ts)/1e6);
+			PoseStamped ego(px.getPosition(), px.getOrientation(), t);
+			egoTrack.push_back(ego);
+		}
 	}
+
+	return egoTrack;
 }
 
 
