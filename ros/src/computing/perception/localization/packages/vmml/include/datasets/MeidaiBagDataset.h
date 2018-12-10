@@ -288,6 +288,13 @@ public:
 	// Flag to request preprocessed image
 	bool isPreprocessed = false;
 
+	enum CameraTrackSource {
+		GNSS,
+		NDT,
+		ICP
+	} cameraTrackSource;
+
+
 protected:
 	static std::string dSetName;
 

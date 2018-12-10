@@ -168,21 +168,41 @@ RandomAccessBag::getPositionAtDurationSecond (const double S) const
 uint32_t
 RandomAccessBag::getPositionAtTime (const ros::Time &tx) const
 {
-	if (tx<=msgPtr.at(0).time or tx>msgPtr.back().time)
-		throw std::out_of_range("Requested time is outside the range");
+	ros::Time txi;
+	const ros::Time
+		bstart = msgPtr.front().time,
+		bstop = msgPtr.back().time;
 
-	auto it = std::lower_bound(msgPtr.begin(), msgPtr.end(), tx,
+	// Check whether tx is inside the range, with tolerance of 1 microsecond
+	if (tx < bstart) {
+		if (abs((tx-bstart).toNSec()) > 1000)
+			throw std::out_of_range("Requested time is below the range");
+		else
+			txi = bstart;
+	}
+
+	else if (tx > bstop) {
+		if (abs((tx-bstop).toNSec()) > 1000)
+			throw std::out_of_range("Requested time is over the range");
+		else
+			txi = bstop;
+	}
+
+	else
+		txi = tx;
+
+	auto it = std::lower_bound(msgPtr.begin(), msgPtr.end(), txi,
 		[](const rosbag::IndexEntry &iptr, const ros::Time &t)
 		{ return (iptr.time < t); }
 	);
 
+	// check if either solution p or p-1 is closer to our requested time
 	uint32_t p = it - msgPtr.begin();
 	if (p>0 and p<size()-1) {
 		auto td1 = msgPtr.at(p).time - tx,
-			td0 = tx - msgPtr.at(p-1).time;
+			td0 = txi - msgPtr.at(p-1).time;
 		return (td1 > td0 ? p-1 : p);
 	}
-
 	else return p;
 }
 

@@ -364,6 +364,8 @@ MeidaiBagDataset::doLoadCache(const string &path)
 	cacheIArc >> ndtTrack;
 	cacheIArc >> cameraTrack;
 
+	cacheIArc >> cameraTrackSource;
+
 	cacheFd.close();
 }
 
@@ -404,10 +406,13 @@ MeidaiBagDataset::createTrajectories(ptime startTimep, ptime stopTimep, bool use
 
 		createTrajectoryFromNDT(*lidarBag, ndtTrack, gnssTrack, pcdMapFilePath);
 		trajectorySrc = &ndtTrack;
+		cameraTrackSource = CameraTrackSource::NDT;
 	}
 
-	else
+	else {
 		trajectorySrc = &gnssTrack;
+		cameraTrackSource = CameraTrackSource::GNSS;
+	}
 
 	cout << "Creating Camera Trajectory\n";
 	// XXX: It is possible that camera recording may have started earlier than lidar's
@@ -455,6 +460,8 @@ void MeidaiBagDataset::writeCache(const string &path)
 	cacheOArc << ndtTrack;
 	cacheOArc << cameraTrack;
 
+	cacheOArc << cameraTrackSource;
+
 	cacheFd.close();
 }
 
@@ -471,7 +478,9 @@ const
 dataItemId
 MeidaiBagDataset::getLowerBound (const ptime &t) const
 {
+//	auto tms1 = (t - unixTime0).total_nanoseconds();
 	auto rt = ros::Time::fromBoost(t);
+//	auto tms2 = rt.toNSec();
 	return (dataItemId)cameraRawBag->getPositionAtTime(rt);
 }
 
@@ -508,7 +517,8 @@ const
 Trajectory
 MeidaiBagDataset::getCameraTrajectory(const ptime timeStart, const ptime timeStop) const
 {
-
+	// XXX: Stub
+	return cameraTrack;
 }
 
 
@@ -581,7 +591,9 @@ MeidaiDataItem::getImage() const
 ptime
 MeidaiDataItem::getTimestamp() const
 {
-	return bImageMsg->header.stamp.toBoost();
+//	return bImageMsg->header.stamp.toBoost();
+	auto ts = parent.cameraRawBag->timeAt(pId);
+	return ts.toBoost();
 }
 
 

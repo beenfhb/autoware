@@ -436,15 +436,27 @@ private:
 
 	void dataset_info_cmd()
 	{
+		if (loadedDataset==nullptr) {
+			debug("No dataset loaded");
+			return;
+		}
+
 		if (slDatasourceType==MEIDAI_DATASET_TYPE) {
-			auto cameraTrack = meidaiDsPtr->getCameraTrajectory();
+			auto cameraTrack = meidaiDsPtr->getCompleteCameraTrajectory();
 
 			if (cameraTrack.empty()==false) {
+
 				if (meidaiDsPtr->isCameraTrajectoryComplete()) {
 					debug("Camera trajectory is complete");
 				}
 				else
 					debug("Camera trajectory is partial");
+
+				switch (meidaiDsPtr->cameraTrackSource) {
+				case MeidaiBagDataset::GNSS: debug("Camera trajectory is derived from GNSS"); break;
+				case MeidaiBagDataset::NDT: debug("Camera trajectory is derived from NDT"); break;
+				case MeidaiBagDataset::ICP: debug("Camera trajectory is derived from ICP"); break;
+				}
 			}
 
 			else {
@@ -518,7 +530,7 @@ private:
 //	void dataset_open_cmd(const string &dsPath, const string &modelDir)
 	void dataset_open_cmd(const stringTokens &cmd)
 	{
-		datasetPath = boost::filesystem::path (cmd[0]);
+		datasetPath = boost::filesystem::path (cmd[1]);
 
 		if (boost::filesystem::is_directory(datasetPath)) {
 
