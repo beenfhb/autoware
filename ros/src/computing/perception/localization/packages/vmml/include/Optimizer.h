@@ -17,8 +17,9 @@
 
 class Frame;
 
-
 void bundle_adjustment (VMap *orgMap);
+
+void bundle_adjustment_2 (VMap *orgMap);
 
 int optimize_pose (const Frame &frame, Pose &initPose, const VMap *vmap);
 

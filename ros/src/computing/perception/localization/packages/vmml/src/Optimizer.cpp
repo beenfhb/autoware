@@ -102,8 +102,7 @@ void debugVector (const VectorXd &v)
 }
 
 
-/*
-void bundle_adjustment_original (VMap *orgMap)
+void bundle_adjustment (VMap *orgMap)
 {
 	vector<kfid> keyframeList = orgMap->allKeyFrames();
 	vector<mpid> mappointList = orgMap->allMapPoints();
@@ -200,8 +199,9 @@ void bundle_adjustment_original (VMap *orgMap)
 		mp->setPosition(vMp->estimate());
 	}
 }
-*/
-void bundle_adjustment (VMap *orgMap)
+
+
+void bundle_adjustment_2 (VMap *orgMap)
 {
 	vector<kfid> keyframeList = orgMap->allKeyFrames();
 	vector<mpid> mappointList = orgMap->allMapPoints();
@@ -286,13 +286,18 @@ void bundle_adjustment (VMap *orgMap)
 			edgeKf->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>( vertexKfMapInv[kId] ));
 
 			// Measurement
-			// P2 = T * T1 ==> T = P2 * inverse(T1)
+			// P2 = T * P1 ==> T = P2 * inverse(P1)
 			TTransform T = orgMap->keyframe(kId)->pose() * orgMap->keyframe(kfriend)->pose().inverse();
 			edgeKf->setMeasurement(g2o::SE3Quat(T.orientation(), T.position()));
 
 			// Uncertainty
 			// XXX: Unfinished
-//			edgeKf->setInformation()
+			Matrix<double,6,6> edgeInf = Matrix<double,6,6>::Identity();
+			// For GNSS
+			edgeInf(0,0) = 5.0;
+			edgeInf(1,1) = 1.0;
+			edgeInf(2,2) = 5.0;
+			edgeKf->setInformation(edgeInf);
 
 			optimizer.addEdge(edgeKf);
 		}
