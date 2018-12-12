@@ -137,8 +137,8 @@ MapBuilder2::build ()
 
 	thread ba([this] {
 				cout << "Bundling...";
-				bundle_adjustment(cMap);
-//				bundle_adjustment_2(cMap);
+//				bundle_adjustment(cMap);
+				bundle_adjustment_2(cMap);
 				cout << "BA Done\n";
 	});
 
