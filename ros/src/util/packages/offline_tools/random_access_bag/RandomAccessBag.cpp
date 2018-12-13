@@ -251,3 +251,10 @@ RandomAccessBag::getTopicList(const rosbag::Bag &bag)
 
 	return topicList;
 }
+
+
+std::string
+RandomAccessBag::messageType() const
+{
+	return conn->datatype;
+}

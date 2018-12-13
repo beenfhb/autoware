@@ -10,6 +10,7 @@ set (CMAKE_AUTOUIC					ON)
 
 find_package(catkin REQUIRED COMPONENTS 
 	rviz
+	cv_bridge
 	pcl_ros
 	vector_map
 	rosbag_storage)
@@ -18,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package (Qt5Core CONFIG REQUIRED)
 find_package (Qt5Widgets CONFIG REQUIRED)
 find_package(PCL REQUIRED)
+find_package (OpenCV REQUIRED)
 
 
 catkin_package(
@@ -93,6 +95,7 @@ target_link_libraries(
 		random_access_bag
 		${catkin_LIBRARIES}
 		Qt5::Widgets
+		${OpenCV_LIBS}
 )
 
 target_include_directories(bag_viewer

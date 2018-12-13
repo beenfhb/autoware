@@ -126,6 +126,8 @@ public:
 	 inline std::string topic() const
 	 { return viewTopic; }
 
+	 std::string messageType() const;
+
 	 static std::map<std::string, std::string>
 	 getTopicList(const rosbag::Bag &bag);
 
