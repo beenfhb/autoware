@@ -1,8 +1,0 @@
-plugin : debug/rosbag
-
-args :
-  rosbag_file : $(env HOME)/.autoware/log/20150324.bag
-  start_time  : 200
-
-info :
-  title : Moriyama Area (lidar + camera + gnss)

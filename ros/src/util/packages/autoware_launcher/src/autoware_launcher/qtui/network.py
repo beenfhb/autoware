@@ -43,9 +43,3 @@ class AwTcpServer(QtNetwork.QTcpServer):
         if socket in self.connections:
             socket.close()
             self.connections.remove(socket)
-
-
-
-from autoware_launcher.core import AwLaunchTree
-if __name__ == "__main__":
-    pass

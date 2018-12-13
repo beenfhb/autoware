@@ -6,6 +6,56 @@ from autoware_launcher.core import AwLaunchNodeListenerIF
 from autoware_launcher.core import AwLaunchNodeExecutorIF
 from .network import AwTcpServer
 
+
+
+class AwProcessMonitorPanel(QtWidgets.QSplitter):
+
+    def __init__(self, guimgr, tree):
+        super(AwProcessMonitorPanel, self).__init__(QtCore.Qt.Horizontal)
+        self.dummyarea = QtWidgets.QLabel()
+        self.executors = QtWidgets.QStackedWidget()
+        self.executors.addWidget(self.dummyarea)
+
+        view = QtWidgets.QTreeWidget()
+        view.setColumnCount(3)
+        view.setHeaderLabels(["Node", "Exec", "Status"])
+        view.header().setStretchLastSection(False)
+        view.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        view.header().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
+        view.header().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
+
+        for node in tree.children():
+            view.addTopLevelItem(self.construct(node))
+        view.expandToDepth(0)
+        view.itemChanged.connect(self.on_item_changed)
+        view.itemClicked.connect(self.on_item_clicked)
+        view.itemActivated.connect(self.on_item_clicked)
+        #view.selectionModel().selectionChanged
+
+        self.addWidget(view)
+        self.addWidget(self.executors)
+
+    def construct(self, node):
+        area = self.dummyarea
+        if node.isleaf():
+            area = AwLaunchExecutor(node)
+            self.executors.addWidget(area)
+        item = AwLaunchWidgetItem(node, area)
+        for child in node.children():
+            item.addChild(self.construct(child))
+        return item
+
+    # QtCore.Slot
+    def on_item_changed(self, item, column):
+        item.changed(column)
+
+    # QtCore.Slot
+    def on_item_clicked(self, item, column):
+        self.executors.setCurrentWidget(item.area)
+
+
+
+
 class AwLaunchWidgetItem(QtWidgets.QTreeWidgetItem, AwLaunchNodeListenerIF):
 
     def __init__(self, node, area):
@@ -111,51 +161,3 @@ class AwLaunchExecutor(QtWidgets.QPlainTextEdit, AwLaunchNodeExecutorIF):
         text = QtCore.QTextStream(byte).readAll()
         self.moveCursor(QtGui.QTextCursor.End)
         self.insertPlainText(text)
-
-
-
-class AwLaunchWidget(QtWidgets.QSplitter):
-
-    def __init__(self, guimgr, tree):
-        super(AwLaunchWidget, self).__init__(QtCore.Qt.Horizontal)
-        self.tcpserver = AwTcpServer(tree)
-        self.dummyarea = QtWidgets.QLabel()
-        self.executors = QtWidgets.QStackedWidget()
-        self.executors.addWidget(self.dummyarea)
-
-        view = QtWidgets.QTreeWidget()
-        view.setColumnCount(3)
-        view.setHeaderLabels(["Node", "Exec", "Status"])
-        view.header().setStretchLastSection(False)
-        view.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-        view.header().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
-        view.header().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
-
-        for node in tree.children():
-            view.addTopLevelItem(self.construct(node))
-        view.expandToDepth(0)
-        view.itemChanged.connect(self.on_item_changed)
-        view.itemClicked.connect(self.on_item_clicked)
-        view.itemActivated.connect(self.on_item_clicked)
-        #view.selectionModel().selectionChanged
-
-        self.addWidget(view)
-        self.addWidget(self.executors)
-
-    def construct(self, node):
-        area = self.dummyarea
-        if node.isleaf():
-            area = AwLaunchExecutor(node)
-            self.executors.addWidget(area)
-        item = AwLaunchWidgetItem(node, area)
-        for child in node.children():
-            item.addChild(self.construct(child))
-        return item
-
-    # QtCore.Slot
-    def on_item_changed(self, item, column):
-        item.changed(column)
-
-    # QtCore.Slot
-    def on_item_clicked(self, item, column):
-        self.executors.setCurrentWidget(item.area)

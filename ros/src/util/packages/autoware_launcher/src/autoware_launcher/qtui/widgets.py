@@ -1,53 +1,126 @@
 from python_qt_binding import QtCore
-from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
+from autoware_launcher.core import fsys
 from autoware_launcher.core import AwLaunchNodeListenerIF
 
-
-
-class AwAbstructPanel(QtWidgets.QWidget):
-
-    def __init__(self, guimgr, launch, window):
-        super(AwAbstructPanel, self).__init__()
-        self.guimgr = guimgr
-        self.launch = launch
-        self.window = window
-
-        # Panel Footer
-        layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(2, 2, 2, 2)
-        layout.setSpacing(2)
-        layout.addStretch()
-        self.footer = QtWidgets.QWidget()
-        self.footer.setLayout(layout)
-
-        # Panel Layout
-        layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(16)
-        layout.addStretch()
-        layout.addWidget(self.footer)
-        self.setLayout(layout)
-
-
-    def add_frame(self, launch):
-        index = self.layout().count() - 2
-        self.layout().insertWidget(index, self.guimgr.create_frame(launch))
-
-    def add_node_button(self):
-        button = QtWidgets.QPushButton("Add Node")
-        self.footer.layout().addWidget(button)
-        def temp():
-            window = AwPluginSelectWindow(self.guimgr, self.launch, self)
-            window.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
-            window.setWindowModality(QtCore.Qt.ApplicationModal)
-            window.show()
-        button.clicked.connect(temp)
+from .abstruct import AwAbstructWindow
+from .abstruct import AwAbstructPanel
+from .abstruct import AwAbstructFrame
+from .procmgr  import AwProcessMonitorPanel
 
 
 
-#temporary
+class AwMainWindow(AwAbstructWindow):
+
+    def __init__(self, guimgr, launch_path):
+
+        super(AwMainWindow, self).__init__(guimgr, launch_path)
+        self.load_geomerty()
+        self.setWindowTitle("Autoware Launcher")
+
+        self.__init_menu()
+        self.update_widget()
+
+    def closeEvent(self, event):
+
+        self.save_geometry()
+        super(AwMainWindow, self).closeEvent(event)
+
+    def update_widget(self):
+
+        profile = AwStandardHomePanel(self.guimgr, launch_path)
+        #process = AwProcessMonitorPanel(self.guimgr, None)
+
+        widget = QtWidgets.QTabWidget()
+        widget.addTab(profile, "Profile")
+        #widget.addTab(process, "Process")
+        self.setCentralWidget(widget)
+
+    def __init_menu(self):
+
+        load_action = QtWidgets.QAction("Load Profile", self)
+        load_action.setShortcut("Ctrl+L")
+        load_action.triggered.connect(self.load_profile)
+
+        save_action = QtWidgets.QAction("Save Profile", self)
+        save_action.setShortcut("Ctrl+S")
+
+        save_as_action = QtWidgets.QAction("Save Profile As", self)
+        save_as_action.setShortcut("Ctrl+A")
+        save_as_action.triggered.connect(self.save_profile_as)
+
+        mainmenu = self.menuBar()
+        filemenu = mainmenu.addMenu("File")
+        filemenu.addAction(load_action)
+        filemenu.addAction(save_action)
+        filemenu.addAction(save_as_action)
+
+    def load_profile(self):
+        import os
+        filename, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Load Profile", fsys.profile_path(), "Launch Profile (*.launch)")
+        filename, filetype = os.path.splitext(filename)
+        if filename:
+            self.guimgr.client.load_launch_tree(filename)
+            self.update_widget()
+
+
+    def save_profile_as(self):
+        import os
+        filename, filetype = QtWidgets.QFileDialog.getSaveFileName(self, "Save Profile As", os.path.expanduser("~"), "Launch Profile (*.launch)")
+        filename, filetype = os.path.splitext(filename)
+        if filetype != ".launch":
+            filename = filename + filetype
+
+
+
+class AwStandardHomePanel(AwAbstructPanel):
+
+    def __init__(self, guimgr, launch_path):
+        super(AwStandardHomePanel, self).__init__(guimgr, launch_path)
+        self.update_widget()
+
+    def update_widget(self):
+        launch = self.guimgr.client.find_launch_node(self.launch_path)
+        self.add_frame(AwProfileFrame(self.guimgr, self.launch_path))
+        for child in launch.children():
+            if child.nodename() in ["map", "vehicle", "sensing", "rviz"]:
+                #self.add_frame(self.guimgr.create_frame(child))
+                self.add_frame(AwLaunchFrame(self.guimgr, child.nodepath()))
+        #self.add_button(AwLaunchButton(self.launch.getchild("rviz")))
+
+
+
+class AwProfileFrame(AwAbstructFrame):
+
+    def __init__(self, guimgr, launch_path):
+        super(AwProfileFrame, self).__init__(guimgr, launch_path)
+        self.update_widget()
+
+    def update_widget(self):
+        launch = self.guimgr.client.find_launch_node(self.launch_path)
+        self.set_title("Profile : " + launch.config.get("info.title"))
+        self.add_text_widget(launch.config.get("info.description"))
+
+
+
+class AwLaunchFrame(AwAbstructFrame):
+
+    def __init__(self, guimgr, launch_path):
+        super(AwLaunchFrame, self).__init__(guimgr, launch_path)
+        self.update_widget()
+
+    def update_widget(self):
+        launch = self.guimgr.client.find_launch_node(self.launch_path)
+        self.set_title("__NAME__ : " + launch.config.get("info.title"))
+        self.add_text_widget(launch.config.get("info.description"))
+
+        # ToDo
+        self.add_button(QtWidgets.QPushButton("Launch"))
+
+
+
+#experimental
 class AwPluginSelectWindow(QtWidgets.QMainWindow):
 
     def __init__(self, guimgr, launch, parent):
@@ -108,8 +181,6 @@ class AwPluginSelectWindow(QtWidgets.QMainWindow):
                 plugin_name =  self.plugins.widget(group_index).item(plugin_index).text()
                 plugin = self.guimgr.loader.find(group_name + "/" + plugin_name)
 
-        print plugin
-
         result = self.launch.create_child(self.edit.text(), plugin)
         if type(result) is not str:
             self.close()
@@ -118,82 +189,98 @@ class AwPluginSelectWindow(QtWidgets.QMainWindow):
 
 
 
-class AwQuickStartPanel(AwAbstructPanel):
+#experimental
+class AwPluginRemoveWindow(QtWidgets.QMainWindow):
 
-    def __init__(self, guimgr, launch, window):
-        super(AwQuickStartPanel, self).__init__(guimgr, launch, window)
-        self.add_node_button()
-        self.add_frame(self.launch)
-        for child in self.launch.children():
-            self.add_frame(child)
-
-
-
-
-class AwDefaultNodePanel(AwAbstructPanel):
-
-    def __init__(self, guimgr, launch, window):
-        super(AwDefaultNodePanel, self).__init__(guimgr, launch, window)
-        for child in self.launch.children():
-            self.add_frame(child)
-
-
-
-class AwAbstructFrame(QtWidgets.QWidget):
-
-    def __init__(self, guimgr, launch):
-        super(AwAbstructFrame, self).__init__()
+    def __init__(self, guimgr, launch, parent):
+        super(AwPluginRemoveWindow, self).__init__(parent)
         self.guimgr = guimgr
         self.launch = launch
 
-        # Frame Header
-        self.title = QtWidgets.QLabel("No Title")
-        self.title.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
-        layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(5, 2, 2, 2)
-        layout.setSpacing(0)
-        layout.addWidget(self.title)
-        self.header = QtWidgets.QWidget()
-        self.header.setObjectName("FrameHeader")
-        self.header.setLayout(layout)
+        settings = QtCore.QSettings("Autoware", "AutowareLauncher")
+        if settings.contains("geometry"):
+            self.restoreGeometry(settings.value("geometry"))
 
-        # Frame Layout
+        # select
+        self.nodelist = QtWidgets.QListWidget()
+        for child in self.launch.children():
+            self.nodelist.addItem(child.nodename())
+
+        # footer
+        cancel = QtWidgets.QPushButton("Cancel")
+        cancel.clicked.connect(self.close)
+        remove = QtWidgets.QPushButton("Remove")
+        remove.clicked.connect(self.remove_launch_node)
+        footer = QtWidgets.QHBoxLayout()
+        footer.addStretch()
+        footer.addWidget(cancel)
+        footer.addWidget(remove)
+
+        # widget
         layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        layout.addWidget(self.header)
-        self.setLayout(layout)
-
-    def set_title(self, title):
-        self.title.setText(title + " : " + self.__class__.__name__)
-
-    def add_widget(self, widget):
-        widget.setObjectName("FrameWidget")
-        self.layout().addWidget(widget)
-
-    def add_button(self, button):
-        self.header.layout().addWidget(button)
-
-    def add_launch_button(self):
-        self.add_button(AwLaunchButton(self.launch))
-
-    def add_config_button(self):
-
-        button = QtWidgets.QPushButton("Config")
-        button.clicked.connect(self.guimgr.create_window_open_event(self))
-        self.add_button(button)
-
-    def create_dummy_widget(self, text):
-
-        layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(5, 2, 2, 2)
-        layout.setSpacing(0)
-        layout.addWidget(QtWidgets.QLabel(text))
-
+        layout.addWidget(self.nodelist)
+        layout.addLayout(footer)
         widget = QtWidgets.QWidget()
         widget.setLayout(layout)
-        return widget
+        self.setCentralWidget(widget)
+        self.setWindowTitle("Remove Launch Node")
 
+    def remove_launch_node(self):
+        items = self.nodelist.selectedItems()
+        if len(items) != 1:
+            print "node is not selected"
+        else:
+            error = self.launch.remove_child(items[0].text())
+            if error:
+                print error
+            else:
+                self.close()
+
+
+
+
+
+
+class AwDefaultRootFrame(AwAbstructFrame):
+
+    def __init__(self, guimgr, launch):
+        super(AwDefaultRootFrame, self).__init__(guimgr, launch)
+        self.set_title("Profile")
+        self.add_widget(self.create_dummy_widget(launch.get_data("info", "title")))
+
+
+
+class AwDefaultNodePanel(AwAbstructPanel, AwLaunchNodeListenerIF):
+
+    def __init__(self, guimgr, launch, window):
+        super(AwDefaultNodePanel, self).__init__(guimgr, launch, window)
+        self.add_node_button()
+        for child in self.launch.children():
+            self.add_frame(child)
+
+        #self.config_updated()
+        self.launch.bind_listener(self)
+        self.destroyed.connect(lambda: self.launch.unbind_listener(self))
+
+        remove_button = QtWidgets.QPushButton("Remove")
+        self.add_button(remove_button)
+        def temp():
+            window = AwPluginRemoveWindow(self.guimgr, self.launch, self)
+            window.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+            window.setWindowModality(QtCore.Qt.ApplicationModal)
+            window.show()
+        remove_button.clicked.connect(temp)
+
+    def config_created(self, child):
+        self.add_frame(child)
+
+    def config_removed(self, name):
+        for i in range(self.layout().count()):
+            frame = self.layout().itemAt(i).widget()
+            if isinstance(frame, AwAbstructFrame):
+                if frame.launch.nodename() == name:
+                    self.layout().takeAt(i).widget().deleteLater()
+                    return
 
 
 class AwDefaultNodeFrame(AwAbstructFrame):
@@ -203,7 +290,7 @@ class AwDefaultNodeFrame(AwAbstructFrame):
         self.set_title(launch.nodename().capitalize())
         self.add_config_button()
         self.add_launch_button()
-        self.add_widget(self.create_dummy_widget(launch.get_data("info", "title")))
+        self.add_text_widget("No Description")
 
 
 

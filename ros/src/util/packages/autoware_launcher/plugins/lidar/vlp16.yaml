@@ -1,0 +1,11 @@
+args :
+    merge_frame : string
+    local_frame : string
+    device_addr : ipv4 
+    device_port : int
+    tx : real
+    ty : real
+    tz : real
+    rx : real
+    ry : real
+    rz : real

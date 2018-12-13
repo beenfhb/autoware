@@ -11,6 +11,9 @@ class AwLaunchNodeListenerIF(object):
     def term_requested(self): pass  #raise NotImplementedError()
     def term_completed(self): pass  #raise NotImplementedError()
     def config_updated(self): pass  #raise NotImplementedError()
+    def config_created(self, node): pass  #raise NotImplementedError()
+    def config_removed(self, name): pass  #raise NotImplementedError()
+    def config_swapped(self): pass  #raise NotImplementedError()
 
 class AwLaunchNodeExecutorIF(object):
     def request_exec(self): pass  #raise NotImplementedError()
@@ -18,74 +21,27 @@ class AwLaunchNodeExecutorIF(object):
 
 
 
-class AwLaunchTree(object):
-
-    def __init__(self, loader):
-
-        #self.parent   = None
-        self.__children = []
-        self.__childmap = {}
-        
-        self.package_path = os.path.dirname(__file__)
-        self.package_path = os.path.join   (self.package_path, "../../..")
-        self.package_path = os.path.abspath(self.package_path)
-
-        self.profile_path = os.path.join(self.package_path, "profiles", "default")
-        self.root = AwLaunchNode(self, "root")
-        self.root.load(self.profile_path, loader)
-
-    # Move to AwBaseNode/Tree
-    def tree(self): return self
-
-    # Move to AwBaseNode/Tree
-    def dump(self): self.root.dump(0)
-
-    # Move to AwBaseNode/Tree
-    def find(self, path):
-        path.reverse()
-        name = path.pop()
-        return self.getchild(name).find(path)
-
-    # Move to AwBaseNode/Tree
-    def nodepath(self):
-        return ""
-
-    # Move to Server
-    def request_json(self, json_string):
-        request = json.loads(json_string)
-        if request.get("command") == "launch":
-            node = self.find(request["path"])
-            if node:
-                node.request_exec()
-                return '{"response":"ok"}'
-        return None
-
-
-    #temporary
-    def children(self):
-        return self.__children
-    def getchild(self, name):
-        return self.__childmap[name]
-    def addchild(self, name, child):
-        self.__children.append(child)
-        self.__childmap[name] = child
-
-
 class AwBaseNode(object):
 
     def __init__(self, parent, name):
-        self.nodetype = True
+        self.__nodetype = True
         self.__nodename = name
         self.__parent   = parent
         self.__children = []
         self.__childmap = {}
-        parent.addchild(name, self)
+        if parent:
+            parent._AwBaseNode__childmap[name] = self
+            parent._AwBaseNode__children.append(self)
 
-    def isleaf(self):
-        return not self.nodetype
+    def dump(self, indent = 0):
+        print((indent * " ") + str(self))
+        for child in self.children(): child.dump(indent + 2)
 
     def isnode(self):
-        return self.nodetype
+        return self.__nodetype is True
+
+    def isleaf(self):
+        return self.__nodetype is False
 
     def tree(self):
         return self.__parent.tree()
@@ -105,11 +61,29 @@ class AwBaseNode(object):
     def haschild(self, name):
         return name in self.__childmap
 
-    def addchild(self, name, child):
-        self.__children.append(child)
-        self.__childmap[name] = child
+    def __delchild(self, name):
+        child = self.__childmap.pop(name)
+        self.__children.remove(child)
 
-    # Move to Server ?
+
+
+class AwBaseTree(AwBaseNode):
+
+    def __init__(self):
+        super(AwBaseTree, self).__init__(None, None)
+
+    def isleaf(self):
+        return False
+
+    def isnode(self):
+        return False
+
+    def tree(self):
+        return self
+
+    def nodepath(self):
+        return ""
+
     def find(self, path):
         if not path:
             return self
@@ -120,22 +94,45 @@ class AwBaseNode(object):
 
 
 
+class AwLaunchTree(AwBaseTree):
+
+    def __init__(self, server):
+        super(AwLaunchTree, self).__init__()
+        self.server = server
+
+    def __str__(self):
+        return "Tree:{}".format(self.nodename())
+
+    def find(self, path):
+        node = self
+        for name in path.split("/"):
+            node = node.getchild(name)
+        return node
+
+    # Move to Server
+    def request_json(self, json_string):
+        request = json.loads(json_string)
+        if request.get("command") == "launch":
+            node = self.find(request["path"])
+            if node:
+                node.request_exec()
+                return '{"response":"ok"}'
+        return None
+
+
+
 class AwLaunchNode(AwBaseNode):
 
-    def __init__(self, parent, name):
+    def __init__(self, parent, name, plugin, config):
         super(AwLaunchNode, self).__init__(parent, name)
-        self.plugin   = None
-        self.__config = {}
-        self.listener = [] #AwLaunchNodeListener
+        self.plugin = plugin
+        self.config = config
+        self.listener = []
         self.executor = AwLaunchNodeExecutorIF()
 
-    # Move to AwBaseNode
-    def dump(self, indent):
-        nodetype = "node" if self.isnode() else "leaf"
-        print((" " * indent) + str((nodetype, self.nodename(), self.plugin.nodepath())))
-        if self.isnode():
-            for child_node in self.children():
-                child_node.dump(indent + 2)
+    def __str__(self):
+        nodetype = "Node" if self.isnode() else "Leaf"
+        return "{}:{:<13} Plugin:{}".format(nodetype, self.nodename(), self.plugin.nodepath())
 
     def bind_listener(self, listener):
         if not isinstance(listener, AwLaunchNodeListenerIF):
@@ -153,24 +150,35 @@ class AwLaunchNode(AwBaseNode):
     def unbind_executor(self, executor):
         self.executor = AwLaunchNodeExecutor()
 
-    # temporary
+    # experimental
     def create_child(self, name, plugin):
         if not name:
-            return "key empty"
+            return "name is empty"
         if self.haschild(name):
-            return "key exist"
+            return "name exists"
         child = AwLaunchNode(self, name)
         child.plugin = plugin
-        child.__config["info"] = {}
-        child.__config["args"] = {}
-        return child
+        child.config["info"] = {}
+        child.config["args"] = {}
+        self.send_config_created(child)
+        return None
+
+    # experimental
+    def remove_child(self, name):
+        if not name:
+            return "name is empty"
+        if not self.haschild(name):
+            return "name does not exist"
+        self.delchild(name)
+        self.send_config_removed(name)
+        return None
 
     def set_data(self, grp, key, value):
-        self.__config[grp][key] = value
+        self.config[grp][key] = value
         self.send_config_updated()
 
     def get_data(self, grp, key, value = None):
-        return self.__config[grp].get(key, value)
+        return self.config[grp].get(key, value)
 
     def request_exec(self):
         if self.isnode():
@@ -205,26 +213,18 @@ class AwLaunchNode(AwBaseNode):
     def send_config_updated(self):
         for item in self.listener: item.config_updated()
 
-    def load(self, fpath, loader):
-        fpath = os.path.join(fpath, self.nodename()) 
-        with open(fpath + ".yaml") as fp:
-            ydata = yaml.safe_load(fp)
-        self.plugin = loader.find(ydata.get("plugin", "node/default"))
-        self.__config["info"] = ydata.get("info", {})
-        self.__config["args"] = ydata.get("args", {})
-        if ydata.get("children") is None:
-            self.nodetype = False
-        else:
-            for child_name in ydata["children"]:
-                child_node = AwLaunchNode(self, child_name)
-                child_node.load(fpath, loader)
+    def send_config_created(self, node):
+        for item in self.listener: item.config_created(node)
+
+    def send_config_removed(self, name):
+        for item in self.listener: item.config_removed(name)
 
     def generate_launch(self):
         xml_path = os.path.join(self.tree().profile_path, self.nodepath() + ".xml")
         with open(xml_path, mode="w") as fp:
             fp.write('<launch>\n')
             fp.write('  <include file="' + os.path.join("$(find autoware_launcher)", "plugins", self.plugin.nodepath() + ".xml") + '">\n')
-            for arg_name, arg_data in self.__config["args"].items():
+            for arg_name, arg_data in self.config["args"].items():
                 if type(arg_data) is list:
                     arg_data = " ".join(arg_data)
                 fp.write('    <arg name="' + arg_name + '" value="' + str(arg_data) + '"/>\n')

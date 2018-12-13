@@ -1,0 +1,37 @@
+<launch>
+
+    <arg name="device_addr">
+    <arg name="device_port">
+    <arg name="merge_frame">
+    <arg name="local_frame">
+    <arg name="tx">
+    <arg name="ty">
+    <arg name="tz">
+    <arg name="rx">
+    <arg name="ry">
+    <arg name="rz">
+
+    <group ns="$(arg local_frame)">
+        <node pkg="tf" type="static_transform_publisher" name="static_transform_publisher"
+            args="$(arg tx) $(arg ty) $(arg tz) $(arg rz) $(arg ry) $(arg rx) $(arg merge_frame) $(arg local_frame) 100" />
+        <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />
+        <node pkg="nodelet" type="nodelet" name="nodelet_driver" args="load velodyne_driver/DriverNodelet nodelet_manager" >
+            <param name="device_ip"    value="$(arg device_addr)" />
+            <param name="frame_id"     value="$(arg local_frame)" />
+            <param name="model"        value="VLP16" />
+            <param name="pcap"         value="" />
+            <param name="port"         value="$(arg device_port)" />
+            <param name="read_fast"    value="false" />
+            <param name="read_once"    value="false" />
+            <param name="repeat_delay" value="0.0" />
+            <param name="rpm"          value="600.0" />
+        </node>
+        <node pkg="nodelet" type="nodelet" name="nodelet_cloud" args="load velodyne_pointcloud/CloudNodelet nodelet_manager">
+            <param name="calibration"  value="$(arg velodyne_back_calibration)" />
+            <param name="max_range"    value="130.0" />
+            <param name="min_range"    value="0.1" />
+            <param name="view_width"   value="3.3" />
+        </node>
+    </group>
+
+</launch>

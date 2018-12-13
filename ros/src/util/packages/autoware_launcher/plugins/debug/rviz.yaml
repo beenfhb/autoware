@@ -1,0 +1,7 @@
+args :
+    file : string
+
+gui :
+    type : file_select
+    list : false
+    data : args.file

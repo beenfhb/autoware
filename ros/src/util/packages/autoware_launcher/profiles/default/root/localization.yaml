@@ -1,3 +1,5 @@
+plugin : debug/node
+
 children :
   - nmea2tfpose
   - ndt_matching

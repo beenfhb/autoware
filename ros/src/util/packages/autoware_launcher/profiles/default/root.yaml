@@ -1,5 +1,6 @@
+plugin : node/root
+
 children :
-  - rosbag
   - map
   - vehicle
   - sensing
@@ -8,3 +9,4 @@ children :
 
 info :
   title : Autoware Default
+  description : This is default profile

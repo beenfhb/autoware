@@ -1,3 +1,4 @@
 <launch>
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(env HOME)/.rviz/default.rviz"/>
+    <arg name="file"/>
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg file)"/>
 </launch>

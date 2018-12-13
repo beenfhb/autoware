@@ -2,22 +2,12 @@
 
 import sys
 
-from autoware_launcher.core import AwPluginLoader
-from autoware_launcher.core import AwLaunchTree
+from autoware_launcher.core import AwLaunchServer
+from autoware_launcher.core import AwLaunchClient
 from autoware_launcher.qtui import AwGuiManager
 
-loader = AwPluginLoader()
-print("============================================================")
-loader.dump_plugins()
-print("============================================================")
-print
+server = AwLaunchServer(sys.argv)
+client = AwLaunchClient(sys.argv, server)
 
-launch = AwLaunchTree(loader)
-print("============================================================")
-launch.dump()
-print("============================================================")
-print
-
-guimgr = AwGuiManager(sys.argv)
-guimgr.loader = loader #temporary
-sys.exit(guimgr.start_autoware_launcher(launch))
+guimgr = AwGuiManager(sys.argv, client)
+sys.exit(guimgr.start())
