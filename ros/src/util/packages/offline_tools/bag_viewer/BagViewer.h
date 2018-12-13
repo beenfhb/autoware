@@ -32,6 +32,7 @@ public slots:
 	void on_playButton_clicked(bool checked);
 	void on_playProgress_sliderMoved(int i);
 	void on_topicSelector_currentIndexChanged(int i);
+	void on_saveButton_clicked(bool checked);
 
 private:
     Ui::BagViewer *ui;
@@ -49,6 +50,8 @@ protected:
 	void setTopic(int n);
 
 	void updateImage(int n);
+
+	void disableControlsOnPlaying(bool state);
 };
 
 #endif // BAGVIEWER_H
