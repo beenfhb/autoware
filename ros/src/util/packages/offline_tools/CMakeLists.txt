@@ -3,13 +3,20 @@ project(offline_tools)
 
 add_compile_options(-std=c++11)
 
+set (CMAKE_INCLUDE_CURRENT_DIR		ON)
+set (CMAKE_AUTOMOC					ON)
+set (CMAKE_AUTOUIC					ON)
+
+
 find_package(catkin REQUIRED COMPONENTS 
 	rviz
 	pcl_ros
 	vector_map
 	rosbag_storage)
 
-find_package(Qt5 REQUIRED Core Widgets)
+#find_package(Qt5 REQUIRED Core Widgets)
+find_package (Qt5Core CONFIG REQUIRED)
+find_package (Qt5Widgets CONFIG REQUIRED)
 find_package(PCL REQUIRED)
 
 
@@ -32,7 +39,6 @@ include_directories(
 link_directories(
 	${catkin_LIBRARY_DIRS})
 
-set(CMAKE_AUTOMOC ON)
 
 add_library(
 	rviz_offline_display
@@ -71,3 +77,25 @@ target_link_libraries(
 		random_access_bag
 		${catkin_LIBRARIES}
 )
+
+
+
+add_executable(bag_viewer
+	bag_viewer/main.cpp
+	bag_viewer/BagViewer.cpp
+	bag_viewer/ratio_layouted_frame.cpp
+	bag_viewer/BagViewer.ui
+	bag_viewer/ratio_layouted_frame.h
+)
+
+target_link_libraries(
+	bag_viewer
+		random_access_bag
+		${catkin_LIBRARIES}
+		Qt5::Widgets
+)
+
+target_include_directories(bag_viewer
+	PUBLIC bag_viewer
+)
+

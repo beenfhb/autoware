@@ -21,10 +21,11 @@ using namespace std;
 
 int main (int argc, char *argv[])
 {
-	rosbag::Bag _mybag("/media/sujiwo/ssd/log_2016-12-26-13-21-10.bag", rosbag::BagMode::Read);
+	rosbag::Bag _mybag("/home/sujiwo/Data/sample-mapping.bag", rosbag::BagMode::Read);
+	auto topicList = RandomAccessBag::getTopicList(_mybag);
 
 //	RandomAccessBag mybag(_mybag, "/camera1/image_raw");
-	RandomAccessBag mybag(_mybag, "/camera1/image_raw", 315.49, 932.16);
+	RandomAccessBag mybag(_mybag, "/camera1/image_raw");
 	auto imageMsg = mybag.at<sensor_msgs::Image>(120);
 	cout << imageMsg->width << endl;
 

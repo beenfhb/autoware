@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <utility>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
@@ -121,6 +122,12 @@ public:
 
 	 inline bool isTimeConstrained() const
 	 { return mIsTimeConstrained; }
+
+	 inline std::string topic() const
+	 { return viewTopic; }
+
+	 static std::map<std::string, std::string>
+	 getTopicList(const rosbag::Bag &bag);
 
 protected:
 	void createCache();
