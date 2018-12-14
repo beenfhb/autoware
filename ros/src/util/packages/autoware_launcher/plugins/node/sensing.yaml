@@ -1,1 +1,2 @@
-children : []
+children :
+  - { type: single, name: lidar,  plugin : node/lidar  }

@@ -1,7 +1,5 @@
-plugin : debug/rviz
-
-args :
-  file : $(env HOME)/Autoware/ros/src/.config/rviz/default.rviz
-
-info :
-  title : Autoware Default
+children: null
+config:
+  args.file: $(env HOME)/Autoware/ros/src/.config/rviz/default.rviz
+  info.title: Autoware Default
+plugin: debug/rviz

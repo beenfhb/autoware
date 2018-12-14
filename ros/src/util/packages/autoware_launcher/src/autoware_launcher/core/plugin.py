@@ -3,7 +3,7 @@ import yaml
 import glob
 
 from . import console
-from . import fsys
+from . import awpath
 
 def get_package_path():
     package_path = os.path.dirname(__file__)
@@ -19,7 +19,7 @@ class AwPluginTree(object):
 
     def __load_plugins(self):
 
-        plugins_path = fsys.plugins_path()
+        plugins_path = awpath.plugins()
         for dirpath, dirs, files in os.walk(plugins_path):
             relpath = os.path.relpath(dirpath, plugins_path)
             for filename in files:

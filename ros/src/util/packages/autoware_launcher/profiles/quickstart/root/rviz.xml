@@ -1,6 +1,0 @@
-<launch>
-
-    <arg name="config" value="$(find autoware_launcher)/profiles/quickstart/root/rviz/default.rviz"/>
-    <node name="$(anon rviz)" pkg="rviz" type="rviz" args="-d $(arg config)"/>
-
-</launch>

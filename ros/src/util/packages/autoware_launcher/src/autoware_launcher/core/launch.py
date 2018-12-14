@@ -4,6 +4,8 @@ import json
 import os
 import yaml
 
+from . import awpath
+
 class AwLaunchNodeListenerIF(object):
     def exec_requested(self): pass  #raise NotImplementedError()
     def term_requested(self): pass  #raise NotImplementedError()
@@ -21,19 +23,19 @@ class AwLaunchNodeExecutorIF(object):
 
 class AwBaseNode(object):
 
-    def __init__(self, parent, name):
-        self.__nodetype = True
+    def __init__(self, name):
         self.__nodename = name
-        self.__parent   = parent
+        self.__nodetype = True
+        self.__parent   = None
         self.__children = []
         self.__childmap = {}
-        if parent:
-            parent._AwBaseNode__childmap[name] = self
-            parent._AwBaseNode__children.append(self)
 
     def dump(self, indent = 0):
         print((indent * " ") + str(self))
         for child in self.children(): child.dump(indent + 2)
+
+    def setleaf(self):
+        self.__nodetype = False
 
     def isnode(self):
         return self.__nodetype is True
@@ -50,6 +52,9 @@ class AwBaseNode(object):
     def nodepath(self):
         return os.path.join(self.__parent.nodepath(), self.nodename())
 
+    def fullpath(self):
+        return os.path.join(self.__parent.fullpath(), self.nodename())
+
     def children(self):
         return self.__children
 
@@ -59,16 +64,28 @@ class AwBaseNode(object):
     def haschild(self, name):
         return name in self.__childmap
 
-    def __delchild(self, name):
-        child = self.__childmap.pop(name)
-        self.__children.remove(child)
+    def addchild(self, node):
+        self.__children.append(node)
+        self.__childmap[node.nodename()] = node
+        node.__parent = self
+
+    def delchild(self, node):
+        self.__children.remove(node)
+        self.__childmap.pop(node.nodename())
+        node.__parent = None
+
+    def nodelist(self, this = False):
+        result = [self] if this else []
+        for child in self.children(): result.extend(child.nodelist(True))
+        return result
 
 
 
 class AwBaseTree(AwBaseNode):
 
     def __init__(self):
-        super(AwBaseTree, self).__init__(None, None)
+        super(AwBaseTree, self).__init__(None)
+        self.treepath = ""
 
     def isleaf(self):
         return False
@@ -81,6 +98,9 @@ class AwBaseTree(AwBaseNode):
 
     def nodepath(self):
         return ""
+    
+    def fullpath(self):
+        return self.treepath
 
     def find(self, path):
         node = self
@@ -101,8 +121,7 @@ class AwLaunchTree(AwBaseTree):
         return "Tree:{}".format(self.nodename())
 
     def profile_path(self):
-        from . import fsys
-        return fsys.profile_path(self.profile)
+        return awpath.profile(self.profile)
 
     # Move to Server
     def request_json(self, json_string):
@@ -114,23 +133,46 @@ class AwLaunchTree(AwBaseTree):
                 return '{"response":"ok"}'
         return None
 
+    def save(self, treepath):
+        self.treepath = treepath
+        for node in self.nodelist():
+            fullpath = node.fullpath() + ".yaml"
+            awpath.makedirs(os.path.dirname(fullpath), exist_ok = True)
+            with open(fullpath, mode = "w") as fp:
+                fp.write(yaml.dump(node.export_data(), default_flow_style = False))
+
+    def load(self, treepath, plugins):
+        def load_node(node):
+            fullpath = node.fullpath()
+            with open(fullpath + ".yaml") as fp:
+                node.import_data(yaml.safe_load(fp), plugins)
+            for child in node.children():
+                load_node(child)
+        root = AwLaunchNode("root")
+        self.addchild(root)
+        self.treepath = treepath
+        load_node(root)
+
+
 
 
 class AwLaunchNode(AwBaseNode):
 
     STOP, EXEC, TERM = 0x00, 0x01, 0x02
 
-    def __init__(self, parent, name, plugin, config):
-        super(AwLaunchNode, self).__init__(parent, name)
-        self.plugin = plugin
-        self.config = config
+    def __init__(self, name):
+        super(AwLaunchNode, self).__init__(name)
+        self.plugin = None
+        self.config = None
         self.status = AwLaunchNode.STOP
         self.listener = []
         self.executor = AwLaunchNodeExecutorIF()
 
     def __str__(self):
         nodetype = "Node" if self.isnode() else "Leaf"
-        return "{}:{:<13} Plugin:{}".format(nodetype, self.nodename(), self.plugin.nodepath())
+        plugin = None if not self.plugin else self.plugin.nodepath() 
+        config = None if not self.config else self.config.keys()
+        return "{}:{:<13} Plugin:{} Config:{}".format(nodetype, self.nodename(), plugin, config)
 
     def bind_listener(self, listener):
         if not isinstance(listener, AwLaunchNodeListenerIF):
@@ -230,3 +272,28 @@ class AwLaunchNode(AwBaseNode):
             fp.write('  </include>\n')
             fp.write('</launch>\n')
         return xml_path
+
+    def import_data(self, data, plugins):
+        self.plugin = plugins.find(data["plugin"])
+        self.config = data["config"]
+        if data["children"] is None:
+            self.setleaf()
+        else:
+            for childname in data["children"]:
+                self.addchild(AwLaunchNode(childname))
+
+    def export_data(self):
+        children = None if self.isleaf() else map(lambda node: node.nodename(), self.children())
+        plugin = self.plugin.nodepath()
+        config = self.config
+        return {"children":children, "plugin":plugin, "config":config}
+
+
+
+if __name__ == "__main__":
+    from .plugin import AwPluginTree
+    plugin = AwPluginTree()
+    launch = AwLaunchTree(None, None)
+    launch.load(awpath.profile("default"), plugin)
+    launch.dump()
+    launch.save(awpath.profile("sample.bak"))

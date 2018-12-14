@@ -1,9 +1,7 @@
-plugin : debug/node
-
-children :
-  - transform
-  - points
-  - vector
-
-info :
-  title : Moriyama Area
+children:
+- transform
+- points
+- vector
+config:
+  info.title: Moriyama Area
+plugin: debug/node

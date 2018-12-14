@@ -1,12 +1,10 @@
-plugin : node/root
-
-children :
-  - map
-  - vehicle
-  - sensing
-  - rviz
-  - localization
-
-info :
-  title : Autoware Default
-  description : This is default profile
+children:
+- map
+- vehicle
+- sensing
+- rviz
+- localization
+config:
+  info.description: This is default profile
+  info.title: Autoware Default
+plugin: node/root

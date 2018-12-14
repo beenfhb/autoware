@@ -1,12 +1,10 @@
-plugin : debug/vehicle
-
-args :
-  tf_tx: 1.2
-  tf_ty: 0.0
-  tf_tz: 2.0
-  tf_rx: 0.0
-  tf_ry: 0.0
-  tf_rz: 0.0
-
-info :
-  title : Prius
+children: null
+config:
+  args.tf_rx: 0.0
+  args.tf_ry: 0.0
+  args.tf_rz: 0.0
+  args.tf_tx: 1.2
+  args.tf_ty: 0.0
+  args.tf_tz: 2.0
+  info.title: Prius
+plugin: debug/vehicle

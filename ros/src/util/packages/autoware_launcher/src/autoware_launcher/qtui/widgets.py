@@ -102,7 +102,7 @@ class AwProfileFrame(AwAbstructFrame):
 
     def setup_widget(self):
         self.set_title("Profile : " + self.launch.config.get("info.title", "No Title"))
-        self.add_text_widget(self.launch.config.get("info.description"))
+        self.add_text_widget(self.launch.config.get("info.description", "No Description"))
 
 class AwLaunchFrame(AwAbstructFrame):
 
