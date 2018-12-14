@@ -60,7 +60,7 @@ class AwLaunchServer(AwLaunchServerIF):
     def request_launch_init(self, plugin_root):
         console.info("request_launch_init: " + plugin_root)
         self.__launch = AwLaunchTree(self, None)
-        self.__make_launch_node(self.__launch, "root", plugin_root)
+        self.__init_launch_node(self.__launch, "root", plugin_root)
 
     def request_launch_load(self, launch_root):
         console.info("request_launch_load: " + launch_root)

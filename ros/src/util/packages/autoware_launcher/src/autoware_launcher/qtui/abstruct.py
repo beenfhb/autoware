@@ -5,10 +5,8 @@ from python_qt_binding import QtWidgets
 
 class AwAbstructWindow(QtWidgets.QMainWindow):
 
-    def __init__(self, guimgr, launch):
-        super(AwAbstructWindow, self).__init__()
-        self.guimgr = guimgr
-        self.launch = launch
+    def __init__(self, parent):
+        super(AwAbstructWindow, self).__init__(parent)
 
     def load_geomerty(self):
         settings = QtCore.QSettings("Autoware", "AutowareLauncher")
@@ -44,22 +42,24 @@ class AwAbstructPanel(QtWidgets.QWidget):
         layout.addWidget(self.footer)
         self.setLayout(layout)
 
+    def clear_widget(self):
+
+        # Panel Footer
+        layout = self.footer.layout()
+        while 1 < layout.count():
+            layout.takeAt(layout.count() - 1).widget().deleteLater()
+
+        # Panel Layout
+        layout = self.layout()
+        while 2 < layout.count():
+            layout.takeAt(0).widget().deleteLater()
+
     def add_frame(self, frame):
         index = self.layout().count() - 2
         self.layout().insertWidget(index, frame)
 
     def add_button(self, button):
         self.footer.layout().addWidget(button)
-
-    def add_node_button(self):
-        button = QtWidgets.QPushButton("Create")
-        self.add_button(button)
-        def temp():
-            window = AwPluginSelectWindow(self.guimgr, self.launch, self)
-            window.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
-            window.setWindowModality(QtCore.Qt.ApplicationModal)
-            window.show()
-        button.clicked.connect(temp)
 
 
 
@@ -87,6 +87,9 @@ class AwAbstructFrame(QtWidgets.QWidget):
     def set_title(self, title):
         self.title.setText(title)
 
+    def add_button(self, button):
+        self.header.layout().addWidget(button)
+
     def add_widget(self, widget):
         widget.setObjectName("FrameWidget")
         self.layout().addWidget(widget)
@@ -97,12 +100,3 @@ class AwAbstructFrame(QtWidgets.QWidget):
         widget = QtWidgets.QWidget()
         widget.setLayout(layout)
         self.add_widget(widget)
-
-    def add_button(self, button):
-        self.header.layout().addWidget(button)
-
-    def add_config_button(self):
-
-        button = QtWidgets.QPushButton("Config")
-        button.clicked.connect(self.guimgr.create_window_open_event(self))
-        self.add_button(button)

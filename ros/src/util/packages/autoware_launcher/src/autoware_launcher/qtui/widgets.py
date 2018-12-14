@@ -15,7 +15,10 @@ class AwMainWindow(AwAbstructWindow):
 
     def __init__(self, guimgr, launch):
 
-        super(AwMainWindow, self).__init__(guimgr, launch)
+        super(AwMainWindow, self).__init__(None)
+        self.guimgr = guimgr
+        self.launch = launch
+
         self.load_geomerty()
         self.setWindowTitle("Autoware Launcher")
 
@@ -29,12 +32,12 @@ class AwMainWindow(AwAbstructWindow):
 
     def setup_widget(self):
 
-        profile = AwStandardLaunchPanel(self.guimgr, self.launch)
-        process = AwProcessMonitorPanel(self.guimgr, self.launch)
+        self.profile = AwStandardLaunchPanel(self.guimgr, self.launch)
+        self.process = AwProcessMonitorPanel(self.guimgr, self.launch)
 
         widget = QtWidgets.QTabWidget()
-        widget.addTab(profile, "Profile")
-        widget.addTab(process, "Process")
+        widget.addTab(self.profile, "Profile")
+        widget.addTab(self.process, "Process")
         self.setCentralWidget(widget)
 
     def __init_menu(self):
@@ -63,7 +66,8 @@ class AwMainWindow(AwAbstructWindow):
         filename, filetype = os.path.splitext(filename)
         if filename:
             self.guimgr.server.request_launch_load(filename)
-            self.setup_widget()
+            self.profile.clear_widget()
+            self.profile.setup_widget()
 
     def save_profile(self):
         pass
@@ -79,8 +83,8 @@ class AwMainWindow(AwAbstructWindow):
 
 class AwStandardLaunchPanel(AwAbstructPanel):
 
-    def __init__(self, guimgr, launch_path):
-        super(AwStandardLaunchPanel, self).__init__(guimgr, launch_path)
+    def __init__(self, guimgr, launch):
+        super(AwStandardLaunchPanel, self).__init__(guimgr, launch)
         self.setup_widget()
 
     def setup_widget(self):
@@ -88,21 +92,17 @@ class AwStandardLaunchPanel(AwAbstructPanel):
         for child in self.launch.children():
             if child.nodename() in ["map", "vehicle", "sensing", "rviz"]:
                 self.add_frame(self.guimgr.create_frame(child, guicls = AwLaunchFrame))
-        #self.add_button(AwLaunchButton(self.launch.getchild("rviz")))
-
-
+        self.add_button(AwConfigButton(self.guimgr, self.launch))
 
 class AwProfileFrame(AwAbstructFrame):
 
-    def __init__(self, guimgr, launch_path):
-        super(AwProfileFrame, self).__init__(guimgr, launch_path)
+    def __init__(self, guimgr, launch):
+        super(AwProfileFrame, self).__init__(guimgr, launch)
         self.setup_widget()
 
     def setup_widget(self):
-        self.set_title("Profile : " + self.launch.config.get("info.title"))
+        self.set_title("Profile : " + self.launch.config.get("info.title", "No Title"))
         self.add_text_widget(self.launch.config.get("info.description"))
-
-
 
 class AwLaunchFrame(AwAbstructFrame):
 
@@ -111,14 +111,59 @@ class AwLaunchFrame(AwAbstructFrame):
         self.setup_widget()
 
     def setup_widget(self):
-        self.set_title(self.launch.nodename().capitalize() + " : " + self.launch.config.get("info.title"))
-        self.add_text_widget(self.launch.config.get("info.description"))
-
-        # ToDo: self.add_button(AwLaunchButton(self.guimgr, self.launch.nodepath()))
+        self.set_title(self.launch.nodename().capitalize() + " : " + self.launch.config.get("info.title", "No Title"))
+        self.add_text_widget(self.launch.config.get("info.description", "No Description"))
         self.add_button(AwLaunchButtonOld(self.guimgr, self.launch))
+        # ToDo: self.add_button(AwLaunchButton(self.guimgr, self.launch.nodepath()))
 
 
 
+
+
+
+class AwDefaultWindow(AwAbstructWindow):
+
+    def __init__(self, parent):
+
+        super(AwDefaultWindow, self).__init__(parent)
+        self.load_geomerty()
+
+class AwDefaultNodePanel(AwAbstructPanel):
+
+    def __init__(self, guimgr, launch):
+        super(AwDefaultNodePanel, self).__init__(guimgr, launch)
+
+    def setup_widget(self):
+        #ToDo: node info edit frame
+        for child in self.launch.children():
+            self.add_frame(self.guimgr.create_frame(child))
+
+class AwDefaultNodeFrame(AwAbstructFrame):
+
+    def __init__(self, guimgr, launch):
+        super(AwDefaultNodeFrame, self).__init__(guimgr, launch)
+        self.set_title(self.launch.nodename().capitalize() + " : " + self.launch.config.get("info.title", "No Title"))
+        self.add_text_widget(self.launch.config.get("info.description", "No Description"))
+        self.add_button(AwConfigButton(self.guimgr, self.launch))
+
+
+
+
+
+
+class AwConfigButton(QtWidgets.QPushButton):
+
+    def __init__(self, guimgr, launch):
+        super(AwConfigButton, self).__init__("Config")
+        def clicked():
+            widget = guimgr.create_panel(launch)
+            window = AwDefaultWindow(self)
+            window.setCentralWidget(widget)
+            window.centralWidget().setup_widget()
+            window.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+            window.setWindowModality(QtCore.Qt.ApplicationModal)
+            window.show()
+        self.clicked.connect(clicked)
 
 class AwLaunchButton(QtWidgets.QPushButton):
 
@@ -152,8 +197,6 @@ class AwLaunchButton(QtWidgets.QPushButton):
         if state_text == self.states[0]: self.guimgr.server.request_launch_exec(self.lpath)
         if state_text == self.states[1]: self.guimgr.server.request_launch_term(self.lpath)
 
-
-
 class AwLaunchButtonOld(QtWidgets.QPushButton, AwLaunchNodeListenerIF):
 
     def __init__(self, guimgr, launch, states = None):
@@ -185,6 +228,9 @@ class AwLaunchButtonOld(QtWidgets.QPushButton, AwLaunchNodeListenerIF):
         state_text = self.text()
         if state_text == self.states[0]: self.launch.request_exec()
         if state_text == self.states[1]: self.launch.request_term()
+
+
+
 
 
 
@@ -318,7 +364,7 @@ class AwDefaultRootFrame(AwAbstructFrame):
 
 
 
-class AwDefaultNodePanel(AwAbstructPanel, AwLaunchNodeListenerIF):
+class AwDefaultNodePanelOld(AwAbstructPanel, AwLaunchNodeListenerIF):
 
     def __init__(self, guimgr, launch, window):
         super(AwDefaultNodePanel, self).__init__(guimgr, launch, window)
@@ -349,15 +395,6 @@ class AwDefaultNodePanel(AwAbstructPanel, AwLaunchNodeListenerIF):
                 if frame.launch.nodename() == name:
                     self.layout().takeAt(i).widget().deleteLater()
                     return
-
-
-class AwDefaultNodeFrame(AwAbstructFrame):
-
-    def __init__(self, guimgr, launch):
-        super(AwDefaultNodeFrame, self).__init__(guimgr, launch)
-        self.set_title(launch.nodename().capitalize())
-        self.add_config_button()
-        self.add_text_widget("No Description")
 
 
 
