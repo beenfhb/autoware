@@ -4,7 +4,7 @@ import json
 import os
 import yaml
 
-from . import awpath
+from . import fspath
 
 class AwLaunchNodeListenerIF(object):
     def exec_requested(self): pass  #raise NotImplementedError()
@@ -112,16 +112,15 @@ class AwBaseTree(AwBaseNode):
 
 class AwLaunchTree(AwBaseTree):
 
-    def __init__(self, server, profile):
+    def __init__(self, server):
         super(AwLaunchTree, self).__init__()
-        self.server  = server
-        self.profile = profile
+        self.server = server
 
     def __str__(self):
         return "Tree:{}".format(self.nodename())
 
     def profile_path(self):
-        return awpath.profile(self.profile)
+        return fspath.profile(self.profile)
 
     # Move to Server
     def request_json(self, json_string):
@@ -137,7 +136,7 @@ class AwLaunchTree(AwBaseTree):
         self.treepath = treepath
         for node in self.nodelist():
             fullpath = node.fullpath() + ".yaml"
-            awpath.makedirs(os.path.dirname(fullpath), exist_ok = True)
+            fspath.makedirs(os.path.dirname(fullpath), exist_ok = True)
             with open(fullpath, mode = "w") as fp:
                 fp.write(yaml.dump(node.export_data(), default_flow_style = False))
 
@@ -293,7 +292,7 @@ class AwLaunchNode(AwBaseNode):
 if __name__ == "__main__":
     from .plugin import AwPluginTree
     plugin = AwPluginTree()
-    launch = AwLaunchTree(None, None)
-    launch.load(awpath.profile("default"), plugin)
+    launch = AwLaunchTree(None)
+    launch.load(fspath.profile("default"), plugin)
     launch.dump()
-    launch.save(awpath.profile("sample.bak"))
+    launch.save(fspath.profile("sample.bak"))

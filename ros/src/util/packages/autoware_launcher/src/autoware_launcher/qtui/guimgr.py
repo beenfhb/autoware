@@ -19,8 +19,8 @@ class AwQtGuiClient(AwLaunchClientIF):
         self.elements = {}
 
         #self.server.register_client()
-        #self.server.request_launch_load("default")
-        self.server.request_launch_init("node/root")
+        self.server.request_launch_load("default")
+        #self.server.request_launch_init("node/root")
 
         self.panels = {}
         self.frames = {}

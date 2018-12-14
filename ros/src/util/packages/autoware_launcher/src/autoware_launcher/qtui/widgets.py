@@ -1,7 +1,7 @@
 from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 
-from autoware_launcher.core import fsys
+from autoware_launcher.core import fspath
 from autoware_launcher.core import AwLaunchNodeListenerIF
 
 from .abstruct import AwAbstructWindow
