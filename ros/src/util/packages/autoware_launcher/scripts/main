@@ -3,11 +3,9 @@
 import sys
 
 from autoware_launcher.core import AwLaunchServer
-from autoware_launcher.core import AwLaunchClient
-from autoware_launcher.qtui import AwGuiManager
+from autoware_launcher.qtui import AwQtGuiClient
 
 server = AwLaunchServer(sys.argv)
-client = AwLaunchClient(sys.argv, server)
+client = AwQtGuiClient(sys.argv, server)
 
-guimgr = AwGuiManager(sys.argv, client)
-sys.exit(guimgr.start())
+sys.exit(client.start())

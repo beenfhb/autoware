@@ -4,8 +4,6 @@ import json
 import os
 import yaml
 
-
-
 class AwLaunchNodeListenerIF(object):
     def exec_requested(self): pass  #raise NotImplementedError()
     def term_requested(self): pass  #raise NotImplementedError()
@@ -85,29 +83,26 @@ class AwBaseTree(AwBaseNode):
         return ""
 
     def find(self, path):
-        if not path:
-            return self
-        else:
-            child = self.__childmap.get(path.pop())
-            if child:
-                return child.find(path)
+        node = self
+        for name in path.split("/"):
+            node = node.getchild(name)
+        return node
 
 
 
 class AwLaunchTree(AwBaseTree):
 
-    def __init__(self, server):
+    def __init__(self, server, profile):
         super(AwLaunchTree, self).__init__()
-        self.server = server
+        self.server  = server
+        self.profile = profile
 
     def __str__(self):
         return "Tree:{}".format(self.nodename())
 
-    def find(self, path):
-        node = self
-        for name in path.split("/"):
-            node = node.getchild(name)
-        return node
+    def profile_path(self):
+        from . import fsys
+        return fsys.profile_path(self.profile)
 
     # Move to Server
     def request_json(self, json_string):
@@ -123,10 +118,13 @@ class AwLaunchTree(AwBaseTree):
 
 class AwLaunchNode(AwBaseNode):
 
+    STOP, EXEC, TERM = 0x00, 0x01, 0x02
+
     def __init__(self, parent, name, plugin, config):
         super(AwLaunchNode, self).__init__(parent, name)
         self.plugin = plugin
         self.config = config
+        self.status = AwLaunchNode.STOP
         self.listener = []
         self.executor = AwLaunchNodeExecutorIF()
 
@@ -220,14 +218,15 @@ class AwLaunchNode(AwBaseNode):
         for item in self.listener: item.config_removed(name)
 
     def generate_launch(self):
-        xml_path = os.path.join(self.tree().profile_path, self.nodepath() + ".xml")
+        xml_path = os.path.join(self.tree().profile_path(), self.nodepath() + ".xml")
         with open(xml_path, mode="w") as fp:
             fp.write('<launch>\n')
             fp.write('  <include file="' + os.path.join("$(find autoware_launcher)", "plugins", self.plugin.nodepath() + ".xml") + '">\n')
-            for arg_name, arg_data in self.config["args"].items():
-                if type(arg_data) is list:
-                    arg_data = " ".join(arg_data)
-                fp.write('    <arg name="' + arg_name + '" value="' + str(arg_data) + '"/>\n')
+            for arg_name, arg_data in self.config.items():
+                if arg_name.startswith("args."):
+                    if type(arg_data) is list:
+                        arg_data = " ".join(arg_data)
+                    fp.write('    <arg name="' + arg_name[5:] + '" value="' + str(arg_data) + '"/>\n')
             fp.write('  </include>\n')
             fp.write('</launch>\n')
         return xml_path

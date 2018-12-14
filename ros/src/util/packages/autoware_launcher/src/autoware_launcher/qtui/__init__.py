@@ -1,1 +1,1 @@
-from .guimgr  import AwGuiManager
+from .guimgr  import AwQtGuiClient

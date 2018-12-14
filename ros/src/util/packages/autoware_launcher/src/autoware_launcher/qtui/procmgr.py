@@ -10,9 +10,9 @@ from .network import AwTcpServer
 
 class AwProcessMonitorPanel(QtWidgets.QSplitter):
 
-    def __init__(self, guimgr, tree):
+    def __init__(self, guimgr, launch):
         super(AwProcessMonitorPanel, self).__init__(QtCore.Qt.Horizontal)
-        self.dummyarea = QtWidgets.QLabel()
+        self.dummyarea = QtWidgets.QLabel("This is node")
         self.executors = QtWidgets.QStackedWidget()
         self.executors.addWidget(self.dummyarea)
 
@@ -24,13 +24,10 @@ class AwProcessMonitorPanel(QtWidgets.QSplitter):
         view.header().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
         view.header().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
 
-        for node in tree.children():
-            view.addTopLevelItem(self.construct(node))
+        view.addTopLevelItem(self.construct(launch))
         view.expandToDepth(0)
         view.itemChanged.connect(self.on_item_changed)
-        view.itemClicked.connect(self.on_item_clicked)
-        view.itemActivated.connect(self.on_item_clicked)
-        #view.selectionModel().selectionChanged
+        view.currentItemChanged.connect(self.on_item_selectd)
 
         self.addWidget(view)
         self.addWidget(self.executors)
@@ -50,9 +47,8 @@ class AwProcessMonitorPanel(QtWidgets.QSplitter):
         item.changed(column)
 
     # QtCore.Slot
-    def on_item_clicked(self, item, column):
-        self.executors.setCurrentWidget(item.area)
-
+    def on_item_selectd(self, curritem, previtem):
+        self.executors.setCurrentWidget(curritem.area)
 
 
 
@@ -77,6 +73,7 @@ class AwLaunchWidgetItem(QtWidgets.QTreeWidgetItem, AwLaunchNodeListenerIF):
                 self.request_exec()
             elif state == QtCore.Qt.Unchecked:
                 self.request_term()
+
 
     def request_exec(self):
         if self.user:

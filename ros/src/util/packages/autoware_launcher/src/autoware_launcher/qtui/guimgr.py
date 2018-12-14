@@ -2,18 +2,24 @@ from python_qt_binding import QtCore
 from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
+from autoware_launcher.core import console
+from autoware_launcher.core import AwLaunchClientIF
+
 from .widgets import AwMainWindow
 from . import widgets
 from . import procmgr
 
 
 
-class AwGuiManager(object):
+class AwQtGuiClient(AwLaunchClientIF):
 
-    def __init__(self, sysarg, client):
+    def __init__(self, sysarg, server):
         self.sysarg = sysarg
-        self.client = client
-        self.client.load_launch_tree("default")
+        self.server = server
+        self.elements = {}
+
+        #self.server.register_client()
+        self.server.request_launch_load("default")
 
         self.panels = {}
         self.frames = {}
@@ -21,6 +27,16 @@ class AwGuiManager(object):
         self.frames["default"] = widgets.AwDefaultNodeFrame
         self.panels["file_select"] = None
         self.frames["file_select"] = widgets.AwFileSelectFrame
+
+    def element_created(self, path, listener):
+        console.info("element_created {} {}".format(path, listener))
+        if not self.elements.get(path): self.elements[path] = []
+        self.elements[path].append(listener)
+
+    def element_deleted(self, path, listener):
+        console.info("element_deleted {} {}".format(path, listener))
+        self.elements[path].remove(listener)
+        if not self.elements.get(path): self.elements.pop(path)
 
     def start(self):
 
@@ -33,7 +49,9 @@ class AwGuiManager(object):
         stylesheet.append("* { font-size: " + str(resolution/100) + "px; }")
         application.setStyleSheet(" ".join(stylesheet))
 
-        window = AwMainWindow(self, None)
+        launch = self.server.request_launch_find("root")
+        window = QtWidgets.QMainWindow()
+        window = AwMainWindow(self, launch)
         window.show()
         return application.exec_()
 
@@ -53,11 +71,12 @@ class AwGuiManager(object):
         window.show()
         return application.exec_()
     
-    def create_frame(self, launch, guikey = None):
-
-        guikey = guikey or launch.plugin.gui.get("type", "default")
-        print "Create Frame: " + launch.nodename() + " " + guikey
-        return self.frames[guikey](self, launch)
+    def create_frame(self, launch, guikey = None, guicls = None):
+        print "Create Frame: {:<7} Key: {} Class: {}".format(launch.nodename(), guikey, guicls)
+        if not guicls:
+            guikey = guikey or launch.plugin.gui.get("type", "default")
+            guicls = self.frames[guikey]
+        return guicls(self, launch)
 
     def create_node_panel(self, window, launch):
 

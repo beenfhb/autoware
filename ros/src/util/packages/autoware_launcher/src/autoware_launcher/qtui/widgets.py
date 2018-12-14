@@ -13,28 +13,28 @@ from .procmgr  import AwProcessMonitorPanel
 
 class AwMainWindow(AwAbstructWindow):
 
-    def __init__(self, guimgr, launch_path):
+    def __init__(self, guimgr, launch):
 
-        super(AwMainWindow, self).__init__(guimgr, launch_path)
+        super(AwMainWindow, self).__init__(guimgr, launch)
         self.load_geomerty()
         self.setWindowTitle("Autoware Launcher")
 
         self.__init_menu()
-        self.update_widget()
+        self.setup_widget()
 
     def closeEvent(self, event):
 
         self.save_geometry()
         super(AwMainWindow, self).closeEvent(event)
 
-    def update_widget(self):
+    def setup_widget(self):
 
-        profile = AwStandardHomePanel(self.guimgr, launch_path)
-        #process = AwProcessMonitorPanel(self.guimgr, None)
+        profile = AwStandardLaunchPanel(self.guimgr, self.launch)
+        process = AwProcessMonitorPanel(self.guimgr, self.launch)
 
         widget = QtWidgets.QTabWidget()
         widget.addTab(profile, "Profile")
-        #widget.addTab(process, "Process")
+        widget.addTab(process, "Process")
         self.setCentralWidget(widget)
 
     def __init_menu(self):
@@ -45,6 +45,7 @@ class AwMainWindow(AwAbstructWindow):
 
         save_action = QtWidgets.QAction("Save Profile", self)
         save_action.setShortcut("Ctrl+S")
+        save_action.triggered.connect(self.save_profile)
 
         save_as_action = QtWidgets.QAction("Save Profile As", self)
         save_as_action.setShortcut("Ctrl+A")
@@ -61,32 +62,32 @@ class AwMainWindow(AwAbstructWindow):
         filename, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Load Profile", fsys.profile_path(), "Launch Profile (*.launch)")
         filename, filetype = os.path.splitext(filename)
         if filename:
-            self.guimgr.client.load_launch_tree(filename)
-            self.update_widget()
+            self.guimgr.server.request_launch_load(filename)
+            self.setup_widget()
 
+    def save_profile(self):
+        pass
 
     def save_profile_as(self):
         import os
-        filename, filetype = QtWidgets.QFileDialog.getSaveFileName(self, "Save Profile As", os.path.expanduser("~"), "Launch Profile (*.launch)")
+        filename, filetype = QtWidgets.QFileDialog.getSaveFileName(self, "Save Profile As", fsys.profile_path(), "Launch Profile (*.launch)")
         filename, filetype = os.path.splitext(filename)
         if filetype != ".launch":
             filename = filename + filetype
 
 
 
-class AwStandardHomePanel(AwAbstructPanel):
+class AwStandardLaunchPanel(AwAbstructPanel):
 
     def __init__(self, guimgr, launch_path):
-        super(AwStandardHomePanel, self).__init__(guimgr, launch_path)
-        self.update_widget()
+        super(AwStandardLaunchPanel, self).__init__(guimgr, launch_path)
+        self.setup_widget()
 
-    def update_widget(self):
-        launch = self.guimgr.client.find_launch_node(self.launch_path)
-        self.add_frame(AwProfileFrame(self.guimgr, self.launch_path))
-        for child in launch.children():
+    def setup_widget(self):
+        self.add_frame(AwProfileFrame(self.guimgr, self.launch))
+        for child in self.launch.children():
             if child.nodename() in ["map", "vehicle", "sensing", "rviz"]:
-                #self.add_frame(self.guimgr.create_frame(child))
-                self.add_frame(AwLaunchFrame(self.guimgr, child.nodepath()))
+                self.add_frame(self.guimgr.create_frame(child, guicls = AwLaunchFrame))
         #self.add_button(AwLaunchButton(self.launch.getchild("rviz")))
 
 
@@ -95,28 +96,95 @@ class AwProfileFrame(AwAbstructFrame):
 
     def __init__(self, guimgr, launch_path):
         super(AwProfileFrame, self).__init__(guimgr, launch_path)
-        self.update_widget()
+        self.setup_widget()
 
-    def update_widget(self):
-        launch = self.guimgr.client.find_launch_node(self.launch_path)
-        self.set_title("Profile : " + launch.config.get("info.title"))
-        self.add_text_widget(launch.config.get("info.description"))
+    def setup_widget(self):
+        self.set_title("Profile : " + self.launch.config.get("info.title"))
+        self.add_text_widget(self.launch.config.get("info.description"))
 
 
 
 class AwLaunchFrame(AwAbstructFrame):
 
-    def __init__(self, guimgr, launch_path):
-        super(AwLaunchFrame, self).__init__(guimgr, launch_path)
-        self.update_widget()
+    def __init__(self, guimgr, launch):
+        super(AwLaunchFrame, self).__init__(guimgr, launch)
+        self.setup_widget()
 
-    def update_widget(self):
-        launch = self.guimgr.client.find_launch_node(self.launch_path)
-        self.set_title("__NAME__ : " + launch.config.get("info.title"))
-        self.add_text_widget(launch.config.get("info.description"))
+    def setup_widget(self):
+        self.set_title(self.launch.nodename().capitalize() + " : " + self.launch.config.get("info.title"))
+        self.add_text_widget(self.launch.config.get("info.description"))
 
-        # ToDo
-        self.add_button(QtWidgets.QPushButton("Launch"))
+        # ToDo: self.add_button(AwLaunchButton(self.guimgr, self.launch.nodepath()))
+        self.add_button(AwLaunchButtonOld(self.guimgr, self.launch))
+
+
+
+
+class AwLaunchButton(QtWidgets.QPushButton):
+
+    def __init__(self, guimgr, lpath, states = None):
+        super(AwLaunchButton, self).__init__()
+        self.guimgr = guimgr
+        self.lpath  = lpath
+        self.states = states or ("Launch", "Terminate")
+
+        self.guimgr.element_created(lpath, self)
+        self.destroyed.connect(lambda: self.guimgr.element_deleted(lpath, self))
+        self.setup_widget()
+
+    def setup_widget(self):
+        self.setText(self.states[0])
+        self.clicked.connect(self.on_clicked)
+
+    def exec_requested(self):
+        self.setText(self.states[1])
+
+    def term_requested(self):
+        self.setEnabled(False)
+
+    def term_completed(self):
+        self.setText(self.states[0])
+        self.setEnabled(True)
+
+    # QtCore.Slot
+    def on_clicked(self):
+        state_text = self.text()
+        if state_text == self.states[0]: self.guimgr.server.request_launch_exec(self.lpath)
+        if state_text == self.states[1]: self.guimgr.server.request_launch_term(self.lpath)
+
+
+
+class AwLaunchButtonOld(QtWidgets.QPushButton, AwLaunchNodeListenerIF):
+
+    def __init__(self, guimgr, launch, states = None):
+        super(AwLaunchButtonOld, self).__init__()
+        self.guimgr = guimgr
+        self.launch = launch
+        self.states = states or ("Launch", "Terminate")
+
+        self.launch.bind_listener(self)
+        self.destroyed.connect(lambda: self.launch.unbind_listener(self))
+        self.setup_widget()
+
+    def setup_widget(self):
+        self.setText(self.states[0])
+        self.clicked.connect(self.on_clicked)
+
+    def exec_requested(self):
+        self.setText(self.states[1])
+
+    def term_requested(self):
+        self.setEnabled(False)
+
+    def term_completed(self):
+        self.setText(self.states[0])
+        self.setEnabled(True)
+
+    # QtCore.Slot
+    def on_clicked(self):
+        state_text = self.text()
+        if state_text == self.states[0]: self.launch.request_exec()
+        if state_text == self.states[1]: self.launch.request_term()
 
 
 
@@ -289,7 +357,6 @@ class AwDefaultNodeFrame(AwAbstructFrame):
         super(AwDefaultNodeFrame, self).__init__(guimgr, launch)
         self.set_title(launch.nodename().capitalize())
         self.add_config_button()
-        self.add_launch_button()
         self.add_text_widget("No Description")
 
 
@@ -339,33 +406,4 @@ class AwFileSelectFrame(AwAbstructFrame, AwLaunchNodeListenerIF):
         self.widget.setText(data)
 
 
-
-class AwLaunchButton(QtWidgets.QPushButton, AwLaunchNodeListenerIF):
-
-    def __init__(self, node):
-        super(AwLaunchButton, self).__init__()
-        self.node = node
-        self.setText("Launch")
-        self.clicked.connect(self.on_clicked)
-
-        self.node.bind_listener(self)
-        self.destroyed.connect(lambda: self.node.unbind_listener(self))
-
-    def exec_requested(self):
-        self.setText("Terminate")
-
-    def term_requested(self):
-        self.setEnabled(False)
-
-    def term_completed(self):
-        self.setText("Launch")
-        self.setEnabled(True)
-
-    # QtCore.Slot
-    def on_clicked(self):
-        state_text = self.text()
-        if state_text == "Launch":
-            self.node.request_exec()
-        if state_text == "Terminate":
-            self.node.request_term()
 

@@ -5,10 +5,10 @@ from python_qt_binding import QtWidgets
 
 class AwAbstructWindow(QtWidgets.QMainWindow):
 
-    def __init__(self, guimgr, launch_path):
+    def __init__(self, guimgr, launch):
         super(AwAbstructWindow, self).__init__()
         self.guimgr = guimgr
-        self.launch = guimgr.client.launch.mirror(launch_path)
+        self.launch = launch
 
     def load_geomerty(self):
         settings = QtCore.QSettings("Autoware", "AutowareLauncher")
@@ -23,10 +23,10 @@ class AwAbstructWindow(QtWidgets.QMainWindow):
 
 class AwAbstructPanel(QtWidgets.QWidget):
 
-    def __init__(self, guimgr, launch_path):
+    def __init__(self, guimgr, launch):
         super(AwAbstructPanel, self).__init__()
-        self.guimgr      = guimgr
-        self.launch_path = launch_path
+        self.guimgr = guimgr
+        self.launch = launch
 
         # Panel Footer
         layout = QtWidgets.QHBoxLayout()
@@ -65,10 +65,10 @@ class AwAbstructPanel(QtWidgets.QWidget):
 
 class AwAbstructFrame(QtWidgets.QWidget):
 
-    def __init__(self, guimgr, launch_path):
+    def __init__(self, guimgr, launch):
         super(AwAbstructFrame, self).__init__()
-        self.guimgr      = guimgr
-        self.launch_path = launch_path
+        self.guimgr = guimgr
+        self.launch = launch
 
         # Frame Header
         self.title = QtWidgets.QLabel("No Title")
