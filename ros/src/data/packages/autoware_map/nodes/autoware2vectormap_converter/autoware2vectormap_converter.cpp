@@ -684,7 +684,6 @@ vector_map_msgs::RoadSign createDummyRoadSign(int id)
 void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoints,
                       const std::vector<autoware_map_msgs::Point> awm_points,
                       const std::vector<autoware_map_msgs::WaypointRelation> awm_waypoint_relations,
-                      const std::vector<autoware_map_msgs::LaneSignalLightRelation> awm_lane_signal_relations,
                       std::vector<vector_map_msgs::Line> &vmap_lines,
                       std::vector<vector_map_msgs::Point> &vmap_points,
                       std::vector<vector_map_msgs::StopLine> &vmap_stop_lines,
@@ -743,14 +742,19 @@ void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoin
             vmap_line.blid = vmap_line.flid = 0;
             vmap_lines.push_back(vmap_line);
 
-            int road_sign_id = vmap_road_signs.size() + 1;
-            vmap_road_signs.push_back(createDummyRoadSign(road_sign_id));
+            std::vector<autoware_map_msgs::WaypointSignalRelation> wsr_vector = awm.findByFilter([&](const autoware_map_msgs::WaypointSignalRelation wsr){ return wsr.waypoint_id == wp.waypoint_id; });
 
+            //only create road sign if stopline is not related to signal
             vector_map_msgs::StopLine vmap_stop_line;
             vmap_stop_line.id = stop_line_id++;
             vmap_stop_line.lid = vmap_line.lid;
             vmap_stop_line.tlid = 0;
-            vmap_stop_line.signid = road_sign_id;
+            if( wsr_vector.size() == 0){
+                int road_sign_id = vmap_road_signs.size() + 1;
+                vmap_road_signs.push_back(createDummyRoadSign(road_sign_id));
+                vmap_stop_line.signid = road_sign_id;
+            }
+
 
             auto relation = std::find_if(awm_waypoint_relations.begin(),
                                          awm_waypoint_relations.end(),
@@ -759,74 +763,6 @@ void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoin
             vmap_stop_lines.push_back(vmap_stop_line);
         }
     }
-
-    std::unordered_map<int,bool> checklist;
-    for( auto lane_signal_relation: awm_lane_signal_relations){
-        int lane_id = lane_signal_relation.lane_id;
-
-        autoware_map_msgs::Lane lane = awm.findByKey(autoware_map::Key<autoware_map_msgs::Lane>(lane_id));
-        int waypoint_id = lane.start_waypoint_id;
-        if(checklist.find(waypoint_id) != checklist.end()) continue;
-        auto awm_wp = awm.findByKey(autoware_map::Key<autoware_map_msgs::Waypoint>(waypoint_id));
-        auto awm_pt = std::find_if(awm_points.begin(),
-                                   awm_points.end(),
-                                   [&](autoware_map_msgs::Point pt){return pt.point_id == awm_wp.point_id; });
-        auto next_waypoint_relation = std::find_if(awm_waypoint_relations.begin(),
-                                                   awm_waypoint_relations.end(),
-                                                   [&](autoware_map_msgs::WaypointRelation wr){return wr.waypoint_id == awm_wp.point_id; });
-        auto next_wp = std::find_if(awm_waypoints.begin(),
-                                    awm_waypoints.end(),
-                                    [&](autoware_map_msgs::Waypoint wp){return wp.waypoint_id == next_waypoint_relation->next_waypoint_id; });
-        auto awm_next_pt = std::find_if(awm_points.begin(),
-                                        awm_points.end(),
-                                        [&](autoware_map_msgs::Point pt){return pt.point_id == next_wp->point_id; });
-        double yaw = atan2(awm_next_pt->y - awm_pt->y, awm_next_pt->x - awm_pt->x);
-        double angle_to_left = addAngles(yaw, -M_PI/2);
-        double angle_to_right = addAngles(yaw, M_PI/2);
-        double r = awm_wp.width / 2;
-
-        double epsilon_x = cos(yaw) * 0.001;
-        double epsilon_y = sin(yaw) * 0.001;
-
-
-        vector_map_msgs::Point start_point, end_point;
-        start_point.pid = point_id++;
-        //stop line must intersect with waypoints left side of the line
-        start_point.bx = awm_pt->x + (r+0.1) * cos(angle_to_left) + epsilon_x;
-        start_point.ly = awm_pt->y + (r+0.1) * sin(angle_to_left) + epsilon_y;
-        start_point.h = awm_pt->z;
-        vmap_points.push_back(start_point);
-
-        end_point.pid = point_id++;
-        //stop line must intersect with waypoints left side of the line
-        end_point.bx = awm_pt->x + r * cos(angle_to_right) + epsilon_x;
-        end_point.ly = awm_pt->y + r * sin(angle_to_right) + epsilon_y;
-        end_point.h = awm_pt->z;
-        vmap_points.push_back(end_point);
-
-        vector_map_msgs::Line vmap_line;
-        vmap_line.lid = line_id++;
-        vmap_line.bpid = start_point.pid;
-        vmap_line.fpid = end_point.pid;
-        vmap_line.blid = vmap_line.flid = 0;
-        vmap_lines.push_back(vmap_line);
-
-        vector_map_msgs::StopLine vmap_stop_line;
-        vmap_stop_line.id = stop_line_id++;
-        vmap_stop_line.lid = vmap_line.lid;
-        vmap_stop_line.tlid = 0;
-        vmap_stop_line.signid = 0;
-
-        auto relation = std::find_if(awm_waypoint_relations.begin(),
-                                     awm_waypoint_relations.end(),
-                                     [&](autoware_map_msgs::WaypointRelation r){return r.next_waypoint_id == waypoint_id; });
-        vmap_stop_line.linkid = std::distance(awm_waypoint_relations.begin(), relation) + 1;
-        vmap_stop_lines.push_back(vmap_stop_line);
-
-        checklist[waypoint_id] = true;
-
-    }
-
 
 }
 
@@ -887,7 +823,7 @@ int main(int argc, char **argv)
     createCrossWalks(awm_lane_attr_relations, vmap_cross_walks);
     createWayAreas(awm_wayareas, vmap_way_areas);
     createSignals(  awm_signal_lights, awm_lane_signal_relations, vmap_signals, vmap_vectors,vmap_dummy_poles, awm_waypoint_relations, awm);
-    createStopLines( awm_waypoints, awm_points, awm_waypoint_relations,awm_lane_signal_relations, vmap_lines, vmap_points, vmap_stop_lines, vmap_road_signs, awm);
+    createStopLines( awm_waypoints, awm_points, awm_waypoint_relations, vmap_lines, vmap_points, vmap_stop_lines, vmap_road_signs, awm);
     // createDummyRoadSign(vmap_road_signs);
 
     ros::Publisher point_pub = nh.advertise<vector_map_msgs::PointArray>("vector_map_info/point", 1, true);
