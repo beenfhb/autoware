@@ -336,23 +336,26 @@ void createPoints(std::vector<autoware_map_msgs::Point> awm_points, std::vector<
     bool epsg_fail_flag = false;
     for ( auto awm_pt : awm_points)
     {
-        vector_map_msgs::Point vmap_point;
-        vmap_point.pid = awm_pt.point_id;
-        vmap_point.b =  convertDecimalToDDMMSS( awm_pt.lat );
-        vmap_point.l =  convertDecimalToDDMMSS( awm_pt.lng );
-        vmap_point.h = awm_pt.z;
-        vmap_point.bx = awm_pt.x;
-        vmap_point.ly = awm_pt.y;
-
+      vector_map_msgs::Point vmap_point;
         // japanese plane rectangular CS number calculated from epsg values;
         if(awm_pt.epsg >= 2443 && awm_pt.epsg <= 2461)
         {
             vmap_point.ref = awm_pt.epsg - 2442;
+            vmap_point.bx = awm_pt.x;
+            vmap_point.ly = awm_pt.y;
         }
         else{
             epsg_fail_flag = true;
             vmap_point.ref = 0;
+            vmap_point.bx = awm_pt.y;
+            vmap_point.ly = awm_pt.x;
         }
+
+        vmap_point.pid = awm_pt.point_id;
+        vmap_point.b =  convertDecimalToDDMMSS( awm_pt.lat );
+        vmap_point.l =  convertDecimalToDDMMSS( awm_pt.lng );
+        vmap_point.h = awm_pt.z;
+
         //cannot convert mcodes from autoware_map_format
         vmap_point.mcode1 = 0;
         vmap_point.mcode2 = 0;
@@ -498,7 +501,7 @@ void createDTLanes(const std::vector<autoware_map_msgs::WaypointRelation> awm_wa
         autoware_map_msgs::Waypoint awm_waypoint = awm.findByKey( autoware_map::Key<autoware_map_msgs::Waypoint>(awm_waypoint_relation.waypoint_id));
         autoware_map_msgs::Waypoint awm_next_waypoint = awm.findByKey( autoware_map::Key<autoware_map_msgs::Waypoint>(awm_waypoint_relation.next_waypoint_id));
 
-        vmap_dtlane.dir = awm_waypoint_relation.yaw;
+        vmap_dtlane.dir = convertDecimalToDDMMSS(awm_waypoint_relation.yaw);
         vmap_dtlane.apara = 0;
         vmap_dtlane.r = 90000000000;
 
