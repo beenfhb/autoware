@@ -287,6 +287,8 @@ struct TTransform : public Eigen::Affine3d
 	const double qw() const
 	{ return orientation().w(); }
 
+	bool isValid() const;
+
 
 	BOOST_SERIALIZATION_SPLIT_MEMBER()
 };

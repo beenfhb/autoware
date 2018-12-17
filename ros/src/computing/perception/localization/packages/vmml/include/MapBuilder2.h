@@ -72,8 +72,7 @@ public:
 	VMap* getMap()
 	{ return cMap; }
 
-	void addCameraParam (const CameraPinholeParams &c)
-	{ cMap->addCameraParameter(c); }
+	void addCameraParam (const CameraPinholeParams &c);
 
 	inline kfid getCurrentKeyFrameId()
 	{ return kfAnchor; }
@@ -90,6 +89,11 @@ public:
 		const ptime stopTime = MAX_TIME);
 
 	void setMask (const cv::Mat &m);
+
+	bool
+	checkDataPoints (GenericDataset::ConstPtr sourceDs, const ptime startTime, const ptime stopTime)
+	const;
+
 
 protected:
 

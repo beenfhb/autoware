@@ -702,12 +702,14 @@ private:
 		Viewer *imgViewer = new Viewer (loadedDataset);
 		imgViewer->setMap(mapBuilder.getMap());
 		dataItemId currentItemId;
+		int _callbackFrameId = 1;
 
 		MapBuilder2::frameCallback frmCallback =
 		[&] (const InputFrame &f)
 		{
 			imgViewer->update(f.sourceId, mapBuilder.getCurrentKeyFrameId());
-			cout << f.sourceId << " / " << loadedDataset->size() << endl;
+			cout << _callbackFrameId << " / " << numOfFrames << endl;
+			_callbackFrameId += 1;
 		};
 		mapBuilder.registerFrameCallback(frmCallback);
 

@@ -583,8 +583,10 @@ VMap::updateCovisibilityGraph(const kfid k)
 //	Should we clear the vertex?
 //	boost::clear_vertex(kfVtxMap[k], covisibility);
 	for (auto kfctr: kfCounter) {
+		covisibilityGraphMtx.lock();
 		// XXX: Do NOT put KfID directly to graph; use vertex descriptor instead
 		boost::add_edge(kfVtxMap[k], kfVtxMap[kfctr.first], kfctr.second, covisibility);
+		covisibilityGraphMtx.unlock();
 	}
 }
 

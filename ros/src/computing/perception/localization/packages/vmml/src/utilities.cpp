@@ -189,6 +189,17 @@ TTransform::interpolate(const TTransform &T1, const TTransform &T2, const double
 }
 
 
+bool TTransform::isValid() const
+{
+	auto P = position();
+
+	if (isnan(P.x()) or isnan(P.y()) or isnan(P.z()))
+		return false;
+
+	return true;
+}
+
+
 using Eigen::VectorXd;
 
 VectorXd

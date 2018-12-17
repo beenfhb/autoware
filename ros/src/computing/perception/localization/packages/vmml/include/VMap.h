@@ -260,6 +260,7 @@ protected:
 	KeyFrameGraph covisibility;
 	std::map<kfid,KeyFrameGraph::vertex_descriptor> kfVtxMap;
 	std::map<KeyFrameGraph::vertex_descriptor,kfid> kfVtxInvMap;
+	std::mutex covisibilityGraphMtx;
 
 	// Information about this map
 	mapKeyValueInfo keyValueInfo;

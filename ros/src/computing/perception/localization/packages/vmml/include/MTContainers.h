@@ -99,6 +99,21 @@ public:
 	// key access
 
 	// at
+//	const typename MtMapBase::mapped_type& at(const typename MtMapBase::key_type &key) const
+//	{ return MtMapBase::at(key); }
+//
+//	typename MtMapBase::mapped_type& at(const typename MtMapBase::key_type &key)
+//	{
+//		ngelock.lock();
+//		auto sat = MtMapBase::at(key);
+//		ngelock.unlock();
+//	}
+
+	void lock()
+	{ return ngelock.lock(); }
+
+	void unlock()
+	{ return ngelock.unlock(); }
 
 protected:
 

@@ -102,6 +102,7 @@ MapBuilder2::input(const InputFrame &f)
 			vector<kfid> kfInsToAnchor = cMap->getKeyFramesComeInto(lastAnchor);
 			cerr << "Found " << kfInsToAnchor.size() << " input keyframes\n";
 			const kfid targetKfId = kfAnchor;
+
 			// XXX: Parallelize this
 			for (auto &kfx: kfInsToAnchor) {
 				cMap->trackMapPoints(kfx, targetKfId);
@@ -195,6 +196,33 @@ MapBuilder2::runFromDataset(GenericDataset::Ptr sourceDs, const ptime startTime,
 	}
 
 	this->build();
+}
+
+
+bool
+MapBuilder2::checkDataPoints (GenericDataset::ConstPtr sourceDs, const ptime startTime, const ptime stopTime)
+const
+{
+	dataItemId
+		startId = sourceDs->getLowerBound(startTime),
+		stopId = sourceDs->getLowerBound(stopTime);
+
+	for (auto currentId=startId; currentId<=stopId; ++currentId) {
+		auto curFrame = sourceDs->get(currentId);
+		if (curFrame->getPose().isValid()==false)
+			return false;
+	}
+
+	return true;
+}
+
+
+void MapBuilder2::addCameraParam (const CameraPinholeParams &c)
+{
+	if (c.height==-1 or c.width==-1)
+		throw runtime_error("Invalid camera parameter");
+
+	cMap->addCameraParameter(c);
 }
 
 
