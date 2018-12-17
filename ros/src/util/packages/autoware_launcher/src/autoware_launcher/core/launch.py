@@ -119,9 +119,6 @@ class AwLaunchTree(AwBaseTree):
     def __str__(self):
         return "Tree:{}".format(self.nodename())
 
-    def profile_path(self):
-        return fspath.profile(self.profile)
-
     # Move to Server
     def request_json(self, json_string):
         request = json.loads(json_string)
@@ -152,7 +149,16 @@ class AwLaunchTree(AwBaseTree):
         self.treepath = treepath
         load_node(root)
 
-
+    def make(self, ppath, plugins):
+        def make_node(node, ppath):
+            plugin = plugins.find(ppath)
+            config = plugin.default_config()
+            children = 
+            for cinfo in plugin.children():
+                print cinfo
+                if cinfo["type"] == "single":
+                    make_node(launch, cinfo["name"], cinfo["plugin"])
+            launch = AwLaunchNode(parent, name, plugin, config)
 
 
 class AwLaunchNode(AwBaseNode):
@@ -259,7 +265,7 @@ class AwLaunchNode(AwBaseNode):
         for item in self.listener: item.config_removed(name)
 
     def generate_launch(self):
-        xml_path = os.path.join(self.tree().profile_path(), self.nodepath() + ".xml")
+        xml_path = self.fullpath() + ".xml"
         with open(xml_path, mode="w") as fp:
             fp.write('<launch>\n')
             fp.write('  <include file="' + os.path.join("$(find autoware_launcher)", "plugins", self.plugin.nodepath() + ".xml") + '">\n')
@@ -271,6 +277,19 @@ class AwLaunchNode(AwBaseNode):
             fp.write('  </include>\n')
             fp.write('</launch>\n')
         return xml_path
+
+    def import_plugin(self, plugin)
+        self.plugin = plugin
+        self.config = plugin.default_config()
+   
+            for cinfo in plugin.children():
+                print cinfo
+                if cinfo["type"] == "single":
+                    make_node(launch, cinfo["name"], cinfo["plugin"])
+            launch = AwLaunchNode(parent, name, plugin, config)
+
+
+
 
     def import_data(self, data, plugins):
         self.plugin = plugins.find(data["plugin"])

@@ -29,15 +29,6 @@ class AwLaunchServer(AwLaunchServerIF):
     def __add_client(self, client):
         self.__client.append(client)
 
-    # move to tree
-    def __init_launch_node(self, parent, name, plugin_path):
-        plugin = self.__plugins.find(plugin_path)
-        config = plugin.default_config()
-        launch = AwLaunchNode(parent, name, plugin, config)
-        for cinfo in plugin.children():
-            print cinfo
-            if cinfo["type"] == "single":
-                self.__init_launch_node(launch, cinfo["name"], cinfo["plugin"])
 
     def request_launch_init(self, plugin_root):
         console.info("request_launch_init: " + plugin_root)
