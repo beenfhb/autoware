@@ -705,7 +705,6 @@ std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Waypoint& ob
 {
     os << obj.waypoint_id << ","
     << obj.point_id << ","
-    << obj.yaw << ","
     << obj.velocity << ","
     << obj.stop_line << ","
     << obj.width << ","
@@ -722,6 +721,7 @@ std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::WaypointRela
 {
     os << obj.waypoint_id << ","
     << obj.next_waypoint_id << ","
+    << obj.yaw << ","
     << obj.blinker << ","
     << obj.distance;
     return os;
@@ -920,11 +920,10 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::Waypoint& obj)
     }
     obj.waypoint_id = std::stoi(columns[0]);
     obj.point_id = std::stoi(columns[1]);
-    obj.yaw = std::stod(columns[2]);
-    obj.velocity = std::stod(columns[3]);
-    obj.stop_line = std::stoi(columns[4]);
-    obj.width = std::stod(columns[5]);
-    obj.height = std::stod(columns[6]);
+    obj.velocity = std::stod(columns[2]);
+    obj.stop_line = std::stoi(columns[3]);
+    obj.width = std::stod(columns[4]);
+    obj.height = std::stod(columns[5]);
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::WaypointLaneRelation& obj)
@@ -949,8 +948,9 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::WaypointRelation& 
     }
     obj.waypoint_id = std::stoi(columns[0]);
     obj.next_waypoint_id = std::stoi(columns[1]);
-    obj.blinker = std::stoi(columns[2]);
-    obj.distance = std::stod(columns[3]);
+    obj.yaw = std::stod(columns[2]);
+    obj.blinker = std::stoi(columns[3]);
+    obj.distance = std::stod(columns[4]);
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::WaypointSignalRelation& obj)

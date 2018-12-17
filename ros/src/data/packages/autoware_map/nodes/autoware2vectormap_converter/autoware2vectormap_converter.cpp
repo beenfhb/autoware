@@ -498,7 +498,7 @@ void createDTLanes(const std::vector<autoware_map_msgs::WaypointRelation> awm_wa
         autoware_map_msgs::Waypoint awm_waypoint = awm.findByKey( autoware_map::Key<autoware_map_msgs::Waypoint>(awm_waypoint_relation.waypoint_id));
         autoware_map_msgs::Waypoint awm_next_waypoint = awm.findByKey( autoware_map::Key<autoware_map_msgs::Waypoint>(awm_waypoint_relation.next_waypoint_id));
 
-        vmap_dtlane.dir = awm_waypoint.yaw;
+        vmap_dtlane.dir = awm_waypoint_relation.yaw;
         vmap_dtlane.apara = 0;
         vmap_dtlane.r = 90000000000;
 
