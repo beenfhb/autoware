@@ -286,7 +286,7 @@ public:
 	cv::Mat computeImagePreprocessorMask() const;
 
 	// Flag to request preprocessed image
-	bool isPreprocessed = false;
+	bool isPreprocessed = true;
 
 	enum CameraTrackSource {
 		GNSS,
