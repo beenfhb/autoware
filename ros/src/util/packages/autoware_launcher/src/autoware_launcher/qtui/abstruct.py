@@ -21,10 +21,22 @@ class AwAbstructWindow(QtWidgets.QMainWindow):
 
 class AwAbstructPanel(QtWidgets.QWidget):
 
-    def __init__(self, guimgr, launch):
+    def __init__(self, guimgr, holder, mirror):
         super(AwAbstructPanel, self).__init__()
         self.guimgr = guimgr
-        self.launch = launch
+        self.holder = holder
+        self.mirror = mirror
+
+
+    def setup_widget(self):
+        if self.layout() is None:
+            self.__setup_widget()
+        else:
+            self.__clear_widget()
+
+    def __setup_widget(self):
+
+        self.window().setWindowTitle(self.__class__.__name__)
 
         # Panel Footer
         layout = QtWidgets.QHBoxLayout()
@@ -42,7 +54,7 @@ class AwAbstructPanel(QtWidgets.QWidget):
         layout.addWidget(self.footer)
         self.setLayout(layout)
 
-    def clear_widget(self):
+    def __clear_widget(self):
 
         # Panel Footer
         layout = self.footer.layout()
@@ -65,10 +77,11 @@ class AwAbstructPanel(QtWidgets.QWidget):
 
 class AwAbstructFrame(QtWidgets.QWidget):
 
-    def __init__(self, guimgr, launch):
+    def __init__(self, guimgr, holder, mirror):
         super(AwAbstructFrame, self).__init__()
         self.guimgr = guimgr
-        self.launch = launch
+        self.holder = holder
+        self.mirror = mirror
 
         # Frame Header
         self.title = QtWidgets.QLabel("No Title")

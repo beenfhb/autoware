@@ -15,65 +15,95 @@ class AwPluginTree(object):
     
     def __init__(self):
         self.__plugins = {}
+        self.__path = fspath.plugins()
+
         self.__load_plugins()
 
     def __load_plugins(self):
-
-        plugins_path = fspath.plugins()
-        for dirpath, dirs, files in os.walk(plugins_path):
-            relpath = os.path.relpath(dirpath, plugins_path)
+        for dirpath, dirs, files in os.walk(self.__path):
+            relpath = os.path.relpath(dirpath, self.__path)
             for filename in files:
                 fkey, fext = os.path.splitext(os.path.join(relpath, filename))
                 if fext == ".yaml":
-                    self.__plugins[fkey] = AwPluginSchema(plugins_path, fkey)
+                    self.__plugins[fkey] = AwPluginSchema(self, fkey)
                 elif fext == ".xml":
-                    if not os.path.isfile(os.path.join(plugins_path, fkey + ".yaml")):
+                    if not os.path.isfile(os.path.join(self.__path, fkey + ".yaml")):
                         console.warning("since yaml is not found, ignoring {}".format(fkey + fext))
                 else:
                     console.warning("since unknown extension, ignoring {}".format(fkey + fext))
 
+    def path(self):
+        return self.__path
+
     def find(self, nodepath):
         return self.__plugins[nodepath]
 
+    def scan(self, nodepath):
+        return filter(lambda p: p.startswith(nodepath), self.__plugins.keys())
+
     def dump(self):
         for nodename in sorted(self.__plugins.keys()):
-            print nodename
-
+            self.__plugins[nodename].dump()
 
 
 class AwPluginSchema(object):
 
-    def __init__(self, treepath, nodepath):
-
-        self.__treepath = treepath
-        self.__nodepath = nodepath
-        self.__yamldata = None
+    def __init__(self, tree, path):
+        self.__tree = tree
+        self.__path = path
+        self.__node = True
+        self.__data = None
 
         self.gui = {}
-        self.__load_yaml(self.fullpath())
+        self.__load_yaml(self.tree().path() + "/" + self.path())
+
+    def tree(self): # Move to BaseNode
+        return self.__tree
+
+    def path(self): # Move to BaseNode
+        return self.__path
 
     def __load_yaml(self, fullpath):
 
         fullpath = fullpath + ".yaml"
         with open(fullpath) as fp:
-            self.__yamldata = yaml.safe_load(fp)
-        
-        if type(self.__yamldata) is not dict:
+            self.__data = yaml.safe_load(fp)
+
+        if type(self.__data) is not dict:
             self.error("yaml data is not dictionary")
-        else:
-            self.__yamldata.setdefault("children", None)
+
+        if self.__data.get("children") is None:
+            self.__node = False
+            self.__data["children"] = []
+
+        self.gui = self.__data.pop("gui", {})
+        self.gui.setdefault("type", "default_node" if self.__node else "default_leaf")
 
     def default_config(self):
         return {}
 
+    def args(self):
+        return self.__data["args"]
+
     def children(self):
-        return self.__yamldata["children"]
-
-    def nodepath(self):
-        return self.__nodepath
-
-    def fullpath(self):
-        return os.path.join(self.__treepath, self.__nodepath)
+        return self.__data["children"]
 
     def error(self, text):
         console.error("{}: {} ({})".format(self.__class__.__name__, text, self.__nodepath))
+
+    def dump(self):
+        print self.__nodepath
+        print "  YML: " + str(self.__data)
+        print "  GUI: " + str(self.gui       )
+
+    def optional_children(self):
+        plugins = {}
+        for cinfo in self.children():
+            if cinfo["type"] == "optional":
+                plugins[cinfo["name"]] = self.__tree.scan(cinfo["plugin"])
+        return plugins
+
+
+if __name__ == "__main__":
+    plugin = AwPluginTree()
+    plugin.dump()

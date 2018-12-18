@@ -1,1 +1,2 @@
-children : []
+children :
+  - { type: optional, name: lidar, plugin : sensing/lidar }

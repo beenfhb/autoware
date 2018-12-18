@@ -118,7 +118,7 @@ class AwLaunchExecutor(QtWidgets.QPlainTextEdit, AwLaunchNodeExecutorIF):
         self.status = AwLaunchExecutor.STOP_STATE
         self.node = node
         self.node.bind_executor(self)
-
+        
         self.setReadOnly(True)
         self.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
 
@@ -126,6 +126,9 @@ class AwLaunchExecutor(QtWidgets.QPlainTextEdit, AwLaunchNodeExecutorIF):
         self.proc.finished.connect(self.on_finished)
         self.proc.readyReadStandardOutput.connect(self.on_ready_stdout)
         self.proc.readyReadStandardError.connect(self.on_ready_stderr)
+
+        import re
+        self.bash_regex = re.compile("\033(\[.*?m|\].*?;)")
 
     # ToDo: add state check
     def request_exec(self):
@@ -149,12 +152,16 @@ class AwLaunchExecutor(QtWidgets.QPlainTextEdit, AwLaunchNodeExecutorIF):
     def on_ready_stdout(self):
         byte = self.proc.readAllStandardOutput()
         text = QtCore.QTextStream(byte).readAll()
+        text = self.bash_regex.sub("", text)
         self.moveCursor(QtGui.QTextCursor.End)
         self.insertPlainText(text)
+        self.moveCursor(QtGui.QTextCursor.End)
 
     # QtCore.Slot
     def on_ready_stderr(self):
         byte = self.proc.readAllStandardError()
         text = QtCore.QTextStream(byte).readAll()
+        text = self.bash_regex.sub("", text)
         self.moveCursor(QtGui.QTextCursor.End)
         self.insertPlainText(text)
+        self.moveCursor(QtGui.QTextCursor.End)

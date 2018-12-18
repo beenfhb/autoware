@@ -1,5 +1,5 @@
 children :
-  - { type: single, name: rviz,         plugin : node/rviz         }
+  - { type: single, name: rviz,         plugin : others/rviz       }
   - { type: single, name: map,          plugin : node/map          }
   - { type: single, name: vehicle,      plugin : node/vehicle      }
   - { type: single, name: sensing,      plugin : node/sensing      }
@@ -9,6 +9,3 @@ children :
   - { type: single, name: decision,     plugin : node/decision     }
   - { type: single, name: mission,      plugin : node/mission      }
   - { type: single, name: motion,       plugin : node/motion       }
-
-gui :
-  type : root

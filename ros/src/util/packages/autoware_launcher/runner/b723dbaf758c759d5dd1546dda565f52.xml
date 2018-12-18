@@ -1,0 +1,4 @@
+<launch>
+  <include file="$(find autoware_launcher)/plugins/node/decision.xml">
+  </include>
+</launch>

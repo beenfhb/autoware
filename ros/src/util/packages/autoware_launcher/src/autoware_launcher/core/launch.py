@@ -112,25 +112,19 @@ class AwBaseTree(AwBaseNode):
 
 class AwLaunchTree(AwBaseTree):
 
-    def __init__(self, server):
+    def __init__(self, server, plugins):
         super(AwLaunchTree, self).__init__()
-        self.server = server
+        self.server  = server
+        self.plugins = plugins
 
     def __str__(self):
-        return "Tree:{}".format(self.nodename())
-
-    # Move to Server
-    def request_json(self, json_string):
-        request = json.loads(json_string)
-        if request.get("command") == "launch":
-            node = self.find(request["path"])
-            if node:
-                node.request_exec()
-                return '{"response":"ok"}'
-        return None
+        childnames = map(lambda child: child.nodename(), self.children())
+        return "Tree:{} Children:{}".format(self.nodename(), childnames)
 
     def save(self, treepath):
         self.treepath = treepath
+        with open(treepath + ".launch", mode = "w") as fp:
+            fp.write("dummy")
         for node in self.nodelist():
             fullpath = node.fullpath() + ".yaml"
             fspath.makedirs(os.path.dirname(fullpath), exist_ok = True)
@@ -150,15 +144,37 @@ class AwLaunchTree(AwBaseTree):
         load_node(root)
 
     def make(self, ppath, plugins):
-        def make_node(node, ppath):
+        def make_node(parent, lname, ppath):
             plugin = plugins.find(ppath)
-            config = plugin.default_config()
-            children = 
-            for cinfo in plugin.children():
-                print cinfo
-                if cinfo["type"] == "single":
-                    make_node(launch, cinfo["name"], cinfo["plugin"])
-            launch = AwLaunchNode(parent, name, plugin, config)
+            launch = AwLaunchNode(lname)
+            launch.plugin = plugin
+            launch.config = plugin.default_config()
+            parent.addchild(launch)
+
+            if plugin.children():
+                for cinfo in plugin.children():
+                    if cinfo["type"] == "single":
+                        make_node(launch, cinfo["name"], cinfo["plugin"])
+            else:
+                launch._AwBaseNode__nodetype = False
+        make_node(self, "root", ppath)
+
+    def create(self, lpath, ppath):
+        if not os.path.basename(lpath):
+            return "name empty"
+        #if exists
+        #    console.warning("name exists")
+        #    return  
+
+        parent = self.find(os.path.dirname(lpath))
+        plugin = self.plugins.find(ppath)
+
+        launch = AwLaunchNode(os.path.basename(lpath))
+        launch.plugin = plugin
+        launch.config = plugin.default_config()
+        parent.addchild(launch)
+        return None
+
 
 
 class AwLaunchNode(AwBaseNode):
@@ -175,9 +191,10 @@ class AwLaunchNode(AwBaseNode):
 
     def __str__(self):
         nodetype = "Node" if self.isnode() else "Leaf"
-        plugin = None if not self.plugin else self.plugin.nodepath() 
+        plugin = None if not self.plugin else self.plugin.path() 
         config = None if not self.config else self.config.keys()
-        return "{}:{:<13} Plugin:{} Config:{}".format(nodetype, self.nodename(), plugin, config)
+        childnames = map(lambda child: child.nodename(), self.children())
+        return "{}:{:<13} Plugin:{} Config:{} Children:{}".format(nodetype, self.nodename(), plugin, config, childnames)
 
     def bind_listener(self, listener):
         if not isinstance(listener, AwLaunchNodeListenerIF):
@@ -196,19 +213,6 @@ class AwLaunchNode(AwBaseNode):
         self.executor = AwLaunchNodeExecutor()
 
     # experimental
-    def create_child(self, name, plugin):
-        if not name:
-            return "name is empty"
-        if self.haschild(name):
-            return "name exists"
-        child = AwLaunchNode(self, name)
-        child.plugin = plugin
-        child.config["info"] = {}
-        child.config["args"] = {}
-        self.send_config_created(child)
-        return None
-
-    # experimental
     def remove_child(self, name):
         if not name:
             return "name is empty"
@@ -218,12 +222,15 @@ class AwLaunchNode(AwBaseNode):
         self.send_config_removed(name)
         return None
 
-    def set_data(self, grp, key, value):
-        self.config[grp][key] = value
-        self.send_config_updated()
+    #def pull_config(self):
+    #def push_config(self, config):
 
-    def get_data(self, grp, key, value = None):
-        return self.config[grp].get(key, value)
+    def get_config(self, key, value):
+        return self.config.get(key, value)
+
+    def set_config(self, key, value):
+        self.config[key] = value
+        self.send_config_updated()
 
     def request_exec(self):
         if self.isnode():
@@ -265,7 +272,9 @@ class AwLaunchNode(AwBaseNode):
         for item in self.listener: item.config_removed(name)
 
     def generate_launch(self):
-        xml_path = self.fullpath() + ".xml"
+        import hashlib
+        xml_hash = hashlib.md5(self.nodepath()).hexdigest()
+        xml_path = fspath.package() + "/runner/" + xml_hash + ".xml"
         with open(xml_path, mode="w") as fp:
             fp.write('<launch>\n')
             fp.write('  <include file="' + os.path.join("$(find autoware_launcher)", "plugins", self.plugin.nodepath() + ".xml") + '">\n')
@@ -278,19 +287,6 @@ class AwLaunchNode(AwBaseNode):
             fp.write('</launch>\n')
         return xml_path
 
-    def import_plugin(self, plugin)
-        self.plugin = plugin
-        self.config = plugin.default_config()
-   
-            for cinfo in plugin.children():
-                print cinfo
-                if cinfo["type"] == "single":
-                    make_node(launch, cinfo["name"], cinfo["plugin"])
-            launch = AwLaunchNode(parent, name, plugin, config)
-
-
-
-
     def import_data(self, data, plugins):
         self.plugin = plugins.find(data["plugin"])
         self.config = data["config"]
@@ -302,7 +298,7 @@ class AwLaunchNode(AwBaseNode):
 
     def export_data(self):
         children = None if self.isleaf() else map(lambda node: node.nodename(), self.children())
-        plugin = self.plugin.nodepath()
+        plugin = self.plugin.path()
         config = self.config
         return {"children":children, "plugin":plugin, "config":config}
 

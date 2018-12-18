@@ -1,1 +1,4 @@
-children : []
+children :
+  - { type: single, name: transform, plugin : map/transform }
+  - { type: single, name: points,    plugin : map/points    }
+  - { type: single, name: vector,    plugin : map/vector    }
