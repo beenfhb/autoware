@@ -726,16 +726,27 @@ void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoin
             vector_map_msgs::Point start_point, end_point;
             start_point.pid = point_id++;
             //stop line must intersect with waypoints left side of the line
+
             start_point.bx = awm_pt->x + (r+0.1) * cos(angle_to_left) + epsilon_x;
             start_point.ly = awm_pt->y + (r+0.1) * sin(angle_to_left) + epsilon_y;
             start_point.h = awm_pt->z;
-            vmap_points.push_back(start_point);
 
             end_point.pid = point_id++;
             //stop line must intersect with waypoints left side of the line
             end_point.bx = awm_pt->x + r * cos(angle_to_right) + epsilon_x;
             end_point.ly = awm_pt->y + r * sin(angle_to_right) + epsilon_y;
             end_point.h = awm_pt->z;
+            //swap x and y if the coordinate is not in japanese rectangular coordinate system
+            if(awm_pt->epsg <= 2443 && awm_pt->epsg >= 2461)
+            {
+                double tmp = start_point.bx;
+                start_point.bx = start_point.ly;
+                start_point.ly = tmp;
+                tmp = end_point.bx;
+                end_point.bx = start_point.ly;
+                end_point.ly = tmp;
+            }
+            vmap_points.push_back(start_point);
             vmap_points.push_back(end_point);
 
             vector_map_msgs::Line vmap_line;
@@ -746,13 +757,13 @@ void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoin
             vmap_lines.push_back(vmap_line);
 
             std::vector<autoware_map_msgs::WaypointSignalRelation> wsr_vector = awm.findByFilter([&](const autoware_map_msgs::WaypointSignalRelation wsr){ return wsr.waypoint_id == wp.waypoint_id; });
-
+            std::cout << wp.waypoint_id << " " << stop_line_id << std::endl;
             //only create road sign if stopline is not related to signal
             vector_map_msgs::StopLine vmap_stop_line;
             vmap_stop_line.id = stop_line_id++;
             vmap_stop_line.lid = vmap_line.lid;
             vmap_stop_line.tlid = 0;
-            if( wsr_vector.size() == 0){
+            if( wsr_vector.empty()){
                 int road_sign_id = vmap_road_signs.size() + 1;
                 vmap_road_signs.push_back(createDummyRoadSign(road_sign_id));
                 vmap_stop_line.signid = road_sign_id;
@@ -785,8 +796,8 @@ int main(int argc, char **argv)
                                                     autoware_map::Category::WAYAREA |
                                                     autoware_map::Category::WAYPOINT |
                                                     autoware_map::Category::WAYPOINT_RELATION |
-                                                    autoware_map::Category::WAYPOINT_LANE_RELATION;
-
+                                                    autoware_map::Category::WAYPOINT_LANE_RELATION |
+                                                    autoware_map::Category::WAYPOINT_SIGNAL_RELATION;
 
     awm.subscribe(nh, awm_required_category , ros::Duration(5));
     if(awm.hasSubscribed(awm_required_category) == false)
