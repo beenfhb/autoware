@@ -613,8 +613,9 @@ MeidaiBagDataset::isCameraTrajectoryComplete() const
 	if (cameraTrack.empty())
 		return false;
 
+	dataItemId firstp = cameraTrack.begin()->first;
 	dataItemId lastp = cameraTrack.rbegin()->first;
-	if (cameraTrack.at(0).timestamp > cameraRawBag->startTime().toBoost() or
+	if (cameraTrack.at(firstp).timestamp > cameraRawBag->startTime().toBoost() or
 		cameraTrack.at(lastp).timestamp < cameraRawBag->stopTime().toBoost())
 	return false;
 

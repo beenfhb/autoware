@@ -697,6 +697,7 @@ private:
 		else {
 			ptstart = loadedDataset->get(0)->getTimestamp();
 			ptstop = loadedDataset->last()->getTimestamp();
+			duration = toSeconds((ptstart-ptstop));
 		}
 
 		int numOfFrames = loadedDataset->size(ptstart, ptstop);

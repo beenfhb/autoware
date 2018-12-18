@@ -174,6 +174,10 @@ cv::Mat ImagePreprocessor::autoAdjustGammaMono(cv::Mat &grayImg, float *gamma, c
 }
 
 
+/*
+ * XXX: Can we add histogram equalization here?
+ * The point is to enhance image contrast
+ */
 cv::Mat ImagePreprocessor::autoAdjustGammaRGB (const cv::Mat &rgbImg, const cv::Mat &mask)
 {
 	cv::Mat res;
