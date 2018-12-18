@@ -452,6 +452,12 @@ private:
 				else
 					debug("Camera trajectory is partial");
 
+				ptime time0 = meidaiDsPtr->get(0)->getTimestamp();
+				auto
+					td1 = toSeconds(cameraTrack.front().timestamp - time0),
+					td2 = toSeconds(cameraTrack.back().timestamp - time0);
+				debug("Available time positions: from " + to_string(td1) + " to " + to_string(td2));
+
 				switch (meidaiDsPtr->cameraTrackSource) {
 				case MeidaiBagDataset::GNSS: debug("Camera trajectory is derived from GNSS"); break;
 				case MeidaiBagDataset::NDT: debug("Camera trajectory is derived from NDT"); break;

@@ -20,11 +20,12 @@
 #include <boost/filesystem.hpp>
 #include <cv_bridge/cv_bridge.h>
 
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/split_member.hpp>
-#include <boost/date_time/posix_time/time_serialize.hpp>
+//#include <boost/serialization/serialization.hpp>
+//#include <boost/serialization/base_object.hpp>
+//#include <boost/serialization/vector.hpp>
+//#include <boost/serialization/split_member.hpp>
+//#include <boost/date_time/posix_time/time_serialize.hpp>
+#include <boost/serialization/map.hpp>
 
 #include "utilities.h"
 #include "ImagePreprocessor.h"
@@ -175,6 +176,20 @@ protected:
 };
 
 
+
+class MeidaiTrajectoryMap : public std::map<dataItemId, PoseStamped>
+{
+friend class boost::serialization::access;
+	template<class Archive>
+	inline void serialize(Archive &ar, const unsigned int version)
+	{ ar & boost::serialization::base_object<std::map<dataItemId, PoseStamped>>(*this);}
+
+public:
+	Trajectory toTrajectory() const;
+};
+
+
+
 class MeidaiBagDataset : public GenericDataset
 {
 public:
@@ -207,6 +222,7 @@ public:
 	);
 
 	void setTimeConstraint(const ptime &start, const ptime &stop);
+	void resetTimeConstraint();
 
 	void loadPosition();
 
@@ -232,8 +248,7 @@ public:
 	const Trajectory& getNdtTrajectory() const
 	{ return ndtTrack; }
 
-	const Trajectory& getCompleteCameraTrajectory() const
-	{ return cameraTrack; }
+	const Trajectory getCompleteCameraTrajectory() const;
 
 	bool isCameraTrajectoryComplete() const;
 
@@ -320,6 +335,9 @@ protected:
 	cv::Mat exposureMask;
 	ImagePreprocessor mPreprocessor;
 
+	// Number of all images in the bag
+	uint64_t numOfFrames;
+
 private:
 	void loadCache ();
 	void doLoadCache (const std::string &);
@@ -328,7 +346,8 @@ private:
 
 	Trajectory gnssTrack;
 	Trajectory ndtTrack;
-	Trajectory cameraTrack;
+//	Trajectory cameraTrack;
+	MeidaiTrajectoryMap cameraTrack;
 
 	float zoomRatio = 1.0;
 

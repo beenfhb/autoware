@@ -170,6 +170,8 @@ MeidaiBagDataset::prepareBag (const ros::Time &beginTime, const ros::Time &stopT
 	velodyneBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagVelodyne, beginTime, stopTime));
 */
 	cameraRawBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagImageTopic));
+	numOfFrames = cameraRawBag->size();
+
 	gnssBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagGnssTopic));
 	velodyneBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagVelodyne));
 }
@@ -417,8 +419,14 @@ MeidaiBagDataset::createTrajectories(ptime startTimep, ptime stopTimep, bool use
 	cout << "Creating Camera Trajectory\n";
 	// XXX: It is possible that camera recording may have started earlier than lidar's
 
-	if (doCompensateTime)
+	uint32_t imageBagPos;
+	if (doCompensateTime) {
+		imageBagPos = cameraRawBag->getPositionAtTime(startTime);
 		cameraRawBag->setTimeConstraint(startTime, stopTime);
+	}
+	else {
+		imageBagPos = 0;
+	}
 
 	for (int i=0; i<cameraRawBag->size(); i++) {
 		auto tm = cameraRawBag->timeAt(i).toBoost();
@@ -432,9 +440,11 @@ MeidaiBagDataset::createTrajectories(ptime startTimep, ptime stopTimep, bool use
 			poseX = trajectorySrc->interpolate(tm);
 		// XXX: Check this value
 		PoseStamped poseX1 = poseX * lidarToCameraTransform;
-		cameraTrack.push_back(poseX1);
+//		cameraTrack.push_back(poseX1);
+		cameraTrack[imageBagPos] = poseX1;
 
 		cout << i+1 << " / " << cameraRawBag->size() << "  \r";
+		imageBagPos += 1;
 	}
 }
 
@@ -518,7 +528,7 @@ Trajectory
 MeidaiBagDataset::getCameraTrajectory(const ptime timeStart, const ptime timeStop) const
 {
 	// XXX: Stub
-	return cameraTrack;
+	return cameraTrack.toTrajectory();
 }
 
 
@@ -547,7 +557,7 @@ Pose
 MeidaiDataItem::getPose()
 const
 {
-	auto &p = parent.cameraTrack[pId];
+	auto &p = parent.cameraTrack.at(pId);
 	return p;
 }
 
@@ -555,7 +565,7 @@ const
 Vector3d
 MeidaiDataItem::getPosition() const
 {
-	auto &p = parent.cameraTrack[pId];
+	auto &p = parent.cameraTrack.at(pId);
 	return p.position();
 }
 
@@ -563,7 +573,7 @@ MeidaiDataItem::getPosition() const
 Quaterniond
 MeidaiDataItem::getOrientation() const
 {
-	auto &p = parent.cameraTrack[pId];
+	auto &p = parent.cameraTrack.at(pId);
 	return p.orientation();
 }
 
@@ -603,12 +613,30 @@ MeidaiBagDataset::isCameraTrajectoryComplete() const
 	if (cameraTrack.empty())
 		return false;
 
-	if (cameraTrack[0].timestamp > cameraRawBag->startTime().toBoost() or
-		cameraTrack.back().timestamp < cameraRawBag->stopTime().toBoost())
+	dataItemId lastp = cameraTrack.rbegin()->first;
+	if (cameraTrack.at(0).timestamp > cameraRawBag->startTime().toBoost() or
+		cameraTrack.at(lastp).timestamp < cameraRawBag->stopTime().toBoost())
 	return false;
 
 	return true;
 }
 
+
+Trajectory
+MeidaiTrajectoryMap::toTrajectory() const
+{
+	Trajectory vTrack;
+
+	for (auto itp: *this) {
+		vTrack.push_back(itp.second);
+	}
+
+	return vTrack;
+}
+
+
+const Trajectory
+MeidaiBagDataset::getCompleteCameraTrajectory() const
+{ return cameraTrack.toTrajectory(); }
 
 
