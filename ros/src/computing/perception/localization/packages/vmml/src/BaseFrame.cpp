@@ -113,6 +113,8 @@ BaseFrame::perturb (PerturbationMode mode,
 		movement = Vector3d(0,0,1); break;
 	}
 	movement = displacement * movement;
+
+	mPose = mPose.shift(movement);
 }
 
 

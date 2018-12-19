@@ -200,6 +200,27 @@ bool TTransform::isValid() const
 }
 
 
+TTransform
+TTransform::shift(const Eigen::Vector3d &vs)
+const
+{
+	TTransform tmp = TTransform::from_XYZ_RPY(vs);
+
+	TTransform S = (*this) * tmp;
+	return S;
+}
+
+
+TTransform
+TTransform::rotate(const double roll, const double pitch, const double yaw)
+const
+{
+	TTransform tmp = TTransform::from_XYZ_RPY(Vector3d::Zero(), roll, pitch, yaw);
+	return (*this) * tmp;
+}
+
+
+
 using Eigen::VectorXd;
 
 VectorXd
@@ -278,3 +299,5 @@ ptime fromSeconds (const double s)
 	tduration td = boost::posix_time::microseconds(micro_ts);
 	return epoch + td;
 }
+
+

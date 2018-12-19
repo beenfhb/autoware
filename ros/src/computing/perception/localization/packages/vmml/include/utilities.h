@@ -289,6 +289,9 @@ struct TTransform : public Eigen::Affine3d
 
 	bool isValid() const;
 
+	TTransform shift(const Eigen::Vector3d &vs) const;
+	TTransform rotate(const double roll, const double pitch=0, const double yaw=0) const;
+
 
 	BOOST_SERIALIZATION_SPLIT_MEMBER()
 };

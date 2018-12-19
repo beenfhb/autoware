@@ -181,4 +181,14 @@ target_link_libraries(vmml_cli
 #)
 
 
+add_executable(test_priv
+	src/bin/temporaries/test_priv.cpp
+)
+
+target_link_libraries(
+	test_priv
+		vmml
+		${REQUIRED_LIBS}
+		${catkin_LIBRARIES}
+)
 
