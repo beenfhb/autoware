@@ -510,16 +510,26 @@ private:
 
 			if (type=="gnss")
 				dsTrack = meidaiDsPtr->getGnssTrajectory();
+
 			else if (type=="ndt")
 				dsTrack = meidaiDsPtr->getNdtTrajectory();
-			else if (type=="camera")
+
+			else if (type=="camera") {
 				dsTrack = meidaiDsPtr->getCameraTrajectory();
+
+				for (int i=0; i<dsTrack.size(); i++) {
+					auto P = dsTrack.at(i);
+					P = P.shift(Vector3d(3.0, 0, 0));
+					dsTrack[i] = P;
+				}
+			}
+
 			else {
 				debug ("Unknown trajectory type for Meidai Dataset");
 				return;
 			}
 
-			dumpPathName = dumpMapTrajectoryPath + '-' + type + ".csv";
+			dumpPathName = dumpDatasetTrajectoryPath + '-' + type + ".csv";
 		}
 
 		else if(slDatasourceType==OXFORD_DATASET_TYPE) {
