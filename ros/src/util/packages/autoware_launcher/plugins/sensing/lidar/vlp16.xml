@@ -1,15 +1,15 @@
 <launch>
 
-    <arg name="device_addr">
-    <arg name="device_port">
-    <arg name="merge_frame">
-    <arg name="local_frame">
-    <arg name="tx">
-    <arg name="ty">
-    <arg name="tz">
-    <arg name="rx">
-    <arg name="ry">
-    <arg name="rz">
+    <arg name="device_addr"/>
+    <arg name="device_port"/>
+    <arg name="merge_frame"/>
+    <arg name="local_frame"/>
+    <arg name="tx"/>
+    <arg name="ty"/>
+    <arg name="tz"/>
+    <arg name="rx"/>
+    <arg name="ry"/>
+    <arg name="rz"/>
 
     <group ns="$(arg local_frame)">
         <node pkg="tf" type="static_transform_publisher" name="static_transform_publisher"

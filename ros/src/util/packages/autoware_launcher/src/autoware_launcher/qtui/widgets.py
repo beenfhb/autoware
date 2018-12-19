@@ -78,7 +78,7 @@ class AwMainWindow(AwAbstructWindow):
         if filename:
             if filetype != ".launch":
                 filename = filename + filetype
-            self.guimgr.server.request_launch_save(filename)
+            self.guimgr.save_profile(filename)
 
 
 
@@ -104,6 +104,7 @@ class AwProfileFrame(AwAbstructFrame):
         self.setup_widget()
 
     def setup_widget(self):
+        super(AwProfileFrame, self).setup_widget()
         self.set_title("Profile : " + self.mirror.get_config("info.title", "No Title"))
         self.add_text_widget(self.mirror.get_config("info.description", "No Description"))
 
@@ -114,6 +115,7 @@ class AwLaunchFrame(AwAbstructFrame):
         self.setup_widget()
 
     def setup_widget(self):
+        super(AwLaunchFrame, self).setup_widget()
         self.set_title(self.mirror.nodename().capitalize() + " : " + self.mirror.get_config("info.title", "No Title"))
         self.add_text_widget(self.mirror.get_config("info.description", "No Description"))
         self.add_button(AwLaunchButton(self.guimgr, self.mirror))
@@ -157,7 +159,7 @@ class AwDefaultLeafPanel(AwAbstructPanel):
 
     def __init__(self, guimgr, mirror):
         super(AwDefaultLeafPanel, self).__init__(guimgr, mirror)
-        self.config = mirror.config()
+        self.config = mirror.config().copy()
 
     def setup_widget(self):
         super(AwDefaultLeafPanel, self).setup_widget()
@@ -175,8 +177,8 @@ class AwDefaultLeafPanel(AwAbstructPanel):
         self.window().close()
 
     def update_clicked(self):
-        response = self.mirror.update(self.config)
-        if response:
+        response = self.mirror.update({"config": self.config})
+        if not response["error"]:
             self.window().close()
 
 
@@ -184,21 +186,21 @@ class AwDefaultLeafFrame(AwAbstructFrame):
 
     def __init__(self, guimgr, mirror):
         super(AwDefaultLeafFrame, self).__init__(guimgr, mirror)
-
-        argstr = "Args\n"
-        for argdef in self.mirror.plugin().args():
-            argstr += "{}: {}\n".format(argdef["name"], self.mirror.get_config("args."+argdef["name"], ""))
-
-        self.set_title(self.mirror.nodename().capitalize() + " : " + self.mirror.get_config("info.title", "No Title"))
-        self.add_text_widget(argstr)
-        self.add_button(AwConfigButton(self.guimgr, self.mirror))
-        
+        config = mirror.config()
+        self.mirror.connect(self)
+        self.setup_widget()
 
     def setup_widget(self):
-        pass
-        #super(AwDefaultLeafFrame, self).setup_widget()
+        super(AwDefaultLeafFrame, self).setup_widget()
+        argstrs = []
+        for argdef in self.mirror.plugin().args():
+            argstrs.append("{}: {}".format(argdef["name"], self.mirror.get_config("args."+argdef["name"], "")))
+        self.set_title(self.mirror.nodename().capitalize() + " : " + self.mirror.get_config("info.title", "No Title"))
+        self.add_text_widget("\n".join(argstrs))
+        self.add_button(AwConfigButton(self.guimgr, self.mirror))
 
-
+    def mirror_updated(self):
+        self.setup_widget()
 
 
 class AwConfigButton(QtWidgets.QPushButton):

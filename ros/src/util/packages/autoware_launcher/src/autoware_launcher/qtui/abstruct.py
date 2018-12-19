@@ -21,12 +21,12 @@ class AwAbstructWindow(QtWidgets.QMainWindow):
 
 class AwAbstructPanel(QtWidgets.QWidget):
 
-    def __init__(self, guimgr, holder, mirror):
+    def __init__(self, guimgr, mirror):
+    #def __init__(self, guimgr, holder, mirror):
         super(AwAbstructPanel, self).__init__()
         self.guimgr = guimgr
-        self.holder = holder
+        #self.holder = holder
         self.mirror = mirror
-
 
     def setup_widget(self):
         if self.layout() is None:
@@ -77,11 +77,20 @@ class AwAbstructPanel(QtWidgets.QWidget):
 
 class AwAbstructFrame(QtWidgets.QWidget):
 
-    def __init__(self, guimgr, holder, mirror):
+    def __init__(self, guimgr, mirror):
+    #def __init__(self, guimgr, holder, mirror):
         super(AwAbstructFrame, self).__init__()
         self.guimgr = guimgr
-        self.holder = holder
+        #self.holder = holder
         self.mirror = mirror
+
+    def setup_widget(self):
+        if self.layout() is None:
+            self.__setup_widget()
+        else:
+            self.__clear_widget()
+
+    def __setup_widget(self):
 
         # Frame Header
         self.title = QtWidgets.QLabel("No Title")
@@ -97,6 +106,18 @@ class AwAbstructFrame(QtWidgets.QWidget):
         layout.addWidget(self.header)
         self.setLayout(layout)
 
+    def __clear_widget(self):
+
+        # Frame Header
+        layout = self.header.layout()
+        while 1 < layout.count():
+            layout.takeAt(layout.count() - 1).widget().deleteLater()
+
+        # Frame Layout
+        layout = self.layout()
+        while 1 < layout.count():
+            layout.takeAt(layout.count() - 1).widget().deleteLater()
+    
     def set_title(self, title):
         self.title.setText(title)
 

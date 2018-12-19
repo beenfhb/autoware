@@ -57,6 +57,12 @@ class AwPluginSchema(object):
         self.gui = {}
         self.__load_yaml(self.tree().path() + "/" + self.path())
 
+    def isnode(self):
+        return self.__node is True
+
+    def isleaf(self):
+        return self.__node is False
+
     def tree(self): # Move to BaseNode
         return self.__tree
 
@@ -75,12 +81,16 @@ class AwPluginSchema(object):
         if self.__data.get("children") is None:
             self.__node = False
             self.__data["children"] = []
+        self.__data.setdefault("args", [])
 
         self.gui = self.__data.pop("gui", {})
         self.gui.setdefault("type", "default_node" if self.__node else "default_leaf")
 
     def default_config(self):
-        return {}
+        config = {}
+        for argdef in self.__data["args"]:
+            config["args." + argdef["name"]] = "" if argdef["type"] == "str" else "0"
+        return config
 
     def args(self):
         return self.__data["args"]

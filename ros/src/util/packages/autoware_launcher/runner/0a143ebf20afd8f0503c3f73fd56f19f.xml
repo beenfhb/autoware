@@ -1,4 +1,0 @@
-<launch>
-  <include file="$(find autoware_launcher)/plugins/node/lidar.xml">
-  </include>
-</launch>

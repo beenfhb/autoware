@@ -4,6 +4,7 @@ import json
 import os
 import yaml
 
+from . import console
 from . import fspath
 
 class AwLaunchNodeListenerIF(object):
@@ -25,7 +26,7 @@ class AwBaseNode(object):
 
     def __init__(self, name):
         self.__nodename = name
-        self.__nodetype = True
+        #self.__nodetype = True
         self.__parent   = None
         self.__children = []
         self.__childmap = {}
@@ -34,14 +35,14 @@ class AwBaseNode(object):
         print((indent * " ") + str(self))
         for child in self.children(): child.dump(indent + 2)
 
-    def setleaf(self):
-        self.__nodetype = False
+    #def setleaf(self):
+    #    self.__nodetype = False
 
-    def isnode(self):
-        return self.__nodetype is True
+    #def isnode(self):
+    #    return self.__nodetype is True
 
-    def isleaf(self):
-        return self.__nodetype is False
+    #def isleaf(self):
+    #    return self.__nodetype is False
 
     def tree(self):
         return self.__parent.tree()
@@ -87,12 +88,6 @@ class AwBaseTree(AwBaseNode):
         super(AwBaseTree, self).__init__(None)
         self.treepath = ""
 
-    def isleaf(self):
-        return False
-
-    def isnode(self):
-        return False
-
     def tree(self):
         return self
 
@@ -129,11 +124,12 @@ class AwLaunchTree(AwBaseTree):
             fullpath = node.fullpath() + ".yaml"
             fspath.makedirs(os.path.dirname(fullpath), exist_ok = True)
             with open(fullpath, mode = "w") as fp:
-                fp.write(yaml.dump(node.export_data(), default_flow_style = False))
+                fp.write(yaml.safe_dump(node.export_data(), default_flow_style = False))
 
     def load(self, treepath, plugins):
         def load_node(node):
             fullpath = node.fullpath()
+            print fullpath
             with open(fullpath + ".yaml") as fp:
                 node.import_data(yaml.safe_load(fp), plugins)
             for child in node.children():
@@ -177,6 +173,7 @@ class AwLaunchTree(AwBaseTree):
 
 
 
+
 class AwLaunchNode(AwBaseNode):
 
     STOP, EXEC, TERM = 0x00, 0x01, 0x02
@@ -186,7 +183,6 @@ class AwLaunchNode(AwBaseNode):
         self.plugin = None
         self.config = None
         self.status = AwLaunchNode.STOP
-        self.listener = []
         self.executor = AwLaunchNodeExecutorIF()
 
     def __str__(self):
@@ -195,19 +191,11 @@ class AwLaunchNode(AwBaseNode):
         config = None if not self.config else self.config.keys()
         childnames = map(lambda child: child.nodename(), self.children())
         return "{}:{:<13} Plugin:{} Config:{} Children:{}".format(nodetype, self.nodename(), plugin, config, childnames)
-
-    def bind_listener(self, listener):
-        if not isinstance(listener, AwLaunchNodeListenerIF):
-            raise TypeError(listener.__class__.__name__ + " does not inherit to AwLaunchNodeListenerIF")
-        self.listener.append(listener)
     
     def bind_executor(self, executor):
         if not isinstance(executor, AwLaunchNodeExecutorIF):
             raise TypeError(executor.__class__.__name__ + " does not inherit to AwLaunchNodeExecutorIF")
         self.executor = executor
-    
-    def unbind_listener(self, listener):
-        self.listener.remove(listener)
 
     def unbind_executor(self, executor):
         self.executor = AwLaunchNodeExecutor()
@@ -225,6 +213,10 @@ class AwLaunchNode(AwBaseNode):
     #def pull_config(self):
     #def push_config(self, config):
 
+    def update(self, ldata):
+        self.config = ldata["config"]
+        return {"error": None}
+
     def get_config(self, key, value):
         return self.config.get(key, value)
 
@@ -233,7 +225,7 @@ class AwLaunchNode(AwBaseNode):
         self.send_config_updated()
 
     def request_exec(self):
-        if self.isnode():
+        if self.plugin.isnode():
             self.send_exec_requested()
             for child_node in self.children():
                 child_node.request_exec()
@@ -277,7 +269,7 @@ class AwLaunchNode(AwBaseNode):
         xml_path = fspath.package() + "/runner/" + xml_hash + ".xml"
         with open(xml_path, mode="w") as fp:
             fp.write('<launch>\n')
-            fp.write('  <include file="' + os.path.join("$(find autoware_launcher)", "plugins", self.plugin.nodepath() + ".xml") + '">\n')
+            fp.write('  <include file="' + os.path.join("$(find autoware_launcher)", "plugins", self.plugin.path() + ".xml") + '">\n')
             for arg_name, arg_data in self.config.items():
                 if arg_name.startswith("args."):
                     if type(arg_data) is list:
@@ -297,10 +289,23 @@ class AwLaunchNode(AwBaseNode):
                 self.addchild(AwLaunchNode(childname))
 
     def export_data(self):
-        children = None if self.isleaf() else map(lambda node: node.nodename(), self.children())
+        children = map(lambda node: node.nodename(), self.children())
         plugin = self.plugin.path()
         config = self.config
-        return {"children":children, "plugin":plugin, "config":config}
+        return { "children": children, "plugin": plugin, "config": config }
+
+
+    # ToDo: remove function
+    def bind_listener(self, listener):
+        console.warning("bind_listener: " + listener.__class__.__name__)
+        #if not isinstance(listener, AwLaunchNodeListenerIF):
+        #    raise TypeError(listener.__class__.__name__ + " does not inherit to AwLaunchNodeListenerIF")
+        #self.listener.append(listener)
+
+    # ToDo: remove function
+    def unbind_listener(self, listener):
+        console.warning("unbind_listener: " + listener.__class__.__name__)
+        #self.listener.remove(listener)
 
 
 

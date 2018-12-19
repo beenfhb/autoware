@@ -9,32 +9,54 @@ from .abstruct import AwAbstructFrame
 
 class AwStrTypeFrame(AwAbstructFrame):
 
-    def __init__(self, guimgr, parent, argdef):
+    def __init__(self, guimgr, holder, argdef):
         super(AwStrTypeFrame, self).__init__(guimgr, None)
-        self.parent = parent
+        self.holder = holder
         self.argdef = argdef
 
+        super(AwStrTypeFrame, self).setup_widget()
         self.edit = QtWidgets.QLineEdit()
+        self.edit.setText(self.holder.config.get("args." + self.argdef["name"]))
         self.edit.editingFinished.connect(self.edited)
         self.add_widget(self.edit)
         self.set_title(argdef["name"])
 
     def edited(self):
-        self.parent.config[self.argdef["name"]] = self.edit.text()
+        self.holder.config["args." + self.argdef["name"]] = self.edit.text()
 
 class AwIntTypeFrame(AwAbstructFrame):
 
-    def __init__(self, guimgr, parent, argdef):
+    def __init__(self, guimgr, holder, argdef):
         super(AwIntTypeFrame, self).__init__(guimgr, None)
+        self.holder = holder
+        self.argdef = argdef
+
+        super(AwIntTypeFrame, self).setup_widget()
+        self.edit = QtWidgets.QLineEdit()
+        self.edit.setText(self.holder.config.get("args." + self.argdef["name"]))
+        self.edit.editingFinished.connect(self.edited)
+        self.add_widget(self.edit)
         self.set_title(argdef["name"])
-        self.add_widget(QtWidgets.QLineEdit())
+
+    def edited(self):
+        self.holder.config["args." + self.argdef["name"]] = self.edit.text()
 
 class AwRealTypeFrame(AwAbstructFrame):
 
-    def __init__(self, guimgr, parent, argdef):
+    def __init__(self, guimgr, holder, argdef):
         super(AwRealTypeFrame, self).__init__(guimgr, None)
+        self.holder = holder
+        self.argdef = argdef
+
+        super(AwRealTypeFrame, self).setup_widget()
+        self.edit = QtWidgets.QLineEdit()
+        self.edit.setText(self.holder.config.get("args." + self.argdef["name"]))
+        self.edit.editingFinished.connect(self.edited)
+        self.add_widget(self.edit)
         self.set_title(argdef["name"])
-        self.add_widget(QtWidgets.QLineEdit())
+
+    def edited(self):
+        self.holder.config["args." + self.argdef["name"]] = self.edit.text()
 
 
 

@@ -19,11 +19,11 @@ class AwQtGuiClient(AwLaunchClientIF):
         self.__mirror = AwLaunchTreeMirror(self)
         self.elements = {}
 
-        #self.server.register_client()
+        self.__server.register_client(self)
         #self.server.request_launch_load("test")
         #self.server.request_launch_make("node/root")
         #self.__server.make_profile("node/lidar")
-        self.__server.load_profile("lidar")
+        self.__server.load_profile("tmp_lidar")
 
         self.panels = {}
         self.frames = {}
@@ -99,14 +99,36 @@ class AwQtGuiClient(AwLaunchClientIF):
         layout.setContentsMargins(5, 2, 2, 2)
         return layout
 
+
+    def save_profile(self, fpath):
+        self.__server.save_profile(fpath)
+
     def load_profile(self, fpath):
         self.__server.load_profile(fpath)
         #if ok
         self.__mirror.clear()
 
 
-    def request_launch_find(self, lpath):
-        return self.__server.request_launch_find(lpath)
+    def find_node(self, lpath):
+        return self.__server.find_node(lpath)
+
+    def exec_node(self, lpath):
+        return self.__server.exec_node(lpath)
+
+    def term_node(self, lpath):
+        return self.__server.term_node(lpath)
+
+    def create_node(self, lpath, ppath):
+        return self.__server.create_node(lpath, ppath)
+
+    def update_node(self, lpath, ldata):
+        return self.__server.update_node(lpath, ldata)
+
+    def node_updated(self, lpath):
+        self.__mirror.updated(lpath)
+
+    #def node_patched
+
 
 
 class AwAwQtGuiManager(object):
@@ -122,52 +144,55 @@ class AwLaunchTreeMirror(object):
         self.cache = {}
         self.client = client
 
-    def create(self, path):
-        node = AwLaunchNodeMirror(self, path)
-        #if not self.nodes.get(node.path): self.nodes[node.path] = []
-        #self.nodes[node.path].append(node)
-        #console.info("create_node {}".format(node))
-        return node
-
-    def remove(self, node):
-        pass
-        #console.info("remove_node {}".format(node))
-        #self.elements[node.path].remove(node.path)
-        #if not self.elements.get(node.path): self.elements.pop(node)
-
     def clear(self):
         self.cache.clear()
 
     def find(self, path):
         if path not in self.cache:
-            self.cache[path] = self.client.request_launch_find(path)
+            self.cache[path] = self.client.find_node(path)
         return self.cache[path]
+
+    def create(self, path):
+        console.info("create_node {}".format(path))
+        node = AwLaunchNodeMirror(self, path)
+        if not self.nodes.get(path): self.nodes[path] = []
+        self.nodes[path].append(node)
+        return node
+
+    def remove(self, path, node):
+        console.info("remove_node {}".format(path))
+        self.nodes[path].remove(node)
+        if not self.nodes.get(path): self.nodes.pop(path)
+
+    def updated(self, path):
+        for node in self.nodes[path]: node.updated()
+
 
 class AwLaunchNodeMirror(object):
 
     def __init__(self, tree, path):
-        self.tree = tree
-        self.path = path
+        self.__tree = tree
+        self.__path = path
+        self.__widget = None
 
     def __find(self):
-        return self.tree.find(self.path)
+        return self.__tree.find(self.__path)
 
     def nodename(self):
         return self.__find().nodename()
 
     def isleaf(self):
-        return self.__find().isleaf()
+        return self.__find().plugin.isleaf()
 
     def plugin(self):
         return self.__find().plugin
 
     def config(self):
-        return self.__find().config
-        #return self.__find().config.copy()
+        #return self.__find().config
+        return self.__find().config.copy()
 
-    def update(self, config):
-        #self.__find().config = config
-        return True
+    def update(self, ldata):
+        return self.__tree.client.update_node(self.__path, ldata)
 
     def get_config(self, key, value):
         return self.__find().config.get(key, value)
@@ -179,24 +204,38 @@ class AwLaunchNodeMirror(object):
         return self.__find().nodename()
 
     def getchild(self, name):
-        return self.tree.create(self.path + "/" + name)
+        return self.__tree.create(self.__path + "/" + name)
 
     def addchild(self, lname, ppath):
-        return self.tree.client.server.create_node(self.path + "/" + lname, ppath)
+        return self.__tree.client.create_node(self.__path + "/" + lname, ppath)
 
     def children(self):
         mirrored_children = []
         for child in self.__find().children():
-            mirrored_children.append(self.tree.create(child.nodepath()))
+            mirrored_children.append(self.__tree.create(child.nodepath()))
         return mirrored_children
 
+
+    def connect(self, widget): # ToDo: move to __init__
+        self.__widget = widget
+        self.__widget.destroyed.connect(self.destroy)
+
+    def destroy(self):
+        self.__tree.remove(self.__path, self)
+
+    def updated(self):
+        if hasattr(self.__widget, "mirror_updated"): self.__widget.mirror_updated()
+
+    def patched(self, diff):
+        if hasattr(self.__widget, "mirror_patched"): self.__widget.mirror_patched(diff)
+
+
+
     def request_exec(self):
-        self.tree.client.server.request_launch_exec(self.path)
+        self.__tree.client.exec_node(self.__path)
 
     def request_term(self):
-        self.tree.client.server.request_launch_term(self.path)
-
-
+        self.__tree.client.term_node(self.__path)
 
     def bind_listener(self, listener):
         return self.__find().bind_listener(listener)
@@ -214,4 +253,4 @@ class AwLaunchNodeMirror(object):
         return self.__find().generate_launch()
 
     def send_term_completed(self):
-        print "send_term_completed:" + self.path
+        print "send_term_completed:" + self.__path
