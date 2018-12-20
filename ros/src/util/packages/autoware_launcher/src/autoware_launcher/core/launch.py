@@ -7,19 +7,6 @@ import yaml
 from . import console
 from . import fspath
 
-class AwLaunchNodeListenerIF(object):
-    def exec_requested(self): pass  #raise NotImplementedError()
-    def term_requested(self): pass  #raise NotImplementedError()
-    def term_completed(self): pass  #raise NotImplementedError()
-    def config_updated(self): pass  #raise NotImplementedError()
-    def config_created(self, node): pass  #raise NotImplementedError()
-    def config_removed(self, name): pass  #raise NotImplementedError()
-    def config_swapped(self): pass  #raise NotImplementedError()
-
-class AwLaunchNodeExecutorIF(object):
-    def request_exec(self): pass  #raise NotImplementedError()
-    def request_term(self): pass  #raise NotImplementedError()
-
 
 
 class AwBaseNode(object):
@@ -75,9 +62,9 @@ class AwBaseNode(object):
         self.__childmap.pop(node.nodename())
         node.__parent = None
 
-    def nodelist(self, this = False):
+    def listnode(self, this = False):
         result = [self] if this else []
-        for child in self.children(): result.extend(child.nodelist(True))
+        for child in self.children(): result.extend(child.listnode(True))
         return result
 
 
@@ -120,7 +107,7 @@ class AwLaunchTree(AwBaseTree):
         self.treepath = treepath
         with open(treepath + ".launch", mode = "w") as fp:
             fp.write("dummy")
-        for node in self.nodelist():
+        for node in self.listnode():
             fullpath = node.fullpath() + ".yaml"
             fspath.makedirs(os.path.dirname(fullpath), exist_ok = True)
             with open(fullpath, mode = "w") as fp:
@@ -129,7 +116,6 @@ class AwLaunchTree(AwBaseTree):
     def load(self, treepath, plugins):
         def load_node(node):
             fullpath = node.fullpath()
-            print fullpath
             with open(fullpath + ".yaml") as fp:
                 node.import_data(yaml.safe_load(fp), plugins)
             for child in node.children():
@@ -182,11 +168,10 @@ class AwLaunchNode(AwBaseNode):
         super(AwLaunchNode, self).__init__(name)
         self.plugin = None
         self.config = None
-        self.status = AwLaunchNode.STOP
-        self.executor = AwLaunchNodeExecutorIF()
+        self.status = self.STOP
 
     def __str__(self):
-        nodetype = "Node" if self.isnode() else "Leaf"
+        nodetype = "Node" if self.plugin.isnode() else "Leaf"
         plugin = None if not self.plugin else self.plugin.path() 
         config = None if not self.config else self.config.keys()
         childnames = map(lambda child: child.nodename(), self.children())
@@ -210,12 +195,43 @@ class AwLaunchNode(AwBaseNode):
         self.send_config_removed(name)
         return None
 
-    #def pull_config(self):
-    #def push_config(self, config):
-
     def update(self, ldata):
         self.config = ldata["config"]
         return {"error": None}
+
+    def launch(self, xmode):
+        if xmode:
+            return self.__exec()
+        else:
+            return self.__term()
+
+    def __exec(self):
+        if self.plugin.isleaf():
+            if self.status == self.STOP:
+                self.status = self.EXEC
+                return (True, True)
+        else:
+            status = self.STOP
+            for child in self.children():
+                status |= child.status
+            if self.status != status:
+                self.status = status
+                return (True, False)
+        return (False, False)
+
+    def __term(self):
+        if self.plugin.isleaf():
+            if self.status == self.EXEC:
+                self.status = self.TERM
+                return (True, True)
+        else:
+            status = self.STOP
+            for child in self.children():
+                status |= child.status
+            if self.status != status:
+                self.status = status
+                return (True, False)
+        return (False, False)
 
     def get_config(self, key, value):
         return self.config.get(key, value)
@@ -224,60 +240,18 @@ class AwLaunchNode(AwBaseNode):
         self.config[key] = value
         self.send_config_updated()
 
-    def request_exec(self):
-        if self.plugin.isnode():
-            self.send_exec_requested()
-            for child_node in self.children():
-                child_node.request_exec()
-        else:
-            self.send_exec_requested()
-            self.executor.request_exec()
-
-    def request_term(self):
-        if self.isnode():
-            self.send_term_completed()
-            for child_node in self.children():
-                child_node.request_term()
-        else:
-            self.send_term_requested()
-            self.executor.request_term()
-
-    # ToDo: apply state check of executor
-    def send_exec_requested(self):
-        for item in self.listener: item.exec_requested()
-
-    # ToDo: apply state check of executor
-    def send_term_requested(self):
-        for item in self.listener: item.term_requested()
-
-    # ToDo: apply state check of executor
-    def send_term_completed(self):
-        for item in self.listener: item.term_completed()
-
-    def send_config_updated(self):
-        for item in self.listener: item.config_updated()
-
-    def send_config_created(self, node):
-        for item in self.listener: item.config_created(node)
-
-    def send_config_removed(self, name):
-        for item in self.listener: item.config_removed(name)
-
-    def generate_launch(self):
-        import hashlib
-        xml_hash = hashlib.md5(self.nodepath()).hexdigest()
-        xml_path = fspath.package() + "/runner/" + xml_hash + ".xml"
-        with open(xml_path, mode="w") as fp:
-            fp.write('<launch>\n')
-            fp.write('  <include file="' + os.path.join("$(find autoware_launcher)", "plugins", self.plugin.path() + ".xml") + '">\n')
-            for arg_name, arg_data in self.config.items():
-                if arg_name.startswith("args."):
-                    if type(arg_data) is list:
-                        arg_data = " ".join(arg_data)
-                    fp.write('    <arg name="' + arg_name[5:] + '" value="' + str(arg_data) + '"/>\n')
-            fp.write('  </include>\n')
-            fp.write('</launch>\n')
-        return xml_path
+    def generate_launch(self): # ToDo: list args from plugin
+        lines = []
+        lines.append('<launch>')
+        lines.append('  <include file="' + os.path.join("$(find autoware_launcher)", "plugins", self.plugin.path() + ".xml") + '">')
+        for arg_name, arg_data in self.config.items():
+            if arg_name.startswith("args."):
+                if type(arg_data) is list:
+                    arg_data = " ".join(arg_data)
+                lines.append('    <arg name="' + arg_name[5:] + '" value="' + str(arg_data) + '"/>')
+        lines.append('  </include>')
+        lines.append('</launch>')
+        return "\n".join(lines)
 
     def import_data(self, data, plugins):
         self.plugin = plugins.find(data["plugin"])
@@ -298,14 +272,10 @@ class AwLaunchNode(AwBaseNode):
     # ToDo: remove function
     def bind_listener(self, listener):
         console.warning("bind_listener: " + listener.__class__.__name__)
-        #if not isinstance(listener, AwLaunchNodeListenerIF):
-        #    raise TypeError(listener.__class__.__name__ + " does not inherit to AwLaunchNodeListenerIF")
-        #self.listener.append(listener)
 
     # ToDo: remove function
     def unbind_listener(self, listener):
         console.warning("unbind_listener: " + listener.__class__.__name__)
-        #self.listener.remove(listener)
 
 
 

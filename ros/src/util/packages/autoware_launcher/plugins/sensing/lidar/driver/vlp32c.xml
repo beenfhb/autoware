@@ -27,7 +27,7 @@
             <param name="rpm"          value="600.0" />
         </node>
         <node pkg="nodelet" type="nodelet" name="nodelet_cloud" args="load velodyne_pointcloud/CloudNodelet nodelet_manager">
-            <param name="calibration"  value="$(arg velodyne_back_calibration)" />
+            <param name="calibration"  value="$(find velodyne_pointcloud)/params/32c-db.yaml" />
             <param name="max_range"    value="130.0" />
             <param name="min_range"    value="0.1" />
             <param name="view_width"   value="3.3" />

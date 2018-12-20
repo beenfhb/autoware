@@ -22,8 +22,8 @@ class AwQtGuiClient(AwLaunchClientIF):
         self.__server.register_client(self)
         #self.server.request_launch_load("test")
         #self.server.request_launch_make("node/root")
-        #self.__server.make_profile("node/lidar")
-        self.__server.load_profile("tmp_lidar")
+        #self.__server.make_profile("node/sensing")
+        self.__server.load_profile("tmp_sensing")
 
         self.panels = {}
         self.frames = {}
@@ -32,21 +32,10 @@ class AwQtGuiClient(AwLaunchClientIF):
         self.panels["default_leaf"] = widgets.AwDefaultLeafPanel
         self.frames["default_leaf"] = widgets.AwDefaultLeafFrame
 
-        self.frames["str_type"] = primitives.AwStrTypeFrame
-        self.frames["int_type"] = primitives.AwIntTypeFrame
-        self.frames["real_type"] = primitives.AwRealTypeFrame
-        self.frames["file_select"] = primitives.AwFileSelectFrame
-
-
-    #def element_created(self, path, listener):
-    #    console.info("element_created {} {}".format(path, listener))
-    #    if not self.elements.get(path): self.elements[path] = []
-    #    self.elements[path].append(listener)
-
-    #def element_deleted(self, path, listener):
-    #    console.info("element_deleted {} {}".format(path, listener))
-    #    self.elements[path].remove(listener)
-    #    if not self.elements.get(path): self.elements.pop(path)
+        self.frames["args.text"]  = primitives.AwTextTypeFrame
+        self.frames["args.file"]  = primitives.AwFileTypeFrame
+        self.frames["args.tf"]    = primitives.AwTransformFrame
+        self.frames["args.calib"] = primitives.AwCameraCalibFrame
 
     def start(self):
 
@@ -59,10 +48,9 @@ class AwQtGuiClient(AwLaunchClientIF):
         stylesheet.append("* { font-size: " + str(resolution/100) + "px; }")
         application.setStyleSheet(" ".join(stylesheet))
 
-        mirror = self.__mirror.create("root")
-        window = QtWidgets.QMainWindow()
-        window = widgets.AwMainWindow(self, mirror)
+        window = widgets.AwMainWindow(self, self.__mirror)
         window.show()
+        window.process.init(self.__server) # ToDo: move to __init__
         return application.exec_()
 
     def create_widget(self, mirror, parent, guicls = None):
@@ -82,10 +70,9 @@ class AwQtGuiClient(AwLaunchClientIF):
             guicls = self.panels[guikey]
         return guicls(self, mirror)
 
-    def create_arg_frame(self, parent, argdef):
-        guikey = argdef["type"] + "_type"
-        guicls = self.frames[guikey]
-        return guicls(self, parent, argdef)
+    def create_arg_frame(self, parent, view):
+        guicls = self.frames[view.guikey]
+        return guicls(self, parent, view.option)
 
     def create_frame_entire_vlayout(self):
         layout = QtWidgets.QVBoxLayout()
@@ -118,6 +105,9 @@ class AwQtGuiClient(AwLaunchClientIF):
     def term_node(self, lpath):
         return self.__server.term_node(lpath)
 
+    def launch_node(self, lpath, xmode):
+        return self.__server.launch_node(lpath, xmode)
+
     def create_node(self, lpath, ppath):
         return self.__server.create_node(lpath, ppath)
 
@@ -126,6 +116,10 @@ class AwQtGuiClient(AwLaunchClientIF):
 
     def node_updated(self, lpath):
         self.__mirror.updated(lpath)
+
+    def status_updated(self, lpath, state):
+        self.__mirror.status_updated(lpath, state)
+
 
     #def node_patched
 
@@ -153,19 +147,21 @@ class AwLaunchTreeMirror(object):
         return self.cache[path]
 
     def create(self, path):
-        console.info("create_node {}".format(path))
-        node = AwLaunchNodeMirror(self, path)
-        if not self.nodes.get(path): self.nodes[path] = []
-        self.nodes[path].append(node)
-        return node
+        #console.warning("create_node {}".format(path))
+        if path not in self.nodes:
+            self.nodes[path] = AwLaunchNodeMirror(self, path)
+        return self.nodes[path]
 
     def remove(self, path, node):
-        console.info("remove_node {}".format(path))
-        self.nodes[path].remove(node)
-        if not self.nodes.get(path): self.nodes.pop(path)
+        #console.warning("remove_node {}".format(path))
+        self.nodes.pop(path)
 
     def updated(self, path):
-        for node in self.nodes[path]: node.updated()
+        self.nodes[path].updated()
+
+    def status_updated(self, lpath, state):
+        self.nodes[lpath].status_updated(state)
+
 
 
 class AwLaunchNodeMirror(object):
@@ -173,16 +169,26 @@ class AwLaunchNodeMirror(object):
     def __init__(self, tree, path):
         self.__tree = tree
         self.__path = path
-        self.__widget = None
+        self.__refs = []
 
     def __find(self):
         return self.__tree.find(self.__path)
 
-    def nodename(self):
-        return self.__find().nodename()
+    def status(self):
+        node = self.__find()
+        if node.status == node.STOP: return "stop"
+        if node.status == node.EXEC: return "exec"
+        if node.status == node.TERM: return "term"
+        return "exec/term"
 
     def isleaf(self):
         return self.__find().plugin.isleaf()
+
+    def path(self):
+        return self.__find().nodepath()
+
+    def name(self):
+        return self.__find().nodename()
 
     def plugin(self):
         return self.__find().plugin
@@ -194,14 +200,11 @@ class AwLaunchNodeMirror(object):
     def update(self, ldata):
         return self.__tree.client.update_node(self.__path, ldata)
 
-    def get_config(self, key, value):
-        return self.__find().config.get(key, value)
+    def launch(self, mode):
+        self.__tree.client.launch_node(self.__path, mode)
 
-    def set_config(self, key, value):
-        self.__find().config[key] = value
-
-    def nodename(self):
-        return self.__find().nodename()
+    def listnode(self, this):
+        return map(lambda node: node.nodepath(), self.__find().listnode(this))
 
     def getchild(self, name):
         return self.__tree.create(self.__path + "/" + name)
@@ -215,39 +218,27 @@ class AwLaunchNodeMirror(object):
             mirrored_children.append(self.__tree.create(child.nodepath()))
         return mirrored_children
 
+    def bind(self, widget):
+        print "bind: {} {}".format(self.__path, str(widget))
+        self.__refs.append(widget)
 
-    def connect(self, widget): # ToDo: move to __init__
-        self.__widget = widget
-        self.__widget.destroyed.connect(self.destroy)
-
-    def destroy(self):
-        self.__tree.remove(self.__path, self)
+    def unbind(self, widget):
+        print "unbind: {} {}".format(self.__path, str(widget))
+        self.__refs.remove(widget)
 
     def updated(self):
-        if hasattr(self.__widget, "mirror_updated"): self.__widget.mirror_updated()
+        for widget in self.__refs:
+            if hasattr(widget, "config_updated"): widget.config_updated()
 
-    def patched(self, diff):
-        if hasattr(self.__widget, "mirror_patched"): self.__widget.mirror_patched(diff)
+    def status_updated(self, state):
+        for widget in self.__refs:
+            if hasattr(widget, "status_updated"): widget.status_updated(state)
 
+    def get_config(self, key, value):
+        return self.__find().config.get(key, value)
 
-
-    def request_exec(self):
-        self.__tree.client.exec_node(self.__path)
-
-    def request_term(self):
-        self.__tree.client.term_node(self.__path)
-
-    def bind_listener(self, listener):
-        return self.__find().bind_listener(listener)
-
-    def unbind_listener(self, listener):
-        return self.__find().unbind_listener(listener)
-
-    def bind_executor(self, executor):
-        return self.__find().bind_executor(executor)
-
-    def unbind_executor(self, executor):
-        return self.__find().unbind_executor(executor)
+    def set_config(self, key, value):
+        self.__find().config[key] = value
 
     def generate_launch(self):
         return self.__find().generate_launch()

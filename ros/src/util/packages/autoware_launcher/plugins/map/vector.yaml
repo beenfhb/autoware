@@ -1,5 +1,5 @@
 args :
-    file : list string
+    - { name: file }
 
 gui :
     type : file_select

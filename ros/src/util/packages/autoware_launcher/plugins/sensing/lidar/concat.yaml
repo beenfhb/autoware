@@ -1,0 +1,4 @@
+args :
+    - { name: input_topics }
+    - { name: output_topic }
+    - { name: output_frame }

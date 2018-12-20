@@ -37,8 +37,11 @@ class AwLaunchServer(AwLaunchServerIF):
     def __init__(self, sysarg):
         self.__plugins = AwPluginTree()
         self.__profile = AwLaunchTree(self, self.__plugins)
-        #self.__process
+        self.__process = None
         self.__clients = []
+
+    def register_runner(self, runner):
+        self.__process = runner
 
     def register_client(self, client):
         self.__clients.append(client)
@@ -60,15 +63,6 @@ class AwLaunchServer(AwLaunchServerIF):
     def find_node(self, lpath):
         console.info("find_node: " + lpath)
         return self.__profile.find(lpath)
-
-    def exec_node(self, lpath):
-        console.info("exec_node: " + lpath)
-        self.__profile.find(lpath).request_exec()
-
-    def term_node(self, lpath):
-        console.info("term_node: " + lpath)
-        self.__profile.find(lpath).request_term()
-
     def create_node(self, lpath, ppath):
         return self.__profile.create(lpath, ppath)
 
@@ -77,6 +71,32 @@ class AwLaunchServer(AwLaunchServerIF):
         if not response["error"]:
             for client in self.__clients: client.node_updated(lpath)
         return response
+
+    def launch_node(self, lpath, xmode): # ToDo: update ancestors status
+        console.info("launch_node: " + lpath + " " + str(xmode))
+        difflist = []
+        execlist = []
+        nodelist = self.__profile.find(lpath).listnode(True)
+        nodelist = sorted(nodelist, reverse = True, key = lambda x: len(x.nodepath()))
+        for node in nodelist:
+            isdiff, isexec = node.launch(xmode)
+            if isdiff: difflist.append(node.nodepath())
+            if isexec: execlist.append(node.nodepath())
+        console.warning(str(difflist))
+        console.warning(str(execlist))
+        for lpath in difflist:
+            state = self.__profile.find(lpath).status
+            for client in self.__clients: client.status_updated(lpath, state)
+        for lpath in execlist:
+            if xmode:
+                xtext = self.__profile.find(lpath).generate_launch()
+                self.__process.roslaunch(lpath, xtext)
+            else:
+                self.__process.terminate(lpath)
+
+    def runner_finished(self, lpath): # ToDo: update ancestors status
+        self.__profile.find(lpath).status = AwLaunchNode.STOP
+        for client in self.__clients: client.status_updated(lpath, AwLaunchNode.STOP)
 
     #def request_json(self, json_string):
     #    request = json.loads(json_string)

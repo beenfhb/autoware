@@ -1,0 +1,18 @@
+args :
+    - { name: merge_frame }
+    - { name: local_frame }
+    - { name: device_addr }
+    - { name: device_port }
+    - { name: tx }
+    - { name: ty }
+    - { name: tz }
+    - { name: rx }
+    - { name: ry }
+    - { name: rz }
+
+view :
+    - { title: Merge Frame, type: args.text, args: merge_frame              }
+    - { title: Local Frame, type: args.text, args: local_frame              }
+    - { title: Device Addr, type: args.text, args: device_addr              }
+    - { title: Device Port, type: args.text, args: device_port              }
+    - { title: Transform,   type: args.tf,   args: [tx, ty, tz, rx, ry, rz] }

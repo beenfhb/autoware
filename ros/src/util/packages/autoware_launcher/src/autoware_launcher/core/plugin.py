@@ -5,11 +5,7 @@ import glob
 from . import console
 from . import fspath
 
-def get_package_path():
-    package_path = os.path.dirname(__file__)
-    package_path = os.path.join   (package_path, "../../..")
-    package_path = os.path.abspath(package_path)
-    return package_path
+
 
 class AwPluginTree(object):
     
@@ -25,7 +21,7 @@ class AwPluginTree(object):
             for filename in files:
                 fkey, fext = os.path.splitext(os.path.join(relpath, filename))
                 if fext == ".yaml":
-                    self.__plugins[fkey] = AwPluginSchema(self, fkey)
+                    self.__plugins[fkey] = AwPluginNode(self, fkey)
                 elif fext == ".xml":
                     if not os.path.isfile(os.path.join(self.__path, fkey + ".yaml")):
                         console.warning("since yaml is not found, ignoring {}".format(fkey + fext))
@@ -46,15 +42,16 @@ class AwPluginTree(object):
             self.__plugins[nodename].dump()
 
 
-class AwPluginSchema(object):
+class AwPluginNode(object):
 
     def __init__(self, tree, path):
         self.__tree = tree
         self.__path = path
         self.__node = True
         self.__data = None
+        self.__view = None
 
-        self.gui = {}
+        #self.gui = {}
         self.__load_yaml(self.tree().path() + "/" + self.path())
 
     def isnode(self):
@@ -83,6 +80,21 @@ class AwPluginSchema(object):
             self.__data["children"] = []
         self.__data.setdefault("args", [])
 
+
+        self.__view = []
+        if self.__data.get("view") is None:
+            for args in self.__data["args"]:
+                name = args["name"]
+                self.__view.append(AwPluginView("args.text", {"title": name, "args": name}))
+        else:
+            for viewdef in self.__data["view"]:
+                guikey = viewdef.pop("type")
+                self.__view.append(AwPluginView(guikey, viewdef))
+
+        print "================================================================"
+        for view in self.__view:
+            print view
+
         self.gui = self.__data.pop("gui", {})
         self.gui.setdefault("type", "default_node" if self.__node else "default_leaf")
 
@@ -94,6 +106,9 @@ class AwPluginSchema(object):
 
     def args(self):
         return self.__data["args"]
+
+    def view(self):
+        return self.__view
 
     def children(self):
         return self.__data["children"]
@@ -112,6 +127,27 @@ class AwPluginSchema(object):
             if cinfo["type"] == "optional":
                 plugins[cinfo["name"]] = self.__tree.scan(cinfo["plugin"])
         return plugins
+
+    # temporary
+    def argstr(self, config):
+        lines = []
+        for argdef in self.__data["args"]:
+            name = argdef["name"]
+            lines.append(name + ": " + config["args." + name])
+            #argstr.append(self.mirror.plugin().argstr(argdef, config))
+        return "\n".join(lines)
+
+
+
+class AwPluginView(object):
+
+    def __init__(self, guikey, option):
+        self.guikey = guikey
+        self.option = option
+    
+    def __str__(self):
+        return "Type:{} Option:{}".format(self.guikey, self.option)
+
 
 
 if __name__ == "__main__":

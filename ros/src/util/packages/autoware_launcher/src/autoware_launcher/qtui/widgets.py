@@ -2,13 +2,11 @@ from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 
 from autoware_launcher.core import fspath
-from autoware_launcher.core import AwLaunchNodeListenerIF
-
 from .abstruct import AwAbstructWindow
 from .abstruct import AwAbstructPanel
 from .abstruct import AwAbstructFrame
-from .procmgr  import AwProcessMonitorPanel
-
+from .runner   import AwRunnerPanel
+#from .network  import AwTcpServerPanel
 
 
 class AwMainWindow(AwAbstructWindow):
@@ -32,8 +30,9 @@ class AwMainWindow(AwAbstructWindow):
 
     def setup_widget(self):
 
-        self.profile = AwStandardLaunchPanel(self.guimgr, self.mirror)
-        self.process = AwProcessMonitorPanel(self.guimgr, self.mirror)
+        root_mirror = self.mirror.create("root")
+        self.profile = AwStandardLaunchPanel(self.guimgr, root_mirror)
+        self.process = AwRunnerPanel        (self.guimgr, self.mirror)
 
         widget = QtWidgets.QTabWidget()
         widget.addTab(self.profile, "Profile")
@@ -92,7 +91,7 @@ class AwStandardLaunchPanel(AwAbstructPanel):
         super(AwStandardLaunchPanel, self).setup_widget()
         self.add_frame(AwProfileFrame(self.guimgr, self.mirror))
         for child in self.mirror.children():
-            if child.nodename() in ["map", "vehicle", "sensing", "rviz"]:
+            if child.name() in ["map", "vehicle", "sensing", "rviz"]:
                 self.add_frame(self.guimgr.create_frame(child, guicls = AwLaunchFrame))
         self.add_button(AwConfigButton(self.guimgr, self.mirror))
         #self.add_button(AwLaunchButton(self.guimgr, self.mirror.getchild("rviz"), ("Start", "Stop")))
@@ -116,7 +115,7 @@ class AwLaunchFrame(AwAbstructFrame):
 
     def setup_widget(self):
         super(AwLaunchFrame, self).setup_widget()
-        self.set_title(self.mirror.nodename().capitalize() + " : " + self.mirror.get_config("info.title", "No Title"))
+        self.set_title(self.mirror.name().capitalize() + " : " + self.mirror.get_config("info.title", "No Title"))
         self.add_text_widget(self.mirror.get_config("info.description", "No Description"))
         self.add_button(AwLaunchButton(self.guimgr, self.mirror))
 
@@ -151,8 +150,10 @@ class AwDefaultNodeFrame(AwAbstructFrame):
 
     def __init__(self, guimgr, mirror):
         super(AwDefaultNodeFrame, self).__init__(guimgr, mirror)
-        self.set_title(self.mirror.nodename().capitalize() + " : " + self.mirror.getconfig("info.title", "No Title"))
-        self.add_text_widget(self.mirror.getconfig("info.description", "No Description"))
+
+        super(AwDefaultNodeFrame, self).setup_widget()
+        self.set_title(self.mirror.name().capitalize() + " : " + self.mirror.get_config("info.title", "No Title"))
+        self.add_text_widget(self.mirror.get_config("info.description", "No Description"))
         self.add_button(AwConfigButton(self.guimgr, self.mirror))
 
 class AwDefaultLeafPanel(AwAbstructPanel):
@@ -163,8 +164,8 @@ class AwDefaultLeafPanel(AwAbstructPanel):
 
     def setup_widget(self):
         super(AwDefaultLeafPanel, self).setup_widget()
-        for argdef in self.mirror.plugin().args():
-            self.add_frame(self.guimgr.create_arg_frame(self, argdef))
+        for view in self.mirror.plugin().view():
+            self.add_frame(self.guimgr.create_arg_frame(self, view))
 
         cancel_button = QtWidgets.QPushButton("Cancel")
         update_button = QtWidgets.QPushButton("Update")
@@ -186,20 +187,16 @@ class AwDefaultLeafFrame(AwAbstructFrame):
 
     def __init__(self, guimgr, mirror):
         super(AwDefaultLeafFrame, self).__init__(guimgr, mirror)
-        config = mirror.config()
-        self.mirror.connect(self)
         self.setup_widget()
 
     def setup_widget(self):
         super(AwDefaultLeafFrame, self).setup_widget()
-        argstrs = []
-        for argdef in self.mirror.plugin().args():
-            argstrs.append("{}: {}".format(argdef["name"], self.mirror.get_config("args."+argdef["name"], "")))
-        self.set_title(self.mirror.nodename().capitalize() + " : " + self.mirror.get_config("info.title", "No Title"))
-        self.add_text_widget("\n".join(argstrs))
+        argstr = self.mirror.plugin().argstr(self.mirror.config())
+        self.set_title(self.mirror.name().capitalize() + " : " + self.mirror.get_config("info.title", "No Title"))
+        self.add_text_widget(argstr)
         self.add_button(AwConfigButton(self.guimgr, self.mirror))
 
-    def mirror_updated(self):
+    def config_updated(self):
         self.setup_widget()
 
 
@@ -217,7 +214,7 @@ class AwConfigButton(QtWidgets.QPushButton):
             window.show()
         self.clicked.connect(clicked)
 
-class AwLaunchButton(QtWidgets.QPushButton, AwLaunchNodeListenerIF):
+class AwLaunchButton(QtWidgets.QPushButton):
 
     def __init__(self, guimgr, launch, states = None):
         super(AwLaunchButton, self).__init__()
@@ -318,7 +315,7 @@ class AwPluginSelectWidget(QtWidgets.QWidget):
             self.parent.setup_widget()
             self.window().close()
         else:
-            print result
+            print response
 
 
 
@@ -337,7 +334,7 @@ class AwPluginRemoveWindow(QtWidgets.QMainWindow):
         # select
         self.nodelist = QtWidgets.QListWidget()
         for child in self.mirror.children():
-            self.nodelist.addItem(child.nodename())
+            self.nodelist.addItem(child.name())
 
         # footer
         cancel = QtWidgets.QPushButton("Cancel")
@@ -383,7 +380,7 @@ class AwDefaultRootFrame(AwAbstructFrame):
 
 
 
-class AwDefaultNodePanelOld(AwAbstructPanel, AwLaunchNodeListenerIF):
+class AwDefaultNodePanelOld(AwAbstructPanel):
 
     def __init__(self, guimgr, launch, window):
         super(AwDefaultNodePanel, self).__init__(guimgr, launch, window)
@@ -411,7 +408,7 @@ class AwDefaultNodePanelOld(AwAbstructPanel, AwLaunchNodeListenerIF):
         for i in range(self.layout().count()):
             frame = self.layout().itemAt(i).widget()
             if isinstance(frame, AwAbstructFrame):
-                if frame.launch.nodename() == name:
+                if frame.launch.name() == name:
                     self.layout().takeAt(i).widget().deleteLater()
                     return
 
