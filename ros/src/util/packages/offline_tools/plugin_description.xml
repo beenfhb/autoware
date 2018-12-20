@@ -17,5 +17,11 @@
 		base_class_type="rviz::Display">
 	<description>Opens an Autoware vector map directory</description>
 	</class>
+
+	<class name="offline_tools/SinglePose"
+		type="SinglePose"
+		base_class_type="rviz::Display">
+	<description>Debug A Single Localization Output</description>
+	</class>
 	
 </library>

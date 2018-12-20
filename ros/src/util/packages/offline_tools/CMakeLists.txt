@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(offline_tools)
 
 add_compile_options(-std=c++11)
@@ -49,6 +49,7 @@ add_library(
 		rviz_plugins/FileProperty.cpp
 		rviz_plugins/VectorMapDisplay.cpp
 		rviz_plugins/VectorMapLoader.cpp
+		rviz_plugins/SinglePose.cpp
 )
 
 target_link_libraries(
