@@ -8,6 +8,8 @@
 #include <OgreVector3.h>
 #include <rviz_plugins/SinglePose.h>
 
+#include <tf/tf.h>
+
 
 SinglePose::SinglePose()
 {
@@ -29,6 +31,11 @@ SinglePose::~SinglePose()
 void
 SinglePose::onInitialize()
 {
+	axesDisp = new rviz::Axes(
+		scene_manager_,
+		scene_node_,
+		1.0, 0.1);
+	redraw();
 }
 
 
@@ -43,16 +50,15 @@ void
 SinglePose::redraw()
 {
 //	tf::
-	axesDisp = new rviz::Axes(
-		scene_manager_,
-		scene_node_,
-		1.0, 1.0);
-
 	axesDisp->setPosition(
 		Ogre::Vector3(
 			Xv->getFloat(),
 			Yv->getFloat(),
 			Zv->getFloat()));
+
+	tf::Quaternion q;
+	q.setRPY(rollv->getFloat(), pitchv->getFloat(), yawv->getFloat());
+	axesDisp->setOrientation(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
 
 	queueRender();
 }
