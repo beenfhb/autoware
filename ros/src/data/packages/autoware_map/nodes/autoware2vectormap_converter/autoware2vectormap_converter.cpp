@@ -14,6 +14,11 @@ using vector_map::createAreaMarker;
 using vector_map::Color;
 using vector_map::VectorMap;
 
+bool isJapaneseCoordinate(int epsg)
+{
+  return epsg >= 2443 && epsg <= 2461;
+
+}
 void insertMarkerArray(visualization_msgs::MarkerArray& a1, const visualization_msgs::MarkerArray& a2)
 {
     a1.markers.insert(a1.markers.end(), a2.markers.begin(), a2.markers.end());
@@ -80,6 +85,7 @@ visualization_msgs::MarkerArray createStopLineMarkerArray(const VectorMap& vmap,
     int id = 0;
     for (const auto& stop_line : vmap.findByFilter([] (const vector_map_msgs::StopLine& stop_line){return true; }))
     {
+
         if (stop_line.lid == 0)
         {
             ROS_ERROR_STREAM("[createStopLineMarkerArray] invalid stop_line: " << stop_line);
@@ -337,16 +343,16 @@ void createPoints(std::vector<autoware_map_msgs::Point> awm_points, std::vector<
     for ( auto awm_pt : awm_points)
     {
       vector_map_msgs::Point vmap_point;
-        // japanese plane rectangular CS number calculated from epsg values;
-        if(awm_pt.epsg >= 2443 && awm_pt.epsg <= 2461)
+        if(isJapaneseCoordinate(awm_pt.epsg))
         {
             vmap_point.ref = awm_pt.epsg - 2442;
             vmap_point.bx = awm_pt.x;
             vmap_point.ly = awm_pt.y;
         }
         else{
+            //has to convert from mgrs -> Janaese plane rectangular CS
             epsg_fail_flag = true;
-            vmap_point.ref = 0;
+            vmap_point.ref = 1;
             vmap_point.bx = awm_pt.y;
             vmap_point.ly = awm_pt.x;
         }
@@ -684,6 +690,32 @@ vector_map_msgs::RoadSign createDummyRoadSign(int id)
     return road_sign;
 }
 
+bool getIntersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double &intersect_x, double &intersect_y ){
+    //let p1(x1, y1), p2(x2, y2), p3(x3, y3), p4(x4,y4)
+    //intersect of line segment p1 to p2 and p3 to p4 satisfies
+    // p1 + r(p2 - p1) = p3 + s(p4 - p3)
+    // 0 <= r <= 1
+    // 0 <= s <= 1
+    double denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+
+    if(denominator == 0){
+        //line is parallel
+        return false;
+    }
+
+    double r = ( (y4 - y3) * (x3 - x1) - (x4 - x3) * (y3 - y1) ) / denominator;
+    double s = ( (y2 - y1) * (x3 - x1) - (x2 - x1) * (y3 - y1) ) / denominator;
+
+    if( r >= 0 && r <= 1 && s >= 0 && s <= 1){
+      intersect_x = x1 + r * (x2 - x1);
+      intersect_y = y1 + r * (y2 - y1);
+      return true;
+    }else{
+      return false;
+    }
+}
+
+
 void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoints,
                       const std::vector<autoware_map_msgs::Point> awm_points,
                       const std::vector<autoware_map_msgs::WaypointRelation> awm_waypoint_relations,
@@ -715,37 +747,75 @@ void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoin
                                             awm_points.end(),
                                             [&](autoware_map_msgs::Point pt){return pt.point_id == next_wp->point_id; });
             double yaw = atan2(awm_next_pt->y - awm_pt->y, awm_next_pt->x - awm_pt->x);
-            double angle_to_left = addAngles(yaw, -M_PI/2);
-            double angle_to_right = addAngles(yaw, M_PI/2);
+            double angle_left, angle_right;
+            if(isJapaneseCoordinate(awm_pt->epsg)){
+              angle_left = addAngles(yaw, -M_PI/2);
+              angle_right = addAngles(yaw, M_PI/2);
+            }else
+            {
+              angle_left = addAngles(yaw, M_PI/2);
+              angle_right = addAngles(yaw, -M_PI/2);
+            }
+            // std::cout << awm_pt->x << " " << awm_pt->y << " " << awm_pt->epsg << std::endl;
             double r = wp.width / 2;
 
+
+            //stop line cannot be right on waypoint with current rebuild_decision_maker
             double epsilon_x = cos(yaw) * 0.001;
             double epsilon_y = sin(yaw) * 0.001;
 
-
             vector_map_msgs::Point start_point, end_point;
             start_point.pid = point_id++;
-            //stop line must intersect with waypoints left side of the line
 
-            start_point.bx = awm_pt->x + (r+0.1) * cos(angle_to_left) + epsilon_x;
-            start_point.ly = awm_pt->y + (r+0.1) * sin(angle_to_left) + epsilon_y;
+            //stop line must intersect with waypoints left side of the line, lengthen left side
+            start_point.bx = awm_pt->x + ( r * 0.9 ) * cos(angle_left) + epsilon_x;
+            start_point.ly = awm_pt->y + (r * 0.9)  * sin(angle_left) + epsilon_y;
             start_point.h = awm_pt->z;
 
             end_point.pid = point_id++;
-            //stop line must intersect with waypoints left side of the line
-            end_point.bx = awm_pt->x + r * cos(angle_to_right) + epsilon_x;
-            end_point.ly = awm_pt->y + r * sin(angle_to_right) + epsilon_y;
+            end_point.bx = awm_pt->x + r * cos(angle_right) + epsilon_x;
+            end_point.ly = awm_pt->y + r * sin(angle_right) + epsilon_y;
             end_point.h = awm_pt->z;
+
+            // make sure that stop line does not intersect with other lanes.
+            for(auto awm_wp_relation:awm_waypoint_relations ){
+                  if(awm_wp_relation.waypoint_id == wp.waypoint_id || awm_wp_relation.next_waypoint_id == wp.waypoint_id){
+                    continue;
+                  }
+                  autoware_map_msgs::Waypoint wp1 = awm.findByKey(autoware_map::Key<autoware_map_msgs::Waypoint>(awm_wp_relation.waypoint_id));
+                  autoware_map_msgs::Waypoint wp2 = awm.findByKey(autoware_map::Key<autoware_map_msgs::Waypoint>(awm_wp_relation.next_waypoint_id));
+                  autoware_map_msgs::Point p1 = awm.findByKey(autoware_map::Key<autoware_map_msgs::Point>(wp1.point_id));
+                  autoware_map_msgs::Point p2 = awm.findByKey(autoware_map::Key<autoware_map_msgs::Point>(wp2.point_id));
+
+                  double intersect_x, intersect_y;
+                  //intersects with
+                  if ( getIntersect(p1.x, p1.y, p2.x, p2.y,
+                                    start_point.bx, start_point.ly, end_point.bx, end_point.ly,
+                                    intersect_x, intersect_y))
+                  {
+                      double distance = std::hypot( awm_pt->x - intersect_x, awm_pt->y - intersect_y );
+                      r = distance * 0.9; //shorten length of stop line so that it does not cross any other lanes
+
+                      start_point.bx = awm_pt->x + (r * 0.9) * cos(angle_left) + epsilon_x;
+                      start_point.ly = awm_pt->y + (r * 0.9) * sin(angle_left) + epsilon_y;
+                      start_point.h = awm_pt->z;
+                      end_point.bx = awm_pt->x + r * cos(angle_right) + epsilon_x;
+                      end_point.ly = awm_pt->y + r * sin(angle_right) + epsilon_y;
+                      end_point.h = awm_pt->z;
+                  }
+            }
+
             //swap x and y if the coordinate is not in japanese rectangular coordinate system
-            if(awm_pt->epsg <= 2443 && awm_pt->epsg >= 2461)
+            if(!isJapaneseCoordinate(awm_pt->epsg))
             {
                 double tmp = start_point.bx;
                 start_point.bx = start_point.ly;
                 start_point.ly = tmp;
                 tmp = end_point.bx;
-                end_point.bx = start_point.ly;
+                end_point.bx = end_point.ly;
                 end_point.ly = tmp;
             }
+
             vmap_points.push_back(start_point);
             vmap_points.push_back(end_point);
 
@@ -757,7 +827,7 @@ void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoin
             vmap_lines.push_back(vmap_line);
 
             std::vector<autoware_map_msgs::WaypointSignalRelation> wsr_vector = awm.findByFilter([&](const autoware_map_msgs::WaypointSignalRelation wsr){ return wsr.waypoint_id == wp.waypoint_id; });
-            std::cout << wp.waypoint_id << " " << stop_line_id << std::endl;
+            // std::cout << wp.waypoint_id << " " << stop_line_id << std::endl;
             //only create road sign if stopline is not related to signal
             vector_map_msgs::StopLine vmap_stop_line;
             vmap_stop_line.id = stop_line_id++;
@@ -769,7 +839,6 @@ void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoin
                 vmap_stop_line.signid = road_sign_id;
             }
 
-
             auto relation = std::find_if(awm_waypoint_relations.begin(),
                                          awm_waypoint_relations.end(),
                                          [&](autoware_map_msgs::WaypointRelation r){return r.next_waypoint_id == wp.waypoint_id; });
@@ -777,7 +846,6 @@ void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoin
             vmap_stop_lines.push_back(vmap_stop_line);
         }
     }
-
 }
 
 int main(int argc, char **argv)
