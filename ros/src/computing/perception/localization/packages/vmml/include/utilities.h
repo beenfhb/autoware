@@ -290,6 +290,9 @@ struct TTransform : public Eigen::Affine3d
 	bool isValid() const;
 
 	TTransform shift(const Eigen::Vector3d &vs) const;
+	inline TTransform shift(const double &x, const double &y, const double &z) const
+	{ return shift(Eigen::Vector3d(x, y, z)); }
+
 	TTransform rotate(const double roll, const double pitch=0, const double yaw=0) const;
 
 

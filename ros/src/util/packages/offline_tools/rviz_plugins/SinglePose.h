@@ -11,6 +11,7 @@
 #include <memory>
 
 #include <rviz/ogre_helpers/axes.h>
+#include <rviz/ogre_helpers/movable_text.h>
 #include <rviz/display.h>
 #include <rviz/properties/float_property.h>
 #include <rviz/properties/string_property.h>
@@ -33,15 +34,19 @@ protected:
 	void redraw();
 
 	rviz::StringProperty *displayName;
+
 	rviz::FloatProperty
 		*Xv,
 		*Yv,
 		*Zv,
 		*rollv,
 		*pitchv,
-		*yawv;
+		*yawv,
+		*radiusv,
+		*sizev;
 
 	rviz::Axes *axesDisp = nullptr;
+	rviz::MovableText *poseName = nullptr;
 };
 
 #endif /* _SINGLEPOSE_H_ */

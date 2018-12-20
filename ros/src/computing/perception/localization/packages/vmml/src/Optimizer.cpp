@@ -5,6 +5,8 @@
  *      Author: sujiwo
  */
 
+#include <memory>
+#include <random>
 
 #include "VMap.h"
 #include "Optimizer.h"
@@ -33,10 +35,56 @@ const float thHuber3D = sqrt(7.815);
 const int baIteration = 6;
 
 
-// XXX: Wrong
-g2o::SE3Quat toSE3Quat
-(const Eigen::Vector3d &position, const Eigen::Quaterniond &orientation)
-{ return g2o::SE3Quat(orientation, position); }
+class PoseDisturb
+{
+public:
+	typedef std::uniform_real_distribution<double> UDistT;
+	typedef std::shared_ptr<UDistT> UDistPtr;
+
+
+PoseDisturb(const Vector3d &means):
+	meanShift(means),
+	distributions(vector<UDistPtr>(3, nullptr))
+{
+	if (meanShift.x()!=0.0) {
+		distributions[0] = createUniformDistribution(meanShift.x());
+	}
+	if (meanShift.y()!=0.0) {
+		distributions[1] = createUniformDistribution(meanShift.y());
+	}
+	if (meanShift.z()!=0.0) {
+		distributions[2] = createUniformDistribution(meanShift.z());
+	}
+}
+
+Pose disturb(const Pose &p)
+{
+	Vector3d sh = getRandomShift();
+	return p.shift(sh);
+}
+
+static UDistPtr createUniformDistribution(const double &m)
+{
+	return UDistPtr(new UDistT(-m, m));
+}
+
+protected:
+	Vector3d meanShift;
+	default_random_engine generator;
+	vector<UDistPtr> distributions;
+
+	Vector3d getRandomShift()
+	{
+		Vector3d sh = Vector3d::Zero();
+		for (int i=0; i<3; ++i)
+			if (distributions[i]!=nullptr) {
+				UDistT &dist = *distributions[i];
+				sh[i] = dist(generator);
+			}
+
+		return sh;
+	}
+};
 
 
 g2o::SE3Quat toSE3Quat (const KeyFrame &kf)
@@ -57,15 +105,6 @@ g2o::SE3Quat toSE3Quat (const Pose &spose)
 {
 	Matrix4d extMat = BaseFrame::createExternalParamMatrix4(spose);
 	return g2o::SE3Quat(extMat.block<3,3>(0,0), extMat.block<3,1>(0,3));
-}
-
-
-// XXX: Wrong
-void fromSE3Quat(const g2o::SE3Quat &pose,
-	Vector3d &position, Quaterniond &orientation)
-{
-	position = pose.translation();
-	orientation = pose.rotation();
 }
 
 
@@ -227,12 +266,26 @@ void bundle_adjustment_2 (VMap *orgMap)
 	map<mpid, g2o::VertexSBAPointXYZ*> vertexMpMapInv;
 	oid vId = 1;
 
+	/*
+	 * Camera's Pose Disturbance are specified in lateral, longitudinal and vertical ways
+	 * For lateral, specify in X
+	 * For longitudinal, specify in Z
+	 * For vertical, specify in Y
+	 */
+	//                            X    Y    Z
+	PoseDisturb poseDist(Vector3d(5,   0.1,   0));
+
 	// Stage #1: Build vertices and edges from-KF-to-MP
 	for (kfid &kId: keyframeList) {
 
 		g2o::VertexCam *vKf = new g2o::VertexCam();
 		KeyFrame *kf = orgMap->keyframe(kId);
+
+		Pose nPose = kf->pose();
+		nPose = poseDist.disturb(nPose);
+		kf->setPose(nPose);
 		vKf->setEstimate (kf->forG2O());
+
 		vKf->setId(vId);
 		vKf->setFixed(kId<2);
 		optimizer.addVertex(vKf);

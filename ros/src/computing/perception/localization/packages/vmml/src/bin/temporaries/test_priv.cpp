@@ -11,6 +11,7 @@
 #include <utility>
 #include <Eigen/Eigen>
 
+#include "datasets/MeidaiBagDataset.h"
 #include "utilities.h"
 
 
@@ -20,8 +21,13 @@ using namespace Eigen;
 
 int main(int argc, char *argv[])
 {
-	Pose bike(2, 2, 0, 0, 0, 0);
-	Pose me = bike.shift(Vector3d(0.5, 0, 0));
+	MeidaiBagDataset::Ptr meidaiDs = MeidaiBagDataset::load("/media/sujiwo/ssd/motoyama.bag");
+	auto cameraTrack = meidaiDs->getCompleteCameraTrajectory();
+	PoseStamped p1000 = cameraTrack[1000];
+
+	cout << dumpVector(p1000) << endl;
+
+	cout << dumpVector(p1000.shift(Vector3d(0, -3.0, 0))) << endl;
 
 	return 0;
 }
