@@ -649,6 +649,7 @@ std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Point& obj)
     << obj.x << ","
     << obj.y << ","
     << obj.z << ","
+    << obj.mgrs << ","
     << obj.epsg << ","
     << obj.pcd << ","
     << obj.lat << ","
@@ -828,10 +829,11 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::Point& obj)
     obj.x = std::stod(columns[1]);
     obj.y = std::stod(columns[2]);
     obj.z = std::stod(columns[3]);
-    obj.epsg = std::stoi(columns[4]);
-    obj.pcd = columns[5];
-    obj.lat = std::stod(columns[6]);
-    obj.lng = std::stod(columns[7]);
+    obj.mgrs = std::stoi(columns[4]);
+    obj.epsg = std::stoi(columns[5]);
+    obj.pcd = columns[6];
+    obj.lat = std::stod(columns[7]);
+    obj.lng = std::stod(columns[8]);
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::Area& obj)
