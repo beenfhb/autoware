@@ -517,11 +517,11 @@ private:
 			else if (type=="camera") {
 				dsTrack = meidaiDsPtr->getCameraTrajectory();
 
-				for (int i=0; i<dsTrack.size(); i++) {
+				/*for (int i=0; i<dsTrack.size(); i++) {
 					auto P = dsTrack.at(i);
 					P = P.shift(Vector3d(3.0, 0, 0));
 					dsTrack[i] = P;
-				}
+				}*/
 			}
 
 			else {

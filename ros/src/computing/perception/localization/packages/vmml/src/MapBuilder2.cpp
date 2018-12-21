@@ -59,6 +59,8 @@ MapBuilder2::track (const InputFrame &f)
 	kfid fId = cMap->createKeyFrame(f.image, f.position, f.orientation, f.cameraId, NULL, f.sourceId, f.tm);
 	cMap->estimateAndTrack(kfAnchor, fId);
 
+	cMap->keyframe(fId)->previousKeyframe = kfAnchor;
+
 	// XXX: Decide when to move the anchor
 	kfAnchor = fId;
 	ifrAnchor = f;
@@ -141,8 +143,8 @@ MapBuilder2::build ()
 
 	thread ba([this] {
 				cout << "Bundling...";
-//				bundle_adjustment(cMap);
-				bundle_adjustment_2(cMap);
+				bundle_adjustment(cMap);
+//				bundle_adjustment_2(cMap);
 				cout << "BA Done\n";
 	});
 
