@@ -1,0 +1,16 @@
+float32 stop_area_front_min
+float32 stop_area_front_max
+float32 stop_area_front_ratio
+float32 stop_area_rear
+float32 stop_area_side
+float32 stop_area_height_min
+float32 stop_area_height_max
+
+float32 filtering_radius
+int32 filtering_points_size
+
+bool use_vehicle_info_param
+float32 vehicle_center_to_base
+float32 vehicle_length
+float32 vehicle_width
+float32 vehicle_height

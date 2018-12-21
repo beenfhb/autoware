@@ -873,6 +873,27 @@ subs :
            position_error :
              flags : [ nl ]
 
+  - name : Emergency Stop
+    desc : emergency stop groups
+    subs :
+    - name : stop_area
+      desc : stop_area
+      cmd  : roslaunch emergency_stop stop_area.launch
+      param: stop_area
+      gui  :
+        vehicle_center_to_base:
+          depend : use_vehicle_info_param
+          depend_bool : 'lambda v : v == 0'
+        vehicle_length:
+          depend : use_vehicle_info_param
+          depend_bool : 'lambda v : v == 0'
+        vehicle_width:
+          depend : use_vehicle_info_param
+          depend_bool : 'lambda v : v == 0'
+        vehicle_height:
+          depend : use_vehicle_info_param
+          depend_bool : 'lambda v : v == 0'
+
   - name : Decision
     desc : decision groups
     subs :
@@ -2074,6 +2095,150 @@ params :
       cmd_param :
         dash        : ''
         delim       : ':='
+
+  - name  : stop_area
+    topic : /config/stop_area
+    msg   : ConfigStopArea
+    vars  :
+    - name  : input_point_topic
+      desc  : input_point_topic
+      label : input_point_topic
+      kind  : topic
+      topic_type : sensor_msgs/PointCloud2
+      v    : /points_raw
+      cmd_param:
+              dash : ''
+              delim: ':='
+    - name  : baselink_frame
+      desc  : baselink_frame
+      label : baselink_frame
+      kind  : str
+      v    : /base_link
+      cmd_param:
+              dash : ''
+              delim: ':='
+    - name  : stop_area_front_min
+      desc  : stop_area_front_min
+      label : stop_area_front_min
+      min   : 0
+      max   : 10.0
+      v     : 0.5
+      cmd_param :
+        dash    : ''
+        delim   : ':='
+    - name  : stop_area_front_max
+      desc  : stop_area_front_max
+      label : stop_area_front_max
+      min   : 0
+      max   : 10.0
+      v     : 3.0
+      cmd_param :
+        dash    : ''
+        delim   : ':='
+    - name  : stop_area_front_ratio
+      desc  : stop_area_front_ratio
+      label : stop_area_front_ratio
+      min   : 0
+      max   : 10.0
+      v     : 1.0
+      cmd_param :
+        dash    : ''
+        delim   : ':='
+    - name  : stop_area_rear
+      desc  : stop_area_rear
+      label : stop_area_rear
+      min   : 0
+      max   : 10.0
+      v     : 0.1
+      cmd_param :
+        dash    : ''
+        delim   : ':='
+    - name  : stop_area_side
+      desc  : stop_area_side
+      label : stop_area_side
+      min   : 0
+      max   : 10.0
+      v     : 0.1
+      cmd_param :
+        dash    : ''
+        delim   : ':='
+    - name  : stop_area_height_min
+      desc  : stop_area_height_min
+      label : stop_area_height_min
+      min   : 0.0
+      max   : 10.0
+      v     : 0.3
+      cmd_param :
+        dash    : ''
+        delim   : ':='
+    - name  : stop_area_height_max
+      desc  : stop_area_height_max
+      label : stop_area_height_max
+      min   : 0.0
+      max   : 10.0
+      v     : 2.5
+      cmd_param :
+        dash    : ''
+        delim   : ':='
+    - name  : filtering_radius
+      desc  : filtering_radius
+      label : filtering_radius
+      min   : 0.0
+      max   : 10.0
+      v     : 0.5
+      cmd_param :
+        dash    : ''
+        delim   : ':='
+    - name  : filtering_points_size
+      desc  : filtering_points_size
+      label : filtering_points_size
+      min   : 0
+      max   : 100
+      v     : 5
+      cmd_param :
+        dash    : ''
+        delim   : ':='
+    - name  : use_vehicle_info_param
+      desc  : use_vehicle_info_param
+      label : use_vehicle_info_param
+      kind  : checkbox
+      v     : True
+    - name  : vehicle_center_to_base
+      desc  : vehicle_center_to_base
+      label : vehicle_center_to_base
+      min   : -10.0
+      max   : 10.0
+      v     : -1.0
+      cmd_param :
+        dash    : ''
+        delim   : ':='
+    - name  : vehicle_length
+      desc  : vehicle_length
+      label : vehicle_length
+      min   : 0
+      max   : 10.0
+      v     : 5.0
+      cmd_param :
+        dash    : ''
+        delim   : ':='
+    - name  : vehicle_width
+      desc  : vehicle_width
+      label : vehicle_width
+      min   : 0
+      max   : 10.0
+      v     : 2.0
+      cmd_param :
+        dash    : ''
+        delim   : ':='
+    - name  : vehicle_height
+      desc  : vehicle_height
+      label : vehicle_height
+      min   : 0
+      max   : 10.0
+      v     : 2.5
+      cmd_param :
+        dash    : ''
+        delim   : ':='
 
   - name  : planner_selector
     topic : /config/PlannerSelector

@@ -38,6 +38,7 @@ add_message_files(
   ConfigRingFilter.msg
   ConfigRingGroundFilter.msg
   ConfigSSD.msg
+  ConfigStopArea.msg
   ConfigTwistFilter.msg
   ConfigVelocitySet.msg
   ConfigVoxelGridFilter.msg
