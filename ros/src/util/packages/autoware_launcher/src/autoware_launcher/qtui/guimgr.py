@@ -20,10 +20,9 @@ class AwQtGuiClient(AwLaunchClientIF):
         self.elements = {}
 
         self.__server.register_client(self)
-        #self.server.request_launch_load("test")
-        #self.server.request_launch_make("node/root")
-        #self.__server.make_profile("node/sensing")
-        self.__server.load_profile("tmp_sensing")
+        #self.__server.make_profile("root/autoware")
+        self.__server.make_profile("node/sensing")
+        #self.__server.load_profile("tmp_sensing")
 
         self.panels = {}
         self.frames = {}
@@ -218,13 +217,13 @@ class AwLaunchNodeMirror(object):
             mirrored_children.append(self.__tree.create(child.nodepath()))
         return mirrored_children
 
-    def bind(self, widget):
-        print "bind: {} {}".format(self.__path, str(widget))
-        self.__refs.append(widget)
+    def bind(self, item):
+        print "bind: {} {}".format(self.__path, str(item))
+        self.__refs.append(item)
 
-    def unbind(self, widget):
-        print "unbind: {} {}".format(self.__path, str(widget))
-        self.__refs.remove(widget)
+    def unbind(self, item):
+        print "unbind: {} {}".format(self.__path, str(item))
+        self.__refs.remove(item)
 
     def updated(self):
         for widget in self.__refs:

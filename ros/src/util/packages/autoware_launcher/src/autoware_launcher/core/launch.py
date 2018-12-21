@@ -135,8 +135,12 @@ class AwLaunchTree(AwBaseTree):
 
             if plugin.children():
                 for cinfo in plugin.children():
-                    if cinfo["type"] == "single":
+                    if cinfo["type"] == "required":
                         make_node(launch, cinfo["name"], cinfo["plugin"])
+                    elif cinfo["type"] == "optional":
+                        pass
+                    else:
+                        console.error(lname + ": " + cinfo["type"])
             else:
                 launch._AwBaseNode__nodetype = False
         make_node(self, "root", ppath)

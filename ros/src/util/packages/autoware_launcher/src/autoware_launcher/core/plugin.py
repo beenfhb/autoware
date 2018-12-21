@@ -101,7 +101,7 @@ class AwPluginNode(object):
     def default_config(self):
         config = {}
         for argdef in self.__data["args"]:
-            config["args." + argdef["name"]] = "" if argdef["type"] == "str" else "0"
+            config["args." + argdef["name"]] = ""
         return config
 
     def args(self):

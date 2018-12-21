@@ -222,8 +222,8 @@ class AwLaunchButton(QtWidgets.QPushButton):
         self.mirror = launch
         self.states = states or ("Launch", "Terminate")
 
-        self.mirror.bind_listener(self)
-        self.destroyed.connect(lambda: self.mirror.unbind_listener(self))
+        self.mirror.bind(self)
+        self.destroyed.connect(lambda: self.mirror.unbind(self))
         self.setup_widget()
 
     def setup_widget(self):
@@ -243,10 +243,8 @@ class AwLaunchButton(QtWidgets.QPushButton):
     # QtCore.Slot
     def on_clicked(self):
         state_text = self.text()
-        if state_text == self.states[0]: self.mirror.request_exec()
-        if state_text == self.states[1]: self.mirror.request_term()
-        #if state_text == self.states[0]: self.guimgr.server.request_launch_exec(self.lpath)
-        #if state_text == self.states[1]: self.guimgr.server.request_launch_term(self.lpath)
+        if state_text == self.states[0]: self.mirror.launch(True)
+        if state_text == self.states[1]: self.mirror.launch(False)
 
 
 
@@ -389,8 +387,8 @@ class AwDefaultNodePanelOld(AwAbstructPanel):
             self.add_frame(child)
 
         #self.config_updated()
-        self.mirror.bind_listener(self)
-        self.destroyed.connect(lambda: self.mirror.unbind_listener(self))
+        self.mirror.bind(self)
+        self.destroyed.connect(lambda: self.mirror.unbind(self))
 
         remove_button = QtWidgets.QPushButton("Remove")
         self.add_button(remove_button)
