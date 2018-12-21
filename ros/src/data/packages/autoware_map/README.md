@@ -58,7 +58,7 @@ Dummy road signs are created for stop line
 
 #### Usage
 NOTE: autoware_map messages must be published before running this node with current implementation.  
-`rosrun map_file autoware_map_loader [FILE]`
+`rosrun map_file autoware_map_loader [FILE]`  
 `rosrun autoware_map autoware2vectormap_converter`
 
 #### Related Packages
