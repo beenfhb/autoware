@@ -16,8 +16,21 @@ using vector_map::VectorMap;
 
 bool isJapaneseCoordinate(int epsg)
 {
-  return epsg >= 2443 && epsg <= 2461;
+    //EPSG CODE 2443~2461 for JGD2000
+    //EPSG CODE 6669~6687 for JGD2011
+  return (epsg >= 2443 && epsg <= 2461) || (epsg >= 6669 && epsg <= 6687);
+}
+int convertESPG2Ref(int epsg){
 
+    if(epsg >= 2443 && epsg <= 2461)
+    {
+        return epsg - 2442;
+    }
+    if(epsg >= 6669 && epsg <= 6687)
+    {
+        return epsg - 6668;
+    }
+    return 0;
 }
 void insertMarkerArray(visualization_msgs::MarkerArray& a1, const visualization_msgs::MarkerArray& a2)
 {
@@ -345,14 +358,14 @@ void createPoints(std::vector<autoware_map_msgs::Point> awm_points, std::vector<
       vector_map_msgs::Point vmap_point;
         if(isJapaneseCoordinate(awm_pt.epsg))
         {
-            vmap_point.ref = awm_pt.epsg - 2442;
+            vmap_point.ref = convertESPG2Ref(awm_pt.epsg);
             vmap_point.bx = awm_pt.x;
             vmap_point.ly = awm_pt.y;
         }
         else{
             //has to convert from mgrs -> Janaese plane rectangular CS
             epsg_fail_flag = true;
-            vmap_point.ref = 1;
+            vmap_point.ref = 0;
             vmap_point.bx = awm_pt.y;
             vmap_point.ly = awm_pt.x;
         }

@@ -649,11 +649,11 @@ std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Point& obj)
     << obj.x << ","
     << obj.y << ","
     << obj.z << ","
-    << obj.mgrs << ","
-    << obj.epsg << ","
-    << obj.pcd << ","
     << obj.lat << ","
-    << obj.lng;
+    << obj.lng << ","
+    << obj.pcd << ","
+    << obj.mgrs << ","
+    << obj.epsg;
     return os;
 }
 std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Area& obj)
@@ -829,11 +829,19 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::Point& obj)
     obj.x = std::stod(columns[1]);
     obj.y = std::stod(columns[2]);
     obj.z = std::stod(columns[3]);
-    obj.mgrs = std::stoi(columns[4]);
-    obj.epsg = std::stoi(columns[5]);
+    obj.lat = std::stod(columns[4]);
+    obj.lng = std::stod(columns[5]);
     obj.pcd = columns[6];
-    obj.lat = std::stod(columns[7]);
-    obj.lng = std::stod(columns[8]);
+    try{
+        obj.mgrs = std::stoi(columns[7]);
+    }
+    catch (const std::invalid_argument& e)
+    {
+        ROS_WARN_STREAM("invalid argument for mgrs: " << e.what());
+        obj.mgrs = 0;
+    }
+    obj.epsg = std::stoi(columns[8]);
+
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::Area& obj)
