@@ -30,7 +30,7 @@ autoware_map_loader loads semantic map information in Autoware Map Format.
 NONE
 
 #### published topics
-+ **awm_stat** std_msgs::Bool  
++ **awm_state** std_msgs::Bool  
   becomes true after the loading is finished
 + **autoware_map_info/lane** autoware_map_msgs::LaneArray    
 + **autoware_map_info/lane_attr_relation** autoware_map_msgs::LaneAttrRelationArray   
