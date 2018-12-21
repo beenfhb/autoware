@@ -35,10 +35,10 @@ void dumpTrajectory(const string &dumpPath, const Trajectory &srcPath)
 int main (int argc, char *argv[])
 {
 	auto meidaiDs = MeidaiBagDataset::load("/media/sujiwo/ssd/log_2016-12-26-13-21-10.bag");
-	meidaiDs->setLidarParameters((getMyPath()/"params/64e-S2.yaml").string(), "", TTransform::Identity());
+	meidaiDs->setLidarParameters((getMyPath()/"params/meidai-64e-S2.yaml").string(), "", TTransform::Identity());
 	auto lidarBag = meidaiDs->getLidarScanBag();
 
-	lidarBag->setTimeConstraint(315.49, 932.16);
+	lidarBag->setTimeConstraint(488.33, 516.53);
 
 	Trajectory icpTrack;
 	createTrajectoryFromICP(*lidarBag,

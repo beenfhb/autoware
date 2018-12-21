@@ -106,12 +106,12 @@ MapBuilder2::input(const InputFrame &f)
 			const kfid targetKfId = kfAnchor;
 
 			// XXX: Parallelize this
-//			for (auto &kfx: kfInsToAnchor) {
-//				cMap->trackMapPoints(kfx, targetKfId);
-//			}
-			for (int i=0; i<min(4, int(kfInsToAnchor.size())); ++i) {
-				cMap->trackMapPoints(kfInsToAnchor[i], targetKfId);
+			for (auto &kfx: kfInsToAnchor) {
+				cMap->trackMapPoints(kfx, targetKfId);
 			}
+//			for (int i=0; i<min(4, int(kfInsToAnchor.size())); ++i) {
+//				cMap->trackMapPoints(kfInsToAnchor[i], targetKfId);
+//			}
 
 			inputCallback(f);
 		}
