@@ -1,2 +1,2 @@
 children :
-  - { type: optional, name: camera, plugin : sensing/camera/driver }
+  - { type: optional, name: camera, plugin : sensing/camera }

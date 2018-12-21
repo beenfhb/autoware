@@ -1,7 +1,4 @@
 args :
-    - { name: intrinsic_file }
-    - { name: extrinsic_file }
-
-view :
-    - { title: Intrinsic File, type: args.file, args: intrinsic_file }
-    - { title: Extrinsic File, type: args.file, args: extrinsic_file }
+    - { name: width  }
+    - { name: height }
+    - { name: fps    }
