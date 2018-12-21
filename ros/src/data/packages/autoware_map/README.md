@@ -2,7 +2,7 @@
 
 ## autoware2vectormap_converter
 ### Feature
-converts autwoare_map_msgs to* vector_map_msgs
+converts autoware_map_msgs to vector_map_msgs
 
 ### Subscribed Topics
 + **autoware_map_info/lane** autoware_map_msgs::LaneArray    
