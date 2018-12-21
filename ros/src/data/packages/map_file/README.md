@@ -51,3 +51,7 @@ NONE
 
 #### Usage
 `rosrun map_file autoware_map_loader [FILE]`
+
+#### Related Packages
++ *autoware_map_msgs package*: Defines the message types for Autoware Map Format
++ *autoware_map*: Provides code api to access to autoware_map_msgs.
