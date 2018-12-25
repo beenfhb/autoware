@@ -1,0 +1,11 @@
+#! /usr/bin/env python
+
+import sys
+
+from autoware_launcher.core import AwLaunchServer
+from autoware_launcher.qtui import AwQtGuiClient
+
+server = AwLaunchServer(sys.argv)
+client = AwQtGuiClient(sys.argv, server)
+
+sys.exit(client.start2())

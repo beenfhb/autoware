@@ -10,7 +10,6 @@ from .launch import AwLaunchNode
 
 
 class AwLaunchServerIF(object):
-    def list_profile(self, lpath): raise NotImplementedError("tree_profile")
     def make_profile(self, ppath): raise NotImplementedError("make_profile")
     def load_profile(self, fpath): raise NotImplementedError("load_profile")
     def save_profile(self, fpath): raise NotImplementedError("save_profile")
@@ -50,19 +49,33 @@ class AwLaunchServer(AwLaunchServerIF):
         console.info("make_profile: " + ppath)
         self.__profile = AwLaunchTree(self, self.__plugins)
         self.__profile.make(ppath, self.__plugins)
+        for client in self.__clients: client.config_cleared()
 
     def load_profile(self, fpath):
         console.info("load_profile: " + fpath)
         self.__profile = AwLaunchTree(self, self.__plugins)
         self.__profile.load(fspath.profile(fpath), self.__plugins)
+        for client in self.__clients: client.config_cleared()
 
     def save_profile(self, fpath):
         console.info("save_profile: " + fpath)
         self.__profile.save(fspath.profile(fpath))
 
+    def list_config(self):
+        console.info("list_config: ")
+        return map(lambda node: node.nodepath(), self.__profile.listnode(False))
+
+    def find_config(self, lpath):
+        console.info("find_config: " + lpath)
+        return self.__profile.find(lpath)
+
+
+
+
     def find_node(self, lpath):
         console.info("find_node: " + lpath)
         return self.__profile.find(lpath)
+
     def create_node(self, lpath, ppath):
         return self.__profile.create(lpath, ppath)
 
@@ -82,8 +95,8 @@ class AwLaunchServer(AwLaunchServerIF):
             isdiff, isexec = node.launch(xmode)
             if isdiff: difflist.append(node.nodepath())
             if isexec: execlist.append(node.nodepath())
-        console.warning(str(difflist))
-        console.warning(str(execlist))
+        console.warning("Update:" + str(difflist))
+        console.warning("Launch:" + str(execlist))
         for lpath in difflist:
             state = self.__profile.find(lpath).status
             for client in self.__clients: client.status_updated(lpath, state)

@@ -1,43 +1,32 @@
 from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 
+from autoware_launcher.core import console
 from autoware_launcher.core import fspath
+
 from .abstruct import AwAbstructWindow
 from .abstruct import AwAbstructPanel
 from .abstruct import AwAbstructFrame
 from .runner   import AwRunnerPanel
-#from .network  import AwTcpServerPanel
+
 
 
 class AwMainWindow(AwAbstructWindow):
 
-    def __init__(self, guimgr, mirror):
+    def __init__(self, client):
 
         super(AwMainWindow, self).__init__(None)
-        self.guimgr = guimgr
-        self.mirror = mirror
+        self.client = client
 
         self.load_geomerty()
         self.setWindowTitle("Autoware Launcher")
 
         self.__init_menu()
-        self.setup_widget()
 
     def closeEvent(self, event):
 
         self.save_geometry()
         super(AwMainWindow, self).closeEvent(event)
-
-    def setup_widget(self):
-
-        root_mirror = self.mirror.create("root")
-        self.profile = AwStandardLaunchPanel(self.guimgr, root_mirror)
-        self.process = AwRunnerPanel        (self.guimgr, self.mirror)
-
-        widget = QtWidgets.QTabWidget()
-        widget.addTab(self.profile, "Profile")
-        widget.addTab(self.process, "Process")
-        self.setCentralWidget(widget)
 
     def __init_menu(self):
 
@@ -64,8 +53,7 @@ class AwMainWindow(AwAbstructWindow):
         filename, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Load Profile", fspath.profile(), "Launch Profile (*.launch)")
         filename, filetype = os.path.splitext(filename)
         if filename:
-            self.guimgr.load_profile(filename)
-            self.profile.setup_widget()
+            self.client.load_profile(filename)
 
     def save_profile(self):
         pass
@@ -77,7 +65,7 @@ class AwMainWindow(AwAbstructWindow):
         if filename:
             if filetype != ".launch":
                 filename = filename + filetype
-            self.guimgr.save_profile(filename)
+            self.client.save_profile(filename)
 
 
 

@@ -9,6 +9,12 @@ from . import primitives
 from . import widgets
 from . import procmgr
 
+from .widgets  import AwMainWindow
+from .treeview import AwTreeViewPanel
+from .treeview import AwControlPanel
+from .procmgr  import AwProcessPanel
+from .summary  import AwSummaryPanel
+
 
 
 class AwQtGuiClient(AwLaunchClientIF):
@@ -16,25 +22,98 @@ class AwQtGuiClient(AwLaunchClientIF):
     def __init__(self, sysarg, server):
         self.__sysarg = sysarg
         self.__server = server
+        self.__panels = []
         self.__mirror = AwLaunchTreeMirror(self)
-        self.elements = {}
 
         self.__server.register_client(self)
         #self.__server.make_profile("root/autoware")
-        self.__server.make_profile("node/sensing")
         #self.__server.load_profile("tmp_sensing")
 
-        self.panels = {}
-        self.frames = {}
-        self.panels["default_node"] = widgets.AwDefaultNodePanel
-        self.frames["default_node"] = widgets.AwDefaultNodeFrame
-        self.panels["default_leaf"] = widgets.AwDefaultLeafPanel
-        self.frames["default_leaf"] = widgets.AwDefaultLeafFrame
+        self.classes = {}
+        self.classes["default_node.panel"] = widgets.AwDefaultNodePanel
+        self.classes["default_node.frame"] = widgets.AwDefaultNodeFrame
+        self.classes["default_leaf.panel"] = widgets.AwDefaultLeafPanel
+        self.classes["default_leaf.frame"] = widgets.AwDefaultLeafFrame
 
-        self.frames["args.text"]  = primitives.AwTextTypeFrame
-        self.frames["args.file"]  = primitives.AwFileTypeFrame
-        self.frames["args.tf"]    = primitives.AwTransformFrame
-        self.frames["args.calib"] = primitives.AwCameraCalibFrame
+        self.classes["args.text"]  = primitives.AwTextTypeFrame
+        self.classes["args.file"]  = primitives.AwFileTypeFrame
+        self.classes["args.tf"]    = primitives.AwTransformFrame
+        self.classes["args.calib"] = primitives.AwCameraCalibFrame
+
+    def start2(self):
+
+        application = QtWidgets.QApplication(self.__sysarg)
+        resolution = application.desktop().screenGeometry()
+        resolution = min(resolution.width(), resolution.height())
+
+        stylesheet = []
+        stylesheet.append("#FrameHeader { border-top: 1px solid; } #FrameHeader, #FrameWidget { padding: 5px; border-bottom: 1px solid; border-left: 1px solid; border-right: 1px solid; }")
+        stylesheet.append("* { font-size: " + str(resolution/100) + "px; }")
+        application.setStyleSheet(" ".join(stylesheet))
+
+        self.__treeview = AwTreeViewPanel(self)
+        self.__control  = AwControlPanel(self)
+        self.__summary  = AwSummaryPanel(self)
+        self.__process  = AwProcessPanel(self)
+
+        tabwidget = QtWidgets.QTabWidget()
+        tabwidget.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
+        tabwidget.addTab(self.__summary, "Summary")
+        tabwidget.addTab(self.__process, "Process")
+
+        vsplitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        vsplitter.addWidget(tabwidget)
+        vsplitter.addWidget(self.__control)
+
+        hsplitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        hsplitter.addWidget(self.__treeview)
+        hsplitter.addWidget(vsplitter)
+
+        window = widgets.AwMainWindow(self)
+        window.setCentralWidget(hsplitter)
+        window.show()
+
+        self.__panels.append(self.__treeview)
+        self.__panels.append(self.__summary)
+        self.__panels.append(self.__process)
+
+        self.__server.register_runner(self.__process)
+        self.__process.register_server(self.__server)
+
+        self.__treeview.register_select_listener(self.__control)
+        self.__treeview.register_select_listener(self.__process)
+
+        self.__server.make_profile("node/sensing")
+        return application.exec_()
+
+    def config_cleared(self):
+        self.__mirror.clear()
+        for panel in self.__panels: panel.config_cleared()
+
+        for lpath in self.__server.list_config():
+            lnode = self.__mirror.create(lpath)
+            for panel in self.__panels: panel.config_created(lnode)
+
+        self.__treeview.expandToDepth(0)
+
+    def config_updated(self):
+        pass        
+
+    def status_updated(self, lpath, state):
+        print (lpath, state) 
+        self.__treeview.status_updated(lpath, state)
+
+
+
+
+
+
+
+
+
+
+
+
 
     def start(self):
 
@@ -59,14 +138,14 @@ class AwQtGuiClient(AwLaunchClientIF):
         #print "Create Frame: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls)
         if not guicls:
             guikey = guikey or mirror.plugin().gui["type"]
-            guicls = self.frames[guikey]
+            guicls = self.classes[guikey + ".frame"]
         return guicls(self, mirror)
 
     def create_panel(self, mirror, guikey = None, guicls = None):
         #print "Create Panel: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls)
         if not guicls:
             guikey = guikey or mirror.plugin().gui["type"]
-            guicls = self.panels[guikey]
+            guicls = self.panels[guikey + ".panel"]
         return guicls(self, mirror)
 
     def create_arg_frame(self, parent, view):
@@ -98,13 +177,7 @@ class AwQtGuiClient(AwLaunchClientIF):
     def find_node(self, lpath):
         return self.__server.find_node(lpath)
 
-    def exec_node(self, lpath):
-        return self.__server.exec_node(lpath)
-
-    def term_node(self, lpath):
-        return self.__server.term_node(lpath)
-
-    def launch_node(self, lpath, xmode):
+    def launch_config(self, lpath, xmode):
         return self.__server.launch_node(lpath, xmode)
 
     def create_node(self, lpath, ppath):
@@ -115,9 +188,6 @@ class AwQtGuiClient(AwLaunchClientIF):
 
     def node_updated(self, lpath):
         self.__mirror.updated(lpath)
-
-    def status_updated(self, lpath, state):
-        self.__mirror.status_updated(lpath, state)
 
 
     #def node_patched

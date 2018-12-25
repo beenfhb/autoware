@@ -1,153 +1,80 @@
+import hashlib
+import os
+from autoware_launcher.core import fspath
+
 from python_qt_binding import QtCore
 from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
-from .network import AwTcpServer
 
 
+class AwProcessPanel(QtWidgets.QStackedWidget):
 
-class AwProcessMonitorPanel(QtWidgets.QSplitter):
+    def __init__(self, client):
+        super(AwProcessPanel, self).__init__()
+        self.__client = client
+        self.__items  = {}
+        self.__server = None
 
-    def __init__(self, guimgr, launch):
-        super(AwProcessMonitorPanel, self).__init__(QtCore.Qt.Horizontal)
-        self.dummyarea = QtWidgets.QLabel("This is node")
-        self.executors = QtWidgets.QStackedWidget()
-        self.executors.addWidget(self.dummyarea)
+        self.__dummy = QtWidgets.QLabel("This is node")
+        self.addWidget(self.__dummy)
 
-        view = QtWidgets.QTreeWidget()
-        view.setColumnCount(3)
-        view.setHeaderLabels(["Node", "Exec", "Status"])
-        view.header().setStretchLastSection(False)
-        view.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-        view.header().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
-        view.header().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
+    def config_cleared(self):
+        for key in self.__items.keys():
+            self.__items.pop(key).deleteLater()
 
-        view.addTopLevelItem(self.construct(launch))
-        view.expandToDepth(0)
-        view.itemChanged.connect(self.on_item_changed)
-        view.currentItemChanged.connect(self.on_item_selectd)
+    def config_created(self, lnode):
+        lpath = lnode.path()
+        if lnode.plugin().isleaf():
+            item = AwProcessItem(lpath)
+            self.__items[lpath] = item
+            self.addWidget(item)
 
-        self.addWidget(view)
-        self.addWidget(self.executors)
+    #def config_removed(self, lpath):
 
-    def construct(self, node):
-        area = self.dummyarea
-        if node.isleaf():
-            area = AwLaunchExecutor(node)
-            self.executors.addWidget(area)
-        item = AwLaunchWidgetItem(node, area)
-        for child in node.children():
-            item.addChild(self.construct(child))
-        return item
+    def config_selected(self, lpath):
+        item = self.__items.get(lpath, self.__dummy)
+        self.setCurrentWidget(item)
 
-    # QtCore.Slot
-    def on_item_changed(self, item, column):
-        item.changed(column)
+    def roslaunch(self, lpath, xtext):
+        xhash = hashlib.md5(lpath).hexdigest()
+        xpath = fspath.package() + "/runner/" + xhash + ".xml"
+        with open(xpath, mode="w") as fp:
+            fp.write(xtext)
+        print "roslaunch {}".format(xpath)
+        self.__items[lpath].proc.start("roslaunch {}".format(xpath))
 
-    # QtCore.Slot
-    def on_item_selectd(self, curritem, previtem):
-        self.executors.setCurrentWidget(curritem.area)
+    def terminate(self, lpath):
+        self.__items[lpath].proc.terminate()
 
+    def register_server(self, server):
+        self.__server = server
 
-
-class AwLaunchWidgetItem(QtWidgets.QTreeWidgetItem):
-
-    def __init__(self, node, area):
-        super(AwLaunchWidgetItem, self).__init__()
-        self.user = True
-        self.area = area
-        self.node = node
-        self.node.bind_listener(self)
-
-        self.setText(0, self.node.nodename())
-        self.setText(1, "")
-        self.setData(1, QtCore.Qt.CheckStateRole, QtCore.Qt.Unchecked)
-        self.setText(2, "stop")
-
-    def changed(self, column):
-        if column == 1:
-            state = self.checkState(column)
-            if state == QtCore.Qt.Checked:
-                self.request_exec()
-            elif state == QtCore.Qt.Unchecked:
-                self.request_term()
+    def runner_finished(self, lpath):
+        self.__server.runner_finished(lpath)
 
 
-    def request_exec(self):
-        if self.user:
-            self.node.request_exec()
-        else:
-            self.user = True
+class AwProcessItem(QtWidgets.QPlainTextEdit):
 
-    def request_term(self):
-        if self.user:
-            self.node.request_term()
-        else:
-            self.user = True
-
-    def exec_requested(self):
-        self.setText(2, "running")
-        if self.checkState(1) != QtCore.Qt.Checked:
-            self.user = False
-            self.setCheckState(1,  QtCore.Qt.Checked)
-
-    def term_requested(self):
-        self.setText(2, "terminating")
-        if self.checkState(1) != QtCore.Qt.Unchecked:
-            self.user = False
-            self.setCheckState(1,  QtCore.Qt.Unchecked)
-
-    def term_completed(self):
-        self.setText(2, "stop")
-        if self.checkState(1) != QtCore.Qt.Unchecked:
-            self.user = False
-            self.setCheckState(1,  QtCore.Qt.Unchecked)
-
-
-
-class AwLaunchExecutor(QtWidgets.QPlainTextEdit):
-
-    STOP_STATE = 1
-    EXEC_STATE = 2
-    TERM_STATE = 3
-
-    def __init__(self, node):
-        super(AwLaunchExecutor, self).__init__()
-        self.status = AwLaunchExecutor.STOP_STATE
-        self.node = node
-        self.node.bind_executor(self)
+    def __init__(self, lpath):
+        super(AwProcessItem, self).__init__()
+        self.lpath = lpath
         
         self.setReadOnly(True)
         self.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
 
         self.proc = QtCore.QProcess(self)
-        self.proc.finished.connect(self.on_finished)
-        self.proc.readyReadStandardOutput.connect(self.on_ready_stdout)
-        self.proc.readyReadStandardError.connect(self.on_ready_stderr)
+        self.proc.finished.connect(self.proc_finished)
+        self.proc.readyReadStandardOutput.connect(self.proc_stdouted)
+        self.proc.readyReadStandardError.connect(self.proc_stderred)
 
         import re
         self.bash_regex = re.compile("\033(\[.*?m|\].*?;)")
 
-    # ToDo: add state check
-    def request_exec(self):
-        self.status = AwLaunchExecutor.EXEC_STATE
-        command = "roslaunch " + self.node.generate_launch()
-        #print "Execute: " + command
-        self.proc.start(command)
+    def proc_finished(self):
+        self.parent()._AwProcessPanel__server.runner_finished(self.lpath)
 
-    # ToDo: add state check
-    def request_term(self):
-        self.status = AwLaunchExecutor.TERM_STATE
-        self.proc.terminate()
-
-    # ToDo: add state check
-    # QtCore.Slot
-    def on_finished(self):
-        self.status = AwLaunchExecutor.STOP_STATE
-        self.node.send_term_completed()
-
-    # QtCore.Slot
-    def on_ready_stdout(self):
+    def proc_stdouted(self):
         byte = self.proc.readAllStandardOutput()
         text = QtCore.QTextStream(byte).readAll()
         text = self.bash_regex.sub("", text)
@@ -155,8 +82,7 @@ class AwLaunchExecutor(QtWidgets.QPlainTextEdit):
         self.insertPlainText(text)
         self.moveCursor(QtGui.QTextCursor.End)
 
-    # QtCore.Slot
-    def on_ready_stderr(self):
+    def proc_stderred(self):
         byte = self.proc.readAllStandardError()
         text = QtCore.QTextStream(byte).readAll()
         text = self.bash_regex.sub("", text)
