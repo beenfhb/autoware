@@ -25,6 +25,19 @@ class AwTreeViewPanel(QtWidgets.QTreeWidget):
         #self.itemChanged.connect(self.on_item_changed)
         self.currentItemChanged.connect(self.item_selectd)
 
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_E:
+            lpath = self.currentItem().lpath
+            self.__client.launch_config(lpath, True)
+            event.accept()
+        elif event.key() == QtCore.Qt.Key_T:
+            lpath = self.currentItem().lpath
+            self.__client.launch_config(lpath, False)
+            event.accept()
+        else:
+            super(AwTreeViewPanel, self).keyPressEvent(event)
+
+
     def register_select_listener(self, panel):
         self.__panels.append(panel)
 

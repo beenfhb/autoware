@@ -71,7 +71,6 @@ class AwLaunchServer(AwLaunchServerIF):
 
 
 
-
     def find_node(self, lpath):
         console.info("find_node: " + lpath)
         return self.__profile.find(lpath)

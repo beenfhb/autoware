@@ -73,14 +73,15 @@ class AwQtGuiClient(AwLaunchClientIF):
         window.setCentralWidget(hsplitter)
         window.show()
 
+        self.__server.register_runner(self.__process)
+        self.__process.register_server(self.__server)
+
         self.__panels.append(self.__treeview)
         self.__panels.append(self.__summary)
         self.__panels.append(self.__process)
 
-        self.__server.register_runner(self.__process)
-        self.__process.register_server(self.__server)
-
         self.__treeview.register_select_listener(self.__control)
+        self.__treeview.register_select_listener(self.__summary)
         self.__treeview.register_select_listener(self.__process)
 
         self.__server.make_profile("node/sensing")
@@ -145,11 +146,11 @@ class AwQtGuiClient(AwLaunchClientIF):
         #print "Create Panel: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls)
         if not guicls:
             guikey = guikey or mirror.plugin().gui["type"]
-            guicls = self.panels[guikey + ".panel"]
+            guicls = self.classes[guikey + ".panel"]
         return guicls(self, mirror)
 
     def create_arg_frame(self, parent, view):
-        guicls = self.frames[view.guikey]
+        guicls = self.classes[view.guikey]
         return guicls(self, parent, view.option)
 
     def create_frame_entire_vlayout(self):

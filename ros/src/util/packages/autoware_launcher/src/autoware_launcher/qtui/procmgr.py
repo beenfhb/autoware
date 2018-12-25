@@ -54,6 +54,7 @@ class AwProcessPanel(QtWidgets.QStackedWidget):
         self.__server.runner_finished(lpath)
 
 
+
 class AwProcessItem(QtWidgets.QPlainTextEdit):
 
     def __init__(self, lpath):
