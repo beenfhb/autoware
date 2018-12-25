@@ -190,17 +190,26 @@ MapBuilder2::runFromDataset(GenericDataset::Ptr sourceDs, const ptime startTime,
 		or stopTime > sourceDs->last()->getTimestamp())
 		throw runtime_error("Requested times are outside of dataset range");
 
-	sourceDataset = sourceDs;
 	dataItemId
 		startId = sourceDataset->getLowerBound(startTime),
 		stopId = sourceDataset->getLowerBound(stopTime);
 
-	for (auto currentId=startId; currentId<=stopId; ++currentId) {
+	return runFromDataset(sourceDs, startId, stopId);
+}
+
+
+void
+MapBuilder2::runFromDataset(GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos)
+{
+	sourceDataset = sourceDs;
+
+	for (auto currentId=startPos; currentId<=stopPos; ++stopPos) {
 		InputFrame cFrame = createInputFrameX (sourceDataset->get(currentId));
 		this->input(cFrame);
 	}
 
 	this->build();
+
 }
 
 

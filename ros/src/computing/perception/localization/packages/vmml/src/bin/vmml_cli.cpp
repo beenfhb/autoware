@@ -141,6 +141,26 @@ public:
 	} ;
 
 
+	struct InputOffsetPosition {
+		double asSecondsFromStart = -1;
+		int64_t asPosition = -1;
+
+		static InputOffsetPosition
+		parseString(const string &s)
+		{
+			InputOffsetPosition inp;
+			if (s.find('.') != string::npos) {
+				inp.asSecondsFromStart = stod(s);
+			}
+			else {
+				inp.asPosition = stoi(s);
+			}
+			return inp;
+		}
+
+	};
+
+
 	VmmlCliApp (int argc, char *argv[]):
 		mLineEditor(argv[0], TestPrompt),
 		mapPath("")
@@ -699,6 +719,10 @@ private:
 
 		if (cmd.size() >= 2) {
 			start = stod(cmd[0]);
+/*
+			start = InputOffsetPosition::parseString(cmd[0]);
+			stop = InputOffsetPosition::parseString(cmd[1]);
+*/
 			stop = stod(cmd[1]);
 			duration = stop - start;
 

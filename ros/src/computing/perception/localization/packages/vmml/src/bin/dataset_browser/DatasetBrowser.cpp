@@ -149,7 +149,7 @@ DatasetBrowser::setImageOnPosition (int v)
 	double tsd = double(ts.total_microseconds())/1e6;
 
 	stringstream ss;
-	ss << fixed << setprecision(2) << tsd;
+	ss << fixed << setprecision(2) << tsd << "(" << to_string(v) << ")";
 	timeOffsetLabel->setText(QString::fromStdString(ss.str()));
 
 	cv::Mat image = curItem->getImage();
@@ -257,3 +257,4 @@ DatasetBrowser::drawPoints
 		}
 	}
 }
+

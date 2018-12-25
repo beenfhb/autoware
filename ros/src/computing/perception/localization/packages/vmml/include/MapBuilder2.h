@@ -88,6 +88,9 @@ public:
 		const ptime startTime = MIN_TIME,
 		const ptime stopTime = MAX_TIME);
 
+	void runFromDataset
+		(GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos);
+
 	void setMask (const cv::Mat &m);
 
 	bool

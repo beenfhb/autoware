@@ -86,9 +86,11 @@ target_link_libraries(
 add_executable(bag_viewer
 	bag_viewer/main.cpp
 	bag_viewer/BagViewer.cpp
+	bag_viewer/ClickableLabel.cpp
 	bag_viewer/ratio_layouted_frame.cpp
 	bag_viewer/BagViewer.ui
 	bag_viewer/ratio_layouted_frame.h
+	bag_viewer/ClickableLabel.h
 )
 
 target_link_libraries(
