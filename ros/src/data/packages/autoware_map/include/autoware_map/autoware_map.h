@@ -89,8 +89,6 @@ using autoware_map_msgs::WaypointLaneRelationArray;
 using autoware_map_msgs::WaypointSignalRelation;
 using autoware_map_msgs::WaypointSignalRelationArray;
 
-
-
 using category_t = unsigned long long;
 // using vector_map::Filter;
 // using vector_map::Callback;
@@ -224,27 +222,8 @@ public:
   }
 };
 
-
-template <class T>
-std::vector<T> parse(const std::string& csv_file)
-{
-    std::ifstream ifs(csv_file.c_str());
-    std::string line;
-    std::getline(ifs, line); // remove first line
-    std::vector<T> objs;
-    while (std::getline(ifs, line))
-    {
-        T obj;
-        std::istringstream iss(line);
-        iss >> obj;
-        objs.push_back(obj);
-    }
-    return objs;
-}
-
 class AutowareMap
 {
-
 private:
     autoware_map::Handle<Lane, LaneArray> lane_;
     autoware_map::Handle<LaneAttrRelation, LaneAttrRelationArray> lane_attr_relation_;
@@ -262,7 +241,6 @@ private:
     autoware_map::Handle<WaypointLaneRelation, WaypointLaneRelationArray> waypoint_lane_relation_;
     autoware_map::Handle<WaypointRelation, WaypointRelationArray> waypoint_relation_;
     autoware_map::Handle<WaypointSignalRelation, WaypointSignalRelationArray> waypoint_signal_relation_;
-
 
 public:
     AutowareMap();
@@ -324,46 +302,7 @@ public:
     void registerCallback(const Callback<WaypointLaneRelation>& cb);
     void registerCallback(const Callback<WaypointRelation>& cb);
     void registerCallback(const Callback<WaypointSignalRelation>& cb);
-
 };
-
-
-
 } //namespace
-
-//
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Lane& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::LaneAttrRelation& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::LaneRelation& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::LaneSignalLightRelation& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::LaneChangeRelation& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::OppositeLaneRelation& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Point& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Area& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Route& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Signal& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::SignalLight& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Wayarea& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Waypoint& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::WaypointLaneRelation& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::WaypointRelation& obj);
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::WaypointSignalRelation& obj);
-//
-std::istream& operator>>(std::istream& os, autoware_map_msgs::Lane& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::LaneAttrRelation& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::LaneRelation& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::LaneSignalLightRelation& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::LaneChangeRelation& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::OppositeLaneRelation& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::Point& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::Area& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::Route& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::Signal& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::SignalLight& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::Wayarea& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::Waypoint& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::WaypointLaneRelation& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::WaypointSignalRelation& obj);
-std::istream& operator>>(std::istream& os, autoware_map_msgs::WaypointRelation& obj);
 
 #endif // AUTOWARE_MAP_AUTOWARE_MAP_H

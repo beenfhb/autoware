@@ -32,6 +32,9 @@
 #include <std_msgs/Bool.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <autoware_map/autoware_map.h>
+#include <autoware_map/util.h>
+#include <autoware_map/visualization.h>
+
 #include <sys/stat.h>
 
 #include <autoware_map_msgs/PointArray.h>
@@ -45,6 +48,23 @@ void printUsage()
     ROS_ERROR_STREAM("rosrun map_file vector_map_loader [CSV]...");
 }
 
+template <class T>
+std::vector<T> parse(const std::string& csv_file)
+{
+    std::ifstream ifs(csv_file.c_str());
+    std::string line;
+    std::getline(ifs, line); // remove first line
+    std::vector<T> objs;
+    while (std::getline(ifs, line))
+    {
+        T obj;
+        std::istringstream iss(line);
+        iss >> obj;
+        objs.push_back(obj);
+    }
+    return objs;
+}
+
 template <class T, class U>
 U createObjectArray(const std::string& file_path)
 {
@@ -53,9 +73,10 @@ U createObjectArray(const std::string& file_path)
     // Therefore we don't set obj_array.header.stamp.
     // obj_array.header.stamp = ros::Time::now();
     obj_array.header.frame_id = "map";
-    obj_array.data = autoware_map::parse<T>(file_path);
+    obj_array.data = parse<T>(file_path);
     return obj_array;
 }
+
 
 } // namespace
 
@@ -86,7 +107,7 @@ int main(int argc, char **argv)
     ros::Publisher waypoint_lane_relation_pub = nh.advertise<autoware_map_msgs::WaypointLaneRelationArray>("autoware_map_info/waypoint_lane_relation", 1, true);
     ros::Publisher waypoint_relation_pub = nh.advertise<autoware_map_msgs::WaypointRelationArray>("autoware_map_info/waypoint_relation", 1, true);
     ros::Publisher waypoint_signal_relation_pub = nh.advertise<autoware_map_msgs::WaypointSignalRelationArray>("autoware_map_info/waypoint_signal_relation", 1, true);
-    // ros::Publisher marker_array_pub = nh.advertise<visualization_msgs::MarkerArray>("vector_map", 1, true);
+    ros::Publisher marker_array_pub = nh.advertise<visualization_msgs::MarkerArray>("autoware_map", 1, true);
     ros::Publisher stat_pub = nh.advertise<std_msgs::Bool>("awm_stat", 1, true);
 
     std_msgs::Bool stat;
@@ -100,74 +121,154 @@ int main(int argc, char **argv)
         file_paths.push_back(file_path);
     }
 
-    // vector_map::category_t category = Category::NONE;
+    autoware_map::category_t category = autoware_map::Category::NONE;
     for (const auto& file_path : file_paths)
     {
         std::string file_name(basename(file_path.c_str()));
-        if (file_name == "point.csv")
+        if (file_name == "points.csv")
         {
-            point_pub.publish(createObjectArray<autoware_map_msgs::Point, autoware_map_msgs::PointArray>(file_path));
-            // category |= Category::POINT;
+            autoware_map_msgs::PointArray points = createObjectArray<autoware_map_msgs::Point, autoware_map_msgs::PointArray>(file_path);
+            if(!points.data.empty())
+            {
+                point_pub.publish(points);
+                category |= autoware_map::Category::POINT;
+            }
         }
-        else if(file_name == "lane.csv")
+        else if(file_name == "lanes.csv")
         {
-            lane_pub.publish(createObjectArray<autoware_map_msgs::Lane, autoware_map_msgs::LaneArray>(file_path));
+            autoware_map_msgs::LaneArray lanes = createObjectArray<autoware_map_msgs::Lane, autoware_map_msgs::LaneArray>(file_path);
+            if(!lanes.data.empty())
+            {
+                lane_pub.publish(lanes);
+                category |= autoware_map::Category::LANE;
+            }
         }
         else if(file_name == "lane_attribute_relations.csv")
         {
-            lane_attr_relation_pub.publish(createObjectArray<autoware_map_msgs::LaneAttrRelation, autoware_map_msgs::LaneAttrRelationArray>(file_path));
+            autoware_map_msgs::LaneAttrRelationArray lane_attribute_relations = createObjectArray<autoware_map_msgs::LaneAttrRelation, autoware_map_msgs::LaneAttrRelationArray>(file_path);
+            if(!lane_attribute_relations.data.empty())
+            {
+                lane_attr_relation_pub.publish(lane_attribute_relations);
+                category |= autoware_map::Category::LANE_ATTR_RELATION;
+            }
         }
         else if(file_name == "lane_relations.csv")
         {
-            lane_relation_pub.publish(createObjectArray<autoware_map_msgs::LaneRelation, autoware_map_msgs::LaneRelationArray>(file_path));
+            autoware_map_msgs::LaneRelationArray lane_relations = createObjectArray<autoware_map_msgs::LaneRelation, autoware_map_msgs::LaneRelationArray>(file_path);
+            if(!lane_relations.data.empty())
+            {
+                lane_relation_pub.publish(lane_relations);
+                category |= autoware_map::Category::LANE_RELATION;
+            }
         }
         else if(file_name == "lane_signal_light_relations.csv")
         {
-            lane_signal_light_relation_pub.publish(createObjectArray<autoware_map_msgs::LaneSignalLightRelation, autoware_map_msgs::LaneSignalLightRelationArray>(file_path));
+            autoware_map_msgs::LaneSignalLightRelationArray lane_signal_relations = createObjectArray<autoware_map_msgs::LaneSignalLightRelation, autoware_map_msgs::LaneSignalLightRelationArray>(file_path);
+            if(!lane_signal_relations.data.empty())
+            {
+                lane_signal_light_relation_pub.publish(lane_signal_relations);
+                category |= autoware_map::Category::LANE_SIGNAL_LIGHT_RELATION;
+            }
         }
         else if(file_name == "lane_change_relations.csv" )
         {
-            lane_change_relation_pub.publish(createObjectArray<autoware_map_msgs::LaneChangeRelation, autoware_map_msgs::LaneChangeRelationArray>(file_path));
+            autoware_map_msgs::LaneChangeRelationArray lane_change_relations = createObjectArray<autoware_map_msgs::LaneChangeRelation, autoware_map_msgs::LaneChangeRelationArray>(file_path);
+            if(!lane_change_relations.data.empty())
+            {
+                lane_change_relation_pub.publish(lane_change_relations);
+                category |= autoware_map::Category::LANE_CHANGE_RELATION;
+            }
         }
         else if(file_name == "opposite_lane_relations.csv")
         {
-            opposite_lane_relation_pub.publish(createObjectArray<autoware_map_msgs::OppositeLaneRelation, autoware_map_msgs::OppositeLaneRelationArray>(file_path));
+            autoware_map_msgs::OppositeLaneRelationArray opposite_lane_relations = createObjectArray<autoware_map_msgs::OppositeLaneRelation, autoware_map_msgs::OppositeLaneRelationArray>(file_path);
+            if(!opposite_lane_relations.data.empty())
+            {
+                opposite_lane_relation_pub.publish(opposite_lane_relations);
+                category |= autoware_map::Category::OPPOSITE_LANE_RELATION;
+            }
         }
-        else if(file_name == "area.csv")
+        else if(file_name == "areas.csv")
         {
-            area_pub.publish(createObjectArray<autoware_map_msgs::Area, autoware_map_msgs::AreaArray>(file_path));
+            autoware_map_msgs::AreaArray areas = createObjectArray<autoware_map_msgs::Area, autoware_map_msgs::AreaArray>(file_path);
+
+            if(!areas.data.empty())
+            {
+                area_pub.publish(areas);
+                category |= autoware_map::Category::AREA;
+            }
         }
         else if(file_name == "route.csv")
         {
-            route_pub.publish(createObjectArray<autoware_map_msgs::Route, autoware_map_msgs::RouteArray>(file_path));
+            autoware_map_msgs::RouteArray routes = createObjectArray<autoware_map_msgs::Route, autoware_map_msgs::RouteArray>(file_path);
+            if(!routes.data.empty())
+            {
+                route_pub.publish(routes);
+                category |= autoware_map::Category::ROUTE;
+            }
         }
-        else if(file_name == "signal.csv")
+        else if(file_name == "signals.csv")
         {
-            signal_pub.publish(createObjectArray<autoware_map_msgs::Signal, autoware_map_msgs::SignalArray>(file_path));
+            autoware_map_msgs::SignalArray signals = createObjectArray<autoware_map_msgs::Signal, autoware_map_msgs::SignalArray>(file_path);
+            if(!signals.data.empty()) {
+                signal_pub.publish(signals);
+                category |= autoware_map::Category::SIGNAL;
+            }
         }
-        else if(file_name == "signal_light.csv")
+        else if(file_name == "signal_lights.csv")
         {
-            signal_light_pub.publish(createObjectArray<autoware_map_msgs::SignalLight, autoware_map_msgs::SignalLightArray>(file_path));
+            autoware_map_msgs::SignalLightArray signal_lights = createObjectArray<autoware_map_msgs::SignalLight, autoware_map_msgs::SignalLightArray>(file_path);
+            if(!signal_lights.data.empty())
+            {
+                signal_light_pub.publish(signal_lights);
+                category |= autoware_map::Category::SIGNAL_LIGHT;
+            }
         }
-        else if(file_name == "wayarea.csv")
+        else if(file_name == "wayareas.csv")
         {
-            wayarea_pub.publish(createObjectArray<autoware_map_msgs::Wayarea, autoware_map_msgs::WayareaArray>(file_path));
+            autoware_map_msgs::WayareaArray wayareas = createObjectArray<autoware_map_msgs::Wayarea, autoware_map_msgs::WayareaArray>(file_path);
+            if(!wayareas.data.empty())
+            {
+                wayarea_pub.publish(wayareas);
+                category |= autoware_map::Category::WAYAREA;
+            }
         }
-        else if(file_name == "waypoint.csv")
+        else if(file_name == "waypoints.csv")
         {
-            waypoint_pub.publish(createObjectArray<autoware_map_msgs::Waypoint, autoware_map_msgs::WaypointArray>(file_path));
+
+            autoware_map_msgs::WaypointArray waypoints= createObjectArray<autoware_map_msgs::Waypoint, autoware_map_msgs::WaypointArray>(file_path);
+            if(!waypoints.data.empty())
+            {
+                waypoint_pub.publish(waypoints);
+                category |= autoware_map::Category::WAYPOINT;
+            }
         }
         else if(file_name == "waypoint_lane_relations.csv")
         {
-            waypoint_lane_relation_pub.publish(createObjectArray<autoware_map_msgs::WaypointLaneRelation, autoware_map_msgs::WaypointLaneRelationArray>(file_path));
+            autoware_map_msgs::WaypointLaneRelationArray waypoint_lane_relations= createObjectArray<autoware_map_msgs::WaypointLaneRelation, autoware_map_msgs::WaypointLaneRelationArray>(file_path);
+            if(!waypoint_lane_relations.data.empty())
+            {
+                waypoint_lane_relation_pub.publish(waypoint_lane_relations);
+                category |= autoware_map::Category::WAYPOINT_LANE_RELATION;
+            }
         }
         else if(file_name == "waypoint_relations.csv")
         {
-            waypoint_relation_pub.publish(createObjectArray<autoware_map_msgs::WaypointRelation, autoware_map_msgs::WaypointRelationArray>(file_path));
+            autoware_map_msgs::WaypointRelationArray waypoint_relations = createObjectArray<autoware_map_msgs::WaypointRelation, autoware_map_msgs::WaypointRelationArray>(file_path);
+            if(!waypoint_relations.data.empty())
+            {
+                waypoint_relation_pub.publish(waypoint_relations);
+                category |= autoware_map::Category::WAYPOINT_RELATION;
+            }
         }
         else if(file_name == "waypoint_signal_relations.csv")
         {
-            waypoint_signal_relation_pub.publish(createObjectArray<autoware_map_msgs::WaypointSignalRelation, autoware_map_msgs::WaypointSignalRelationArray>(file_path));
+            autoware_map_msgs::WaypointSignalRelationArray waypoint_signal_relations = createObjectArray<autoware_map_msgs::WaypointSignalRelation, autoware_map_msgs::WaypointSignalRelationArray>(file_path);
+            if(!waypoint_signal_relations.data.empty())
+            {
+                waypoint_signal_relation_pub.publish(waypoint_signal_relations);
+                category |= autoware_map::Category::WAYPOINT_SIGNAL_RELATION;
+            }
         }
         else
             ROS_ERROR_STREAM("unknown csv file: " << file_path);
@@ -175,6 +276,39 @@ int main(int argc, char **argv)
 
     stat.data = true;
     stat_pub.publish(stat);
+
+    autoware_map::AutowareMap autoware_map;
+    autoware_map.subscribe(nh, category);
+
+    visualization_msgs::MarkerArray marker_array;
+    insertMarkerArray(marker_array, createPointMarkerArray(autoware_map, Color::YELLOW));
+    insertMarkerArray(marker_array, createWaypointMarkerArray(autoware_map, Color::GREEN));
+    insertMarkerArray(marker_array, createWaypointSignalRelationMarkerArray(autoware_map, Color::RED));
+    insertMarkerArray(marker_array, createWaypointRelationMarkerArray(autoware_map, Color::YELLOW));
+    // insertMarkerArray(marker_array, createGutterMarkerArray(vmap, Color::GRAY, Color::GRAY, Color::GRAY));
+    // insertMarkerArray(marker_array, createCurbMarkerArray(vmap, Color::GRAY));
+    // insertMarkerArray(marker_array, createWhiteLineMarkerArray(vmap, Color::WHITE, Color::YELLOW));
+    // insertMarkerArray(marker_array, createStopLineMarkerArray(vmap, Color::WHITE));
+    // insertMarkerArray(marker_array, createZebraZoneMarkerArray(vmap, Color::WHITE));
+    // insertMarkerArray(marker_array, createCrossWalkMarkerArray(vmap, Color::WHITE));
+    // insertMarkerArray(marker_array, createRoadMarkMarkerArray(vmap, Color::WHITE));
+    // insertMarkerArray(marker_array, createRoadPoleMarkerArray(vmap, Color::GRAY));
+    // insertMarkerArray(marker_array, createRoadSignMarkerArray(vmap, Color::GREEN, Color::GRAY));
+    // insertMarkerArray(marker_array, createSignalMarkerArray(vmap, Color::RED, Color::BLUE, Color::YELLOW, Color::CYAN,
+    //                                                         Color::GRAY));
+    // insertMarkerArray(marker_array, createStreetLightMarkerArray(vmap, Color::YELLOW, Color::GRAY));
+    // insertMarkerArray(marker_array, createUtilityPoleMarkerArray(vmap, Color::GRAY));
+    // insertMarkerArray(marker_array, createGuardRailMarkerArray(vmap, Color::LIGHT_BLUE));
+    // insertMarkerArray(marker_array, createSideWalkMarkerArray(vmap, Color::GRAY));
+    // insertMarkerArray(marker_array, createDriveOnPortionMarkerArray(vmap, Color::LIGHT_CYAN));
+    // insertMarkerArray(marker_array, createCrossRoadMarkerArray(vmap, Color::LIGHT_GREEN));
+    // insertMarkerArray(marker_array, createSideStripMarkerArray(vmap, Color::GRAY));
+    // insertMarkerArray(marker_array, createCurveMirrorMarkerArray(vmap, Color::MAGENTA, Color::GRAY));
+    // insertMarkerArray(marker_array, createWallMarkerArray(vmap, Color::LIGHT_YELLOW));
+    // insertMarkerArray(marker_array, createFenceMarkerArray(vmap, Color::LIGHT_RED));
+    // insertMarkerArray(marker_array, createRailCrossingMarkerArray(vmap, Color::LIGHT_MAGENTA));
+    marker_array_pub.publish(marker_array);
+
 
     ros::spin();
 

@@ -30,187 +30,190 @@
 
 #include <tf/transform_datatypes.h>
 #include <autoware_map/autoware_map.h>
-//
+#include <autoware_map/util.h>
+
+using autoware_map::Key;
 namespace autoware_map
 {
 namespace
 {
-void updateLane(std::map<autoware_map::Key<Lane>, Lane>& map, const LaneArray& msg)
+void updateLane(std::map<Key<Lane>, Lane>& map, const LaneArray& msg)
 {
-    map = std::map<autoware_map::Key<Lane>, Lane>();
+    map = std::map<Key<Lane>, Lane>();
     for (const auto& item : msg.data)
     {
         if (item.lane_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<Lane>(item.lane_id), item));
+        map.insert(std::make_pair(Key<Lane>(item.lane_id), item));
     }
 }
-void updateLaneAttrRelation(std::map<autoware_map::Key<LaneAttrRelation>, LaneAttrRelation>& map, const LaneAttrRelationArray& msg)
+void updateLaneAttrRelation(std::map<Key<LaneAttrRelation>, LaneAttrRelation>& map, const LaneAttrRelationArray& msg)
 {
     //use this id for key since there are no unique id for relations
     int id = 1;
-    map = std::map<autoware_map::Key<LaneAttrRelation>, LaneAttrRelation>();
+    map = std::map<Key<LaneAttrRelation>, LaneAttrRelation>();
     for (const auto& item : msg.data)
     {
         if (item.lane_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<LaneAttrRelation>(id++), item));
+        map.insert(std::make_pair(Key<LaneAttrRelation>(id++), item));
     }
 }
-void updateLaneRelation(std::map<autoware_map::Key<LaneRelation>, LaneRelation>& map, const LaneRelationArray& msg)
+void updateLaneRelation(std::map<Key<LaneRelation>, LaneRelation>& map, const LaneRelationArray& msg)
 {
     //use this id for key since there are no unique id for relations
     int id = 1;
-    map = std::map<autoware_map::Key<LaneRelation>, LaneRelation>();
+    map = std::map<Key<LaneRelation>, LaneRelation>();
     for (const auto& item : msg.data)
     {
         if (item.lane_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<LaneRelation>(id++), item));
+        map.insert(std::make_pair(Key<LaneRelation>(id++), item));
     }
 }
-void updateLaneSignalLightRelation(std::map<autoware_map::Key<LaneSignalLightRelation>, LaneSignalLightRelation>& map, const LaneSignalLightRelationArray& msg)
+void updateLaneSignalLightRelation(std::map<Key<LaneSignalLightRelation>, LaneSignalLightRelation>& map, const LaneSignalLightRelationArray& msg)
 {
     //use this id for key since there are no unique id for relations
     int id = 1;
-    map = std::map<autoware_map::Key<LaneSignalLightRelation>, LaneSignalLightRelation>();
+    map = std::map<Key<LaneSignalLightRelation>, LaneSignalLightRelation>();
     for (const auto& item : msg.data)
     {
         if (item.lane_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<LaneSignalLightRelation>(id++), item));
+        map.insert(std::make_pair(Key<LaneSignalLightRelation>(id++), item));
     }
 }
-void updateLaneChangeRelation(std::map<autoware_map::Key<LaneChangeRelation>, LaneChangeRelation>& map, const LaneChangeRelationArray& msg)
+void updateLaneChangeRelation(std::map<Key<LaneChangeRelation>, LaneChangeRelation>& map, const LaneChangeRelationArray& msg)
 {
     //use this id for key since there are no unique id for relations
     int id = 1;
-    map = std::map<autoware_map::Key<LaneChangeRelation>, LaneChangeRelation>();
+    map = std::map<Key<LaneChangeRelation>, LaneChangeRelation>();
     for (const auto& item : msg.data)
     {
         if (item.lane_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<LaneChangeRelation>(id++), item));
+        map.insert(std::make_pair(Key<LaneChangeRelation>(id++), item));
     }
 }
-void updateOppositeLaneRelation(std::map<autoware_map::Key<OppositeLaneRelation>, OppositeLaneRelation>& map, const OppositeLaneRelationArray& msg)
+void updateOppositeLaneRelation(std::map<Key<OppositeLaneRelation>, OppositeLaneRelation>& map, const OppositeLaneRelationArray& msg)
 {
     //use this id for key since there are no unique id for relations
     int id = 1;
-    map = std::map<autoware_map::Key<OppositeLaneRelation>, OppositeLaneRelation>();
+    map = std::map<Key<OppositeLaneRelation>, OppositeLaneRelation>();
     for (const auto& item : msg.data)
     {
         if (item.lane_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<OppositeLaneRelation>(id++), item));
+        map.insert(std::make_pair(Key<OppositeLaneRelation>(id++), item));
     }
 }
-void updatePoint(std::map<autoware_map::Key<Point>, Point>& map, const PointArray& msg)
+void updatePoint(std::map<Key<Point>, Point>& map, const PointArray& msg)
 {
-    map = std::map<autoware_map::Key<Point>, Point>();
+    map = std::map<Key<Point>, Point>();
     for (const auto& item : msg.data)
     {
         if (item.point_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<Point>(item.point_id), item));
+        map.insert(std::make_pair(Key<Point>(item.point_id), item));
     }
 }
-void updateArea(std::map<autoware_map::Key<Area>, Area>& map, const AreaArray& msg)
+void updateArea(std::map<Key<Area>, Area>& map, const AreaArray& msg)
 {
-    map = std::map<autoware_map::Key<Area>, Area>();
+    map = std::map<Key<Area>, Area>();
     for (const auto& item : msg.data)
     {
         if (item.area_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<Area>(item.area_id), item));
+        map.insert(std::make_pair(Key<Area>(item.area_id), item));
     }
 }
-void updateRoute(std::map<autoware_map::Key<Route>, Route>& map, const RouteArray& msg)
+void updateRoute(std::map<Key<Route>, Route>& map, const RouteArray& msg)
 {
-    map = std::map<autoware_map::Key<Route>, Route>();
+    map = std::map<Key<Route>, Route>();
     for (const auto& item : msg.data)
     {
         if (item.route_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<Route>(item.route_id), item));
+        map.insert(std::make_pair(Key<Route>(item.route_id), item));
     }
 }
-void updateSignal(std::map<autoware_map::Key<Signal>, Signal>& map, const SignalArray& msg)
+void updateSignal(std::map<Key<Signal>, Signal>& map, const SignalArray& msg)
 {
-    map = std::map<autoware_map::Key<Signal>, Signal>();
+    map = std::map<Key<Signal>, Signal>();
     for (const auto& item : msg.data)
     {
         if (item.signal_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<Signal>(item.signal_id), item));
+        map.insert(std::make_pair(Key<Signal>(item.signal_id), item));
     }
 }
-void updateSignalLight(std::map<autoware_map::Key<SignalLight>, SignalLight>& map, const SignalLightArray& msg)
+void updateSignalLight(std::map<Key<SignalLight>, SignalLight>& map, const SignalLightArray& msg)
 {
-    map = std::map<autoware_map::Key<SignalLight>, SignalLight>();
+    map = std::map<Key<SignalLight>, SignalLight>();
     for (const auto& item : msg.data)
     {
         if (item.signal_light_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<SignalLight>(item.signal_light_id), item));
+        map.insert(std::make_pair(Key<SignalLight>(item.signal_light_id), item));
     }
 }
-void updateWayarea(std::map<autoware_map::Key<Wayarea>, Wayarea>& map, const WayareaArray& msg)
+void updateWayarea(std::map<Key<Wayarea>, Wayarea>& map, const WayareaArray& msg)
 {
-    map = std::map<autoware_map::Key<Wayarea>, Wayarea>();
+    map = std::map<Key<Wayarea>, Wayarea>();
     for (const auto& item : msg.data)
     {
         if (item.wayarea_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<Wayarea>(item.wayarea_id), item));
+        map.insert(std::make_pair(Key<Wayarea>(item.wayarea_id), item));
     }
 }
-void updateWaypoint(std::map<autoware_map::Key<Waypoint>, Waypoint>& map, const WaypointArray& msg)
+void updateWaypoint(std::map<Key<Waypoint>, Waypoint>& map, const WaypointArray& msg)
 {
-    map = std::map<autoware_map::Key<Waypoint>, Waypoint>();
+    map = std::map<Key<Waypoint>, Waypoint>();
     for (const auto& item : msg.data)
     {
         if (item.waypoint_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<Waypoint>(item.waypoint_id), item));
+        map.insert(std::make_pair(Key<Waypoint>(item.waypoint_id), item));
     }
 }
-void updateWaypointRelation(std::map<autoware_map::Key<WaypointRelation>, WaypointRelation>& map, const WaypointRelationArray& msg)
-{
-    //use this id for key since there are no unique id for relations
-    int id = 1;
-    map = std::map<autoware_map::Key<WaypointRelation>, WaypointRelation>();
-    for (const auto& item : msg.data)
-    {
-        if (item.waypoint_id == 0)
-            continue;
-        map.insert(std::make_pair(autoware_map::Key<WaypointRelation>(id++), item));
-    }
-}
-void updateWaypointLaneRelation(std::map<autoware_map::Key<WaypointLaneRelation>, WaypointLaneRelation>& map, const WaypointLaneRelationArray& msg)
+void updateWaypointRelation(std::map<Key<WaypointRelation>, WaypointRelation>& map, const WaypointRelationArray& msg)
 {
     //use this id for key since there are no unique id for relations
     int id = 1;
-    map = std::map<autoware_map::Key<WaypointLaneRelation>, WaypointLaneRelation>();
+    map = std::map<Key<WaypointRelation>, WaypointRelation>();
     for (const auto& item : msg.data)
     {
         if (item.waypoint_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<WaypointLaneRelation>(id++), item));
+        map.insert(std::make_pair(Key<WaypointRelation>(id++), item));
     }
 }
-void updateWaypointSignalRelation(std::map<autoware_map::Key<WaypointSignalRelation>, WaypointSignalRelation>& map, const WaypointSignalRelationArray& msg)
+void updateWaypointLaneRelation(std::map<Key<WaypointLaneRelation>, WaypointLaneRelation>& map, const WaypointLaneRelationArray& msg)
 {
     //use this id for key since there are no unique id for relations
     int id = 1;
-    map = std::map<autoware_map::Key<WaypointSignalRelation>, WaypointSignalRelation>();
+    map = std::map<Key<WaypointLaneRelation>, WaypointLaneRelation>();
     for (const auto& item : msg.data)
     {
         if (item.waypoint_id == 0)
             continue;
-        map.insert(std::make_pair(autoware_map::Key<WaypointSignalRelation>(id++), item));
+        map.insert(std::make_pair(Key<WaypointLaneRelation>(id++), item));
     }
 }
+void updateWaypointSignalRelation(std::map<Key<WaypointSignalRelation>, WaypointSignalRelation>& map, const WaypointSignalRelationArray& msg)
+{
+    //use this id for key since there are no unique id for relations
+    int id = 1;
+    map = std::map<Key<WaypointSignalRelation>, WaypointSignalRelation>();
+    for (const auto& item : msg.data)
+    {
+        if (item.waypoint_id == 0)
+            continue;
+        map.insert(std::make_pair(Key<WaypointSignalRelation>(id++), item));
+    }
+}
+
 }   // namespace
 bool AutowareMap::hasSubscribed(category_t category) const
 {
@@ -461,67 +464,67 @@ void AutowareMap::subscribe(ros::NodeHandle& nh, category_t category, const size
 }
 
 
-Lane AutowareMap::findByKey(const autoware_map::Key<Lane>& key) const
+Lane AutowareMap::findByKey(const Key<Lane>& key) const
 {
     return lane_.findByKey(key);
 }
-LaneAttrRelation AutowareMap::findByKey(const autoware_map::Key<LaneAttrRelation>& key) const
+LaneAttrRelation AutowareMap::findByKey(const Key<LaneAttrRelation>& key) const
 {
     return lane_attr_relation_.findByKey(key);
 }
-LaneRelation AutowareMap::findByKey(const autoware_map::Key<LaneRelation>& key) const
+LaneRelation AutowareMap::findByKey(const Key<LaneRelation>& key) const
 {
     return lane_relation_.findByKey(key);
 }
-LaneSignalLightRelation AutowareMap::findByKey(const autoware_map::Key<LaneSignalLightRelation>& key) const
+LaneSignalLightRelation AutowareMap::findByKey(const Key<LaneSignalLightRelation>& key) const
 {
     return lane_signal_light_relation_.findByKey(key);
 }
-LaneChangeRelation AutowareMap::findByKey(const autoware_map::Key<LaneChangeRelation>& key) const
+LaneChangeRelation AutowareMap::findByKey(const Key<LaneChangeRelation>& key) const
 {
     return lane_change_relation_.findByKey(key);
 }
-OppositeLaneRelation AutowareMap::findByKey(const autoware_map::Key<OppositeLaneRelation>& key) const
+OppositeLaneRelation AutowareMap::findByKey(const Key<OppositeLaneRelation>& key) const
 {
     return opposite_lane_relation_.findByKey(key);
 }
-Point AutowareMap::findByKey(const autoware_map::Key<Point>& key) const
+Point AutowareMap::findByKey(const Key<Point>& key) const
 {
     return point_.findByKey(key);
 }
-Area AutowareMap::findByKey(const autoware_map::Key<Area>& key) const
+Area AutowareMap::findByKey(const Key<Area>& key) const
 {
     return area_.findByKey(key);
 }
-Route AutowareMap::findByKey(const autoware_map::Key<Route>& key) const
+Route AutowareMap::findByKey(const Key<Route>& key) const
 {
     return route_.findByKey(key);
 }
-Signal AutowareMap::findByKey(const autoware_map::Key<Signal>& key) const
+Signal AutowareMap::findByKey(const Key<Signal>& key) const
 {
     return signal_.findByKey(key);
 }
-SignalLight AutowareMap::findByKey(const autoware_map::Key<SignalLight>& key) const
+SignalLight AutowareMap::findByKey(const Key<SignalLight>& key) const
 {
     return signal_light_.findByKey(key);
 }
-Wayarea AutowareMap::findByKey(const autoware_map::Key<Wayarea>& key) const
+Wayarea AutowareMap::findByKey(const Key<Wayarea>& key) const
 {
     return wayarea_.findByKey(key);
 }
-Waypoint AutowareMap::findByKey(const autoware_map::Key<Waypoint>& key) const
+Waypoint AutowareMap::findByKey(const Key<Waypoint>& key) const
 {
     return waypoint_.findByKey(key);
 }
-WaypointLaneRelation AutowareMap::findByKey(const autoware_map::Key<WaypointLaneRelation>& key) const
+WaypointLaneRelation AutowareMap::findByKey(const Key<WaypointLaneRelation>& key) const
 {
     return waypoint_lane_relation_.findByKey(key);
 }
-WaypointRelation AutowareMap::findByKey(const autoware_map::Key<WaypointRelation>& key) const
+WaypointRelation AutowareMap::findByKey(const Key<WaypointRelation>& key) const
 {
     return waypoint_relation_.findByKey(key);
 }
-WaypointSignalRelation AutowareMap::findByKey(const autoware_map::Key<WaypointSignalRelation>& key) const
+WaypointSignalRelation AutowareMap::findByKey(const Key<WaypointSignalRelation>& key) const
 {
     return waypoint_signal_relation_.findByKey(key);
 }
@@ -591,387 +594,4 @@ std::vector<WaypointSignalRelation> AutowareMap::findByFilter(const Filter<Waypo
 }
 
 
-}
-
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Lane& obj)
-{
-    os << obj.lane_id << ","
-    << obj.start_waypoint_id << ","
-    << obj.end_waypoint_id << ","
-    << obj.lane_number << ","
-    << obj.num_of_lanes << ","
-    << obj.speed_limit << ","
-    << obj.length << ","
-    << obj.width_limit << ","
-    << obj.height_limit << ","
-    << obj.weight_limit;
-    return os;
-}
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::LaneAttrRelation& obj)
-{
-    os << obj.lane_id << ","
-    << obj.attribute_type << ","
-    << obj.area_id;
-    return os;
-}
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::LaneRelation& obj)
-{
-    os << obj.lane_id << ","
-    << obj.next_lane_id << ","
-    << obj.blinker;
-    return os;
-}
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::LaneSignalLightRelation& obj)
-{
-    os << obj.lane_id << ","
-    << obj.signal_light_id;
-    return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::LaneChangeRelation& obj)
-{
-    os << obj.lane_id << ","
-    << obj.next_lane_id << ","
-    << obj.blinker;
-    return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::OppositeLaneRelation& obj)
-{
-    os << obj.lane_id << ","
-    << obj.opposite_lane_id;
-    return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Point& obj)
-{
-    os << obj.point_id << ","
-    << obj.x << ","
-    << obj.y << ","
-    << obj.z << ","
-    << obj.lat << ","
-    << obj.lng << ","
-    << obj.pcd << ","
-    << obj.mgrs << ","
-    << obj.epsg;
-    return os;
-}
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Area& obj)
-{
-    os << obj.area_id << ",";
-    for ( auto id = obj.point_ids.begin(); id != obj.point_ids.end(); id++)
-    {
-        os << *id;
-        if( id+1 != obj.point_ids.end() )
-            os << ":";
-    }
-    return os;
-}
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Route& obj)
-{
-    os << obj.route_id << ","
-    << obj.start_waypoint_id << ","
-    << obj.end_waypoint_id << ","
-    << obj.begin_lane_id << ","
-    << obj.finish_lane_id << ","
-    << obj.min_lane_width << ","
-    << obj.max_lane_width << ","
-    << obj.length << ","
-    << obj.max_weight;
-    return os;
-}
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Signal& obj)
-{
-    os << obj.signal_id;
-    return os;
-}
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::SignalLight& obj)
-{
-    os << obj.signal_light_id << ","
-    << obj.signal_id << ","
-    << obj.point_id << ","
-    << obj.horizontal_angle << ","
-    << obj.vertical_angle << ","
-    << obj.color_type << ","
-    << obj.arrow_type;
-    return os;
-}
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Wayarea& obj)
-{
-    os << obj.wayarea_id << ","
-    << obj.area_id;
-    return os;
-}
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Waypoint& obj)
-{
-    os << obj.waypoint_id << ","
-    << obj.point_id << ","
-    << obj.velocity << ","
-    << obj.stop_line << ","
-    << obj.width << ","
-    << obj.height;
-    return os;
-}
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::WaypointLaneRelation& obj)
-{
-    os << obj.waypoint_id << ","
-    << obj.lane_id;
-    return os;
-}
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::WaypointRelation& obj)
-{
-    os << obj.waypoint_id << ","
-    << obj.next_waypoint_id << ","
-    << obj.yaw << ","
-    << obj.blinker << ","
-    << obj.distance;
-    return os;
-}
-std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::WaypointSignalRelation& obj)
-{
-    os << obj.waypoint_id << ","
-    << obj.signal_id;
-    return os;
-}
-
-std::istream& operator>>(std::istream& is, autoware_map_msgs::Lane& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.lane_id = std::stoi(columns[0]);
-    obj.start_waypoint_id = std::stoi(columns[1]);
-    obj.end_waypoint_id = std::stoi(columns[2]);
-    obj.lane_number = std::stoi(columns[3]);
-    obj.num_of_lanes = std::stoi(columns[4]);
-    obj.speed_limit = std::stod(columns[5]);
-    obj.length = std::stod(columns[6]);
-    obj.width_limit = std::stod(columns[7]);
-    obj.height_limit = std::stod(columns[8]);
-    obj.weight_limit = std::stod(columns[9]);
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::LaneAttrRelation& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.lane_id = std::stoi(columns[0]);
-    obj.attribute_type = std::stoi(columns[1]);
-    obj.area_id = std::stoi(columns[2]);
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::LaneRelation& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.lane_id = std::stoi(columns[0]);
-    obj.next_lane_id = std::stoi(columns[1]);
-    obj.blinker = std::stoi(columns[2]);
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::LaneSignalLightRelation& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.lane_id = std::stoi(columns[0]);
-    obj.signal_light_id = std::stoi(columns[1]);
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::LaneChangeRelation& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.lane_id = std::stoi(columns[0]);
-    obj.next_lane_id = std::stoi(columns[1]);
-    obj.blinker = std::stoi(columns[2]);
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::OppositeLaneRelation& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.lane_id = std::stoi(columns[0]);
-    obj.opposite_lane_id = std::stoi(columns[1]);
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::Point& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.point_id = std::stoi(columns[0]);
-    obj.x = std::stod(columns[1]);
-    obj.y = std::stod(columns[2]);
-    obj.z = std::stod(columns[3]);
-    obj.lat = std::stod(columns[4]);
-    obj.lng = std::stod(columns[5]);
-    obj.pcd = columns[6];
-    try{
-        obj.mgrs = std::stoi(columns[7]);
-    }
-    catch (const std::invalid_argument& e)
-    {
-        ROS_WARN_STREAM("invalid argument for mgrs: " << e.what());
-        obj.mgrs = 0;
-    }
-    obj.epsg = std::stoi(columns[8]);
-
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::Area& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.area_id = std::stoi(columns[0]);
-    std::stringstream ss(columns[1]);
-    while (std::getline(ss, column, ':' )) {
-        obj.point_ids.push_back( std::stoi(column) );
-    }
-
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::Route& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.route_id = std::stoi(columns[0]);
-    obj.start_waypoint_id = std::stoi(columns[1]);
-    obj.end_waypoint_id = std::stoi(columns[2]);
-    obj.begin_lane_id = std::stoi(columns[3]);
-    obj.finish_lane_id = std::stoi(columns[4]);
-    obj.min_lane_width = std::stod(columns[5]);
-    obj.max_lane_width = std::stod(columns[6]);
-    obj.length = std::stod(columns[7]);
-    obj.max_weight = std::stod(columns[8]);
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::Signal& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.signal_id = std::stoi(columns[0]);
-    // obj.signal_light_id = std::stoi(columns[1]);
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::SignalLight& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.signal_light_id = std::stoi(columns[0]);
-    obj.signal_id = std::stoi(columns[1]);
-    obj.point_id = std::stoi(columns[2]);
-    obj.horizontal_angle = std::stod(columns[3]);
-    obj.vertical_angle = std::stod(columns[4]);
-    obj.color_type = std::stoi(columns[5]);
-    obj.arrow_type = std::stoi(columns[6]);
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::Wayarea& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.wayarea_id = std::stoi(columns[0]);
-    obj.area_id = std::stoi(columns[1]);
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::Waypoint& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.waypoint_id = std::stoi(columns[0]);
-    obj.point_id = std::stoi(columns[1]);
-    obj.velocity = std::stod(columns[2]);
-    obj.stop_line = std::stoi(columns[3]);
-    obj.width = std::stod(columns[4]);
-    obj.height = std::stod(columns[5]);
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::WaypointLaneRelation& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.waypoint_id = std::stoi(columns[0]);
-    obj.lane_id = std::stoi(columns[1]);
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::WaypointRelation& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.waypoint_id = std::stoi(columns[0]);
-    obj.next_waypoint_id = std::stoi(columns[1]);
-    obj.yaw = std::stod(columns[2]);
-    obj.blinker = std::stoi(columns[3]);
-    obj.distance = std::stod(columns[4]);
-    return is;
-}
-std::istream& operator>>(std::istream& is, autoware_map_msgs::WaypointSignalRelation& obj)
-{
-    std::vector<std::string> columns;
-    std::string column;
-    while (std::getline(is, column, ','))
-    {
-        columns.push_back(column);
-    }
-    obj.waypoint_id = std::stoi(columns[0]);
-    obj.signal_id = std::stoi(columns[1]);
-    return is;
-}
+} //namespace autoware_map
