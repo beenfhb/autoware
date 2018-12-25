@@ -26,7 +26,7 @@ include_directories(
 )
 
 
-add_library( autoware_map lib/autoware_map/autoware_map.cpp )
+add_library( autoware_map lib/autoware_map/autoware_map.cpp lib/autoware_map/util.cpp lib/autoware_map/visualization.cpp)
 add_dependencies( autoware_map ${catkin_EXPORTED_TARGETS} )
 target_link_libraries( autoware_map ${catkin_LIBRARIES} )
 
