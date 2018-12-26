@@ -28,62 +28,59 @@
 #ifndef PANGOLIN_IMAGE_COMMON_H
 #define PANGOLIN_IMAGE_COMMON_H
 
+#include <exception>
+#include <map>
 #include <pangolin/platform.h>
 #include <pangolin/utils/type_convert.h>
 #include <pangolin/utils/uri.h>
-#include <exception>
 #include <string>
-#include <map>
 
-namespace pangolin
-{
+namespace pangolin {
 
-struct PANGOLIN_EXPORT VideoException : std::exception
-{
-    VideoException(std::string str) : desc(str) {}
-    VideoException(std::string str, std::string detail) {
-        desc = str + "\n\t" + detail;
-    }
-    ~VideoException() throw() {}
-    const char* what() const throw() { return desc.c_str(); }
-    std::string desc;
+struct PANGOLIN_EXPORT VideoException : std::exception {
+  VideoException(std::string str) : desc(str) {}
+  VideoException(std::string str, std::string detail) {
+    desc = str + "\n\t" + detail;
+  }
+  ~VideoException() throw() {}
+  const char *what() const throw() { return desc.c_str(); }
+  std::string desc;
 };
 
-struct PANGOLIN_EXPORT VideoPixelFormat
-{
-    // Previously, VideoInterface::PixFormat returned a string.
-    // For compatibility, make this string convertable
-    inline operator std::string() const { return format; }
-    
-    std::string  format;
-    unsigned int channels;
-    unsigned int channel_bits[4];
-    unsigned int bpp;
-    bool planar;
+struct PANGOLIN_EXPORT VideoPixelFormat {
+  // Previously, VideoInterface::PixFormat returned a string.
+  // For compatibility, make this string convertable
+  inline operator std::string() const { return format; }
+
+  std::string format;
+  unsigned int channels;
+  unsigned int channel_bits[4];
+  unsigned int bpp;
+  bool planar;
 };
 
-struct PANGOLIN_EXPORT ImageDim
-{
-    inline ImageDim() : x(0), y(0) {}
-    inline ImageDim(size_t x, size_t y) : x(x), y(y) {}
-    size_t x;
-    size_t y;
+struct PANGOLIN_EXPORT ImageDim {
+  inline ImageDim() : x(0), y(0) {}
+  inline ImageDim(size_t x, size_t y) : x(x), y(y) {}
+  size_t x;
+  size_t y;
 };
 
-struct PANGOLIN_EXPORT ImageROI
-{
-    inline ImageROI() : x(0), y(0), w(0), h(0) {}
-    inline ImageROI(size_t x, size_t y, size_t w, size_t h) : x(x), y(y), w(w), h(h) {}
-    size_t x; size_t y;
-    size_t w; size_t h;
+struct PANGOLIN_EXPORT ImageROI {
+  inline ImageROI() : x(0), y(0), w(0), h(0) {}
+  inline ImageROI(size_t x, size_t y, size_t w, size_t h)
+      : x(x), y(y), w(w), h(h) {}
+  size_t x;
+  size_t y;
+  size_t w;
+  size_t h;
 };
 
 //! Return Pixel Format properties given string specification in
 //! FFMPEG notation.
 PANGOLIN_EXPORT
-VideoPixelFormat VideoFormatFromString(const std::string& format);
+VideoPixelFormat VideoFormatFromString(const std::string &format);
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_IMAGE_COMMON_H
-

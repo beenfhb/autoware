@@ -52,20 +52,18 @@
 #include <dynamic_reconfigure/server.h>
 #include <sick_ldmrs_driver/SickLDMRSDriverConfig.h>
 
-#include <manager.hpp>
 #include <application/BasicApplication.hpp>
 #include <datatypes/Object.hpp>
+#include <manager.hpp>
 
-
-namespace sick_ldmrs_driver
-{
+namespace sick_ldmrs_driver {
 
 typedef pcl::PointCloud<sick_ldmrs_msgs::SICK_LDMRS_Point> PointCloud;
 
-class SickLDMRS : public application::BasicApplication
-{
+class SickLDMRS : public application::BasicApplication {
 public:
-  SickLDMRS(Manager* manager, boost::shared_ptr<diagnostic_updater::Updater> diagnostics);
+  SickLDMRS(Manager *manager,
+            boost::shared_ptr<diagnostic_updater::Updater> diagnostics);
   virtual ~SickLDMRS();
   void init();
   void produce_diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat);
@@ -75,7 +73,8 @@ public:
 
 protected:
   boost::shared_ptr<diagnostic_updater::Updater> diagnostics_;
-  void setData(BasicData& data);  // Callback for new data from the manager (scans etc.)
+  void setData(
+      BasicData &data); // Callback for new data from the manager (scans etc.)
   void validate_flexres_resolution(int &res);
   void validate_flexres_start_angle(double &angle1, double &angle2);
   bool isUpsideDown();
@@ -88,16 +87,19 @@ private:
   ros::Publisher pub_;
   ros::Publisher object_pub_;
   // Diagnostics
-  diagnostic_updater::DiagnosedPublisher<sensor_msgs::PointCloud2>* diagnosticPub_;
+  diagnostic_updater::DiagnosedPublisher<sensor_msgs::PointCloud2>
+      *diagnosticPub_;
 
   // Dynamic Reconfigure
   SickLDMRSDriverConfig config_;
-  dynamic_reconfigure::Server<SickLDMRSDriverConfig> dynamic_reconfigure_server_;
+  dynamic_reconfigure::Server<SickLDMRSDriverConfig>
+      dynamic_reconfigure_server_;
 
   // sick_ldmrs library objects
-  Manager* manager_;
+  Manager *manager_;
 
-  // Expected scan frequency. Must be a member variable for access by diagnostics.
+  // Expected scan frequency. Must be a member variable for access by
+  // diagnostics.
   double expected_frequency_;
 
   bool initialized_;

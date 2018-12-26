@@ -36,25 +36,22 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <pcl_ros/point_cloud.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sick_ldmrs_msgs/sick_ldmrs_point_type.h>
-#include <pcl_ros/point_cloud.h>
 
 typedef sick_ldmrs_msgs::SICK_LDMRS_Point PointT;
 typedef pcl::PointCloud<PointT> PointCloudT;
 
 ros::Publisher pub;
 
-void callback(const PointCloudT::ConstPtr& cloud)
-{
+void callback(const PointCloudT::ConstPtr &cloud) {
   PointCloudT::Ptr cloud_filtered = boost::make_shared<PointCloudT>();
   cloud_filtered->header = cloud->header;
 
   // layer1: only publish points from second layer
-  for (size_t i = 0; i < cloud->size(); i++)
-  {
-    if (cloud->points[i].layer == 1)
-    {
+  for (size_t i = 0; i < cloud->size(); i++) {
+    if (cloud->points[i].layer == 1) {
       cloud_filtered->points.push_back(cloud->points[i]);
     }
   }
@@ -62,8 +59,7 @@ void callback(const PointCloudT::ConstPtr& cloud)
   pub.publish(cloud_filtered);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   ros::init(argc, argv, "sick_ldmrs_filter_layer");
   ros::NodeHandle nh;
 

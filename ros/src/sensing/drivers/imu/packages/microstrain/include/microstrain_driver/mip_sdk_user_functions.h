@@ -12,30 +12,29 @@
 #ifndef _MIP_SDK_USER_FUNCTIONS_H
 #define _MIP_SDK_USER_FUNCTIONS_H
 
-//Include Files
+// Include Files
 #include "mip.h"
-#include <time.h>
+#include <assert.h>
+#include <errno.h> // Error number definitions
+#include <fcntl.h> // File control definitions
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <termios.h> // terminal io (serial port) interface
-#include <fcntl.h>  // File control definitions
-#include <errno.h>  // Error number definitions
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 // Defines
-//! @def 
+//! @def
 
 typedef int ComPortHandle;
 typedef unsigned char Byte;
 
-#define MIP_USER_FUNCTION_OK    0
+#define MIP_USER_FUNCTION_OK 0
 #define MIP_USER_FUNCTION_ERROR 1
 
 #define MIP_COM_PORT_BUFFER_SIZE 0x200
-
 
 // Function Prototypes
 u16 purge(ComPortHandle comPortHandle);
@@ -44,9 +43,11 @@ u16 mip_sdk_port_open(void **port_handle, const char *portstr, int baudrate);
 
 u16 mip_sdk_port_close(void *port_handle);
 
-u16 mip_sdk_port_write(void *port_handle, u8 *buffer, u32 num_bytes, u32 *bytes_written, u32 timeout_ms);
+u16 mip_sdk_port_write(void *port_handle, u8 *buffer, u32 num_bytes,
+                       u32 *bytes_written, u32 timeout_ms);
 
-u16 mip_sdk_port_read(void *port_handle, u8 *buffer, u32 num_bytes, u32 *bytes_read, u32 timeout_ms);
+u16 mip_sdk_port_read(void *port_handle, u8 *buffer, u32 num_bytes,
+                      u32 *bytes_read, u32 timeout_ms);
 
 u32 mip_sdk_port_read_count(void *port_handle);
 

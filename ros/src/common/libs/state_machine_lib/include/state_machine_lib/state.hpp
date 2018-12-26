@@ -7,8 +7,7 @@
 #include <state_machine_lib/state_flags.hpp>
 #include <vector>
 
-namespace state_machine
-{
+namespace state_machine {
 class StartState;
 class InitialState;
 class LocateVehicleState;
@@ -38,12 +37,9 @@ class MissionCompleteState;
 class EmergencyState;
 
 // base class
-class BaseState
-{
+class BaseState {
 protected:
-  BaseState()
-  {
-  }
+  BaseState() {}
 
 public:
   virtual void update(void) = 0;
@@ -60,9 +56,7 @@ public:
 };
 
 // Interface
-template <class T>
-class State : public BaseState
-{
+template <class T> class State : public BaseState {
 protected:
   std::string StateName = "Base";
   uint64_t StateNum;
@@ -73,75 +67,52 @@ protected:
   std::function<void(void)> StateCallbackInFunc;
   std::function<void(void)> StateCallbackOutFunc;
 
-  State()
-  {
+  State() {
     StateNum = 0;
     StateTransMask = (uint64_t)STATE_END - 1;
     StateKind = UNKNOWN_STATE;
   }
 
 public:
-  virtual void update(void)
-  {
+  virtual void update(void) {
     if (StateCallbackUpdateFunc)
       StateCallbackUpdateFunc();
   }
 
-  virtual void inState(void)
-  {
+  virtual void inState(void) {
     if (StateCallbackInFunc)
       StateCallbackInFunc();
   }
-  virtual void outState(void)
-  {
+  virtual void outState(void) {
     if (StateCallbackOutFunc)
       StateCallbackOutFunc();
   }
-  virtual void setCallbackUpdateFunc(std::function<void(void)> _f)
-  {
+  virtual void setCallbackUpdateFunc(std::function<void(void)> _f) {
     StateCallbackUpdateFunc = _f;
   }
 
-  virtual void setCallbackOutFunc(std::function<void(void)> _f)
-  {
+  virtual void setCallbackOutFunc(std::function<void(void)> _f) {
     StateCallbackOutFunc = _f;
   }
 
-  virtual void setCallbackInFunc(std::function<void(void)> _f)
-  {
+  virtual void setCallbackInFunc(std::function<void(void)> _f) {
     StateCallbackInFunc = _f;
   }
 
-  void showStateName(void)
-  {
-    std::cout << StateName << "-";
-  }
+  void showStateName(void) { std::cout << StateName << "-"; }
 
-  static T* getInstance(void)
-  {
+  static T *getInstance(void) {
     static T singleton;
     return &singleton;
   }
 
-  std::string getStateName(void)
-  {
-    return std::string(StateName);
-  }
+  std::string getStateName(void) { return std::string(StateName); }
 
-  uint8_t getStateKind(void)
-  {
-    return StateKind;
-  }
+  uint8_t getStateKind(void) { return StateKind; }
 
-  uint64_t getStateTransMask(void)
-  {
-    return StateTransMask;
-  }
-  uint64_t getStateNum(void)
-  {
-    return StateNum;
-  }
+  uint64_t getStateTransMask(void) { return StateTransMask; }
+  uint64_t getStateNum(void) { return StateNum; }
 };
-}
+} // namespace state_machine
 
 #endif

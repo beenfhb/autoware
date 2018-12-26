@@ -14,58 +14,53 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
 
-#include <vector>
 #include <string>
-
+#include <vector>
 
 using std::string;
 
-
-class ImagePreprocessor
-{
+class ImagePreprocessor {
 public:
+  enum ProcessMode { AS_IS = 0, AGC = 1, ILLUMINATI = 2 };
 
-	enum ProcessMode {
-		AS_IS = 0,
-		AGC = 1,
-		ILLUMINATI = 2
-	};
+  ImagePreprocessor(ProcessMode m, const string &subscribedImageTopic,
+                    const string &publishedImageTopic, ros::NodeHandle &nh);
 
-	ImagePreprocessor (ProcessMode m,
-		const string &subscribedImageTopic,
-		const string &publishedImageTopic,
-		ros::NodeHandle &nh);
+  void messageCallback(const sensor_msgs::ImageConstPtr &msg);
 
-	void messageCallback (const sensor_msgs::ImageConstPtr &msg);
+  virtual ~ImagePreprocessor();
 
-	virtual ~ImagePreprocessor();
+  static cv::Mat cdf(cv::Mat &grayImage, cv::Mat mask = cv::Mat());
 
-	static cv::Mat cdf (cv::Mat &grayImage, cv::Mat mask=cv::Mat());
+  static float detectSmear(cv::Mat &rgbImage, const float tolerance);
 
-	static float detectSmear (cv::Mat &rgbImage, const float tolerance);
+  static cv::Mat setGamma(cv::Mat &grayImage, const float gamma,
+                          bool LUT_only = false);
 
-	static cv::Mat setGamma (cv::Mat &grayImage, const float gamma, bool LUT_only=false);
+  static cv::Mat autoAdjustGammaRGB(cv::Mat &rgbImage,
+                                    cv::Mat mask = cv::Mat());
+  static cv::Mat autoAdjustGammaRGB(cv::Mat &rgbImage,
+                                    std::vector<cv::Mat> &rgbBuf,
+                                    cv::Mat mask = cv::Mat());
+  static cv::Mat autoAdjustGammaMono(cv::Mat &grayImage, float *gamma = NULL,
+                                     cv::Mat mask = cv::Mat());
+  static cv::Mat toIlluminatiInvariant(const cv::Mat &rgbImage,
+                                       const float alpha);
 
-	static cv::Mat autoAdjustGammaRGB (cv::Mat &rgbImage, cv::Mat mask=cv::Mat());
-	static cv::Mat autoAdjustGammaRGB (cv::Mat &rgbImage, std::vector<cv::Mat> &rgbBuf, cv::Mat mask=cv::Mat());
-	static cv::Mat autoAdjustGammaMono (cv::Mat &grayImage, float *gamma=NULL, cv::Mat mask=cv::Mat());
-	static cv::Mat toIlluminatiInvariant (const cv::Mat &rgbImage, const float alpha);
-
-	void setMask (cv::Mat &maskSrc);
-	void setIAlpha (const float &a)
-	{ iAlpha = a; }
+  void setMask(cv::Mat &maskSrc);
+  void setIAlpha(const float &a) { iAlpha = a; }
 
 protected:
-	ros::NodeHandle &node;
-	ros::Subscriber imgsub;
-	ros::Publisher imgpub;
-	ProcessMode pMode;
+  ros::NodeHandle &node;
+  ros::Subscriber imgsub;
+  ros::Publisher imgpub;
+  ProcessMode pMode;
 
-	// buffers
-	std::vector<cv::Mat> rgbImageBuf;
-	cv::Mat mask;
+  // buffers
+  std::vector<cv::Mat> rgbImageBuf;
+  cv::Mat mask;
 
-	float iAlpha;
+  float iAlpha;
 };
 
 #endif /* _IMAGEPREPROCESSOR_H_ */

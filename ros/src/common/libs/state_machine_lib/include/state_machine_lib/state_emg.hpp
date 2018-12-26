@@ -3,80 +3,67 @@
 
 #include "state.hpp"
 
-namespace state_machine
-{
-class EmergencyHWState : public State<EmergencyHWState>
-{
+namespace state_machine {
+class EmergencyHWState : public State<EmergencyHWState> {
 private:
   friend class State<EmergencyHWState>;
-  EmergencyHWState(void)
-  {
+  EmergencyHWState(void) {
     StateName = "EmergencyHW";
     StateTransMask = 0;
   }
 
 public:
 };
-class EmergencyHWVehicleState : public State<EmergencyHWVehicleState>
-{
+class EmergencyHWVehicleState : public State<EmergencyHWVehicleState> {
 private:
   friend class State<EmergencyHWVehicleState>;
-  EmergencyHWVehicleState(void)
-  {
+  EmergencyHWVehicleState(void) {
     StateName = "EmergencyHWVehicle";
     StateTransMask = 0;
   }
 
 public:
 };
-class EmergencyHWControllerState : public State<EmergencyHWControllerState>
-{
+class EmergencyHWControllerState : public State<EmergencyHWControllerState> {
 private:
   friend class State<EmergencyHWControllerState>;
-  EmergencyHWControllerState(void)
-  {
+  EmergencyHWControllerState(void) {
     StateName = "EmergencyHWController";
     StateTransMask = 0;
   }
 
 public:
 };
-class EmergencySWState : public State<EmergencySWState>
-{
+class EmergencySWState : public State<EmergencySWState> {
 private:
   friend class State<EmergencySWState>;
-  EmergencySWState(void)
-  {
+  EmergencySWState(void) {
     StateName = "EmergencySW";
     StateTransMask = 0;
   }
 
 public:
 };
-class EmergencySWAutowareState : public State<EmergencySWAutowareState>
-{
+class EmergencySWAutowareState : public State<EmergencySWAutowareState> {
 private:
   friend class State<EmergencySWAutowareState>;
-  EmergencySWAutowareState(void)
-  {
+  EmergencySWAutowareState(void) {
     StateName = "EmergencySWAutoware";
     StateTransMask = 0;
   }
 
 public:
 };
-class EmergencySWControllerState : public State<EmergencySWControllerState>
-{
+class EmergencySWControllerState : public State<EmergencySWControllerState> {
 private:
   friend class State<EmergencySWControllerState>;
-  EmergencySWControllerState(void)
-  {
+  EmergencySWControllerState(void) {
     StateName = "EmergencySWController";
     StateTransMask = 0;
   }
 
 public:
 };
-}
+} // namespace state_machine
 
 #endif

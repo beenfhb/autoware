@@ -31,7 +31,7 @@
 #include <pangolin/platform.h>
 
 #ifdef CPP11_NO_BOOST
-    #include <thread>
+#include <thread>
 #else
 #include <boost/thread.hpp>
 #include <boost/type_traits.hpp>
@@ -43,33 +43,31 @@
 #if BOOST_VERSION < 105000
 // Simple implementation of missing sleep_for / sleep_until methods
 namespace boost {
-    namespace this_thread {
-        template <class Rep, class Period>
-        void sleep_for(const boost::chrono::duration<Rep, Period>& d)
-        {
-            boost::chrono::microseconds t = boost::chrono::duration_cast<boost::chrono::microseconds>(d);
+namespace this_thread {
+template <class Rep, class Period>
+void sleep_for(const boost::chrono::duration<Rep, Period> &d) {
+  boost::chrono::microseconds t =
+      boost::chrono::duration_cast<boost::chrono::microseconds>(d);
 
-            if (t > boost::chrono::microseconds(0)) {
-                usleep(t.count());
-            }
-        }
+  if (t > boost::chrono::microseconds(0)) {
+    usleep(t.count());
+  }
+}
 
-        template <class Clock, class Duration>
-        void sleep_until(const boost::chrono::time_point<Clock, Duration>& t)
-        {
-            using namespace boost::chrono;
-            typedef time_point<Clock, Duration> Time;
-            typedef system_clock::time_point SysTime;
-            if (t > Clock::now())
-            {
-                typedef typename boost::common_type<typename Time::duration,
-                    typename SysTime::duration>::type D;
-                D d = t - Clock::now();
-                usleep( duration_cast<microseconds>(d).count() );
-            }
-        }
-    }  // this_thread
-} // boost
+template <class Clock, class Duration>
+void sleep_until(const boost::chrono::time_point<Clock, Duration> &t) {
+  using namespace boost::chrono;
+  typedef time_point<Clock, Duration> Time;
+  typedef system_clock::time_point SysTime;
+  if (t > Clock::now()) {
+    typedef typename boost::common_type<typename Time::duration,
+                                        typename SysTime::duration>::type D;
+    D d = t - Clock::now();
+    usleep(duration_cast<microseconds>(d).count());
+  }
+}
+} // namespace this_thread
+} // namespace boost
 #endif // BOOST_VERSION < 105000
 #endif // BOOST_VERSION >= 104500
 

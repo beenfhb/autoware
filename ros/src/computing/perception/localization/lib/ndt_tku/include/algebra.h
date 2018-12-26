@@ -22,44 +22,47 @@
 
 #define E_ERROR 0.001
 
-int mux_matrix2d(double s1[2][2], double s2[2][2],double dst[2][2]);
-int mux_matrix3d(double s1[3][3], double s2[3][3],double dst[3][3]);
-int mux_matrix(double *s1,double *s2,double *dst,int in, int kn, int 
-jn);
+int mux_matrix2d(double s1[2][2], double s2[2][2], double dst[2][2]);
+int mux_matrix3d(double s1[3][3], double s2[3][3], double dst[3][3]);
+int mux_matrix(double *s1, double *s2, double *dst, int in, int kn, int jn);
 
-int add_matrix2d(double s1[2][2], double s2[2][2],double dst[2][2]);
-int add_matrix3d(double s1[3][3], double s2[3][3],double dst[3][3]);
-int add_matrix6d(double s1[6][6], double s2[6][6],double dst[6][6]);
+int add_matrix2d(double s1[2][2], double s2[2][2], double dst[2][2]);
+int add_matrix3d(double s1[3][3], double s2[3][3], double dst[3][3]);
+int add_matrix6d(double s1[6][6], double s2[6][6], double dst[6][6]);
 
-int sub_matrix2d(double s1[2][2], double s2[2][2],double dst[2][2]);
-int sub_matrix3d(double s1[3][3], double s2[3][3],double dst[3][3]);
+int sub_matrix2d(double s1[2][2], double s2[2][2], double dst[2][2]);
+int sub_matrix3d(double s1[3][3], double s2[3][3], double dst[3][3]);
 
-int identity_matrix2d(double dst[2][2]); 
-int identity_matrix3d(double dst[3][3]); 
-int identity_matrix6d(double dst[6][6]); 
+int identity_matrix2d(double dst[2][2]);
+int identity_matrix3d(double dst[3][3]);
+int identity_matrix6d(double dst[6][6]);
 
-int zero_matrix2d(double dst[2][2]); 
-int zero_matrix3d(double dst[3][3]); 
-int zero_matrix6d(double dst[6][6]); 
+int zero_matrix2d(double dst[2][2]);
+int zero_matrix3d(double dst[3][3]);
+int zero_matrix6d(double dst[6][6]);
 
-int transpose_matrix2d(double s1[2][2],double dst[2][2]);
-int transpose_matrix3d(double s1[3][3],double dst[3][3]);
+int transpose_matrix2d(double s1[2][2], double dst[2][2]);
+int transpose_matrix3d(double s1[3][3], double dst[3][3]);
 
 double determinant_matrix2d(double mat[2][2]);
 double determinant_matrix3d(double mat[3][3]);
 
-int inverse_matrix2d(double mat[2][2],double dst[2][2]);
+int inverse_matrix2d(double mat[2][2], double dst[2][2]);
 int inverse_matrix3d(double mat[3][3], double dst[3][3]);
 
-int eigenvalue_matrix2d(double mat[2][2],double *l1, double *l2);
-int eigenvalue_matrix3d(double mat[3][3],double l1[2], double l2[2],double l3[2]);
+int eigenvalue_matrix2d(double mat[2][2], double *l1, double *l2);
+int eigenvalue_matrix3d(double mat[3][3], double l1[2], double l2[2],
+                        double l3[2]);
 
-int eigenvecter_matrix2d(double mat[2][2],double *v1,double *v2,double *l1,double *l2);
-int eigenvecter_matrix3d(double mat[3][3],double v[3][3],double *l);
+int eigenvecter_matrix2d(double mat[2][2], double *v1, double *v2, double *l1,
+                         double *l2);
+int eigenvecter_matrix3d(double mat[3][3], double v[3][3], double *l);
 
-int matrix2d_eigen(double *v1,double *v2,double l1,double l2,double dst[2][2]);
-int matrix3d_eigen(double v[3][3],double l1,double l2,double l3,double dst[3][3]);
-int round_matrix3d(double mat[3][3],double dst[3][3] );
+int matrix2d_eigen(double *v1, double *v2, double l1, double l2,
+                   double dst[2][2]);
+int matrix3d_eigen(double v[3][3], double l1, double l2, double l3,
+                   double dst[3][3]);
+int round_matrix3d(double mat[3][3], double dst[3][3]);
 int ginverse_matrix3d(double mat[3][3], double dst[3][3]);
 int ginverse_matrix6d(double mat[6][6], double dst[6][6]);
 #endif

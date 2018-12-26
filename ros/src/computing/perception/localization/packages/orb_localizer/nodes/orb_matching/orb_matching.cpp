@@ -5,20 +5,16 @@
  *  XXX: Licensing has not been cleared yet.
  */
 
-
-#include <iostream>
 #include "Matcher.h"
+#include <iostream>
 
+int main(int argc, char *argv[]) {
+  ros::init(argc, argv, "orb_matching", ros::init_options::AnonymousName);
+  ros::start();
+  ros::NodeHandle nodeHandler("~");
 
+  Matcher orb_matching(nodeHandler);
+  ros::spin();
 
-int main (int argc, char *argv[])
-{
-	ros::init(argc, argv, "orb_matching", ros::init_options::AnonymousName);
-	ros::start();
-	ros::NodeHandle nodeHandler ("~");
-
-	Matcher orb_matching (nodeHandler);
-	ros::spin();
-
-	ros::shutdown();
+  ros::shutdown();
 }

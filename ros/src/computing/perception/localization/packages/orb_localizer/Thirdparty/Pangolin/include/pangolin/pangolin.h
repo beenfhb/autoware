@@ -31,34 +31,34 @@
 #include <pangolin/platform.h>
 
 #ifdef BUILD_PANGOLIN_GUI
-  #include <pangolin/gl/gl.h>
-  #include <pangolin/gl/gldraw.h>
-  #include <pangolin/gl/glvbo.h>
-  #include <pangolin/gl/glstate.h>
-  #include <pangolin/gl/colour.h>
-  #include <pangolin/display/display.h>
-  #include <pangolin/display/view.h>
-  #ifdef HAVE_GLUT
-    #include <pangolin/display/device/display_glut.h>
-  #endif // HAVE_GLUT
-  #ifdef _ANDROID_
-    #include <pangolin/display/device/display_android.h>
-  #endif
-  #if !defined(HAVE_GLES) || defined(HAVE_GLES_2)
-    #include <pangolin/plot/plotter.h>
-  #endif
+#include <pangolin/display/display.h>
+#include <pangolin/display/view.h>
+#include <pangolin/gl/colour.h>
+#include <pangolin/gl/gl.h>
+#include <pangolin/gl/gldraw.h>
+#include <pangolin/gl/glstate.h>
+#include <pangolin/gl/glvbo.h>
+#ifdef HAVE_GLUT
+#include <pangolin/display/device/display_glut.h>
+#endif // HAVE_GLUT
+#ifdef _ANDROID_
+#include <pangolin/display/device/display_android.h>
+#endif
+#if !defined(HAVE_GLES) || defined(HAVE_GLES_2)
+#include <pangolin/plot/plotter.h>
+#endif
 #endif // BUILD_PANGOLIN_GUI
 
 #ifdef BUILD_PANGOLIN_VARS
-  #include <pangolin/var/varextra.h>
-  #ifdef BUILD_PANGOLIN_GUI
-    #include <pangolin/display/widgets/widgets.h>
-  #endif // BUILD_PANGOLIN_GUI
+#include <pangolin/var/varextra.h>
+#ifdef BUILD_PANGOLIN_GUI
+#include <pangolin/display/widgets/widgets.h>
+#endif // BUILD_PANGOLIN_GUI
 #endif // BUILD_PANGOLIN_VARS
 
 #ifdef BUILD_PANGOLIN_VIDEO
-  #include <pangolin/video/video.h>
-  #include <pangolin/video/video_output.h>
+#include <pangolin/video/video.h>
+#include <pangolin/video/video_output.h>
 #endif // BUILD_PANGOLIN_VIDEO
 
 #include <pangolin/image/image_io.h>
@@ -67,4 +67,3 @@
 #define HAVE_PANGOLIN
 
 #endif // PANGOLIN_H
-

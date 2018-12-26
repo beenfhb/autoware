@@ -16,27 +16,24 @@
 #include <linux/can.h>
 #include <linux/can/raw.h>
 
-namespace mycansend
-{
+namespace mycansend {
 
-class CanSender
-{
+class CanSender {
 private:
- int s_;
- struct ifreq ifr_;
+  int s_;
+  struct ifreq ifr_;
 
- bool initialized_;
+  bool initialized_;
 
 public:
- CanSender(const std::string& device);
- CanSender();
- ~CanSender();
+  CanSender(const std::string &device);
+  CanSender();
+  ~CanSender();
 
- void init(const std::string& device);
- void send(char* can_frame);
+  void init(const std::string &device);
+  void send(char *can_frame);
 };
-  
-}
 
+} // namespace mycansend
 
 #endif /* ifndef CANSEND_H */

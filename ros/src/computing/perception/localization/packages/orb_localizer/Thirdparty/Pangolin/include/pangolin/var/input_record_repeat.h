@@ -30,60 +30,57 @@
 
 #include <pangolin/pangolin.h>
 
+#include <fstream>
 #include <list>
 #include <string>
-#include <fstream>
 
-namespace pangolin
-{
+namespace pangolin {
 
-struct FrameInput
-{
-    int index;
-    std::string var;
-    std::string val;
+struct FrameInput {
+  int index;
+  std::string var;
+  std::string val;
 };
 
-struct PANGOLIN_EXPORT InputRecordRepeat
-{
-    InputRecordRepeat(const std::string& var_record_prefix);
-    ~InputRecordRepeat();
-    
-    void SetIndex(int id);
-    
-    void Record();
-    void Stop();
-    
-    void LoadBuffer(const std::string& filename);
-    void SaveBuffer(const std::string& filename);
-    void ClearBuffer();
-    
-    void PlayBuffer();
-    void PlayBuffer(size_t start, size_t end);
-    
-    void UpdateVariable(const std::string& name );
-    
-    template<typename T>
-    inline void UpdateVariable(const Var<T>& var ) {
-        GuiVarChanged((void*)this, var.var->Meta().full_name, *var.var);
-    }
-    
-    size_t Size();
-    
+struct PANGOLIN_EXPORT InputRecordRepeat {
+  InputRecordRepeat(const std::string &var_record_prefix);
+  ~InputRecordRepeat();
+
+  void SetIndex(int id);
+
+  void Record();
+  void Stop();
+
+  void LoadBuffer(const std::string &filename);
+  void SaveBuffer(const std::string &filename);
+  void ClearBuffer();
+
+  void PlayBuffer();
+  void PlayBuffer(size_t start, size_t end);
+
+  void UpdateVariable(const std::string &name);
+
+  template <typename T> inline void UpdateVariable(const Var<T> &var) {
+    GuiVarChanged((void *)this, var.var->Meta().full_name, *var.var);
+  }
+
+  size_t Size();
+
 protected:
-    bool record;
-    bool play;
-    
-    int index;
-    std::ofstream file;
-    std::string filename;
-    
-    std::list<FrameInput> play_queue;
-    std::list<FrameInput> record_queue;
-    
-    static void GuiVarChanged(void* data, const std::string& name, VarValueGeneric& var);
+  bool record;
+  bool play;
+
+  int index;
+  std::ofstream file;
+  std::string filename;
+
+  std::list<FrameInput> play_queue;
+  std::list<FrameInput> record_queue;
+
+  static void GuiVarChanged(void *data, const std::string &name,
+                            VarValueGeneric &var);
 };
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_INPUT_RECORD_REPEAT_H

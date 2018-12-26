@@ -6,17 +6,16 @@
 #include <map>
 #include <string>
 
+#include <QAbstractButton>
+#include <QLabel>
 #include <QMainWindow>
 #include <QString>
-#include <QLabel>
-#include <QAbstractButton>
 
 namespace Ui {
-  class LabelMakerGui;
+class LabelMakerGui;
 }
 
-class LabelMakerGui : public QMainWindow
-{
+class LabelMakerGui : public QMainWindow {
   Q_OBJECT
 
 public:
@@ -28,7 +27,7 @@ private slots:
   void ShowImage();
 
   // Change background color to corresponding one
-  void SetRadioButtonsColor(QAbstractButton* selected_button);
+  void SetRadioButtonsColor(QAbstractButton *selected_button);
 
   // The behavior of "Next" and "Previous" button
   void SaveAndGoNext();
@@ -36,6 +35,7 @@ private slots:
 
   // The behavior of "Reset Selection" button
   void ResetSelection();
+
 private:
   // The utility function to get directory path
   QString GetTargetDirectoryPath();

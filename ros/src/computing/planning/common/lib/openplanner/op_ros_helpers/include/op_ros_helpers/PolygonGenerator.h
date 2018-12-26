@@ -7,88 +7,79 @@
 #define OP_POLYGONGENERATOR_H_
 
 #include "op_planner/RoadNetwork.h"
-#include <sensor_msgs/PointCloud2.h>
-#include <visualization_msgs/Marker.h>
-#include <pcl_conversions/pcl_conversions.h>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <visualization_msgs/Marker.h>
 
-namespace PlannerHNS
-{
+namespace PlannerHNS {
 
-class QuarterView
-{
+class QuarterView {
 public:
-	int id;
-	int min_ang;
-	int max_ang;
-	WayPoint max_from_center;
-	bool bFirst;
+  int id;
+  int min_ang;
+  int max_ang;
+  WayPoint max_from_center;
+  bool bFirst;
 
-	QuarterView(const int& min_a, const int& max_a, const int& index)
-	{
-		min_ang = min_a;
-		max_ang = max_a;
-		id = index;
-		bFirst = true;
-	}
+  QuarterView(const int &min_a, const int &max_a, const int &index) {
+    min_ang = min_a;
+    max_ang = max_a;
+    id = index;
+    bFirst = true;
+  }
 
-	void InitQuarterView(const int& min_a, const int& max_a, const int& index)
-	{
-		min_ang = min_a;
-		max_ang = max_a;
-		id = index;
-		bFirst = true;
-	}
+  void InitQuarterView(const int &min_a, const int &max_a, const int &index) {
+    min_ang = min_a;
+    max_ang = max_a;
+    id = index;
+    bFirst = true;
+  }
 
-	void ResetQuarterView()
-	{
-		bFirst = true;
-	}
+  void ResetQuarterView() { bFirst = true; }
 
-	bool UpdateQuarterView(const WayPoint& v)
-	{
-		if(v.pos.a <= min_ang || v.pos.a > max_ang)
-			return false;
+  bool UpdateQuarterView(const WayPoint &v) {
+    if (v.pos.a <= min_ang || v.pos.a > max_ang)
+      return false;
 
-		if(bFirst)
-		{
-			max_from_center = v;
-			bFirst = false;
-		}
-		else if(v.cost > max_from_center.cost)
-			max_from_center = v;
+    if (bFirst) {
+      max_from_center = v;
+      bFirst = false;
+    } else if (v.cost > max_from_center.cost)
+      max_from_center = v;
 
-		return true;
-	}
+    return true;
+  }
 
-	bool GetMaxPoint(WayPoint& maxPoint)
-	{
-		if(bFirst)
-			return false;
-		else
-			maxPoint = max_from_center;
+  bool GetMaxPoint(WayPoint &maxPoint) {
+    if (bFirst)
+      return false;
+    else
+      maxPoint = max_from_center;
 
-		return true;
-	}
+    return true;
+  }
 };
 
-class PolygonGenerator
-{
+class PolygonGenerator {
 
 public:
+  GPSPoint m_Centroid;
+  std::vector<QuarterView> m_Quarters;
+  std::vector<GPSPoint> m_Polygon;
 
-	GPSPoint m_Centroid;
-	std::vector<QuarterView> m_Quarters;
-	std::vector<GPSPoint> m_Polygon;
-
-	PolygonGenerator(int nQuarters);
-	virtual ~PolygonGenerator();
-	std::vector<QuarterView> CreateQuarterViews(const int& nResolution);
-	std::vector<GPSPoint> EstimateClusterPolygon(const pcl::PointCloud<pcl::PointXYZ>& cluster, const GPSPoint& original_centroid, GPSPoint& new_centroid, const double& polygon_resolution = 1.0);
+  PolygonGenerator(int nQuarters);
+  virtual ~PolygonGenerator();
+  std::vector<QuarterView> CreateQuarterViews(const int &nResolution);
+  std::vector<GPSPoint>
+  EstimateClusterPolygon(const pcl::PointCloud<pcl::PointXYZ> &cluster,
+                         const GPSPoint &original_centroid,
+                         GPSPoint &new_centroid,
+                         const double &polygon_resolution = 1.0);
 };
 
-} /* namespace PlannerXNS */
+} // namespace PlannerHNS
 
 #endif /* OP_POLYGONGENERATOR_H_ */

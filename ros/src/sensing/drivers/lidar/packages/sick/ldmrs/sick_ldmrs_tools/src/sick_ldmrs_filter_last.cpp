@@ -36,26 +36,23 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <pcl_ros/point_cloud.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sick_ldmrs_msgs/sick_ldmrs_point_type.h>
-#include <pcl_ros/point_cloud.h>
 
 typedef sick_ldmrs_msgs::SICK_LDMRS_Point PointT;
 typedef pcl::PointCloud<PointT> PointCloudT;
 
 ros::Publisher pub;
 
-void callback(const PointCloudT::ConstPtr& cloud)
-{
+void callback(const PointCloudT::ConstPtr &cloud) {
   PointCloudT::Ptr cloud_filtered = boost::make_shared<PointCloudT>();
   cloud_filtered->header = cloud->header;
 
   // last: only publish last echo
-  for (size_t i = 0; i < cloud->size(); i++)
-  {
+  for (size_t i = 0; i < cloud->size(); i++) {
     // all points that are *not* the last echo have FlagTransparent set
-    if (!(cloud->points[i].flags & sick_ldmrs_msgs::FlagTransparent))
-    {
+    if (!(cloud->points[i].flags & sick_ldmrs_msgs::FlagTransparent)) {
       cloud_filtered->points.push_back(cloud->points[i]);
     }
   }
@@ -63,8 +60,7 @@ void callback(const PointCloudT::ConstPtr& cloud)
   pub.publish(cloud_filtered);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   ros::init(argc, argv, "sick_ldmrs_filter_last");
   ros::NodeHandle nh;
 

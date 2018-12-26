@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-//! @file    mip_sdk_system.h 
+//! @file    mip_sdk_system.h
 //! @author  Nathan Miller
 //! @version 1.1
 //
@@ -8,32 +8,31 @@
 //
 // External dependencies:
 //
-//  
-// 
-//!@copyright 2014 Lord Microstrain Sensing Systems. 
+//
+//
+//!@copyright 2014 Lord Microstrain Sensing Systems.
 //
 //!@section CHANGES
-//! 
+//!
 //
 //!@section LICENSE
 //!
-//! THE PRESENT SOFTWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING 
-//! CUSTOMERS WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER 
+//! THE PRESENT SOFTWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING
+//! CUSTOMERS WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER
 //! FOR THEM TO SAVE TIME. AS A RESULT, LORD MICROSTRAIN SENSING SYSTEMS
-//! SHALL NOT BE HELD LIABLE FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES 
-//! WITH RESPECT TO ANY CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR 
-//! THE USE MADE BY CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION 
-//! WITH THEIR PRODUCTS.
+//! SHALL NOT BE HELD LIABLE FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES
+//! WITH RESPECT TO ANY CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR
+//! THE USE MADE BY CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN
+//! CONNECTION WITH THEIR PRODUCTS.
 //
 /////////////////////////////////////////////////////////////////////////////
 
 #ifndef _MIP_SDK_SYSTEM_H
 #define _MIP_SDK_SYSTEM_H
 
-
 ////////////////////////////////////////////////////////////////////////////////
 //
-//Include Files
+// Include Files
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -45,8 +44,7 @@
 // Defines
 //
 ////////////////////////////////////////////////////////////////////////////////
-//! @def 
-
+//! @def
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -54,22 +52,19 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#define MIP_SYSTEM_COMMAND_SET				0x7F
-
+#define MIP_SYSTEM_COMMAND_SET 0x7F
 
 ////////////////////////////////////////////////////////////////////////////////
 // BASE COMMAND DESCRIPTORS (command desc are < 0x80)
 ////////////////////////////////////////////////////////////////////////////////
 
-#define MIP_SYSTEM_CMD_COM_MODE           	0x10	 
-
+#define MIP_SYSTEM_CMD_COM_MODE 0x10
 
 ////////////////////////////////////////////////////////////////////////////////
 // BASE REPLY DESCRIPTORS (reply desc are >= 0x80)
 ////////////////////////////////////////////////////////////////////////////////
 
-#define MIP_SYSTEM_REPLY_COM_MODE    		0x90	
-
+#define MIP_SYSTEM_REPLY_COM_MODE 0x90
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -77,14 +72,13 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Function Prototypes
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-u16 mip_system_com_mode(mip_interface *device_interface, u8 function_selector, u8 *com_mode);
-
+u16 mip_system_com_mode(mip_interface *device_interface, u8 function_selector,
+                        u8 *com_mode);
 
 #endif

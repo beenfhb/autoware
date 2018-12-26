@@ -28,52 +28,49 @@
 #ifndef PANGOLIN_THREADED_WRITE_H
 #define PANGOLIN_THREADED_WRITE_H
 
+#include <fstream>
 #include <iostream>
 #include <streambuf>
-#include <fstream>
 
-#include <pangolin/compat/thread.h>
-#include <pangolin/compat/mutex.h>
 #include <pangolin/compat/condition_variable.h>
+#include <pangolin/compat/mutex.h>
+#include <pangolin/compat/thread.h>
 
-namespace pangolin
-{
+namespace pangolin {
 
-class PANGOLIN_EXPORT threadedfilebuf : public std::streambuf
-{
+class PANGOLIN_EXPORT threadedfilebuf : public std::streambuf {
 public:
-    ~threadedfilebuf();
-    threadedfilebuf();
-    threadedfilebuf(const std::string& filename, unsigned int buffer_size_bytes);
-    
-    void open(const std::string& filename, unsigned int buffer_size_bytes);
-    void close();
-    
-    void operator()();
-    
+  ~threadedfilebuf();
+  threadedfilebuf();
+  threadedfilebuf(const std::string &filename, unsigned int buffer_size_bytes);
+
+  void open(const std::string &filename, unsigned int buffer_size_bytes);
+  void close();
+
+  void operator()();
+
 protected:
-    //! Override streambuf::xsputn for asynchronous write
-    std::streamsize xsputn(const char * s, std::streamsize n);
+  //! Override streambuf::xsputn for asynchronous write
+  std::streamsize xsputn(const char *s, std::streamsize n);
 
-    //! Override streambuf::overflow for asynchronous write
-    int overflow(int c);
-    
-    std::filebuf file;
-    char* mem_buffer;
-    std::streamsize mem_size;
-    std::streamsize mem_max_size;
-    std::streamsize mem_start;
-    std::streamsize mem_end;
-    
-    boostd::mutex update_mutex;
-    boostd::condition_variable cond_queued;
-    boostd::condition_variable cond_dequeued;
-    boostd::thread write_thread;
+  //! Override streambuf::overflow for asynchronous write
+  int overflow(int c);
 
-    bool should_run;
+  std::filebuf file;
+  char *mem_buffer;
+  std::streamsize mem_size;
+  std::streamsize mem_max_size;
+  std::streamsize mem_start;
+  std::streamsize mem_end;
+
+  boostd::mutex update_mutex;
+  boostd::condition_variable cond_queued;
+  boostd::condition_variable cond_dequeued;
+  boostd::thread write_thread;
+
+  bool should_run;
 };
 
-}
-
+} // namespace pangolin
 
 #endif // PANGOLIN_THREADED_WRITE_H

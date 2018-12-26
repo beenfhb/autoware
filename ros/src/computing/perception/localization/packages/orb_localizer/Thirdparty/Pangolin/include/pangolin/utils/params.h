@@ -31,42 +31,35 @@
 #include <pangolin/platform.h>
 #include <pangolin/utils/type_convert.h>
 
-#include <string>
 #include <map>
+#include <string>
 
-namespace pangolin
-{
+namespace pangolin {
 
-class PANGOLIN_EXPORT Params
-{
+class PANGOLIN_EXPORT Params {
 public:
-    typedef std::map<std::string,std::string> ParamMap;
+  typedef std::map<std::string, std::string> ParamMap;
 
-    bool Contains(const std::string& key) const
-    {
-        return params.find(key) != params.end();
+  bool Contains(const std::string &key) const {
+    return params.find(key) != params.end();
+  }
+
+  template <typename T> T Get(const std::string &key, T default_val) const {
+    ParamMap::const_iterator v = params.find(key);
+    if (v != params.end()) {
+      return Convert<T, std::string>::Do(v->second);
+    } else {
+      return default_val;
     }
+  }
 
-    template<typename T>
-    T Get(const std::string& key, T default_val) const
-    {
-        ParamMap::const_iterator v = params.find(key);
-        if(v != params.end()) {
-            return Convert<T, std::string>::Do(v->second);
-        }else{
-            return default_val;
-        }
-    }
+  template <typename T> void Set(const std::string &key, const T &val) {
+    params[key] = Convert<std::string, T>::Do(val);
+  }
 
-    template<typename T>
-    void Set(const std::string& key, const T& val)
-    {
-        params[key] = Convert<std::string,T>::Do(val);
-    }
-
-    ParamMap params;
+  ParamMap params;
 };
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_PARAMS_H

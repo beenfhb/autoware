@@ -34,9 +34,9 @@
 #include <pangolin/console/ConsoleView.h>
 #endif // HAVE_PYTHON
 
-#include <pangolin/display/view.h>
 #include <pangolin/compat/function.h>
 #include <pangolin/display/user_app.h>
+#include <pangolin/display/view.h>
 
 #include <map>
 #include <queue>
@@ -45,67 +45,64 @@
 #include <pangolin/video/video_output.h>
 #endif // BUILD_PANGOLIN_VIDEO
 
+namespace pangolin {
 
-namespace pangolin
-{
+typedef std::map<const std::string, View *> ViewMap;
+typedef std::map<int, boostd::function<void(void)>> KeyhookMap;
 
-typedef std::map<const std::string,View*> ViewMap;
-typedef std::map<int,boostd::function<void(void)> > KeyhookMap;
+struct PANGOLIN_EXPORT PangolinGl {
+  PangolinGl();
+  ~PangolinGl();
 
-struct PANGOLIN_EXPORT PangolinGl
-{
-    PangolinGl();
-    ~PangolinGl();
-    
-    // Base container for displays
-    View base;
-    
-    // Named views which are managed by pangolin (i.e. created / deleted by pangolin)
-    ViewMap named_managed_views;
+  // Base container for displays
+  View base;
 
-    // Optional user app
-    UserApp* user_app;
-    
-    // Global keypress hooks
-    KeyhookMap keypress_hooks;
-    
-    // Manage fullscreen (ToggleFullscreen is quite new)
-    bool is_double_buffered;
-    bool is_fullscreen;
-    GLint windowed_size[2];
-    
-    // State relating to interactivity
-    bool quit;
-    int had_input;
-    int has_resized;
-    int mouse_state;
-    View* activeDisplay;
-    
-    std::queue<std::pair<std::string,Viewport> > screen_capture;
-    
+  // Named views which are managed by pangolin (i.e. created / deleted by
+  // pangolin)
+  ViewMap named_managed_views;
+
+  // Optional user app
+  UserApp *user_app;
+
+  // Global keypress hooks
+  KeyhookMap keypress_hooks;
+
+  // Manage fullscreen (ToggleFullscreen is quite new)
+  bool is_double_buffered;
+  bool is_fullscreen;
+  GLint windowed_size[2];
+
+  // State relating to interactivity
+  bool quit;
+  int had_input;
+  int has_resized;
+  int mouse_state;
+  View *activeDisplay;
+
+  std::queue<std::pair<std::string, Viewport>> screen_capture;
+
 #ifdef BUILD_PANGOLIN_VIDEO
-    View* record_view;
-    VideoOutput recorder;
+  View *record_view;
+  VideoOutput recorder;
 #endif
 
 #ifdef HAVE_PYTHON
-    ConsoleView* console_view;
+  ConsoleView *console_view;
 #endif
 };
 
 // Implemented in platform specific display file.
 PANGOLIN_EXPORT
-void PangolinPlatformInit(PangolinGl& context);
+void PangolinPlatformInit(PangolinGl &context);
 
 // Implemented in platform specific display file.
 PANGOLIN_EXPORT
-void PangolinPlatformDeinit(PangolinGl& context);
+void PangolinPlatformDeinit(PangolinGl &context);
 
 #ifdef BUILD_PANGOLIN_VIDEO
-  void SaveFramebuffer(VideoOutput& video, const Viewport& v);
+void SaveFramebuffer(VideoOutput &video, const Viewport &v);
 #endif // BUILD_PANGOLIN_VIDEO
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_DISPLAY_INTERNAL_H
-

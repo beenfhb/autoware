@@ -1,30 +1,29 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
-#include <calibrationtoolkit.h>
+#include <QDebug>
 #include <QInputDialog>
+#include <QMainWindow>
 #include <QSettings>
-#include <QString>
 #include <QSize>
 #include <QSizeF>
+#include <QString>
 #include <QStringList>
-#include <QDebug>
+#include <calibrationtoolkit.h>
 
 namespace Ui {
 class MainWindow;
 }
 
-class MainWindow : public QMainWindow
-{
-    Q_OBJECT
+class MainWindow : public QMainWindow {
+  Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
+  explicit MainWindow(QWidget *parent = 0);
+  ~MainWindow();
 
 private:
-    Ui::MainWindow *ui;
+  Ui::MainWindow *ui;
 };
 
 #endif // MAINWINDOW_H

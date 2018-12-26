@@ -5,8 +5,8 @@
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
  *
- *  * Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *  * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  *
  *  * Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
@@ -18,15 +18,16 @@
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- *  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
 自分から認識した物体の種類と位置情報をデータベースに送信する
@@ -46,41 +47,40 @@
 
 */
 
+#include "autoware_can_msgs/CANInfo.h"
 #include <ros/ros.h>
 #include <std_msgs/String.h>
-#include "autoware_can_msgs/CANInfo.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include <iostream>
 #include <math.h>
 #include <pthread.h>
-#include <vector>
-#include <iostream>
-#include <string>
 #include <sstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
 #include <sys/time.h>
+#include <time.h>
+#include <vector>
 
 #include <obj_db.h>
 
 using namespace std;
 
-//default server name and port to send data
+// default server name and port to send data
 static const string default_db_host = "db1.ertl.jp";
 static const int default_db_port = 5678;
 
-//flag for comfirming whether updating position or not
+// flag for comfirming whether updating position or not
 static bool canGetFlag;
 
-//send to server class
+// send to server class
 static SendData sd;
 
-//send data
+// send data
 static string CanSql;
 
-//wrap SendData class
-static void send_sql()
-{
+// wrap SendData class
+static void send_sql() {
   std::string value = make_header(2, 1);
 
   value += CanSql;
@@ -95,12 +95,11 @@ static void send_sql()
   std::cout << "retrun message from DBserver : " << res << std::endl;
 }
 
-static void* intervalCall(void *unused)
-{
-  while(1){
-    //If angle and position data is not updated from prevous data send,
-    //data is not sent
-    if(!canGetFlag) {
+static void *intervalCall(void *unused) {
+  while (1) {
+    // If angle and position data is not updated from prevous data send,
+    // data is not sent
+    if (!canGetFlag) {
       sleep(1);
       continue;
     }
@@ -113,8 +112,7 @@ static void* intervalCall(void *unused)
   return nullptr;
 }
 
-static void can_infoCallback(const autoware_can_msgs::CANInfo& can)
-{
+static void can_infoCallback(const autoware_can_msgs::CANInfo &can) {
   ostringstream oss;
 
   oss << "INSERT INTO CAN(";
@@ -234,34 +232,33 @@ static void can_infoCallback(const autoware_can_msgs::CANInfo& can)
   canGetFlag = true;
 }
 
-int main(int argc, char **argv)
-{
-  ros::init(argc ,argv, "can_uploader") ;
+int main(int argc, char **argv) {
+  ros::init(argc, argv, "can_uploader");
   cout << "can_uploader" << endl;
 
   /**
    * NodeHandle is the main access point to communications with the ROS system.
-   * The first NodeHandle constructed will fully initialize this node, and the last
-   * NodeHandle destructed will close down the node.
+   * The first NodeHandle constructed will fully initialize this node, and the
+   * last NodeHandle destructed will close down the node.
    */
   ros::NodeHandle n;
   ros::Subscriber can = n.subscribe("/can_info", 1, can_infoCallback);
 
-  //set server name and port
+  // set server name and port
   string host_name = default_db_host;
   int port = default_db_port;
-  if(argc >= 3){
+  if (argc >= 3) {
     host_name = argv[1];
     port = std::atoi(argv[2]);
   }
 
   sd = SendData(host_name, port);
 
-  //set angle and position flag : false at first
+  // set angle and position flag : false at first
   canGetFlag = false;
 
   pthread_t th;
-  if(pthread_create(&th, nullptr, intervalCall, nullptr)){
+  if (pthread_create(&th, nullptr, intervalCall, nullptr)) {
     printf("thread create error\n");
   }
   pthread_detach(th);

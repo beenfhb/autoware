@@ -21,24 +21,20 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
 
-namespace decision_maker
-{
-void DecisionMakerNode::update(void)
-{
+namespace decision_maker {
+void DecisionMakerNode::update(void) {
   update_msgs();
   if (ctx)
     ctx->update();
 }
 
-void DecisionMakerNode::run(void)
-{
+void DecisionMakerNode::run(void) {
   ros::Rate loop_rate(1);
 
   // for subscribe callback function
   ros::AsyncSpinner spinner(3);
   spinner.start();
-  while (ros::ok())
-  {
+  while (ros::ok()) {
     ros::Time begin = ros::Time::now();
     update();
     if (enableDisplayMarker)
@@ -55,4 +51,4 @@ void DecisionMakerNode::run(void)
     loop_rate.sleep();
   }
 }
-}
+} // namespace decision_maker

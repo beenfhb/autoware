@@ -27,44 +27,40 @@
 
 #include <pangolin/gl/glchar.h>
 
-namespace pangolin
-{
+namespace pangolin {
 
-GlChar::GlChar()
-    : x_step(0.0f)
-{
-    // Uninitialised
+GlChar::GlChar() : x_step(0.0f) {
+  // Uninitialised
 }
 
-GlChar::GlChar(int tw, int th, int x, int y, int w, int h, GLfloat advance, GLfloat ox, GLfloat oy)
-    : x_step(advance)
-{
-    const GLfloat u = (GLfloat)x / (GLfloat)tw;
-    const GLfloat v = (GLfloat)y / (GLfloat)th;
-    const GLfloat u2 = (GLfloat)(x + w) / (GLfloat)tw;
-    const GLfloat v2 = (GLfloat)(y + h) / (GLfloat)th;
+GlChar::GlChar(int tw, int th, int x, int y, int w, int h, GLfloat advance,
+               GLfloat ox, GLfloat oy)
+    : x_step(advance) {
+  const GLfloat u = (GLfloat)x / (GLfloat)tw;
+  const GLfloat v = (GLfloat)y / (GLfloat)th;
+  const GLfloat u2 = (GLfloat)(x + w) / (GLfloat)tw;
+  const GLfloat v2 = (GLfloat)(y + h) / (GLfloat)th;
 
-    // Setup u,v tex coords
-    vs[0] = XYUV(ox, oy,     u,v );
-    vs[1] = XYUV(ox, oy-h,   u,v2 );
-    vs[2] = XYUV(w+ox, oy-h, u2,v2 );
-    vs[3] = XYUV(w+ox, oy,   u2,v );
+  // Setup u,v tex coords
+  vs[0] = XYUV(ox, oy, u, v);
+  vs[1] = XYUV(ox, oy - h, u, v2);
+  vs[2] = XYUV(w + ox, oy - h, u2, v2);
+  vs[3] = XYUV(w + ox, oy, u2, v);
 
-    y_min = oy-h;
-    y_max = oy;
+  y_min = oy - h;
+  y_max = oy;
 }
 
-void GlChar::Draw() const
-{
-    glVertexPointer(2, GL_FLOAT, sizeof(XYUV), &vs[0].x);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(XYUV), &vs[0].tu);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnable(GL_TEXTURE_2D);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glDisable(GL_TEXTURE_2D);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+void GlChar::Draw() const {
+  glVertexPointer(2, GL_FLOAT, sizeof(XYUV), &vs[0].x);
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glTexCoordPointer(2, GL_FLOAT, sizeof(XYUV), &vs[0].tu);
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  glEnable(GL_TEXTURE_2D);
+  glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+  glDisable(GL_TEXTURE_2D);
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
-}
+} // namespace pangolin

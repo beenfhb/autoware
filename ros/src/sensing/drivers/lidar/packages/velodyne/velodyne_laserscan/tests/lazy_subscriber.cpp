@@ -6,11 +6,11 @@
 #include <gtest/gtest.h>
 
 #include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/LaserScan.h>
+#include <sensor_msgs/PointCloud2.h>
 
 // Subscriber receive callback
-void recv(const sensor_msgs::LaserScanConstPtr& msg) {}
+void recv(const sensor_msgs::LaserScanConstPtr &msg) {}
 
 // Build and publish a minimal PointCloud2 message
 void publish(const ros::Publisher &pub) {
@@ -50,10 +50,10 @@ void publish(const ros::Publisher &pub) {
 }
 
 // Verify correct handling of subscribe and unsubscribe events
-TEST(Main, subscribe_unsubscribe)
-{
+TEST(Main, subscribe_unsubscribe) {
   ros::NodeHandle nh;
-  ros::Publisher pub = nh.advertise<sensor_msgs::PointCloud2>("velodyne_points", 2);
+  ros::Publisher pub =
+      nh.advertise<sensor_msgs::PointCloud2>("velodyne_points", 2);
 
   // Wait for node to startup
   ros::WallDuration(2.0).sleep();
@@ -70,7 +70,8 @@ TEST(Main, subscribe_unsubscribe)
   EXPECT_EQ(1, sub.getNumPublishers());
   EXPECT_EQ(1, pub.getNumSubscribers());
 
-  // Unsubscribe from 'scan' and expect the node to unsubscribe from 'velodyne_points'
+  // Unsubscribe from 'scan' and expect the node to unsubscribe from
+  // 'velodyne_points'
   sub.shutdown();
   for (size_t i = 10; i > 0; i--) {
     publish(pub);
@@ -82,8 +83,7 @@ TEST(Main, subscribe_unsubscribe)
 }
 
 // Run all the tests that were declared with TEST()
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "test_lazy_subscriber");
   return RUN_ALL_TESTS();

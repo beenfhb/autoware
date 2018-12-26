@@ -5,12 +5,10 @@
 #ifndef ERRORHANDLER_HPP
 #define ERRORHANDLER_HPP
 
-
 #include "../BasicDatatypes.hpp"
-#include <stdexcept>	// for throw
+#include <stdexcept> // for throw
 
-
-#define printInfoMessage(a, b)  (b ? infoMessage(a, b):doNothing())
+#define printInfoMessage(a, b) (b ? infoMessage(a, b) : doNothing())
 
 // Fehler-"behandlung": Schreibe die Fehlermeldung und beende das Programm.
 void dieWithError(std::string errorMessage);

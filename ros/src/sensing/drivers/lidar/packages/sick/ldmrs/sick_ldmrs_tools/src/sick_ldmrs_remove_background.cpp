@@ -36,9 +36,9 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <pcl/point_cloud.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sick_ldmrs_msgs/sick_ldmrs_point_type.h>
-#include <pcl/point_cloud.h>
 
 typedef sick_ldmrs_msgs::SICK_LDMRS_Point PointT;
 typedef pcl::PointCloud<PointT> PointCloudT;
@@ -50,49 +50,44 @@ double min_dist_ratio_;
 
 PointCloudT::Ptr cloud_bg_;
 
-void callback(const sensor_msgs::PointCloud2::ConstPtr& pc)
-{
+void callback(const sensor_msgs::PointCloud2::ConstPtr &pc) {
   PointCloudT::Ptr cloud = boost::make_shared<PointCloudT>();
   pcl::fromROSMsg(*pc, *cloud);
 
-  if (!cloud->isOrganized())
-  {
+  if (!cloud->isOrganized()) {
     ROS_ERROR_THROTTLE(15.0, "Input point cloud is not organized!");
     return;
   }
 
-  if (cloud_bg_ && (cloud->width != cloud_bg_->width || cloud->height != cloud_bg_->height))
-  {
-    ROS_INFO("Dimensions of input cloud different from stored background, resetting background.");
+  if (cloud_bg_ && (cloud->width != cloud_bg_->width ||
+                    cloud->height != cloud_bg_->height)) {
+    ROS_INFO("Dimensions of input cloud different from stored background, "
+             "resetting background.");
     cloud_bg_.reset();
   }
 
-  if (!cloud_bg_)
-  {
+  if (!cloud_bg_) {
     cloud_bg_ = cloud;
     return;
   }
 
   PointT invalid;
   invalid.x = invalid.y = invalid.z = std::numeric_limits<float>::quiet_NaN();
-//  PointCloudT::Ptr cloud_out = boost::make_shared<PointCloudT>(width, height, invalid);
-//  cloud_out->is_dense = false;
+  //  PointCloudT::Ptr cloud_out = boost::make_shared<PointCloudT>(width,
+  //  height, invalid); cloud_out->is_dense = false;
 
-  for (size_t i = 0; i < cloud->size(); i++)
-  {
+  for (size_t i = 0; i < cloud->size(); i++) {
     const PointT &p_in = cloud->points[i];
     const PointT &p_bg = cloud_bg_->points[i];
 
     // if input point invalid -> output invalid
-    if (!pcl::isFinite<PointT>(p_in))
-    {
+    if (!pcl::isFinite<PointT>(p_in)) {
       continue;
     }
 
     // if background invalid (and input valid) -> output valid
-    if (!pcl::isFinite<PointT>(p_bg))
-    {
-      (*cloud_bg_)[i] = p_in;     // store new background point
+    if (!pcl::isFinite<PointT>(p_bg)) {
+      (*cloud_bg_)[i] = p_in; // store new background point
       continue;
     }
 
@@ -101,14 +96,11 @@ void callback(const sensor_msgs::PointCloud2::ConstPtr& pc)
     float dist_bg = p_bg.getVector3fMap().norm();
     float diff = dist_bg - dist_in;
 
-    if (diff < 0)
-    {
+    if (diff < 0) {
       // point is further away than previous background
       (*cloud_bg_)[i] = p_in;
       (*cloud)[i] = invalid;
-    }
-    else if (diff / dist_bg < min_dist_ratio_)
-    {
+    } else if (diff / dist_bg < min_dist_ratio_) {
       // point is too close to background
       (*cloud)[i] = invalid;
     }
@@ -116,19 +108,20 @@ void callback(const sensor_msgs::PointCloud2::ConstPtr& pc)
     // ... otherwise, point is foreground => don't invalidate
   }
 
-  sensor_msgs::PointCloud2::Ptr msg = boost::make_shared<sensor_msgs::PointCloud2>();
+  sensor_msgs::PointCloud2::Ptr msg =
+      boost::make_shared<sensor_msgs::PointCloud2>();
   pcl::toROSMsg(*cloud, *msg);
   msg->header = pc->header;
   pub.publish(msg);
 
-  sensor_msgs::PointCloud2::Ptr msg_bg = boost::make_shared<sensor_msgs::PointCloud2>();
+  sensor_msgs::PointCloud2::Ptr msg_bg =
+      boost::make_shared<sensor_msgs::PointCloud2>();
   pcl::toROSMsg(*cloud_bg_, *msg_bg);
   msg_bg->header = pc->header;
   pub_bg.publish(msg_bg);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   ros::init(argc, argv, "sick_ldmrs_remove_background");
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");

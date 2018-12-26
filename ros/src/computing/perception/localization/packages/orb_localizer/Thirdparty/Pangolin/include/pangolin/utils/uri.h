@@ -32,20 +32,18 @@
 #include <pangolin/utils/params.h>
 #include <string>
 
-namespace pangolin
-{
+namespace pangolin {
 
-class PANGOLIN_EXPORT Uri : public Params
-{
+class PANGOLIN_EXPORT Uri : public Params {
 public:
-    std::string scheme;
-    std::string url;
+  std::string scheme;
+  std::string url;
 };
 
 //! Parse string as Video URI
 PANGOLIN_EXPORT
-Uri ParseUri(const std::string& str_uri);
+Uri ParseUri(const std::string &str_uri);
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_URI_H

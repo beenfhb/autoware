@@ -30,13 +30,12 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
+#include "adi_driver/adis16470.h"
 #include "ros/ros.h"
 #include "sensor_msgs/Imu.h"
-#include "adi_driver/adis16470.h"
+#include <string>
 
-class ImuNode
-{
+class ImuNode {
 public:
   Adis16470 imu;
   ros::NodeHandle node_handle_;
@@ -46,9 +45,7 @@ public:
   bool burst_mode_;
   double rate_;
 
-  explicit ImuNode(ros::NodeHandle nh)
-    : node_handle_(nh)
-  {
+  explicit ImuNode(ros::NodeHandle nh) : node_handle_(nh) {
     // Read parameters
     node_handle_.param("device", device_, std::string("/dev/ttyACM0"));
     node_handle_.param("frame_id", frame_id_, std::string("imu"));
@@ -58,31 +55,23 @@ public:
     ROS_INFO("device: %s", device_.c_str());
     ROS_INFO("frame_id: %s", frame_id_.c_str());
     ROS_INFO("rate: %f [Hz]", rate_);
-    ROS_INFO("burst_mode: %s", (burst_mode_ ? "true": "false"));
+    ROS_INFO("burst_mode: %s", (burst_mode_ ? "true" : "false"));
 
     imu_data_pub_ = node_handle_.advertise<sensor_msgs::Imu>("data_raw", 100);
   }
 
-  ~ImuNode()
-  {
-    imu.closePort();
-  }
+  ~ImuNode() { imu.closePort(); }
 
   /**
    * @brief Check if the device is opened
    */
-  bool is_opened(void)
-  {
-    return (imu.fd_ >= 0);
-  }
+  bool is_opened(void) { return (imu.fd_ >= 0); }
   /**
    * @brief Open IMU device file
    */
-  bool open(void)
-  {
+  bool open(void) {
     // Open device file
-    if (imu.openPort(device_) < 0)
-    {
+    if (imu.openPort(device_) < 0) {
       ROS_ERROR("Failed to open device %s", device_.c_str());
     }
     // Wait 10ms for SPI ready
@@ -91,8 +80,7 @@ public:
     imu.get_product_id(pid);
     ROS_INFO("Product ID: %x\n", pid);
   }
-  int publish_imu_data()
-  {
+  int publish_imu_data() {
     sensor_msgs::Imu data;
     data.header.frame_id = frame_id_;
     data.header.stamp = ros::Time::now();
@@ -115,31 +103,20 @@ public:
 
     imu_data_pub_.publish(data);
   }
-  bool spin()
-  {
+  bool spin() {
     ros::Rate loop_rate(rate_);
 
-    while (ros::ok())
-    {
-      if (burst_mode_)
-      {
-        if (imu.update_burst() == 0)
-        {
+    while (ros::ok()) {
+      if (burst_mode_) {
+        if (imu.update_burst() == 0) {
           publish_imu_data();
-        }
-        else
-        {
+        } else {
           ROS_ERROR("Cannot update burst");
         }
-      }
-      else
-      {
-        if (imu.update() == 0)
-        {
+      } else {
+        if (imu.update() == 0) {
           publish_imu_data();
-        }
-        else
-        {
+        } else {
           ROS_ERROR("Cannot update");
         }
       }
@@ -150,19 +127,17 @@ public:
   }
 };
 
-int main(int argc, char** argv)
-{
+int main(int argc, char **argv) {
   ros::init(argc, argv, "imu");
   ros::NodeHandle nh("~");
   ImuNode node(nh);
 
   node.open();
-  while (!node.is_opened())
-  {
+  while (!node.is_opened()) {
     ROS_WARN("Keep trying to open the device in 1 second period...");
     sleep(1);
     node.open();
   }
   node.spin();
-  return(0);
+  return (0);
 }

@@ -1,21 +1,21 @@
 /***************************************************************************
-*   Copyright (C) 2005 by TAKEUCHI Eijiro,,,   *
-*                                                                         *
-*   This program is free software; you can redistribute it and/or modify  *
-*   it under the terms of the GNU General Public License as published by  *
-*   the Free Software Foundation; either version 2 of the License, or     *
-*   (at your option) any later version.                                   *
-*                                                                         *
-*   This program is distributed in the hope that it will be useful,       *
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
-*   GNU General Public License for more details.                          *
-*                                                                         *
-*   You should have received a copy of the GNU General Public License     *
-*   along with this program; if not, write to the                         *
-*   Free Software Foundation, Inc.,                                       *
-*   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
-***************************************************************************/
+ *   Copyright (C) 2005 by TAKEUCHI Eijiro,,,   *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
 #ifndef __NDT_TKU__
 #define __NDT_TKU__
 
@@ -146,12 +146,12 @@
 // tctslc
 #if 0
 #define INITIAL_X 3702
-#define INITIAL_Y -99430  // matsu
+#define INITIAL_Y -99430 // matsu
 //#define INITIAL_Y -99426   //zmp
 #define INITIAL_Z 87
 #define INITIAL_ROLL 0
 #define INITIAL_PITCH 0
-#define INITIAL_YAW 0  // matsu
+#define INITIAL_YAW 0 // matsu
 //#define INITIAL_YAW 3.14   //zmp
 #endif
 
@@ -168,7 +168,7 @@
 // x=-14763
 // y=-84780
 // q=-2.34
-#define LAYER_NUM 2  // 0.2 0.4 0.8 1.6 3.2(128*80*48)
+#define LAYER_NUM 2 // 0.2 0.4 0.8 1.6 3.2(128*80*48)
 
 #define ND_MIN 40
 
@@ -179,8 +179,7 @@
 /*point*/
 typedef struct point_type *PointPtr;
 
-typedef struct point_type
-{
+typedef struct point_type {
   double x;
   double y;
   double z;
@@ -189,8 +188,7 @@ typedef struct point_type
 /*point*/
 typedef struct postuer_type *PosturePtr;
 
-typedef struct postuer_type
-{
+typedef struct postuer_type {
   double x;
   double y;
   double z;
@@ -202,8 +200,7 @@ typedef struct postuer_type
 /*Normal Distribution  data type*/
 typedef struct Normaldistribution *NDPtr;
 
-typedef struct Normaldistribution
-{
+typedef struct Normaldistribution {
   /*covariances*/
   Point mean;
   double covariance[3][3];
@@ -239,8 +236,7 @@ typedef struct Normaldistribution
 
 typedef struct nd_map *NDMapPtr;
 
-typedef struct nd_map
-{
+typedef struct nd_map {
   NDPtr *nd;
   int layer;
   int x;
@@ -256,8 +252,7 @@ typedef struct nd_map
 
 typedef struct nd_data *NDDatPtr;
 
-typedef struct nd_data
-{
+typedef struct nd_data {
   NormalDistribution nd;
   int x;
   int y;
@@ -276,7 +271,8 @@ int round_covariance(NDPtr nd);
 int print_ellipse(FILE *output_file, double mat[3][3], double cx, double cy);
 int print_ellipse_nd(FILE *output_file, NDPtr nd);
 void glstart(int argc, char *argv[]);
-void DrawString(GLfloat x, GLfloat y, double size_x, double size_y, void *font, char *string);
+void DrawString(GLfloat x, GLfloat y, double size_x, double size_y, void *font,
+                char *string);
 void DrawLine(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2);
 void display(void);
 void reshape(int w, int h);
@@ -291,10 +287,12 @@ double probability_on_ND(NDPtr nd, double x, double y, double z);
 
 // void add_ND(NDPtr);
 NDPtr add_ND(void);
-double calc_summand2d(PointPtr p, NDPtr nd, PosturePtr pose, double *g, double H[3][3]);
+double calc_summand2d(PointPtr p, NDPtr nd, PosturePtr pose, double *g,
+                      double H[3][3]);
 int adjust2d(PointPtr scan, int num, PosturePtr initial);
 
-double calc_summand3d(PointPtr p, NDPtr nd, PosturePtr pose, double *g, double H[6][6], double qd3[6][3], double dist);
+double calc_summand3d(PointPtr p, NDPtr nd, PosturePtr pose, double *g,
+                      double H[6][6], double qd3[6][3], double dist);
 double adjust3d(PointPtr scan, int num, PosturePtr initial, int target);
 void set_sincos2(double a, double b, double g, double sc[3][3]);
 void scan_transrate(PointPtr src, PointPtr dst, PosturePtr pose, int num);

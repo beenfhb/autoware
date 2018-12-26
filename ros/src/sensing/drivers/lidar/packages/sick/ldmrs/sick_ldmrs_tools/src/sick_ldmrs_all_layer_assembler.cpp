@@ -34,73 +34,67 @@
 
 #include <ros/ros.h>
 
-#include <tf/transform_listener.h>
-#include <tf/message_filter.h>
 #include <message_filters/subscriber.h>
+#include <tf/message_filter.h>
+#include <tf/transform_listener.h>
 
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <pcl/point_cloud.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sick_ldmrs_msgs/sick_ldmrs_point_type.h>
-#include <pcl/point_cloud.h>
 
+#include <pcl_ros/impl/transforms.hpp> // necessary because of custom point type
 #include <pcl_ros/transforms.h>
-#include <pcl_ros/impl/transforms.hpp>   // necessary because of custom point type
 
 typedef sick_ldmrs_msgs::SICK_LDMRS_Point PointT;
 typedef pcl::PointCloud<PointT> PointCloudT;
 
-tf::TransformListener* tf_;
+tf::TransformListener *tf_;
 ros::Publisher pub_;
 
 std::string fixed_frame_;
 
 PointCloudT::Ptr cloud_lower_ = boost::make_shared<PointCloudT>();
 
-void callback(const sensor_msgs::PointCloud2::ConstPtr& pc)
-{
+void callback(const sensor_msgs::PointCloud2::ConstPtr &pc) {
   PointCloudT::Ptr cloud = boost::make_shared<PointCloudT>();
   pcl::fromROSMsg(*pc, *cloud);
 
   // ----- transform to fixed frame
-  try
-  {
+  try {
     PointCloudT::Ptr cloud_fixed = boost::make_shared<PointCloudT>();
 
-    if (!pcl_ros::transformPointCloud(fixed_frame_, *cloud, *cloud_fixed, *tf_))
-    {
+    if (!pcl_ros::transformPointCloud(fixed_frame_, *cloud, *cloud_fixed,
+                                      *tf_)) {
       ROS_WARN("TF exception in transformPointCloud!");
       cloud_lower_.reset();
-      return ;
+      return;
     }
     cloud = cloud_fixed;
-  }
-  catch (tf::TransformException& ex)
-  {
+  } catch (tf::TransformException &ex) {
     ROS_WARN("TF Exception %s", ex.what());
     cloud_lower_.reset();
-    return ;
+    return;
   }
 
   // ----- check that we have both clouds (for lower + upper layers)
   if (cloud->size() == 0)
     return;
 
-  if (cloud->at(0).layer < 4)
-  {
+  if (cloud->at(0).layer < 4) {
     cloud_lower_ = cloud;
-    return;   // wait for upper 4 layer cloud
-  }
-  else if (!cloud_lower_)
-  {
-    return;   // wait for lower 4 layer cloud first
+    return; // wait for upper 4 layer cloud
+  } else if (!cloud_lower_) {
+    return; // wait for lower 4 layer cloud first
   }
 
   // ----- concatenate lower + upper clouds
   *cloud_lower_ += *cloud;
 
   // ----- publish
-  sensor_msgs::PointCloud2::Ptr msg = boost::make_shared<sensor_msgs::PointCloud2>();
+  sensor_msgs::PointCloud2::Ptr msg =
+      boost::make_shared<sensor_msgs::PointCloud2>();
   pcl::toROSMsg(*cloud_lower_, *msg);
   msg->header.stamp = pc->header.stamp;
   msg->header.frame_id = fixed_frame_;
@@ -109,14 +103,12 @@ void callback(const sensor_msgs::PointCloud2::ConstPtr& pc)
   cloud_lower_.reset();
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   ros::init(argc, argv, "sick_ldmrs_all_layer_assembler");
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");
 
-  if (!private_nh.getParam("fixed_frame", fixed_frame_))
-  {
+  if (!private_nh.getParam("fixed_frame", fixed_frame_)) {
     ROS_FATAL("Need to set parameter fixed_frame");
     return 1;
   }
@@ -124,10 +116,11 @@ int main(int argc, char **argv)
   tf_ = new tf::TransformListener(nh, ros::Duration(3.0));
 
   message_filters::Subscriber<sensor_msgs::PointCloud2> sub;
-  tf::MessageFilter<sensor_msgs::PointCloud2>* tf_filter;
+  tf::MessageFilter<sensor_msgs::PointCloud2> *tf_filter;
 
   sub.subscribe(nh, "cloud", 10);
-  tf_filter = new tf::MessageFilter<sensor_msgs::PointCloud2>(sub, *tf_, fixed_frame_, 10);
+  tf_filter = new tf::MessageFilter<sensor_msgs::PointCloud2>(sub, *tf_,
+                                                              fixed_frame_, 10);
   tf_filter->registerCallback(boost::bind(callback, _1));
 
   pub_ = nh.advertise<sensor_msgs::PointCloud2>("all_layers", 10);

@@ -36,10 +36,8 @@
 #include <string>
 #include <termios.h>
 
-namespace adxl345
-{
-class Imu
-{
+namespace adxl345 {
+class Imu {
 public:
   //! File descripter for USB-ISS
   int fd_;
@@ -54,11 +52,11 @@ public:
   char write_address(char address, char data);
   int open_device(const std::string device);
   void close_device();
-  int get_product_id(unsigned char& data);
-  int get_seq_count(int16_t& data);
+  int get_product_id(unsigned char &data);
+  int get_seq_count(int16_t &data);
   int update(void);
 };
 
-}  // namespace adxl345
+} // namespace adxl345
 
-#endif  // ADI_DRIVER_ADXL345_H
+#endif // ADI_DRIVER_ADXL345_H

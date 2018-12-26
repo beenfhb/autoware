@@ -29,79 +29,74 @@
 
 #include <deque>
 
-#include <pangolin/platform.h>
-#include <pangolin/gl/glfont.h>
-#include <pangolin/var/var.h>
 #include <pangolin/display/view.h>
-#include <pangolin/handler/handler.h>
 #include <pangolin/gl/colour.h>
+#include <pangolin/gl/glfont.h>
+#include <pangolin/handler/handler.h>
+#include <pangolin/platform.h>
+#include <pangolin/var/var.h>
 
 #include <pangolin/console/ConsoleInterpreter.h>
 
-namespace pangolin
-{
+namespace pangolin {
 
-class ConsoleView : public pangolin::View, pangolin::Handler
-{
+class ConsoleView : public pangolin::View, pangolin::Handler {
 public:
-    struct Line
-    {
-        Line()
-        {
-        }
+  struct Line {
+    Line() {}
 
-        Line(const GlText& text, ConsoleLineType linetype = ConsoleLineTypeCmd )
-            : text(text), linetype(linetype)
-        {
-        }
+    Line(const GlText &text, ConsoleLineType linetype = ConsoleLineTypeCmd)
+        : text(text), linetype(linetype) {}
 
-        GlText text;
-        ConsoleLineType linetype;
-    };
+    GlText text;
+    ConsoleLineType linetype;
+  };
 
+  // Construct with interpreter (and take ownership)
+  ConsoleView(ConsoleInterpreter *interpreter);
 
-    // Construct with interpreter (and take ownership)
-    ConsoleView(ConsoleInterpreter* interpreter);
+  ~ConsoleView();
 
-    ~ConsoleView();
+  // Replace implementation in View to account for hiding animation
+  View &Show(bool show = true);
 
-    // Replace implementation in View to account for hiding animation
-    View& Show(bool show=true);
+  // Replace implementation in View to account for hiding animation
+  void ToggleShow();
 
-    // Replace implementation in View to account for hiding animation
-    void ToggleShow();
+  // Replace implementation in View to account for hiding animation
+  bool IsShown() const;
 
-    // Replace implementation in View to account for hiding animation
-    bool IsShown() const;
+  void Render() PANGOLIN_OVERRIDE;
 
-    void Render() PANGOLIN_OVERRIDE;
-
-    void Keyboard(View&, unsigned char key, int x, int y, bool pressed) PANGOLIN_OVERRIDE;
+  void Keyboard(View &, unsigned char key, int x, int y,
+                bool pressed) PANGOLIN_OVERRIDE;
 
 private:
-    void DrawLine(const ConsoleView::Line& l);
+  void DrawLine(const ConsoleView::Line &l);
 
-    void ProcessOutputLines();
+  void ProcessOutputLines();
 
-    void AddLine(const std::string& text, ConsoleLineType linetype = ConsoleLineTypeCmd);
+  void AddLine(const std::string &text,
+               ConsoleLineType linetype = ConsoleLineTypeCmd);
 
-    Line* GetLine(int id, ConsoleLineType line_type, const std::string& prefix = "");
+  Line *GetLine(int id, ConsoleLineType line_type,
+                const std::string &prefix = "");
 
-    ConsoleInterpreter* interpreter;
+  ConsoleInterpreter *interpreter;
 
-    GlFont& font;
+  GlFont &font;
 
-    std::map<ConsoleLineType, GlText> prompts;
+  std::map<ConsoleLineType, GlText> prompts;
 
-    Line current_line;
-    std::deque<Line> line_buffer;
+  Line current_line;
+  std::deque<Line> line_buffer;
 
-    bool hiding;
-    GLfloat bottom;
+  bool hiding;
+  GLfloat bottom;
 
-    Colour background_colour;
-    std::map<ConsoleLineType,pangolin::Colour> line_colours;
-    float animation_speed;
+  Colour background_colour;
+  std::map<ConsoleLineType, pangolin::Colour> line_colours;
+  float animation_speed;
 };
 
-}
+} // namespace pangolin

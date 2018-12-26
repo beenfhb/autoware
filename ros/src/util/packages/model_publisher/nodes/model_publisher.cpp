@@ -1,12 +1,11 @@
-#include <ros/ros.h>
-#include <visualization_msgs/Marker.h>
 #include <iostream>
+#include <ros/ros.h>
 #include <tf/transform_datatypes.h>
 #include <tf/transform_listener.h>
+#include <visualization_msgs/Marker.h>
 
-int main(int argc, char **argv)
-{
-  ros::init(argc, argv, "mode_publisher") ;
+int main(int argc, char **argv) {
+  ros::init(argc, argv, "mode_publisher");
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");
 
@@ -46,7 +45,8 @@ int main(int argc, char **argv)
   private_nh.getParam("offset_yaw", offset_yaw);
   ROS_INFO_STREAM("offset_yaw : " << offset_yaw);
 
-  ros::Publisher pub = nh.advertise<visualization_msgs::Marker>(topic_name, 10, true);
+  ros::Publisher pub =
+      nh.advertise<visualization_msgs::Marker>(topic_name, 10, true);
 
   visualization_msgs::Marker marker;
   marker.header.frame_id = base_frame;
@@ -63,7 +63,8 @@ int main(int argc, char **argv)
   double roll = offset_roll * (M_PI / 180.0);
   double yaw = offset_yaw * (M_PI / 180.0);
   double pitch = offset_pitch * (M_PI / 180.0);
-  marker.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(roll, pitch, yaw);
+  marker.pose.orientation =
+      tf::createQuaternionMsgFromRollPitchYaw(roll, pitch, yaw);
   marker.color.r = 0.0;
   marker.color.g = 0.0;
   marker.color.b = 0.0;

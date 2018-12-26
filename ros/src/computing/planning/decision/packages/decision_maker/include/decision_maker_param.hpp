@@ -1,8 +1,7 @@
 #ifndef __DECISION_MAKER_PARAM_HPP__
 #define __DECISION_MAKER_PARAM_HPP__
 
-namespace decision_maker
-{
+namespace decision_maker {
 //#define DEBUG_PRINT
 
 #define DEFAULT_DISPLAY_FLAG false
@@ -41,6 +40,6 @@ namespace decision_maker
 #define DEFAULT_DETECTION_AREA_X2 0.0
 #define DEFAULT_DETECTION_AREA_Y1 50.0
 #define DEFAULT_DETECTION_AREA_Y2 -50.0
-}
+} // namespace decision_maker
 
 #endif

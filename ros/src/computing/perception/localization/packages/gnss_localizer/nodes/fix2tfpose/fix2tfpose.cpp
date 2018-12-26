@@ -5,8 +5,8 @@
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
  *
- *  * Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *  * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  *
  *  * Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
@@ -18,15 +18,16 @@
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- *  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -36,8 +37,8 @@
 #include <std_msgs/Bool.h>
 #include <tf/transform_broadcaster.h>
 
-#include <iostream>
 #include <gnss/geo_pos_conv.hpp>
+#include <iostream>
 
 static ros::Publisher pose_publisher;
 
@@ -50,8 +51,7 @@ static double yaw;
 
 static int _plane;
 
-static void GNSSCallback(const sensor_msgs::NavSatFixConstPtr &msg)
-{
+static void GNSSCallback(const sensor_msgs::NavSatFixConstPtr &msg) {
   geo_pos_conv geo;
 
   geo.set_plane(_plane);
@@ -70,22 +70,21 @@ static void GNSSCallback(const sensor_msgs::NavSatFixConstPtr &msg)
   pose.pose.position.z = geo.z();
 
   // set gnss_stat
-  if (pose.pose.position.x == 0.0 || pose.pose.position.y == 0.0 || pose.pose.position.z == 0.0)
-  {
+  if (pose.pose.position.x == 0.0 || pose.pose.position.y == 0.0 ||
+      pose.pose.position.z == 0.0) {
     gnss_stat_msg.data = false;
-  }
-  else
-  {
+  } else {
     gnss_stat_msg.data = true;
   }
 
-  double distance = sqrt(pow(pose.pose.position.y - _prev_pose.pose.position.y, 2) +
-                         pow(pose.pose.position.x - _prev_pose.pose.position.x, 2));
+  double distance =
+      sqrt(pow(pose.pose.position.y - _prev_pose.pose.position.y, 2) +
+           pow(pose.pose.position.x - _prev_pose.pose.position.x, 2));
   std::cout << "distance : " << distance << std::endl;
 
-  if (distance > 0.2)
-  {
-    yaw = atan2(pose.pose.position.y - _prev_pose.pose.position.y, pose.pose.position.x - _prev_pose.pose.position.x);
+  if (distance > 0.2) {
+    yaw = atan2(pose.pose.position.y - _prev_pose.pose.position.y,
+                pose.pose.position.x - _prev_pose.pose.position.x);
     _quat = tf::createQuaternionMsgFromYaw(yaw);
     _prev_pose = pose;
   }
@@ -98,14 +97,15 @@ static void GNSSCallback(const sensor_msgs::NavSatFixConstPtr &msg)
   static tf::TransformBroadcaster br;
   tf::Transform transform;
   tf::Quaternion q;
-  transform.setOrigin(tf::Vector3(pose.pose.position.x, pose.pose.position.y, pose.pose.position.z));
+  transform.setOrigin(tf::Vector3(pose.pose.position.x, pose.pose.position.y,
+                                  pose.pose.position.z));
   q.setRPY(0, 0, yaw);
   transform.setRotation(q);
-  br.sendTransform(tf::StampedTransform(transform, msg->header.stamp, "map", "gps"));
+  br.sendTransform(
+      tf::StampedTransform(transform, msg->header.stamp, "map", "gps"));
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   ros::init(argc, argv, "fix2tfpose");
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");

@@ -3,18 +3,18 @@
 
 #include <string>
 
+#include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
-#include <cv_bridge/cv_bridge.h>
 
 #include "Context.h"
 #include "autoware_msgs/Signals.h"
 #include "traffic_light_recognizer.h"
 
 class RegionTLRSSDROSNode {
- public:
+public:
   RegionTLRSSDROSNode();
   ~RegionTLRSSDROSNode();
 
@@ -25,22 +25,22 @@ class RegionTLRSSDROSNode {
   // The vector of data structure to save traffic light state, position, ...etc
   std::vector<Context> contexts_;
 
- private:
+private:
   /* Light state transition probably happen in Japanese traffic light */
   const LightState kStateTransitionMatrix[4][4] = {
-    /* current: */
-    /* GREEN   , YELLOW    , RED    , UNDEFINED  */
-    /* -------------------------------------------  */
-    {GREEN     , YELLOW    , YELLOW    , GREEN}  ,  /* | previous = GREEN */
-    {UNDEFINED , YELLOW    , RED       , YELLOW} ,  /* | previous = YELLOW */
-    {GREEN     , RED       , RED       , RED}    ,  /* | previous = RED */
-    {GREEN     , YELLOW    , RED       , UNDEFINED} /* | previous = UNDEFINED */
+      /* current: */
+      /* GREEN   , YELLOW    , RED    , UNDEFINED  */
+      /* -------------------------------------------  */
+      {GREEN, YELLOW, YELLOW, GREEN},   /* | previous = GREEN */
+      {UNDEFINED, YELLOW, RED, YELLOW}, /* | previous = YELLOW */
+      {GREEN, RED, RED, RED},           /* | previous = RED */
+      {GREEN, YELLOW, RED, UNDEFINED}   /* | previous = UNDEFINED */
   };
-
 
   void GetROSParam();
   void StartSubscribersAndPublishers();
-  LightState DetermineState(LightState previous_state, LightState current_state, int* state_judge_count);
+  LightState DetermineState(LightState previous_state, LightState current_state,
+                            int *state_judge_count);
   void PublishTrafficLight(std::vector<Context> contexts);
   void PublishString(std::vector<Context> contexts);
   void PublishMarkerArray(std::vector<Context> contexts);
@@ -87,4 +87,4 @@ class RegionTLRSSDROSNode {
   const std::string kStringUnknown;
 };
 
-#endif  // REGION_TLR_SSD_H
+#endif // REGION_TLR_SSD_H

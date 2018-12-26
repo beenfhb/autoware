@@ -12,13 +12,11 @@
 
 #include <amathutils_lib/amathutils.hpp>
 
-namespace decision_maker
-{
+namespace decision_maker {
 #define DEFAULT_LATENCY_NUM 5
 #define DEFAULT_WAYPOINTS_NUM 3
 #define DEFAULT_CONVERGENCE_NUM 2.0
-class PlannerSelector
-{
+class PlannerSelector {
 private:
   ros::NodeHandle nh_;
 
@@ -47,8 +45,7 @@ private:
   bool existWaypoints(const int _config_waypoints_num);
 
 public:
-  PlannerSelector()
-  {
+  PlannerSelector() {
     this->initROS();
     enableLattice_ = 0;
     pastWaypoint = false;
@@ -60,10 +57,12 @@ public:
   void initROS();
 
   void callbackFromClosest(const ros::MessageEvent<std_msgs::Int32> &event);
-  void callbackFromWaypoints(const ros::MessageEvent<autoware_msgs::Lane const> &event);
+  void callbackFromWaypoints(
+      const ros::MessageEvent<autoware_msgs::Lane const> &event);
   void callbackFromLattice(const std_msgs::Int32 &msg);
-  void callbackFromConfig(const autoware_config_msgs::ConfigPlannerSelector &msg);
+  void
+  callbackFromConfig(const autoware_config_msgs::ConfigPlannerSelector &msg);
   void callbackFromCurrentVelocity(const geometry_msgs::TwistStamped &msg);
 };
-}
+} // namespace decision_maker
 #endif

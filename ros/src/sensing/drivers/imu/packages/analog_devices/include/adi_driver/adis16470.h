@@ -33,11 +33,10 @@
 #ifndef ADI_DRIVER_ADIS16470_H
 #define ADI_DRIVER_ADIS16470_H
 
-#include <termios.h>
 #include <string>
+#include <termios.h>
 
-class Adis16470
-{
+class Adis16470 {
 public:
   //! File descripter for USB-ISS
   int fd_;
@@ -52,10 +51,10 @@ public:
   Adis16470();
   int openPort(const std::string device);
   void closePort();
-  int get_product_id(int16_t& data);
+  int get_product_id(int16_t &data);
   int update(void);
   int update_burst(void);
-  int read_register(char address, int16_t& data);
+  int read_register(char address, int16_t &data);
 };
 
-#endif  // ADI_DRIVER_ADIS16470_H
+#endif // ADI_DRIVER_ADIS16470_H

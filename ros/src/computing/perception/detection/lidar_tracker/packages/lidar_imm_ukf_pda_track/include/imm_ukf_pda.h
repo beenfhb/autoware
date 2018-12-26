@@ -5,8 +5,8 @@
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
  *
- *  * Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *  * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  *
  *  * Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
@@ -18,31 +18,30 @@
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- *  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef OBJECT_TRACKING_IMM_UKF_JPDAF_H
 #define OBJECT_TRACKING_IMM_UKF_JPDAF_H
 
-
-#include <vector>
 #include <chrono>
 #include <stdio.h>
+#include <vector>
 
-
-#include <ros/ros.h>
 #include <ros/package.h>
+#include <ros/ros.h>
 
+#include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/io/pcd_io.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <tf/transform_listener.h>
@@ -54,8 +53,7 @@
 
 #include "ukf.h"
 
-class ImmUkfPda
-{
+class ImmUkfPda {
 private:
   int target_id_;
   bool init_;
@@ -99,7 +97,8 @@ private:
   std::vector<vector_map_msgs::Lane> lanes_;
 
   double merge_distance_threshold_;
-  const double CENTROID_DISTANCE = 0.2;//distance to consider centroids the same
+  const double CENTROID_DISTANCE =
+      0.2; // distance to consider centroids the same
 
   std::string input_topic_;
   std::string output_topic_;
@@ -118,80 +117,94 @@ private:
 
   std_msgs::Header input_header_;
 
-  void callback(const autoware_msgs::DetectedObjectArray& input);
+  void callback(const autoware_msgs::DetectedObjectArray &input);
 
-  void transformPoseToGlobal(const autoware_msgs::DetectedObjectArray& input,
-                             autoware_msgs::DetectedObjectArray& transformed_input);
-  void transformPoseToLocal(autoware_msgs::DetectedObjectArray& detected_objects_output);
+  void
+  transformPoseToGlobal(const autoware_msgs::DetectedObjectArray &input,
+                        autoware_msgs::DetectedObjectArray &transformed_input);
+  void transformPoseToLocal(
+      autoware_msgs::DetectedObjectArray &detected_objects_output);
 
-  geometry_msgs::Pose getTransformedPose(const geometry_msgs::Pose& in_pose,
-                                                const tf::StampedTransform& tf_stamp);
+  geometry_msgs::Pose getTransformedPose(const geometry_msgs::Pose &in_pose,
+                                         const tf::StampedTransform &tf_stamp);
 
   bool updateNecessaryTransform();
 
-  void measurementValidation(const autoware_msgs::DetectedObjectArray& input, UKF& target, const bool second_init,
-                             const Eigen::VectorXd& max_det_z, const Eigen::MatrixXd& max_det_s,
-                             std::vector<autoware_msgs::DetectedObject>& object_vec, std::vector<bool>& matching_vec);
-  autoware_msgs::DetectedObject getNearestObject(UKF& target,
-                                                 const std::vector<autoware_msgs::DetectedObject>& object_vec);
-  void updateBehaviorState(const UKF& target, autoware_msgs::DetectedObject& object);
+  void
+  measurementValidation(const autoware_msgs::DetectedObjectArray &input,
+                        UKF &target, const bool second_init,
+                        const Eigen::VectorXd &max_det_z,
+                        const Eigen::MatrixXd &max_det_s,
+                        std::vector<autoware_msgs::DetectedObject> &object_vec,
+                        std::vector<bool> &matching_vec);
+  autoware_msgs::DetectedObject getNearestObject(
+      UKF &target,
+      const std::vector<autoware_msgs::DetectedObject> &object_vec);
+  void updateBehaviorState(const UKF &target,
+                           autoware_msgs::DetectedObject &object);
 
-  void initTracker(const autoware_msgs::DetectedObjectArray& input, double timestamp);
-  void secondInit(UKF& target, const std::vector<autoware_msgs::DetectedObject>& object_vec, double dt);
+  void initTracker(const autoware_msgs::DetectedObjectArray &input,
+                   double timestamp);
+  void secondInit(UKF &target,
+                  const std::vector<autoware_msgs::DetectedObject> &object_vec,
+                  double dt);
 
-  void updateTrackingNum(const std::vector<autoware_msgs::DetectedObject>& object_vec, UKF& target);
+  void updateTrackingNum(
+      const std::vector<autoware_msgs::DetectedObject> &object_vec,
+      UKF &target);
 
-  bool probabilisticDataAssociation(const autoware_msgs::DetectedObjectArray& input, const double dt,
-                                    std::vector<bool>& matching_vec,
-                                    std::vector<autoware_msgs::DetectedObject>& object_vec, UKF& target);
-  void makeNewTargets(const double timestamp, const autoware_msgs::DetectedObjectArray& input,
-                      const std::vector<bool>& matching_vec);
+  bool probabilisticDataAssociation(
+      const autoware_msgs::DetectedObjectArray &input, const double dt,
+      std::vector<bool> &matching_vec,
+      std::vector<autoware_msgs::DetectedObject> &object_vec, UKF &target);
+  void makeNewTargets(const double timestamp,
+                      const autoware_msgs::DetectedObjectArray &input,
+                      const std::vector<bool> &matching_vec);
 
   void staticClassification();
 
-  void makeOutput(const autoware_msgs::DetectedObjectArray& input,
-                  const std::vector<bool>& matching_vec,
-                  autoware_msgs::DetectedObjectArray& detected_objects_output);
+  void makeOutput(const autoware_msgs::DetectedObjectArray &input,
+                  const std::vector<bool> &matching_vec,
+                  autoware_msgs::DetectedObjectArray &detected_objects_output);
 
   void removeUnnecessaryTarget();
 
-  void dumpResultText(autoware_msgs::DetectedObjectArray& detected_objects);
+  void dumpResultText(autoware_msgs::DetectedObjectArray &detected_objects);
 
-  void tracker(const autoware_msgs::DetectedObjectArray& transformed_input,
-               autoware_msgs::DetectedObjectArray& detected_objects_output);
+  void tracker(const autoware_msgs::DetectedObjectArray &transformed_input,
+               autoware_msgs::DetectedObjectArray &detected_objects_output);
 
-  bool updateDirection(const double smallest_nis, const autoware_msgs::DetectedObject& in_object,
-                           autoware_msgs::DetectedObject& out_object, UKF& target);
+  bool updateDirection(const double smallest_nis,
+                       const autoware_msgs::DetectedObject &in_object,
+                       autoware_msgs::DetectedObject &out_object, UKF &target);
 
-  bool storeObjectWithNearestLaneDirection(const autoware_msgs::DetectedObject& in_object,
-                                      autoware_msgs::DetectedObject& out_object);
+  bool storeObjectWithNearestLaneDirection(
+      const autoware_msgs::DetectedObject &in_object,
+      autoware_msgs::DetectedObject &out_object);
 
   void checkVectormapSubscription();
 
-  autoware_msgs::DetectedObjectArray
-  removeRedundantObjects(const autoware_msgs::DetectedObjectArray& in_detected_objects,
-                         const std::vector<size_t> in_tracker_indices);
+  autoware_msgs::DetectedObjectArray removeRedundantObjects(
+      const autoware_msgs::DetectedObjectArray &in_detected_objects,
+      const std::vector<size_t> in_tracker_indices);
 
   autoware_msgs::DetectedObjectArray
-  forwardNonMatchedObject(const autoware_msgs::DetectedObjectArray& tmp_objects,
-                          const autoware_msgs::DetectedObjectArray&  input,
-                          const std::vector<bool>& matching_vec);
+  forwardNonMatchedObject(const autoware_msgs::DetectedObjectArray &tmp_objects,
+                          const autoware_msgs::DetectedObjectArray &input,
+                          const std::vector<bool> &matching_vec);
 
-  bool
-  arePointsClose(const geometry_msgs::Point& in_point_a,
-                 const geometry_msgs::Point& in_point_b,
-                 float in_radius);
+  bool arePointsClose(const geometry_msgs::Point &in_point_a,
+                      const geometry_msgs::Point &in_point_b, float in_radius);
 
-  bool
-  arePointsEqual(const geometry_msgs::Point& in_point_a,
-                 const geometry_msgs::Point& in_point_b);
+  bool arePointsEqual(const geometry_msgs::Point &in_point_a,
+                      const geometry_msgs::Point &in_point_b);
 
-  bool
-  isPointInPool(const std::vector<geometry_msgs::Point>& in_pool,
-                const geometry_msgs::Point& in_point);
+  bool isPointInPool(const std::vector<geometry_msgs::Point> &in_pool,
+                     const geometry_msgs::Point &in_point);
 
-  void updateTargetWithAssociatedObject(const std::vector<autoware_msgs::DetectedObject>& object_vec,
-                                        UKF& target);
+  void updateTargetWithAssociatedObject(
+      const std::vector<autoware_msgs::DetectedObject> &object_vec,
+      UKF &target);
 
 public:
   ImmUkfPda();

@@ -1,38 +1,36 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <string>
+#include <QImage>
 #include <QMainWindow>
 #include <QPainter>
-#include <QImage>
 #include <QTime>
+#include <string>
 
-#include <rosinterface/rosinterface.h>
 #include <fastvirtualscan/fastvirtualscan.h>
+#include <rosinterface/rosinterface.h>
 #include <sensor_msgs/LaserScan.h>
 
 //#define DEBUG_GUI
 
-namespace Ui
-{
+namespace Ui {
 class MainWindow;
 }
 
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow {
   Q_OBJECT
 
 public:
-  explicit MainWindow(QWidget* parent = 0);
+  explicit MainWindow(QWidget *parent = 0);
   ~MainWindow();
 
 private:
-  Ui::MainWindow* ui;
+  Ui::MainWindow *ui;
 
 protected:
-  ROSSub<sensor_msgs::PointCloud2ConstPtr>* velodyne;
-  ROSPub<sensor_msgs::PointCloud2>* vsros;
-  ROSPub<sensor_msgs::LaserScan>* scanros;
+  ROSSub<sensor_msgs::PointCloud2ConstPtr> *velodyne;
+  ROSPub<sensor_msgs::PointCloud2> *vsros;
+  ROSPub<sensor_msgs::LaserScan> *scanros;
   FastVirtualScan virtualscan;
   QVector<double> beams;
   QVector<double> heights;
@@ -50,4 +48,4 @@ protected:
   void drawBeam(int beamid);
 };
 
-#endif  // MAINWINDOW_H
+#endif // MAINWINDOW_H

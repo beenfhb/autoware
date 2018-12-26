@@ -8,9 +8,8 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
-LabelMakerGui::LabelMakerGui(QWidget *parent) :
-  QMainWindow(parent),
-  ui_(new Ui::LabelMakerGui) {
+LabelMakerGui::LabelMakerGui(QWidget *parent)
+    : QMainWindow(parent), ui_(new Ui::LabelMakerGui) {
   // Initialize GUI
   ui_->setupUi(this);
 
@@ -18,10 +17,12 @@ LabelMakerGui::LabelMakerGui(QWidget *parent) :
   dataset_path_ = GetTargetDirectoryPath();
 
   // Get image list
-  image_list_ = file_system_operator_.GetImageList(dataset_path_.toStdString() + "/Images/");
+  image_list_ = file_system_operator_.GetImageList(dataset_path_.toStdString() +
+                                                   "/Images/");
 
   // Open target file for saving data
-  file_system_operator_.CheckPreSavedData(dataset_path_.toStdString() + "/Annotations/");
+  file_system_operator_.CheckPreSavedData(dataset_path_.toStdString() +
+                                          "/Annotations/");
 
   // Setup GUI
   ui_->image_id_horizontal_slider_->setMaximum(image_list_.size() - 1);
@@ -32,56 +33,39 @@ LabelMakerGui::LabelMakerGui(QWidget *parent) :
   ShowImage();
 
   // Define Interfaces behavior
-  connect(ui_->image_id_horizontal_slider_,
-          SIGNAL(valueChanged(int)),
-          ui_->image_id_spin_box_,
-          SLOT(setValue(int)));
+  connect(ui_->image_id_horizontal_slider_, SIGNAL(valueChanged(int)),
+          ui_->image_id_spin_box_, SLOT(setValue(int)));
 
-  connect(ui_->image_id_spin_box_,
-          SIGNAL(valueChanged(int)),
-          ui_->image_id_horizontal_slider_,
-          SLOT(setValue(int)));
+  connect(ui_->image_id_spin_box_, SIGNAL(valueChanged(int)),
+          ui_->image_id_horizontal_slider_, SLOT(setValue(int)));
 
-  connect(ui_->image_id_spin_box_,
-          SIGNAL(valueChanged(int)),
-          this,
+  connect(ui_->image_id_spin_box_, SIGNAL(valueChanged(int)), this,
           SLOT(ShowImage()));
 
-  connect(ui_->radio_button_group_,
-          SIGNAL(buttonClicked(QAbstractButton*)),
-          this,
-          SLOT(SetRadioButtonsColor(QAbstractButton*)));
+  connect(ui_->radio_button_group_, SIGNAL(buttonClicked(QAbstractButton *)),
+          this, SLOT(SetRadioButtonsColor(QAbstractButton *)));
 
-  connect(ui_->next_push_button_,
-          SIGNAL(pressed()),
-          this,
+  connect(ui_->next_push_button_, SIGNAL(pressed()), this,
           SLOT(SaveAndGoNext()));
 
-  connect(ui_->previous_push_button_,
-          SIGNAL(pressed()),
-          this,
+  connect(ui_->previous_push_button_, SIGNAL(pressed()), this,
           SLOT(SaveAndGoPrevious()));
 
-  connect(ui_->reset_push_button_,
-          SIGNAL(pressed()),
-          this,
+  connect(ui_->reset_push_button_, SIGNAL(pressed()), this,
           SLOT(ResetSelection()));
 } // LabelMakerGui::LabelMakerGui()
 
-
-LabelMakerGui::~LabelMakerGui()
-{
+LabelMakerGui::~LabelMakerGui() {
   delete ui_;
 } // LabelMakerGui::~LabelMakerGui()
-
 
 QString LabelMakerGui::GetTargetDirectoryPath() {
   // Loop getting path until correct one is acquired
   QString path;
 
   while (true) {
-    path = QFileDialog::getExistingDirectory(this,
-                                             "Select Existing Dataset Directory");
+    path = QFileDialog::getExistingDirectory(
+        this, "Select Existing Dataset Directory");
     if (path == "") {
       // "Cancel" button is pushed. Treminate program
       exit(EXIT_SUCCESS);
@@ -94,20 +78,18 @@ QString LabelMakerGui::GetTargetDirectoryPath() {
     } else {
       // Create error message
       QString error_message;
-      error_message = "\"Images\" direcotry cannnot be found in \"" +
-                      path + "\". \n\n" +
-                      "Make sure DataSet directory surely exists. \n" +
-                      "Or Execute \"rosrun trafficlight_recognizer roi_extractor\" first in order to create dataset source ";
+      error_message =
+          "\"Images\" direcotry cannnot be found in \"" + path + "\". \n\n" +
+          "Make sure DataSet directory surely exists. \n" +
+          "Or Execute \"rosrun trafficlight_recognizer roi_extractor\" first "
+          "in order to create dataset source ";
 
-      QMessageBox::warning(this,
-                           "ERROR",
-                           error_message);
+      QMessageBox::warning(this, "ERROR", error_message);
     }
   }
 
   return path;
 } // QString LabelMakerGui::GetTargetDirectoryPath() {
-
 
 void LabelMakerGui::ResetRadioButtonsBackGround() {
   // Reset radio buttons' background color
@@ -116,7 +98,6 @@ void LabelMakerGui::ResetRadioButtonsBackGround() {
   ui_->red_radio_button_->setStyleSheet("background-color:grey");
   ui_->unknown_radio_button_->setStyleSheet("background-color:grey");
 }
-
 
 void LabelMakerGui::ShowImage() {
   // Load current ID's image
@@ -132,7 +113,6 @@ void LabelMakerGui::ShowImage() {
     ui_->graphics_view_->SetText("No Image corresponding to this ID is found.");
   }
 }
-
 
 void LabelMakerGui::SetRadioButtonsColor(QAbstractButton *selected_button) {
   // Reset background
@@ -151,19 +131,17 @@ void LabelMakerGui::SetRadioButtonsColor(QAbstractButton *selected_button) {
   }
 }
 
-
 bool LabelMakerGui::SaveCurrentState() {
   // Get selected state
-  QAbstractButton* selected = ui_->radio_button_group_->checkedButton();
+  QAbstractButton *selected = ui_->radio_button_group_->checkedButton();
   if (selected == 0) { // Show warning window as no state is selected
-    QMessageBox::warning(this,
-                         "WARNING",
-                         "No State is selected.");
+    QMessageBox::warning(this, "WARNING", "No State is selected.");
     return false;
   }
 
   QString button_name = selected->text();
-  FileSystemOperator::LightState state = FileSystemOperator::LightState::UNKNOWN;
+  FileSystemOperator::LightState state =
+      FileSystemOperator::LightState::UNKNOWN;
 
   if (button_name == "GREEN") {
     state = FileSystemOperator::LightState::GREEN;
@@ -181,30 +159,22 @@ bool LabelMakerGui::SaveCurrentState() {
   QPoint start;
   QPoint end;
   if (!ui_->graphics_view_->GetSelectedArea(&start, &end)) {
-    QMessageBox::warning(this,
-                         "WARNING",
-                         "No Area is specified.");
+    QMessageBox::warning(this, "WARNING", "No Area is specified.");
     return false;
   }
 
   // Get image property
   QSize image_size = ui_->graphics_view_->GetImageSize();
-  int image_depth = 3; // This program assume input image is color (3 channel) image
+  int image_depth =
+      3; // This program assume input image is color (3 channel) image
 
   // Save specified state into file
-  file_system_operator_.WriteStateToFile("Images", // Image file should be under "Image" directory
-                                         image_list_[current_image_id],
-                                         state,
-                                         image_size.height(),
-                                         image_size.width(),
-                                         image_depth,
-                                         start.x(),
-                                         start.y(),
-                                         end.x(),
-                                         end.y());
+  file_system_operator_.WriteStateToFile(
+      "Images", // Image file should be under "Image" directory
+      image_list_[current_image_id], state, image_size.height(),
+      image_size.width(), image_depth, start.x(), start.y(), end.x(), end.y());
   return true;
 }
-
 
 void LabelMakerGui::SaveAndGoNext() {
   // Save Process
@@ -216,14 +186,13 @@ void LabelMakerGui::SaveAndGoNext() {
   int image_id = ui_->image_id_spin_box_->text().toInt();
   image_id++;
   if (ui_->image_id_spin_box_->maximum() < image_id) {
-    QMessageBox::information(this,
-                             "Information",
-                             "This is the end of image list.\n Thank you for your great work!");
+    QMessageBox::information(
+        this, "Information",
+        "This is the end of image list.\n Thank you for your great work!");
     return;
   }
   ui_->image_id_spin_box_->setValue(image_id);
 }
-
 
 void LabelMakerGui::SaveAndGoPrevious() {
   // Save Process
@@ -235,14 +204,12 @@ void LabelMakerGui::SaveAndGoPrevious() {
   int image_id = ui_->image_id_spin_box_->text().toInt();
   image_id--;
   if (image_id < ui_->image_id_spin_box_->minimum()) {
-    QMessageBox::information(this,
-                             "Information",
+    QMessageBox::information(this, "Information",
                              "This is the first image of the list.");
     return;
   }
   ui_->image_id_spin_box_->setValue(image_id);
 }
-
 
 void LabelMakerGui::ResetSelection() {
   // Reset radiobutton selection

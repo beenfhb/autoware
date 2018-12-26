@@ -28,118 +28,113 @@
 #ifndef PANGOLIN_WIDGETS_H
 #define PANGOLIN_WIDGETS_H
 
-#include <pangolin/display/view.h>
-#include <pangolin/var/var.h>
-#include <pangolin/handler/handler.h>
 #include <pangolin/compat/function.h>
+#include <pangolin/display/view.h>
 #include <pangolin/gl/glfont.h>
+#include <pangolin/handler/handler.h>
+#include <pangolin/var/var.h>
 
-namespace pangolin
-{
+namespace pangolin {
 
 PANGOLIN_EXPORT
 bool GuiVarHasChanged();
 
 PANGOLIN_EXPORT
-View& CreatePanel(const std::string& name);
+View &CreatePanel(const std::string &name);
 
-struct PANGOLIN_EXPORT Panel : public View
-{
-    Panel();
-    Panel(const std::string& auto_register_var_prefix);
-    void Render();
-    void ResizeChildren();
-    static void AddVariable(void* data, const std::string& name, VarValueGeneric& var, bool brand_new);
+struct PANGOLIN_EXPORT Panel : public View {
+  Panel();
+  Panel(const std::string &auto_register_var_prefix);
+  void Render();
+  void ResizeChildren();
+  static void AddVariable(void *data, const std::string &name,
+                          VarValueGeneric &var, bool brand_new);
 };
 
-template<typename T>
-struct Widget : public View, Handler, Var<T>
-{
-    Widget(std::string title, VarValueGeneric& tv)
-        : Var<T>(tv), title(title)
-    {
-        handler = this;
-    }
-    
-    std::string title;
+template <typename T> struct Widget : public View, Handler, Var<T> {
+  Widget(std::string title, VarValueGeneric &tv) : Var<T>(tv), title(title) {
+    handler = this;
+  }
+
+  std::string title;
 };
 
-struct PANGOLIN_EXPORT Button : public Widget<bool>
-{
-    Button(std::string title, VarValueGeneric& tv);
-    void Mouse(View&, MouseButton button, int x, int y, bool pressed, int mouse_state);
-    void Render();
-    
-    //Cache params on resize
-    void ResizeChildren();
-    GlText gltext;
-    GLfloat raster[2];
-    bool down;
+struct PANGOLIN_EXPORT Button : public Widget<bool> {
+  Button(std::string title, VarValueGeneric &tv);
+  void Mouse(View &, MouseButton button, int x, int y, bool pressed,
+             int mouse_state);
+  void Render();
+
+  // Cache params on resize
+  void ResizeChildren();
+  GlText gltext;
+  GLfloat raster[2];
+  bool down;
 };
 
 #ifdef CPP11_NO_BOOST
-struct PANGOLIN_EXPORT FunctionButton : public Widget<boostd::function<void(void)> >
-{
-    FunctionButton(std::string title, VarValueGeneric& tv);
-    void Mouse(View&, MouseButton button, int x, int y, bool pressed, int mouse_state);
-    void Render();
+struct PANGOLIN_EXPORT FunctionButton
+    : public Widget<boostd::function<void(void)>> {
+  FunctionButton(std::string title, VarValueGeneric &tv);
+  void Mouse(View &, MouseButton button, int x, int y, bool pressed,
+             int mouse_state);
+  void Render();
 
-    //Cache params on resize
-    void ResizeChildren();
-    GlText gltext;
-    GLfloat raster[2];
-    bool down;
+  // Cache params on resize
+  void ResizeChildren();
+  GlText gltext;
+  GLfloat raster[2];
+  bool down;
 };
 #endif // CPP11_NO_BOOST
 
-struct PANGOLIN_EXPORT Checkbox : public Widget<bool>
-{
-    Checkbox(std::string title, VarValueGeneric& tv);
-    void Mouse(View&, MouseButton button, int x, int y, bool pressed, int mouse_state);
-    void Render();
-    
-    //Cache params on resize
-    void ResizeChildren();
-    GlText gltext;
-    GLfloat raster[2];
-    Viewport vcb;
+struct PANGOLIN_EXPORT Checkbox : public Widget<bool> {
+  Checkbox(std::string title, VarValueGeneric &tv);
+  void Mouse(View &, MouseButton button, int x, int y, bool pressed,
+             int mouse_state);
+  void Render();
+
+  // Cache params on resize
+  void ResizeChildren();
+  GlText gltext;
+  GLfloat raster[2];
+  Viewport vcb;
 };
 
-struct PANGOLIN_EXPORT Slider : public Widget<double>
-{
-    Slider(std::string title, VarValueGeneric& tv);
-    void Mouse(View&, MouseButton button, int x, int y, bool pressed, int mouse_state);
-    void MouseMotion(View&, int x, int y, int mouse_state);
-    void Keyboard(View&, unsigned char key, int x, int y, bool pressed);
-    void Render();
-    
-    //Cache params on resize
-    void ResizeChildren();
-    GlText gltext;
-    GLfloat raster[2];
-    bool lock_bounds;
-    bool logscale;
+struct PANGOLIN_EXPORT Slider : public Widget<double> {
+  Slider(std::string title, VarValueGeneric &tv);
+  void Mouse(View &, MouseButton button, int x, int y, bool pressed,
+             int mouse_state);
+  void MouseMotion(View &, int x, int y, int mouse_state);
+  void Keyboard(View &, unsigned char key, int x, int y, bool pressed);
+  void Render();
+
+  // Cache params on resize
+  void ResizeChildren();
+  GlText gltext;
+  GLfloat raster[2];
+  bool lock_bounds;
+  bool logscale;
 };
 
-struct PANGOLIN_EXPORT TextInput : public Widget<std::string>
-{
-    TextInput(std::string title, VarValueGeneric& tv);
-    void Mouse(View&, MouseButton button, int x, int y, bool pressed, int mouse_state);
-    void MouseMotion(View&, int x, int y, int mouse_state);
-    void Keyboard(View&, unsigned char key, int x, int y, bool pressed);
-    void Render();
-    
-    std::string edit;
-    GlText gledit;
+struct PANGOLIN_EXPORT TextInput : public Widget<std::string> {
+  TextInput(std::string title, VarValueGeneric &tv);
+  void Mouse(View &, MouseButton button, int x, int y, bool pressed,
+             int mouse_state);
+  void MouseMotion(View &, int x, int y, int mouse_state);
+  void Keyboard(View &, unsigned char key, int x, int y, bool pressed);
+  void Render();
 
-    //Cache params on resize
-    void ResizeChildren();
-    GlText gltext;
-    GLfloat raster[2];
-    bool do_edit;
-    int sel[2];
+  std::string edit;
+  GlText gledit;
+
+  // Cache params on resize
+  void ResizeChildren();
+  GlText gltext;
+  GLfloat raster[2];
+  bool do_edit;
+  int sel[2];
 };
 
-
-}
+} // namespace pangolin
 #endif // PANGOLIN_WIDGETS_H

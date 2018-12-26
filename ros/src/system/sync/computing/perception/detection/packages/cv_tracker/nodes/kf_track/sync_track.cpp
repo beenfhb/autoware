@@ -1,47 +1,49 @@
+#include "autoware_msgs/ImageObjRanged.h"
+#include "autoware_msgs/ImageObjTracked.h"
 #include "ros/ros.h"
 #include "sensor_msgs/Image.h"
-#include "autoware_msgs/ImageObjTracked.h"
-#include "autoware_msgs/ImageObjRanged.h"
 #include "sync.hpp"
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "sync_tracking");
-    std::string ns(ros::this_node::getNamespace());
-    std::string sub1("/image_obj_ranged");
-    std::string sub2("/sync_drivers/image_raw");
-    std::string req("/image_obj_tracked");
-    std::string pub1("/image_obj_ranged");
-    std::string pub2("/image_raw");
+  ros::init(argc, argv, "sync_tracking");
+  std::string ns(ros::this_node::getNamespace());
+  std::string sub1("/image_obj_ranged");
+  std::string sub2("/sync_drivers/image_raw");
+  std::string req("/image_obj_tracked");
+  std::string pub1("/image_obj_ranged");
+  std::string pub2("/image_raw");
 
-    Synchronizer<autoware_msgs::ImageObjRange, sensor_msgs::Image, autoware_msgs::ImageObjTracked> synchronizer(sub1, sub2, pub1, pub2, req, ns);
-    synchronizer.run();
+  Synchronizer<autoware_msgs::ImageObjRange, sensor_msgs::Image,
+               autoware_msgs::ImageObjTracked>
+      synchronizer(sub1, sub2, pub1, pub2, req, ns);
+  synchronizer.run();
 
-    return 0;
+  return 0;
 }
 
 #if 0
 /* ----header---- */
 /* common header */
 #include "ros/ros.h"
-#include <ros/callback_queue.h>
+#include "t_sync_message.h"
 #include <boost/circular_buffer.hpp>
-#include <vector>
+#include <errno.h>
+#include <fcntl.h>
+#include <mqueue.h>
+#include <pthread.h>
+#include <ros/callback_queue.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
-#include <sys/stat.h>
 #include <sys/select.h>
-#include <mqueue.h>
-#include <fcntl.h>
-#include <errno.h>
+#include <sys/stat.h>
 #include <unistd.h>
-#include <pthread.h>
-#include "t_sync_message.h"
+#include <vector>
 /* user header */
-#include "sensor_msgs/Image.h"
-#include "autoware_msgs/ImageObjTracked.h"
 #include "autoware_msgs/ImageObjRanged.h"
+#include "autoware_msgs/ImageObjTracked.h"
+#include "sensor_msgs/Image.h"
 
 /* ----mode---- */
 #define _REQ_PUB 1
@@ -68,7 +70,6 @@ double fabs_time_diff(std_msgs::Header *timespec1, std_msgs::Header *timespec2) 
 double get_time(const std_msgs::Header *timespec) {
     return (double)timespec->stamp.sec + (double)timespec->stamp.nsec/1000000000L;
 }
-
 
 #if _REQ_PUB
 autoware_msgs::ImageObjRange* p_image_obj_ranged_buf;
@@ -280,8 +281,6 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-
-
 
 #if 0
 autoware_msgs::ImageObjRanged image_obj_ranged_buf;

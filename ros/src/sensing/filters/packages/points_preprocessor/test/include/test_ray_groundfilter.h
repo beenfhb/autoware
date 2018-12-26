@@ -6,31 +6,46 @@
 #include "ray_ground_filter.h"
 
 // test fixtures are necessary to use friend classes
-TEST(RayGroundFilter, clipCloud)
-{
-  char* argv = "test_points_preprocessor";
+TEST(RayGroundFilter, clipCloud) {
+  char *argv = "test_points_preprocessor";
   int argc = 1;
   ros::init(argc, &argv, "test_raygroundfilter_clipcloud");
-  pcl::PointCloud<pcl::PointXYZI>::Ptr in_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::PointCloud<pcl::PointXYZI>::Ptr out_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr in_cloud_ptr(
+      new pcl::PointCloud<pcl::PointXYZI>);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr out_cloud_ptr(
+      new pcl::PointCloud<pcl::PointXYZI>);
 
   RayGroundFilter rgfilter;
 
   // add a few test points
-  pcl::PointXYZI pt; 
-  pt.x = 0.0F; pt.y = 0.0F; pt.z = 1.0F;
+  pcl::PointXYZI pt;
+  pt.x = 0.0F;
+  pt.y = 0.0F;
+  pt.z = 1.0F;
   in_cloud_ptr->push_back(pt);
-  pt.x = 0.0F; pt.y = 1.0F; pt.z = 1.3F;
+  pt.x = 0.0F;
+  pt.y = 1.0F;
+  pt.z = 1.3F;
   in_cloud_ptr->push_back(pt);
-  pt.x = 0.0F; pt.y = 2.0F; pt.z = 1.5F;
+  pt.x = 0.0F;
+  pt.y = 2.0F;
+  pt.z = 1.5F;
   in_cloud_ptr->push_back(pt);
-  pt.x = 0.0F; pt.y = 3.0F; pt.z = 1.7F;
+  pt.x = 0.0F;
+  pt.y = 3.0F;
+  pt.z = 1.7F;
   in_cloud_ptr->push_back(pt);
-  pt.x = 0.0F; pt.y = 4.0F; pt.z = 1.9F;
+  pt.x = 0.0F;
+  pt.y = 4.0F;
+  pt.z = 1.9F;
   in_cloud_ptr->push_back(pt);
-  pt.x = 0.0F; pt.y = 5.0F; pt.z = 1.7F;
+  pt.x = 0.0F;
+  pt.y = 5.0F;
+  pt.z = 1.7F;
   in_cloud_ptr->push_back(pt);
-  pt.x = 0.0F; pt.y = 6.0F; pt.z = 1.5F;
+  pt.x = 0.0F;
+  pt.y = 6.0F;
+  pt.z = 1.5F;
   in_cloud_ptr->push_back(pt);
 
   // clip cloud

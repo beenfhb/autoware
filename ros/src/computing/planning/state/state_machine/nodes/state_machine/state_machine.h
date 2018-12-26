@@ -5,8 +5,8 @@
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
  *
- *  * Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *  * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  *
  *  * Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
@@ -18,26 +18,25 @@
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- *  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #ifndef STATE_MACHINE_H
 #define STATE_MACHINE_H
 
-#include <memory>
 #include <iostream>
+#include <memory>
 
-namespace state_machine
-{
-enum class StateList : int32_t
-{
+namespace state_machine {
+enum class StateList : int32_t {
   MOVE_FORWARD,
   TRAFFIC_LIGHT_STOP,
   LANE_CHANGE,
@@ -48,15 +47,13 @@ enum class StateList : int32_t
   EMERGENCY = -1,
 };
 
-enum class TrafficLight : int32_t
-{
+enum class TrafficLight : int32_t {
   RED,
   GREEN,
   UNKNOWN,
 };
 
-enum class ChangeFlag : int32_t
-{
+enum class ChangeFlag : int32_t {
   straight,
   right,
   left,
@@ -64,9 +61,7 @@ enum class ChangeFlag : int32_t
   unknown = -1,
 };
 
-template <class T>
-typename std::underlying_type<T>::type enumToInteger(T t)
-{
+template <class T> typename std::underlying_type<T>::type enumToInteger(T t) {
   return static_cast<typename std::underlying_type<T>::type>(t);
 }
 
@@ -74,37 +69,26 @@ typename std::underlying_type<T>::type enumToInteger(T t)
 class StateContext;
 
 // abstract class for states
-class BaseState
-{
+class BaseState {
 public:
   virtual ~BaseState() = default;
   virtual void update(StateContext *context) = 0;
-  virtual int32_t getStateName()
-  {
-    return 0;
-  };
-  
-  virtual std::unique_ptr<std::string> getStateNameString()
-  {
-    return 0;
-  };
+  virtual int32_t getStateName() { return 0; };
+
+  virtual std::unique_ptr<std::string> getStateNameString() { return 0; };
 };
 
 // State : MOVE_FORWARD
-class StateMoveForward : public BaseState
-{
+class StateMoveForward : public BaseState {
 public:
   void update(StateContext *context) override;
-  int32_t getStateName() override
-  {
+  int32_t getStateName() override {
     return enumToInteger(StateList::MOVE_FORWARD);
   }
-  std::unique_ptr<std::string> getStateNameString() override
-  {
+  std::unique_ptr<std::string> getStateNameString() override {
     return std::unique_ptr<std::string>(new std::string("MOVE_FORWARD"));
   }
-  static std::unique_ptr<BaseState> create()
-  {
+  static std::unique_ptr<BaseState> create() {
     return std::unique_ptr<BaseState>(new StateMoveForward);
   };
 
@@ -113,20 +97,16 @@ private:
 };
 
 // State : TRAFFIC_LIGHT_STOP
-class StateTrafficLightStop : public BaseState
-{
+class StateTrafficLightStop : public BaseState {
 public:
   void update(StateContext *context) override;
-  int32_t getStateName() override
-  {
+  int32_t getStateName() override {
     return enumToInteger(StateList::TRAFFIC_LIGHT_STOP);
   }
-  std::unique_ptr<std::string> getStateNameString() override
-  {
+  std::unique_ptr<std::string> getStateNameString() override {
     return std::unique_ptr<std::string>(new std::string("TRAFFIC_LIGHT_STOP"));
   }
-  static std::unique_ptr<BaseState> create()
-  {
+  static std::unique_ptr<BaseState> create() {
     return std::unique_ptr<BaseState>(new StateTrafficLightStop);
   };
 
@@ -135,20 +115,16 @@ private:
 };
 
 // State : LANE_CHANGE
-class StateLaneChange : public BaseState
-{
+class StateLaneChange : public BaseState {
 public:
   void update(StateContext *context) override;
-  int32_t getStateName() override
-  {
+  int32_t getStateName() override {
     return enumToInteger(StateList::LANE_CHANGE);
   }
-  std::unique_ptr<std::string> getStateNameString() override
-  {
+  std::unique_ptr<std::string> getStateNameString() override {
     return std::unique_ptr<std::string>(new std::string("LANE_CHANGE"));
   }
-  static std::unique_ptr<BaseState> create()
-  {
+  static std::unique_ptr<BaseState> create() {
     return std::unique_ptr<BaseState>(new StateLaneChange);
   };
 
@@ -157,64 +133,52 @@ private:
 };
 
 // State : STOP_SIGN_STOP
-class StateStopSignStop : public BaseState
-{
- public:
+class StateStopSignStop : public BaseState {
+public:
   void update(StateContext *context) override;
-  int32_t getStateName() override
-  {
+  int32_t getStateName() override {
     return enumToInteger(StateList::STOP_SIGN_STOP);
   }
-  std::unique_ptr<std::string> getStateNameString() override
-  {
+  std::unique_ptr<std::string> getStateNameString() override {
     return std::unique_ptr<std::string>(new std::string("STOP_SIGN_STOP"));
   }
-  static std::unique_ptr<BaseState> create()
-  {
+  static std::unique_ptr<BaseState> create() {
     return std::unique_ptr<BaseState>(new StateStopSignStop);
   };
 
- private:
+private:
   StateStopSignStop() = default;
 };
 
 // State : Obstacle Avoidance
-class StateObstacleAvoidance : public BaseState
-{
- public:
+class StateObstacleAvoidance : public BaseState {
+public:
   void update(StateContext *context) override;
-  int32_t getStateName() override
-  {
+  int32_t getStateName() override {
     return enumToInteger(StateList::STOP_SIGN_STOP);
   }
-  std::unique_ptr<std::string> getStateNameString() override
-  {
+  std::unique_ptr<std::string> getStateNameString() override {
     return std::unique_ptr<std::string>(new std::string("OBSTACLE_AVOIDANCE"));
   }
-  static std::unique_ptr<BaseState> create()
-  {
+  static std::unique_ptr<BaseState> create() {
     return std::unique_ptr<BaseState>(new StateObstacleAvoidance);
   };
 
- private:
+private:
   StateObstacleAvoidance() = default;
 };
 
 // State : EMERGENCY
-class StateEmergency : public BaseState
-{
+class StateEmergency : public BaseState {
 public:
   void update(StateContext *context) override;
-  int32_t getStateName() override
-  {
+  int32_t getStateName() override {
     return enumToInteger(StateList::EMERGENCY);
   }
-  std::unique_ptr<std::string> getStateNameString() override
-  {
+  std::unique_ptr<std::string> getStateNameString() override {
     return std::unique_ptr<std::string>(new std::string("EMERGENCY"));
   }
-  static std::unique_ptr<BaseState> create()
-  {
+  static std::unique_ptr<BaseState> create() {
     return std::unique_ptr<BaseState>(new StateEmergency);
   };
 
@@ -223,20 +187,16 @@ private:
 };
 
 // State : MISSION_COMPLETE
-class StateMissionComplete : public BaseState
-{
+class StateMissionComplete : public BaseState {
 public:
   void update(StateContext *context) override;
-  int32_t getStateName() override
-  {
+  int32_t getStateName() override {
     return enumToInteger(StateList::MISSION_COMPLETE);
   }
-  std::unique_ptr<std::string> getStateNameString() override
-  {
+  std::unique_ptr<std::string> getStateNameString() override {
     return std::unique_ptr<std::string>(new std::string("MISSION_COMPLETE"));
   }
-  static std::unique_ptr<BaseState> create()
-  {
+  static std::unique_ptr<BaseState> create() {
     return std::unique_ptr<BaseState>(new StateMissionComplete);
   };
 
@@ -244,42 +204,26 @@ private:
   StateMissionComplete() = default;
 };
 
-class StateContext
-{
+class StateContext {
 public:
   StateContext()
-    : state_(StateMoveForward::create()), light_color_(TrafficLight::UNKNOWN), change_flag_(ChangeFlag::unknown){};
-  void setState(std::unique_ptr<BaseState> newState)
-  {
+      : state_(StateMoveForward::create()), light_color_(TrafficLight::UNKNOWN),
+        change_flag_(ChangeFlag::unknown){};
+  void setState(std::unique_ptr<BaseState> newState) {
     state_ = std::move(newState);
   };
-  void update()
-  {
-    state_->update(this);
-  }
-  void setLightColor(const int32_t &msg)
-  {
+  void update() { state_->update(this); }
+  void setLightColor(const int32_t &msg) {
     light_color_ = static_cast<TrafficLight>(msg);
   }
-  void setChangeFlag(const int32_t &msg)
-  {
+  void setChangeFlag(const int32_t &msg) {
     change_flag_ = static_cast<ChangeFlag>(msg);
   }
 
-  TrafficLight getLightColor() const
-  {
-    return light_color_;
-  }
-  ChangeFlag getChangeFlag() const
-  {
-    return change_flag_;
-  }
-  int32_t getCurrentState() const
-  {
-    return state_->getStateName();
-  }
-  std::unique_ptr<std::string> getCurrentStateString() const
-  {
+  TrafficLight getLightColor() const { return light_color_; }
+  ChangeFlag getChangeFlag() const { return change_flag_; }
+  int32_t getCurrentState() const { return state_->getStateName(); }
+  std::unique_ptr<std::string> getCurrentStateString() const {
     return state_->getStateNameString();
   }
 
@@ -289,5 +233,5 @@ private:
   ChangeFlag change_flag_;
 };
 
-}  // state_machine
-#endif  // STATE_MACHINE_H
+} // namespace state_machine
+#endif // STATE_MACHINE_H

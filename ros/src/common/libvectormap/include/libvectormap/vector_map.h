@@ -3,18 +3,17 @@
 
 //#include "ros/ros.h"
 //#include "std_msgs/String.h"
+#include "Math.h"
+#include <map>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
-#include <vector>
-#include <map>
 #include <string>
-#include "Math.h"
+#include <vector>
 
 #include <vector_map/vector_map.h>
 
-
-typedef struct{
+typedef struct {
   int pid;
   double bx;
   double ly;
@@ -25,46 +24,45 @@ typedef struct{
   int mcode1;
   int mcode2;
   int mcode3;
-}Point;
+} Point;
 
-typedef struct{
+typedef struct {
   int lid;
   int bpid;
   int fpid;
   int blid;
   int flid;
-}Line;
+} Line;
 
-typedef struct{
+typedef struct {
   int vid;
   int pid;
   double hang;
   double vang;
-}Vector;
-  
+} Vector;
 
-typedef struct{
+typedef struct {
   int id;
   int vid;
   int plid;
   int type;
   int linkid;
-}Signal;
+} Signal;
 
-typedef struct{
+typedef struct {
   int id;
   int lid;
   double width;
   char color;
   int type;
   int linkid;
-}WhiteLine;
+} WhiteLine;
 
-typedef struct{
+typedef struct {
   int lid;
-}Mark;
+} Mark;
 
-typedef struct{
+typedef struct {
   int did;
   double dist;
   int pid;
@@ -75,9 +73,9 @@ typedef struct{
   double cant;
   double lw;
   double rw;
-}DTLane;
+} DTLane;
 
-typedef struct{
+typedef struct {
   int lnid;
   int did;
   int blid;
@@ -95,41 +93,36 @@ typedef struct{
   double span;
   int lcnt;
   int lno;
-}Lane;
+} Lane;
 
-
-class VectorMap
-{
- public:
+class VectorMap {
+public:
   bool loaded;
-  std::map<int, Point > points;
-  std::map<int, Line > lines;
-  std::map<int, WhiteLine > whitelines;
-  std::map<int, Lane > lanes;
-  std::map<int, DTLane > dtlanes;
-  std::map<int, Vector > vectors;
-  std::map<int, Signal > signals;
+  std::map<int, Point> points;
+  std::map<int, Line> lines;
+  std::map<int, WhiteLine> whitelines;
+  std::map<int, Lane> lanes;
+  std::map<int, DTLane> dtlanes;
+  std::map<int, Vector> vectors;
+  std::map<int, Signal> signals;
 
-  void load_points(const vector_map::PointArray& msg);
-  void load_lines(const vector_map::LineArray& msg);
-  void load_lanes(const vector_map::LaneArray& msg);
-  void load_vectors(const vector_map::VectorArray& msg);
-  void load_signals(const vector_map::SignalArray& msg);
-  void load_whitelines(const vector_map::WhiteLineArray& msg);
-  void load_dtlanes(const vector_map::DTLaneArray& msg);
+  void load_points(const vector_map::PointArray &msg);
+  void load_lines(const vector_map::LineArray &msg);
+  void load_lanes(const vector_map::LaneArray &msg);
+  void load_vectors(const vector_map::VectorArray &msg);
+  void load_signals(const vector_map::SignalArray &msg);
+  void load_whitelines(const vector_map::WhiteLineArray &msg);
+  void load_dtlanes(const vector_map::DTLaneArray &msg);
 
+  VectorMap() : loaded(false) {}
 
-  VectorMap () :
-	  loaded(false) {}
-
-  inline Point3 getPoint (const int idx)
-  {
-	  Point3 p;
-	  Point psrc = points[idx];
-	  p.x() = psrc.bx; p.y() = psrc.ly, p.z() = psrc.h;
-	  return p;
+  inline Point3 getPoint(const int idx) {
+    Point3 p;
+    Point psrc = points[idx];
+    p.x() = psrc.bx;
+    p.y() = psrc.ly, p.z() = psrc.h;
+    return p;
   }
-
 };
 
 #endif

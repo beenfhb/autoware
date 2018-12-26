@@ -18,15 +18,16 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 #include "algebra.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
-int jacobi_matrix3d(int ct, double eps, double A[3][3], double A1[3][3], double X1[3][3]);
-int kai_3(double a, double b, double c, double x1[2], double x2[2], double x3[2]);
+int jacobi_matrix3d(int ct, double eps, double A[3][3], double A1[3][3],
+                    double X1[3][3]);
+int kai_3(double a, double b, double c, double x1[2], double x2[2],
+          double x3[2]);
 
-int mux_matrix2d(double s1[2][2], double s2[2][2], double dst[2][2])
-{
+int mux_matrix2d(double s1[2][2], double s2[2][2], double dst[2][2]) {
   dst[0][0] = s1[0][0] * s2[0][0] + s1[0][1] * s2[1][0];
   dst[0][1] = s1[0][0] * s2[0][1] + s1[0][1] * s2[1][1];
   dst[1][0] = s1[1][0] * s2[0][0] + s1[1][1] * s2[1][0];
@@ -34,16 +35,12 @@ int mux_matrix2d(double s1[2][2], double s2[2][2], double dst[2][2])
   return 1;
 }
 
-int mux_matrix3d(double s1[3][3], double s2[3][3], double dst[3][3])
-{
+int mux_matrix3d(double s1[3][3], double s2[3][3], double dst[3][3]) {
   int i, j, k;
-  for (i = 0; i < 3; i++)
-  {
-    for (j = 0; j < 3; j++)
-    {
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
       dst[i][j] = 0;
-      for (k = 0; k < 3; k++)
-      {
+      for (k = 0; k < 3; k++) {
         dst[i][j] += s1[i][k] * s2[k][j];
       }
     }
@@ -51,17 +48,13 @@ int mux_matrix3d(double s1[3][3], double s2[3][3], double dst[3][3])
   return 1;
 }
 
-int mux_matrix(double *s1, double *s2, double *dst, int in, int kn, int jn)
-{
+int mux_matrix(double *s1, double *s2, double *dst, int in, int kn, int jn) {
   int i, j, k;
 
-  for (i = 0; i < in; i++)
-  {
-    for (j = 0; j < jn; j++)
-    {
+  for (i = 0; i < in; i++) {
+    for (j = 0; j < jn; j++) {
       dst[i * jn + j] = 0;
-      for (k = 0; k < kn; k++)
-      {
+      for (k = 0; k < kn; k++) {
         dst[i * jn + j] += s1[i * kn + k] * s2[k * jn + j];
       }
     }
@@ -69,9 +62,7 @@ int mux_matrix(double *s1, double *s2, double *dst, int in, int kn, int jn)
   return 1;
 }
 
-
-int add_matrix2d(double s1[2][2], double s2[2][2], double dst[2][2])
-{
+int add_matrix2d(double s1[2][2], double s2[2][2], double dst[2][2]) {
   dst[0][0] = s1[0][0] + s2[0][0];
   dst[0][1] = s1[0][1] + s2[0][1];
   dst[1][0] = s1[1][0] + s2[1][0];
@@ -79,25 +70,19 @@ int add_matrix2d(double s1[2][2], double s2[2][2], double dst[2][2])
   return 1;
 }
 
-int add_matrix3d(double s1[3][3], double s2[3][3], double dst[3][3])
-{
+int add_matrix3d(double s1[3][3], double s2[3][3], double dst[3][3]) {
   int i, j;
-  for (i = 0; i < 3; i++)
-  {
-    for (j = 0; j < 3; j++)
-    {
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
       dst[i][j] = s1[i][j] + s2[i][j];
     }
   }
   return 1;
 }
-int add_matrix6d(double s1[6][6], double s2[6][6], double dst[6][6])
-{
+int add_matrix6d(double s1[6][6], double s2[6][6], double dst[6][6]) {
   int i, j;
-  for (i = 0; i < 6; i++)
-  {
-    for (j = 0; j < 6; j++)
-    {
+  for (i = 0; i < 6; i++) {
+    for (j = 0; j < 6; j++) {
       dst[i][j] = s1[i][j] + s2[i][j];
     }
   }
@@ -105,8 +90,7 @@ int add_matrix6d(double s1[6][6], double s2[6][6], double dst[6][6])
 }
 
 /**/
-int sub_matrix2d(double s1[2][2], double s2[2][2], double dst[2][2])
-{
+int sub_matrix2d(double s1[2][2], double s2[2][2], double dst[2][2]) {
   dst[0][0] = s1[0][0] - s2[0][0];
   dst[0][1] = s1[0][1] - s2[0][1];
   dst[1][0] = s1[1][0] - s2[1][0];
@@ -114,21 +98,17 @@ int sub_matrix2d(double s1[2][2], double s2[2][2], double dst[2][2])
   return 1;
 }
 
-int sub_matrix3d(double s1[3][3], double s2[3][3], double dst[3][3])
-{
+int sub_matrix3d(double s1[3][3], double s2[3][3], double dst[3][3]) {
   int i, j;
-  for (i = 0; i < 3; i++)
-  {
-    for (j = 0; j < 3; j++)
-    {
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
       dst[i][j] = s1[i][j] - s2[i][j];
     }
   }
   return 1;
 }
 
-int identity_matrix2d(double dst[2][2])
-{
+int identity_matrix2d(double dst[2][2]) {
   dst[0][0] = 1;
   dst[0][1] = 0;
   dst[1][0] = 0;
@@ -136,13 +116,10 @@ int identity_matrix2d(double dst[2][2])
   return 1;
 }
 
-int identity_matrix3d(double dst[3][3])
-{
+int identity_matrix3d(double dst[3][3]) {
   int i, j;
-  for (i = 0; i < 3; i++)
-  {
-    for (j = 0; j < 3; j++)
-    {
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
       if (i == j)
         dst[i][j] = 1;
       else
@@ -152,13 +129,10 @@ int identity_matrix3d(double dst[3][3])
   return 1;
 }
 
-int identity_matrix6d(double dst[6][6])
-{
+int identity_matrix6d(double dst[6][6]) {
   int i, j;
-  for (i = 0; i < 6; i++)
-  {
-    for (j = 0; j < 6; j++)
-    {
+  for (i = 0; i < 6; i++) {
+    for (j = 0; j < 6; j++) {
       if (i == j)
         dst[i][j] = 1;
       else
@@ -168,8 +142,7 @@ int identity_matrix6d(double dst[6][6])
   return 1;
 }
 
-int zero_matrix2d(double dst[2][2])
-{
+int zero_matrix2d(double dst[2][2]) {
   dst[0][0] = 0;
   dst[0][1] = 0;
   dst[1][0] = 0;
@@ -177,34 +150,27 @@ int zero_matrix2d(double dst[2][2])
   return 1;
 }
 
-int zero_matrix3d(double dst[3][3])
-{
+int zero_matrix3d(double dst[3][3]) {
   int i, j;
-  for (i = 0; i < 3; i++)
-  {
-    for (j = 0; j < 3; j++)
-    {
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
       dst[i][j] = 0;
     }
   }
   return 1;
 }
 
-int zero_matrix6d(double dst[6][6])
-{
+int zero_matrix6d(double dst[6][6]) {
   int i, j;
-  for (i = 0; i < 6; i++)
-  {
-    for (j = 0; j < 6; j++)
-    {
+  for (i = 0; i < 6; i++) {
+    for (j = 0; j < 6; j++) {
       dst[i][j] = 0;
     }
   }
   return 1;
 }
 
-int transpose_matrix2d(double s1[2][2], double dst[2][2])
-{
+int transpose_matrix2d(double s1[2][2], double dst[2][2]) {
   dst[0][0] = s1[0][0];
   dst[0][1] = s1[1][0];
   dst[1][0] = s1[0][1];
@@ -212,38 +178,33 @@ int transpose_matrix2d(double s1[2][2], double dst[2][2])
   return 1;
 }
 
-int transpose_matrix3d(double s1[3][3], double dst[3][3])
-{
+int transpose_matrix3d(double s1[3][3], double dst[3][3]) {
   int i, j;
-  for (i = 0; i < 3; i++)
-  {
-    for (j = 0; j < 3; j++)
-    {
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
       dst[i][j] = s1[j][i];
     }
   }
   return 1;
 }
 
-double determinant_matrix2d(double mat[2][2])
-{
+double determinant_matrix2d(double mat[2][2]) {
   return (mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1]);
 }
 
-double determinant_matrix3d(double mat[3][3])
-{
-  return (mat[0][0] * mat[1][1] * mat[2][2] + mat[0][1] * mat[1][2] * mat[2][0] + mat[0][2] * mat[1][0] * mat[2][1] -
-          mat[2][0] * mat[1][1] * mat[0][2] - mat[2][1] * mat[1][2] * mat[0][0] - mat[2][2] * mat[1][0] * mat[0][1]);
+double determinant_matrix3d(double mat[3][3]) {
+  return (
+      mat[0][0] * mat[1][1] * mat[2][2] + mat[0][1] * mat[1][2] * mat[2][0] +
+      mat[0][2] * mat[1][0] * mat[2][1] - mat[2][0] * mat[1][1] * mat[0][2] -
+      mat[2][1] * mat[1][2] * mat[0][0] - mat[2][2] * mat[1][0] * mat[0][1]);
 }
 
 /*inverse matrix*/
-int inverse_matrix2d(double mat[2][2], double dst[2][2])
-{
+int inverse_matrix2d(double mat[2][2], double dst[2][2]) {
   double inv;
 
   inv = mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
-  if (fabs(inv) == 0.0)
-  {
+  if (fabs(inv) == 0.0) {
     fprintf(stderr, "matrix is not regular matrix.\n");
     return 0;
   }
@@ -256,8 +217,7 @@ int inverse_matrix2d(double mat[2][2], double dst[2][2])
   return 1; /*regular matrix*/
 }
 
-int inverse_matrix3d(double mat[3][3], double dst[3][3])
-{
+int inverse_matrix3d(double mat[3][3], double dst[3][3]) {
   double d;
   d = determinant_matrix3d(mat);
 
@@ -279,8 +239,7 @@ int inverse_matrix3d(double mat[3][3], double dst[3][3])
 }
 
 /*eigen value*/
-int eigenvalue_matrix2d(double mat[2][2], double *l1, double *l2)
-{
+int eigenvalue_matrix2d(double mat[2][2], double *l1, double *l2) {
   double a, b, c, x;
 
   a = 1.0;
@@ -292,8 +251,7 @@ int eigenvalue_matrix2d(double mat[2][2], double *l1, double *l2)
   x = sqrt(b * b - 4 * a * c);
   *l1 = (-b + x) / 2 * a;
   *l2 = (-b - x) / 2 * a;
-  if (fabs(*l1) < fabs(*l2))
-  {
+  if (fabs(*l1) < fabs(*l2)) {
     x = *l1;
     *l1 = *l2;
     *l2 = x;
@@ -301,8 +259,8 @@ int eigenvalue_matrix2d(double mat[2][2], double *l1, double *l2)
   return 1;
 }
 
-int kai_3(double a, double b, double c, double x1[2], double x2[2], double x3[2])
-{
+int kai_3(double a, double b, double c, double x1[2], double x2[2],
+          double x3[2]) {
   double p, q, m, n, w1[2], w2[2];
   p = b - a * a / 3.0;
   q = 2.0 * a * a * a / 27.0 - a * b / 3.0 + c;
@@ -324,15 +282,17 @@ int kai_3(double a, double b, double c, double x1[2], double x2[2], double x3[2]
 }
 
 /*eigen value*/
-int eigenvalue_matrix3d(double mat[3][3], double l1[2], double l2[2], double l3[2])
-{
+int eigenvalue_matrix3d(double mat[3][3], double l1[2], double l2[2],
+                        double l3[2]) {
   double a, b, c;
 
   a = -mat[0][0] - mat[1][1] - mat[2][2];
   b = mat[0][0] * mat[1][1] + mat[1][1] * mat[2][2] + mat[2][2] * mat[0][0] -
       (mat[0][1] * mat[0][1] + mat[0][2] * mat[0][2] + mat[1][2] * mat[1][2]);
-  c = -mat[0][0] * mat[1][1] * mat[2][2] - 2 * mat[0][1] * mat[0][2] * mat[1][2] + mat[0][0] * mat[1][2] * mat[1][2] +
-      mat[1][1] * mat[0][2] * mat[0][2] + mat[2][2] * mat[0][1] * mat[0][1];
+  c = -mat[0][0] * mat[1][1] * mat[2][2] -
+      2 * mat[0][1] * mat[0][2] * mat[1][2] +
+      mat[0][0] * mat[1][2] * mat[1][2] + mat[1][1] * mat[0][2] * mat[0][2] +
+      mat[2][2] * mat[0][1] * mat[0][1];
   kai_3(a, b, c, l1, l2, l3);
 
   //	if(fabs(a) < E_ERROR)return(0);
@@ -345,40 +305,34 @@ int eigenvalue_matrix3d(double mat[3][3], double l1[2], double l2[2], double l3[
 /*          eps : ��«Ƚ����                                   */
 /*          A : �оݤȤ������                                   */
 /*          A1, A2 : ��Ȱ��nxn�ι���ˡ�A1���г����Ǥ���ͭ��   */
-/*          X1, X2 : ��Ȱ��nxn�ι���ˡ�X1�γ��󤬸�ͭ�٥��ȥ� */
+/*          X1, X2 : ��Ȱ��nxn�ι���ˡ�X1�γ��󤬸�ͭ�٥��ȥ�
+ */
 /*          return : =0 : ����                                   */
 /*                   =1 : ��«����                               */
 /*          coded by Y.Suganuma                                  */
 /*****************************************************************/
 
-int jacobi_matrix3d(int ct, double eps, double A[3][3], double A1[3][3], double X1[3][3])
-{
+int jacobi_matrix3d(int ct, double eps, double A[3][3], double A1[3][3],
+                    double X1[3][3]) {
   double A2[3][3], X2[3][3];
   double max, s, t, v, sn, cs;
   int i1, i2, k = 0, ind = 1, p = 0, q = 0, n = 3;
   // �������
-  for (i1 = 0; i1 < n; i1++)
-  {
-    for (i2 = 0; i2 < n; i2++)
-    {
+  for (i1 = 0; i1 < n; i1++) {
+    for (i2 = 0; i2 < n; i2++) {
       A1[i1][i2] = A[i1][i2];
       X1[i1][i2] = 0.0;
     }
     X1[i1][i1] = 1.0;
   }
   // �׻�
-  while (ind > 0 && k < ct)
-  {
+  while (ind > 0 && k < ct) {
     // �������Ǥ�õ��
     max = 0.0;
-    for (i1 = 0; i1 < n; i1++)
-    {
-      for (i2 = 0; i2 < n; i2++)
-      {
-        if (i2 != i1)
-        {
-          if (fabs(A1[i1][i2]) > max)
-          {
+    for (i1 = 0; i1 < n; i1++) {
+      for (i2 = 0; i2 < n; i2++) {
+        if (i2 != i1) {
+          if (fabs(A1[i1][i2]) > max) {
             max = fabs(A1[i1][i2]);
             p = i1;
             q = i2;
@@ -391,8 +345,7 @@ int jacobi_matrix3d(int ct, double eps, double A[3][3], double A1[3][3], double 
     if (max < eps)
       ind = 0;
     // ��«���ʤ�
-    else
-    {
+    else {
       // ����
       s = -A1[p][q];
       t = 0.5 * (A1[p][p] - A1[q][q]);
@@ -402,36 +355,29 @@ int jacobi_matrix3d(int ct, double eps, double A[3][3], double A1[3][3], double 
         sn = -sn;
       cs = sqrt(1.0 - sn * sn);
       // Ak�η׻�
-      for (i1 = 0; i1 < n; i1++)
-      {
-        if (i1 == p)
-        {
-          for (i2 = 0; i2 < n; i2++)
-          {
+      for (i1 = 0; i1 < n; i1++) {
+        if (i1 == p) {
+          for (i2 = 0; i2 < n; i2++) {
             if (i2 == p)
-              A2[p][p] = A1[p][p] * cs * cs + A1[q][q] * sn * sn - 2.0 * A1[p][q] * sn * cs;
+              A2[p][p] = A1[p][p] * cs * cs + A1[q][q] * sn * sn -
+                         2.0 * A1[p][q] * sn * cs;
             else if (i2 == q)
               A2[p][q] = 0.0;
             else
               A2[p][i2] = A1[p][i2] * cs - A1[q][i2] * sn;
           }
-        }
-        else if (i1 == q)
-        {
-          for (i2 = 0; i2 < n; i2++)
-          {
+        } else if (i1 == q) {
+          for (i2 = 0; i2 < n; i2++) {
             if (i2 == q)
-              A2[q][q] = A1[p][p] * sn * sn + A1[q][q] * cs * cs + 2.0 * A1[p][q] * sn * cs;
+              A2[q][q] = A1[p][p] * sn * sn + A1[q][q] * cs * cs +
+                         2.0 * A1[p][q] * sn * cs;
             else if (i2 == p)
               A2[q][p] = 0.0;
             else
               A2[q][i2] = A1[q][i2] * cs + A1[p][i2] * sn;
           }
-        }
-        else
-        {
-          for (i2 = 0; i2 < n; i2++)
-          {
+        } else {
+          for (i2 = 0; i2 < n; i2++) {
             if (i2 == p)
               A2[i1][p] = A1[i1][p] * cs - A1[i1][q] * sn;
             else if (i2 == q)
@@ -442,10 +388,8 @@ int jacobi_matrix3d(int ct, double eps, double A[3][3], double A1[3][3], double 
         }
       }
       // Xk�η׻�
-      for (i1 = 0; i1 < n; i1++)
-      {
-        for (i2 = 0; i2 < n; i2++)
-        {
+      for (i1 = 0; i1 < n; i1++) {
+        for (i2 = 0; i2 < n; i2++) {
           if (i2 == p)
             X2[i1][p] = X1[i1][p] * cs - X1[i1][q] * sn;
           else if (i2 == q)
@@ -456,10 +400,8 @@ int jacobi_matrix3d(int ct, double eps, double A[3][3], double A1[3][3], double 
       }
       // ���Υ��ƥåפ�
       k++;
-      for (i1 = 0; i1 < n; i1++)
-      {
-        for (i2 = 0; i2 < n; i2++)
-        {
+      for (i1 = 0; i1 < n; i1++) {
+        for (i2 = 0; i2 < n; i2++) {
           A1[i1][i2] = A2[i1][i2];
           X1[i1][i2] = X2[i1][i2];
         }
@@ -473,8 +415,8 @@ int jacobi_matrix3d(int ct, double eps, double A[3][3], double A1[3][3], double 
 }
 
 /*eigen vecter*/
-int eigenvecter_matrix2d(double mat[2][2], double *v1, double *v2, double *l1, double *l2)
-{
+int eigenvecter_matrix2d(double mat[2][2], double *v1, double *v2, double *l1,
+                         double *l2) {
   double a;
 
   if (!eigenvalue_matrix2d(mat, l1, l2))
@@ -496,8 +438,7 @@ int eigenvecter_matrix2d(double mat[2][2], double *v1, double *v2, double *l1, d
 }
 
 /*eigen vecter*/
-int eigenvecter_matrix3d(double mat[3][3], double v[3][3], double *l)
-{
+int eigenvecter_matrix3d(double mat[3][3], double v[3][3], double *l) {
   double L[3][3], V[3][3];
   int i;
 
@@ -505,16 +446,13 @@ int eigenvecter_matrix3d(double mat[3][3], double v[3][3], double *l)
     return -1;
 
   /*sort*/
-  if (fabs(L[0][0]) > fabs(L[1][1]))
-  {
-    if (fabs(L[0][0]) > fabs(L[2][2]))
-    {
+  if (fabs(L[0][0]) > fabs(L[1][1])) {
+    if (fabs(L[0][0]) > fabs(L[2][2])) {
       l[0] = L[0][0];
       v[0][0] = V[0][0];
       v[1][0] = V[1][0];
       v[2][0] = V[2][0];
-      if (fabs(L[1][1]) > fabs(L[2][2]))
-      {
+      if (fabs(L[1][1]) > fabs(L[2][2])) {
         l[1] = L[1][1];
         v[0][1] = V[0][1];
         v[1][1] = V[1][1];
@@ -523,9 +461,7 @@ int eigenvecter_matrix3d(double mat[3][3], double v[3][3], double *l)
         v[0][2] = V[0][2];
         v[1][2] = V[1][2];
         v[2][2] = V[2][2];
-      }
-      else
-      {
+      } else {
         l[2] = L[1][1];
         v[0][2] = V[0][1];
         v[1][2] = V[1][1];
@@ -535,9 +471,7 @@ int eigenvecter_matrix3d(double mat[3][3], double v[3][3], double *l)
         v[1][1] = V[1][2];
         v[2][1] = V[2][2];
       }
-    }
-    else
-    {
+    } else {
       l[0] = L[2][2];
       v[0][0] = V[0][2];
       v[1][0] = V[1][2];
@@ -551,17 +485,13 @@ int eigenvecter_matrix3d(double mat[3][3], double v[3][3], double *l)
       v[1][2] = V[1][1];
       v[2][2] = V[2][1];
     }
-  }
-  else
-  {
-    if (fabs(L[0][0]) < fabs(L[2][2]))
-    {
+  } else {
+    if (fabs(L[0][0]) < fabs(L[2][2])) {
       l[2] = L[0][0];
       v[0][2] = V[0][0];
       v[1][2] = V[1][0];
       v[2][2] = V[2][0];
-      if (fabs(L[1][1]) > fabs(L[2][2]))
-      {
+      if (fabs(L[1][1]) > fabs(L[2][2])) {
         l[0] = L[1][1];
         v[0][0] = V[0][1];
         v[1][0] = V[1][1];
@@ -570,9 +500,7 @@ int eigenvecter_matrix3d(double mat[3][3], double v[3][3], double *l)
         v[0][1] = V[0][2];
         v[1][1] = V[1][2];
         v[2][1] = V[2][2];
-      }
-      else
-      {
+      } else {
         l[0] = L[2][2];
         v[0][0] = V[0][2];
         v[1][0] = V[1][2];
@@ -582,9 +510,7 @@ int eigenvecter_matrix3d(double mat[3][3], double v[3][3], double *l)
         v[1][1] = V[1][1];
         v[2][1] = V[2][1];
       }
-    }
-    else
-    {
+    } else {
       l[0] = L[1][1];
       v[0][0] = V[0][1];
       v[1][0] = V[1][1];
@@ -602,8 +528,8 @@ int eigenvecter_matrix3d(double mat[3][3], double v[3][3], double *l)
   return i;
 }
 
-int matrix2d_eigen(double *v1, double *v2, double l1, double l2, double dst[2][2])
-{
+int matrix2d_eigen(double *v1, double *v2, double l1, double l2,
+                   double dst[2][2]) {
   double V[2][2], IV[2][2], A[2][2], B[2][2];
 
   V[0][0] = v1[0];
@@ -624,8 +550,8 @@ int matrix2d_eigen(double *v1, double *v2, double l1, double l2, double dst[2][2
   return 1;
 }
 
-int matrix3d_eigen(double v[3][3], double l1, double l2, double l3, double dst[3][3])
-{
+int matrix3d_eigen(double v[3][3], double l1, double l2, double l3,
+                   double dst[3][3]) {
   double IV[3][3], A[3][3], B[3][3];
 
   A[0][0] = l1;
@@ -648,8 +574,7 @@ int matrix3d_eigen(double v[3][3], double l1, double l2, double l3, double dst[3
   return 1;
 }
 
-int round_matrix3d(double mat[3][3], double dst[3][3])
-{
+int round_matrix3d(double mat[3][3], double dst[3][3]) {
   double v[3][3], l[3], a;
 
   eigenvecter_matrix3d(mat, v, l);
@@ -665,16 +590,14 @@ int round_matrix3d(double mat[3][3], double dst[3][3])
     return 0;
 
   a = fabs(l[1] / l[0]);
-  if (a < 0.0001)
-  {
+  if (a < 0.0001) {
     if (l[1] > 0)
       l[1] = fabs(l[0]) / 1000.0;
     else
       l[1] = -fabs(l[0]) / 1000.0;
 
     a = fabs(l[2] / l[0]);
-    if (a < -0.0001)
-    {
+    if (a < -0.0001) {
       if (l[2] > 0)
         l[2] = fabs(l[0]) / 1000.0;
       else
@@ -686,28 +609,22 @@ int round_matrix3d(double mat[3][3], double dst[3][3])
   return 1;
 }
 
-int ginverse_matrix3d(double mat[3][3], double inv[3][3])
-{
+int ginverse_matrix3d(double mat[3][3], double inv[3][3]) {
   double p, d, max, dumy, A[3][3];
   int i, j, k, s;
 
   identity_matrix3d(inv);
-  for (i = 0; i < 3; i++)
-  {
-    for (j = 0; j < 3; j++)
-    {
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
       A[i][j] = mat[i][j];
     }
   }
 
-  for (k = 0; k < 3; k++)
-  {
+  for (k = 0; k < 3; k++) {
     max = -100000000;
     s = k;
-    for (j = k; j < 3; j++)
-    {
-      if (fabs(A[j][k]) > max)
-      {
+    for (j = k; j < 3; j++) {
+      if (fabs(A[j][k]) > max) {
         max = fabs(A[j][k]);
         s = j;
       }
@@ -715,8 +632,7 @@ int ginverse_matrix3d(double mat[3][3], double inv[3][3])
     if (max == -100000000)
       return 0;
 
-    for (j = 0; j < 3; j++)
-    {
+    for (j = 0; j < 3; j++) {
       dumy = A[k][j];
       A[k][j] = A[s][j];
       A[s][j] = dumy;
@@ -727,26 +643,20 @@ int ginverse_matrix3d(double mat[3][3], double inv[3][3])
     }
 
     p = A[k][k];
-    for (j = k; j < 3; j++)
-    {
+    for (j = k; j < 3; j++) {
       A[k][j] = A[k][j] / p;
     }
-    for (j = 0; j < 3; j++)
-    {
+    for (j = 0; j < 3; j++) {
       inv[k][j] = inv[k][j] / p;
     }
 
-    for (i = 0; i < 3; i++)
-    {
-      if (i != k)
-      {
+    for (i = 0; i < 3; i++) {
+      if (i != k) {
         d = A[i][k];
-        for (j = 0; j < 3; j++)
-        {
+        for (j = 0; j < 3; j++) {
           inv[i][j] = inv[i][j] - d * inv[k][j];
         }
-        for (j = k; j < 3; j++)
-        {
+        for (j = k; j < 3; j++) {
           A[i][j] = A[i][j] - d * A[k][j];
         }
       }
@@ -755,28 +665,22 @@ int ginverse_matrix3d(double mat[3][3], double inv[3][3])
   return 1;
 }
 
-int ginverse_matrix6d(double mat[6][6], double inv[6][6])
-{
+int ginverse_matrix6d(double mat[6][6], double inv[6][6]) {
   double p, d, max, dumy, A[6][6];
   int i, j, k, s;
 
   identity_matrix6d(inv);
-  for (i = 0; i < 6; i++)
-  {
-    for (j = 0; j < 6; j++)
-    {
+  for (i = 0; i < 6; i++) {
+    for (j = 0; j < 6; j++) {
       A[i][j] = mat[i][j];
     }
   }
 
-  for (k = 0; k < 6; k++)
-  {
+  for (k = 0; k < 6; k++) {
     max = -100000000;
     s = k;
-    for (j = k; j < 6; j++)
-    {
-      if (fabs(A[j][k]) > max)
-      {
+    for (j = k; j < 6; j++) {
+      if (fabs(A[j][k]) > max) {
         max = fabs(A[j][k]);
         s = j;
       }
@@ -784,8 +688,7 @@ int ginverse_matrix6d(double mat[6][6], double inv[6][6])
     if (max == 100000000)
       return 0;
 
-    for (j = 0; j < 6; j++)
-    {
+    for (j = 0; j < 6; j++) {
       dumy = A[k][j];
       A[k][j] = A[s][j];
       A[s][j] = dumy;
@@ -796,26 +699,20 @@ int ginverse_matrix6d(double mat[6][6], double inv[6][6])
     }
 
     p = A[k][k];
-    for (j = k; j < 6; j++)
-    {
+    for (j = k; j < 6; j++) {
       A[k][j] = A[k][j] / p;
     }
-    for (j = 0; j < 6; j++)
-    {
+    for (j = 0; j < 6; j++) {
       inv[k][j] = inv[k][j] / p;
     }
 
-    for (i = 0; i < 6; i++)
-    {
-      if (i != k)
-      {
+    for (i = 0; i < 6; i++) {
+      if (i != k) {
         d = A[i][k];
-        for (j = 0; j < 6; j++)
-        {
+        for (j = 0; j < 6; j++) {
           inv[i][j] = inv[i][j] - d * inv[k][j];
         }
-        for (j = k; j < 6; j++)
-        {
+        for (j = k; j < 6; j++) {
           A[i][j] = A[i][j] - d * A[k][j];
         }
       }

@@ -31,9 +31,9 @@
 #include <pangolin/platform.h>
 
 #ifdef CPP11_NO_BOOST
-    #include <memory>
+#include <memory>
 #else
-    #include <boost/shared_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #endif
 
 #include <pangolin/compat/boostd.h>

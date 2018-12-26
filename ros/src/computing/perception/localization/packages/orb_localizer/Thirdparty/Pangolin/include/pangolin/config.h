@@ -6,8 +6,8 @@
  */
 
 /// Version
-#define PANGOLIN_VERSION_MAJOR 
-#define PANGOLIN_VERSION_MINOR 
+#define PANGOLIN_VERSION_MAJOR
+#define PANGOLIN_VERSION_MINOR
 #define PANGOLIN_VERSION_STRING ""
 
 /// Pangolin options
@@ -76,4 +76,4 @@
 #define CALLEE_HAS_VARIADIC_TEMPLATES
 #endif
 
-#endif //PANGOLIN_CONFIG_H
+#endif // PANGOLIN_CONFIG_H

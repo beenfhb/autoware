@@ -12,8 +12,7 @@ using namespace velodyne_pointcloud;
 std::string g_package_name("velodyne_pointcloud");
 std::string g_package_path;
 
-void init_global_data(void)
-{
+void init_global_data(void) {
   g_package_path = ros::package::getPath(g_package_name);
 }
 
@@ -21,15 +20,13 @@ void init_global_data(void)
 // Test cases
 ///////////////////////////////////////////////////////////////
 
-TEST(Calibration, missing_file)
-{
+TEST(Calibration, missing_file) {
   Calibration calibration(false);
   calibration.read("./no_such_file.yaml");
   EXPECT_FALSE(calibration.initialized);
 }
 
-TEST(Calibration, vlp16)
-{
+TEST(Calibration, vlp16) {
   Calibration calibration(g_package_path + "/params/VLP16db.yaml", false);
   EXPECT_TRUE(calibration.initialized);
   ASSERT_EQ(calibration.num_lasers, 16);
@@ -51,8 +48,7 @@ TEST(Calibration, vlp16)
   EXPECT_EQ(laser.min_intensity, 0);
 }
 
-TEST(Calibration, hdl32e)
-{
+TEST(Calibration, hdl32e) {
   Calibration calibration(g_package_path + "/params/32db.yaml", false);
   EXPECT_TRUE(calibration.initialized);
   ASSERT_EQ(calibration.num_lasers, 32);
@@ -74,8 +70,7 @@ TEST(Calibration, hdl32e)
   EXPECT_EQ(laser.min_intensity, 0);
 }
 
-TEST(Calibration, hdl64e)
-{
+TEST(Calibration, hdl64e) {
   Calibration calibration(g_package_path + "/params/64e_utexas.yaml", false);
   EXPECT_TRUE(calibration.initialized);
   ASSERT_EQ(calibration.num_lasers, 64);
@@ -97,8 +92,7 @@ TEST(Calibration, hdl64e)
   EXPECT_EQ(laser.min_intensity, 0);
 }
 
-TEST(Calibration, hdl64e_s21)
-{
+TEST(Calibration, hdl64e_s21) {
   Calibration calibration(g_package_path + "/params/64e_s2.1-sztaki.yaml",
                           false);
   EXPECT_TRUE(calibration.initialized);
@@ -121,11 +115,9 @@ TEST(Calibration, hdl64e_s21)
   EXPECT_EQ(laser.min_intensity, 0);
 }
 
-TEST(Calibration, hdl64e_s2_float_intensities)
-{
-  Calibration calibration(g_package_path +
-                          "/tests/issue_84_float_intensities.yaml",
-                          false);
+TEST(Calibration, hdl64e_s2_float_intensities) {
+  Calibration calibration(
+      g_package_path + "/tests/issue_84_float_intensities.yaml", false);
   EXPECT_TRUE(calibration.initialized);
   ASSERT_EQ(calibration.num_lasers, 64);
 
@@ -155,10 +147,8 @@ TEST(Calibration, hdl64e_s2_float_intensities)
 }
 
 // Run all the tests that were declared with TEST()
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   init_global_data();
   return RUN_ALL_TESTS();
 }
-

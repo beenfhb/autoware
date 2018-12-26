@@ -7,63 +7,34 @@
 
 #include "cluster.h"
 
-Cluster::Cluster()
-{
-  valid_cluster_ = true;
-}
+Cluster::Cluster() { valid_cluster_ = true; }
 
-geometry_msgs::PolygonStamped Cluster::GetPolygon()
-{
-  return polygon_;
-}
+geometry_msgs::PolygonStamped Cluster::GetPolygon() { return polygon_; }
 
-jsk_recognition_msgs::BoundingBox Cluster::GetBoundingBox()
-{
+jsk_recognition_msgs::BoundingBox Cluster::GetBoundingBox() {
   return bounding_box_;
 }
 
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr Cluster::GetCloud()
-{
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr Cluster::GetCloud() {
   return pointcloud_;
 }
 
-pcl::PointXYZ Cluster::GetMinPoint()
-{
-  return min_point_;
-}
+pcl::PointXYZ Cluster::GetMinPoint() { return min_point_; }
 
-pcl::PointXYZ Cluster::GetMaxPoint()
-{
-  return max_point_;
-}
+pcl::PointXYZ Cluster::GetMaxPoint() { return max_point_; }
 
-pcl::PointXYZ Cluster::GetCentroid()
-{
-  return centroid_;
-}
+pcl::PointXYZ Cluster::GetCentroid() { return centroid_; }
 
-pcl::PointXYZ Cluster::GetAveragePoint()
-{
-  return average_point_;
-}
+pcl::PointXYZ Cluster::GetAveragePoint() { return average_point_; }
 
-double Cluster::GetOrientationAngle()
-{
-  return orientation_angle_;
-}
+double Cluster::GetOrientationAngle() { return orientation_angle_; }
 
-Eigen::Matrix3f Cluster::GetEigenVectors()
-{
-  return eigen_vectors_;
-}
+Eigen::Matrix3f Cluster::GetEigenVectors() { return eigen_vectors_; }
 
-Eigen::Vector3f Cluster::GetEigenValues()
-{
-  return eigen_values_;
-}
+Eigen::Vector3f Cluster::GetEigenValues() { return eigen_values_; }
 
-void Cluster::ToROSMessage(std_msgs::Header in_ros_header, autoware_msgs::CloudCluster &out_cluster_message)
-{
+void Cluster::ToROSMessage(std_msgs::Header in_ros_header,
+                           autoware_msgs::CloudCluster &out_cluster_message) {
   sensor_msgs::PointCloud2 cloud_msg;
 
   pcl::toROSMsg(*(this->GetCloud()), cloud_msg);
@@ -106,8 +77,7 @@ void Cluster::ToROSMessage(std_msgs::Header in_ros_header, autoware_msgs::CloudC
   out_cluster_message.eigen_values.z = eigen_values.z();
 
   Eigen::Matrix3f eigen_vectors = this->GetEigenVectors();
-  for (unsigned int i = 0; i < 3; i++)
-  {
+  for (unsigned int i = 0; i < 3; i++) {
     geometry_msgs::Vector3 eigen_vector;
     eigen_vector.x = eigen_vectors(i, 0);
     eigen_vector.y = eigen_vectors(i, 1);
@@ -119,10 +89,11 @@ void Cluster::ToROSMessage(std_msgs::Header in_ros_header, autoware_msgs::CloudC
   out_cluster_message.fpfh_descriptor.data = fpfh_descriptor;*/
 }
 
-void Cluster::SetCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_origin_cloud_ptr,
-                       const std::vector<int>& in_cluster_indices, std_msgs::Header in_ros_header, int in_id, int in_r,
-                       int in_g, int in_b, std::string in_label, bool in_estimate_pose)
-{
+void Cluster::SetCloud(
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr in_origin_cloud_ptr,
+    const std::vector<int> &in_cluster_indices, std_msgs::Header in_ros_header,
+    int in_id, int in_r, int in_g, int in_b, std::string in_label,
+    bool in_estimate_pose) {
   label_ = in_label;
   id_ = in_id;
   r_ = in_r;
@@ -130,7 +101,8 @@ void Cluster::SetCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_origin_cloud
   b_ = in_b;
   // extract pointcloud using the indices
   // calculate min and max points
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr current_cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr current_cluster(
+      new pcl::PointCloud<pcl::PointXYZRGB>);
   float min_x = std::numeric_limits<float>::max();
   float max_x = -std::numeric_limits<float>::max();
   float min_y = std::numeric_limits<float>::max();
@@ -139,8 +111,8 @@ void Cluster::SetCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_origin_cloud
   float max_z = -std::numeric_limits<float>::max();
   float average_x = 0, average_y = 0, average_z = 0;
 
-  for (auto pit = in_cluster_indices.begin(); pit != in_cluster_indices.end(); ++pit)
-  {
+  for (auto pit = in_cluster_indices.begin(); pit != in_cluster_indices.end();
+       ++pit) {
     // fill new colored cluster point by point
     pcl::PointXYZRGB p;
     p.x = in_origin_cloud_ptr->points[*pit].x;
@@ -180,8 +152,7 @@ void Cluster::SetCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_origin_cloud
   max_point_.z = max_z;
 
   // calculate centroid, average
-  if (in_cluster_indices.size() > 0)
-  {
+  if (in_cluster_indices.size() > 0) {
     centroid_.x /= in_cluster_indices.size();
     centroid_.y /= in_cluster_indices.size();
     centroid_.z /= in_cluster_indices.size();
@@ -215,8 +186,7 @@ void Cluster::SetCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_origin_cloud
 
   {
     std::vector<cv::Point2f> points;
-    for (unsigned int i = 0; i < current_cluster->points.size(); i++)
-    {
+    for (unsigned int i = 0; i < current_cluster->points.size(); i++) {
       cv::Point2f pt;
       pt.x = current_cluster->points[i].x;
       pt.y = current_cluster->points[i].y;
@@ -227,8 +197,7 @@ void Cluster::SetCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_origin_cloud
     cv::convexHull(points, hull);
 
     polygon_.header = in_ros_header;
-    for (size_t i = 0; i < hull.size() + 1; i++)
-    {
+    for (size_t i = 0; i < hull.size() + 1; i++) {
       geometry_msgs::Point32 point;
       point.x = hull[i % hull.size()].x;
       point.y = hull[i % hull.size()].y;
@@ -236,16 +205,14 @@ void Cluster::SetCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_origin_cloud
       polygon_.polygon.points.push_back(point);
     }
 
-    for (size_t i = 0; i < hull.size() + 1; i++)
-    {
+    for (size_t i = 0; i < hull.size() + 1; i++) {
       geometry_msgs::Point32 point;
       point.x = hull[i % hull.size()].x;
       point.y = hull[i % hull.size()].y;
       point.z = max_point_.z;
       polygon_.polygon.points.push_back(point);
     }
-    if (in_estimate_pose)
-    {
+    if (in_estimate_pose) {
       cv::RotatedRect box = minAreaRect(hull);
       rz = box.angle * 3.14 / 180;
       bounding_box_.pose.position.x = box.center.x;
@@ -264,12 +231,13 @@ void Cluster::SetCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_origin_cloud
   current_cluster->is_dense = true;
 
   // Get EigenValues, eigenvectors
-  if (current_cluster->points.size() > 3)
-  {
+  if (current_cluster->points.size() > 3) {
     pcl::PCA<pcl::PointXYZ> current_cluster_pca;
-    pcl::PointCloud<pcl::PointXYZ>::Ptr current_cluster_mono(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr current_cluster_mono(
+        new pcl::PointCloud<pcl::PointXYZ>);
 
-    pcl::copyPointCloud<pcl::PointXYZRGB, pcl::PointXYZ>(*current_cluster, *current_cluster_mono);
+    pcl::copyPointCloud<pcl::PointXYZRGB, pcl::PointXYZ>(*current_cluster,
+                                                         *current_cluster_mono);
 
     current_cluster_pca.setInputCloud(current_cluster_mono);
     eigen_vectors_ = current_cluster_pca.getEigenVectors();
@@ -280,13 +248,14 @@ void Cluster::SetCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_origin_cloud
   pointcloud_ = current_cluster;
 }
 
-std::vector<float> Cluster::GetFpfhDescriptor(const unsigned int& in_ompnum_threads,
-                                              const double& in_normal_search_radius,
-                                              const double& in_fpfh_search_radius)
-{
+std::vector<float>
+Cluster::GetFpfhDescriptor(const unsigned int &in_ompnum_threads,
+                           const double &in_normal_search_radius,
+                           const double &in_fpfh_search_radius) {
   std::vector<float> cluster_fpfh_histogram(33, 0.0);
 
-  pcl::search::KdTree<pcl::PointXYZRGB>::Ptr norm_tree(new pcl::search::KdTree<pcl::PointXYZRGB>);
+  pcl::search::KdTree<pcl::PointXYZRGB>::Ptr norm_tree(
+      new pcl::search::KdTree<pcl::PointXYZRGB>);
   if (pointcloud_->points.size() > 0)
     norm_tree->setInputCloud(pointcloud_);
 
@@ -295,14 +264,17 @@ std::vector<float> Cluster::GetFpfhDescriptor(const unsigned int& in_ompnum_thre
   normal_estimation.setNumberOfThreads(in_ompnum_threads);
   normal_estimation.setInputCloud(pointcloud_);
   normal_estimation.setSearchMethod(norm_tree);
-  normal_estimation.setViewPoint(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(),
+  normal_estimation.setViewPoint(std::numeric_limits<float>::max(),
+                                 std::numeric_limits<float>::max(),
                                  std::numeric_limits<float>::max());
   normal_estimation.setRadiusSearch(in_normal_search_radius);
   normal_estimation.compute(*normals);
 
-  pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_histograms(new pcl::PointCloud<pcl::FPFHSignature33>());
+  pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_histograms(
+      new pcl::PointCloud<pcl::FPFHSignature33>());
 
-  pcl::FPFHEstimationOMP<pcl::PointXYZRGB, pcl::Normal, pcl::FPFHSignature33> fpfh;
+  pcl::FPFHEstimationOMP<pcl::PointXYZRGB, pcl::Normal, pcl::FPFHSignature33>
+      fpfh;
   fpfh.setNumberOfThreads(in_ompnum_threads);
   fpfh.setInputCloud(pointcloud_);
   fpfh.setInputNormals(normals);
@@ -313,12 +285,14 @@ std::vector<float> Cluster::GetFpfhDescriptor(const unsigned int& in_ompnum_thre
   float fpfh_max = std::numeric_limits<float>::min();
   float fpfh_min = std::numeric_limits<float>::max();
 
-  for (unsigned int i = 0; i < fpfh_histograms->size(); i++)  // for each point fpfh
+  for (unsigned int i = 0; i < fpfh_histograms->size();
+       i++) // for each point fpfh
   {
     for (unsigned int j = 0; j < cluster_fpfh_histogram.size();
-         j++)  // sum each histogram's bin for all points, get min/max
+         j++) // sum each histogram's bin for all points, get min/max
     {
-      cluster_fpfh_histogram[j] = cluster_fpfh_histogram[j] + fpfh_histograms->points[i].histogram[j];
+      cluster_fpfh_histogram[j] =
+          cluster_fpfh_histogram[j] + fpfh_histograms->points[i].histogram[j];
       if (cluster_fpfh_histogram[j] < fpfh_min)
         fpfh_min = cluster_fpfh_histogram[j];
       if (cluster_fpfh_histogram[j] > fpfh_max)
@@ -327,31 +301,22 @@ std::vector<float> Cluster::GetFpfhDescriptor(const unsigned int& in_ompnum_thre
 
     float fpfh_dif = fpfh_max - fpfh_min;
     for (unsigned int j = 0; fpfh_dif > 0 && j < cluster_fpfh_histogram.size();
-         j++)  // substract the min from each and normalize
+         j++) // substract the min from each and normalize
     {
-      cluster_fpfh_histogram[j] = (cluster_fpfh_histogram[j] - fpfh_min) / fpfh_dif;
+      cluster_fpfh_histogram[j] =
+          (cluster_fpfh_histogram[j] - fpfh_min) / fpfh_dif;
     }
   }
 
   return cluster_fpfh_histogram;
 }
 
-bool Cluster::IsValid()
-{
-  return valid_cluster_;
-}
+bool Cluster::IsValid() { return valid_cluster_; }
 
-void Cluster::SetValidity(bool in_valid)
-{
-  valid_cluster_ = in_valid;
-}
+void Cluster::SetValidity(bool in_valid) { valid_cluster_ = in_valid; }
 
-int Cluster::GetId()
-{
-  return id_;
-}
+int Cluster::GetId() { return id_; }
 
-Cluster::~Cluster()
-{
+Cluster::~Cluster() {
   // TODO Auto-generated destructor stub
 }

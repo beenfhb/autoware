@@ -4,22 +4,21 @@
 #define DEBUG 0
 
 #include "astar_util.h"
-#include <ros/ros.h>
-#include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/PoseArray.h>
+#include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Path.h>
+#include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 
+#include <chrono>
 #include <iostream>
-#include <vector>
 #include <queue>
 #include <string>
-#include <chrono>
+#include <vector>
 
-class AstarSearch
-{
- public:
+class AstarSearch {
+public:
   AstarSearch();
   ~AstarSearch();
 
@@ -28,17 +27,20 @@ class AstarSearch
   geometry_msgs::PoseArray debug_pose_array_;
   //--------------------------------------
 
-  bool makePlan(const geometry_msgs::Pose &start_pose, const geometry_msgs::Pose &goal_pose, const nav_msgs::OccupancyGrid &map);
+  bool makePlan(const geometry_msgs::Pose &start_pose,
+                const geometry_msgs::Pose &goal_pose,
+                const nav_msgs::OccupancyGrid &map);
   void reset();
   void broadcastPathTF();
-  nav_msgs::Path getPath() {return path_;}
+  nav_msgs::Path getPath() { return path_; }
 
- private:
+private:
   bool search();
   void resizeNode(int width, int height, int angle_size);
   void createStateUpdateTable(int angle_size);
   void createStateUpdateTableLocal(int angle_size); //
-  void poseToIndex(const geometry_msgs::Pose &pose, int *index_x, int *index_y, int *index_theta);
+  void poseToIndex(const geometry_msgs::Pose &pose, int *index_x, int *index_y,
+                   int *index_theta);
   bool isOutOfRange(int index_x, int index_y);
   void setPath(const SimpleNode &goal);
   void setMap(const nav_msgs::OccupancyGrid &map);
@@ -53,10 +55,10 @@ class AstarSearch
   std::string path_frame_;        // publishing path frame
   int angle_size_;                // descritized angle size
   double minimum_turning_radius_; // varying by vehicles
-  int obstacle_threshold_;        // more than this value is regarded as obstacles
-  double goal_radius_;            // meter
-  double goal_angle_;             // degree
-  bool use_back_;                 // use backward driving
+  int obstacle_threshold_; // more than this value is regarded as obstacles
+  double goal_radius_;     // meter
+  double goal_angle_;      // degree
+  bool use_back_;          // use backward driving
   double robot_length_;
   double robot_width_;
   double base2back_;
@@ -69,7 +71,9 @@ class AstarSearch
   std::vector<std::vector<NodeUpdate>> state_update_table_;
   nav_msgs::MapMetaData map_info_;
   std::vector<std::vector<std::vector<AstarNode>>> nodes_;
-  std::priority_queue<SimpleNode, std::vector<SimpleNode>, std::greater<SimpleNode>> openlist_;
+  std::priority_queue<SimpleNode, std::vector<SimpleNode>,
+                      std::greater<SimpleNode>>
+      openlist_;
   std::vector<SimpleNode> goallist_;
 
   // Pose in global(/map) frame

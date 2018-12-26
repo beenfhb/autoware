@@ -25,74 +25,65 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <pangolin/utils/uri.h>
 #include <pangolin/utils/file_utils.h>
+#include <pangolin/utils/uri.h>
 
-#include <vector>
 #include <stdexcept>
+#include <vector>
 
-namespace pangolin
-{
+namespace pangolin {
 
-Uri ParseUri(const std::string &str_uri)
-{
-    Uri uri;
+Uri ParseUri(const std::string &str_uri) {
+  Uri uri;
 
-    // Find Scheme delimiter
-    size_t ns = str_uri.find_first_of(':');
-    if( ns != std::string::npos )
-    {
-        uri.scheme = str_uri.substr(0,ns);
-    }else{
-        uri.scheme = "file";
-        uri.url = str_uri;
-        return uri;
-    }
-
-    // Find url delimiter
-    size_t nurl = str_uri.find("//",ns+1);
-    if(nurl != std::string::npos)
-    {
-        // If there is space between the delimiters, extract protocol arguments
-        if( nurl-ns > 1)
-        {
-            if( str_uri[ns+1] == '[' && str_uri[nurl-1] == ']' )
-            {
-                std::string queries = str_uri.substr(ns+2, nurl-1 - (ns+2) );
-                std::vector<std::string> params;
-                Split(queries, ',', params);
-                for(size_t i=0; i< params.size(); ++i)
-                {
-                    std::vector<std::string> args;
-                    Split(params[i], '=', args );
-                    std::string key = Trim(args[0]);
-                    std::string val = args.size() > 1 ? Trim(args[1]) : "";
-                    uri.params[key] = val;
-                }
-            }else{
-                throw std::runtime_error("Unable to parse URI: '" + str_uri + "'");
-            }
-        }
-
-        uri.url = str_uri.substr(nurl+2);
-    }
-
+  // Find Scheme delimiter
+  size_t ns = str_uri.find_first_of(':');
+  if (ns != std::string::npos) {
+    uri.scheme = str_uri.substr(0, ns);
+  } else {
+    uri.scheme = "file";
+    uri.url = str_uri;
     return uri;
-}
+  }
 
-std::ostream& operator<< (std::ostream &out, Uri &uri)
-{
-    out << "scheme: " << uri.scheme << std::endl;
-    out << "url:    " << uri.url << std::endl;
-    out << "params:" << std::endl;
-
-    for( Uri::ParamMap::const_iterator ip = uri.params.begin();
-         ip != uri.params.end(); ++ip)
-    {
-        out << "\t" << ip->first << " = " << ip->second << std::endl;
+  // Find url delimiter
+  size_t nurl = str_uri.find("//", ns + 1);
+  if (nurl != std::string::npos) {
+    // If there is space between the delimiters, extract protocol arguments
+    if (nurl - ns > 1) {
+      if (str_uri[ns + 1] == '[' && str_uri[nurl - 1] == ']') {
+        std::string queries = str_uri.substr(ns + 2, nurl - 1 - (ns + 2));
+        std::vector<std::string> params;
+        Split(queries, ',', params);
+        for (size_t i = 0; i < params.size(); ++i) {
+          std::vector<std::string> args;
+          Split(params[i], '=', args);
+          std::string key = Trim(args[0]);
+          std::string val = args.size() > 1 ? Trim(args[1]) : "";
+          uri.params[key] = val;
+        }
+      } else {
+        throw std::runtime_error("Unable to parse URI: '" + str_uri + "'");
+      }
     }
 
-    return out;
+    uri.url = str_uri.substr(nurl + 2);
+  }
+
+  return uri;
 }
 
+std::ostream &operator<<(std::ostream &out, Uri &uri) {
+  out << "scheme: " << uri.scheme << std::endl;
+  out << "url:    " << uri.url << std::endl;
+  out << "params:" << std::endl;
+
+  for (Uri::ParamMap::const_iterator ip = uri.params.begin();
+       ip != uri.params.end(); ++ip) {
+    out << "\t" << ip->first << " = " << ip->second << std::endl;
+  }
+
+  return out;
 }
+
+} // namespace pangolin

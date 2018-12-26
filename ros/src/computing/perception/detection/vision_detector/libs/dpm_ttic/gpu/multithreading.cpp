@@ -15,25 +15,17 @@
 
 #include "multithreading.h"
 
-CUTThread cutStartThread(CUT_THREADROUTINE func, void * data)
-{
-        pthread_t thread;
-        pthread_create(&thread, NULL, func, data);
-        return thread;
+CUTThread cutStartThread(CUT_THREADROUTINE func, void *data) {
+  pthread_t thread;
+  pthread_create(&thread, NULL, func, data);
+  return thread;
 }
 
-void cutEndThread(CUTThread thread)
-{
-        pthread_join(thread, NULL);
-}
+void cutEndThread(CUTThread thread) { pthread_join(thread, NULL); }
 
-void cutDestroyThread(CUTThread thread)
-{
-        pthread_cancel(thread);
-}
+void cutDestroyThread(CUTThread thread) { pthread_cancel(thread); }
 
-void cutWaitForThreads(const CUTThread * threads, int num)
-{
-        for(int i = 0; i < num; i++)
-		cutEndThread(threads[i]);
+void cutWaitForThreads(const CUTThread *threads, int num) {
+  for (int i = 0; i < num; i++)
+    cutEndThread(threads[i]);
 }

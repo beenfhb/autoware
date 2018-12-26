@@ -5,8 +5,8 @@
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
  *
- *  * Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *  * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  *
  *  * Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
@@ -18,15 +18,16 @@
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- *  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
 pos_downloader
@@ -36,15 +37,15 @@ publish data as ractangular plane
 
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include <jsk_rviz_plugins/Pictogram.h>
-#include <jsk_rviz_plugins/PictogramArray.h>
 #include <cstdio>
 #include <cstdlib>
-#include <vector>
+#include <ctime>
 #include <iostream>
+#include <jsk_rviz_plugins/Pictogram.h>
+#include <jsk_rviz_plugins/PictogramArray.h>
 #include <sstream>
 #include <string>
-#include <ctime>
+#include <vector>
 #ifndef CURRENT_CAR_DIRECTLY
 #include <map>
 #endif /* ! CURRENT_CAR_DIRECTLY */
@@ -56,21 +57,21 @@ publish data as ractangular plane
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
 
-#define MYNAME		"pos_downloader"
+#define MYNAME "pos_downloader"
 #define PICTOGRAMNAME "mo_pictograms"
-#define STARTTIME	(0)		// sec since 1970-01-01 (0==now)
-#define DELAYSEC	(0)		// delay sec for pos_uploader
-#define POSUP_DZ	(40)		// z offset of PosUp
-#define PEDESTRIAN_DZ	(-2)		// z offset of pedestrian_pose
-#define DOWNLOAD_PERIOD	(250)		// period (msec)
-#define TOTAL_LIFETIME	(10.0)		// total lifetime (sec)
+#define STARTTIME (0)         // sec since 1970-01-01 (0==now)
+#define DELAYSEC (0)          // delay sec for pos_uploader
+#define POSUP_DZ (40)         // z offset of PosUp
+#define PEDESTRIAN_DZ (-2)    // z offset of pedestrian_pose
+#define DOWNLOAD_PERIOD (250) // period (msec)
+#define TOTAL_LIFETIME (10.0) // total lifetime (sec)
 
-#define TYPE_OWN	(1)
-#define TYPE_CAR	(2)
-#define TYPE_PEDESTRIAN	(3)
+#define TYPE_OWN (1)
+#define TYPE_CAR (2)
+#define TYPE_PEDESTRIAN (3)
 
-#define ANON_MARKER_ID_MIN     (2)
-#define ANON_MARKER_ID_MAX     (0x7f000000)
+#define ANON_MARKER_ID_MIN (2)
+#define ANON_MARKER_ID_MAX (0x7f000000)
 
 using namespace std;
 
@@ -80,8 +81,8 @@ static string sshpubkey;
 static string sshprivatekey;
 static int ssh_port;
 static string sshtunnelhost;
-static int sleep_msec = DOWNLOAD_PERIOD;	// period
-static double life_time = 1.0;			// sec
+static int sleep_msec = DOWNLOAD_PERIOD; // period
+static double life_time = 1.0;           // sec
 static double posup_dz;
 static double pedestrian_dz;
 
@@ -103,39 +104,38 @@ static map<int, ros::Time> prev_map;
 
 #ifdef NEVER
 static double color_percent(int diffmsec) {
-  return (1.0 - diffmsec/TOTAL_LIFETIME/1000.0)*((256-48)/256.0) + (48/256.0);
+  return (1.0 - diffmsec / TOTAL_LIFETIME / 1000.0) * ((256 - 48) / 256.0) +
+         (48 / 256.0);
 }
 #endif /* NEVER */
 static double alpha_percent(int diffmsec) {
-  return (1.0 - diffmsec/TOTAL_LIFETIME/1000.0);
+  return (1.0 - diffmsec / TOTAL_LIFETIME / 1000.0);
 }
 
-static std::vector<std::string> split(const string& input, char delimiter) {
-    std::istringstream stream(input);
+static std::vector<std::string> split(const string &input, char delimiter) {
+  std::istringstream stream(input);
 
-    std::string field;
-    std::vector<std::string> result;
-    while (std::getline(stream, field, delimiter)) {
-        result.push_back(field);
-    }
-    return result;
+  std::string field;
+  std::vector<std::string> result;
+  while (std::getline(stream, field, delimiter)) {
+    result.push_back(field);
+  }
+  return result;
 }
 
 static void dbg_out_pictogram(jsk_rviz_plugins::Pictogram pictogram) {
 #ifdef POS_DB_VERBOSE
-  std::cout
-  << pictogram.pose.position.x << ","
-  << pictogram.pose.position.y << ","
-  << pictogram.pose.position.z << " : "
-  << pictogram.pose.orientation.x << ","
-  << pictogram.pose.orientation.y << ","
-  << pictogram.pose.orientation.z << ","
-  << pictogram.pose.orientation.w << std::endl;
+  std::cout << pictogram.pose.position.x << "," << pictogram.pose.position.y
+            << "," << pictogram.pose.position.z << " : "
+            << pictogram.pose.orientation.x << ","
+            << pictogram.pose.orientation.y << ","
+            << pictogram.pose.orientation.z << ","
+            << pictogram.pose.orientation.w << std::endl;
 #endif /* POS_DB_VERBOSE */
 }
 
-
-static void update_pictograms(int id, ros::Time now, jsk_rviz_plugins::Pictogram pictogram) {
+static void update_pictograms(int id, ros::Time now,
+                              jsk_rviz_plugins::Pictogram pictogram) {
   vector<int>::iterator itr = find(car_ids.begin(), car_ids.end(), id);
 
   pictograms_array.header.frame_id = "/map";
@@ -151,7 +151,7 @@ static void update_pictograms(int id, ros::Time now, jsk_rviz_plugins::Pictogram
 }
 
 static void publish_car(int id, int is_current, ros::Time now,
-  geometry_msgs::Pose& pose, int diffmsec) {
+                        geometry_msgs::Pose &pose, int diffmsec) {
   jsk_rviz_plugins::Pictogram pictogram;
   pictogram.header.frame_id = "/map";
   pictogram.header.stamp = now;
@@ -170,14 +170,16 @@ static void publish_car(int id, int is_current, ros::Time now,
     pictogram.color.a = 1.0;
 
     tf::Quaternion q1;
-    q1.setRPY(M_PI/2, 0, M_PI);
-    tf::Quaternion q2(pictogram.pose.orientation.x, pictogram.pose.orientation.y, pictogram.pose.orientation.z, pictogram.pose.orientation.w);
+    q1.setRPY(M_PI / 2, 0, M_PI);
+    tf::Quaternion q2(
+        pictogram.pose.orientation.x, pictogram.pose.orientation.y,
+        pictogram.pose.orientation.z, pictogram.pose.orientation.w);
     tf::Quaternion q3;
     q3 = q2 * q1;
 
-    //for making look good from top veiw
+    // for making look good from top veiw
     tf::Quaternion q4;
-    q4.setRPY(M_PI/2, 0, 0);
+    q4.setRPY(M_PI / 2, 0, 0);
     q3 = q3 * q4;
 
     pictogram.pose.position.z += 1.0;
@@ -188,8 +190,8 @@ static void publish_car(int id, int is_current, ros::Time now,
 
     update_pictograms(id, now, pictogram);
     dbg_out_pictogram(pictogram);
-#else /* CURRENT_CAR_DIRECTLY */
-    ros::Time newnow = now - ros::Duration(diffmsec/1000.0);
+#else  /* CURRENT_CAR_DIRECTLY */
+    ros::Time newnow = now - ros::Duration(diffmsec / 1000.0);
     if (now_map.count(id) == 0 || newnow >= now_map[id]) {
       car_map[id] = pose;
       now_map[id] = newnow;
@@ -197,7 +199,7 @@ static void publish_car(int id, int is_current, ros::Time now,
 #endif /* CURRENT_CAR_DIRECTLY */
 
   } else {
-    //marker.type = visualization_msgs::Marker::SPHERE;
+    // marker.type = visualization_msgs::Marker::SPHERE;
     // marker.lifetime = ros::Duration(life_time);
     pictogram.character = "circle";
     pictogram.size = 2;
@@ -217,7 +219,7 @@ static void publish_car_summary(ros::Time now) {
   jsk_rviz_plugins::Pictogram pictogram;
   map<int, geometry_msgs::Pose>::iterator itr;
 
-  for(itr = car_map.begin(); itr != car_map.end(); itr++) {
+  for (itr = car_map.begin(); itr != car_map.end(); itr++) {
     int id = itr->first;
     geometry_msgs::Pose pose = itr->second;
     ros::Time cur = now_map[id];
@@ -238,15 +240,16 @@ static void publish_car_summary(ros::Time now) {
     pictogram.color.b = 0.0;
     pictogram.color.a = 1.0;
     tf::Quaternion q1;
-    q1.setRPY(M_PI/2, 0, M_PI);
-    tf::Quaternion q2(pictogram.pose.orientation.x, pictogram.pose.orientation.y, pictogram.pose.orientation.z, pictogram.pose.orientation.w);
+    q1.setRPY(M_PI / 2, 0, M_PI);
+    tf::Quaternion q2(
+        pictogram.pose.orientation.x, pictogram.pose.orientation.y,
+        pictogram.pose.orientation.z, pictogram.pose.orientation.w);
     tf::Quaternion q3;
     q3 = q2 * q1;
 
-
-    //for making look good from top veiw
+    // for making look good from top veiw
     tf::Quaternion q4;
-    q4.setRPY(M_PI/2, 0, 0);
+    q4.setRPY(M_PI / 2, 0, 0);
     q3 = q3 * q4;
 
     pictogram.pose.position.z += 1.0;
@@ -265,7 +268,7 @@ static void publish_car_summary(ros::Time now) {
 #endif /* ! CURRENT_CAR_DIRECTLY */
 
 static void publish_pedestrian(int id, int is_pedestrian, ros::Time now,
-  geometry_msgs::Pose& pose, int diffmsec) {
+                               geometry_msgs::Pose &pose, int diffmsec) {
   jsk_rviz_plugins::Pictogram pictogram;
   pictogram.header.frame_id = "/map";
   pictogram.header.stamp = now;
@@ -273,7 +276,7 @@ static void publish_pedestrian(int id, int is_pedestrian, ros::Time now,
   pictogram.action = jsk_rviz_plugins::Pictogram::ADD;
   pictogram.mode = jsk_rviz_plugins::Pictogram::PICTOGRAM_MODE;
   pictogram.character = "dot-circle-o";
-  //marker.type = visualization_msgs::Marker::CYLINDER;
+  // marker.type = visualization_msgs::Marker::CYLINDER;
   // marker.lifetime = ros::Duration(life_time);
   pictogram.size = 5;
   pictogram.ttl = life_time;
@@ -296,7 +299,7 @@ static void publish_pedestrian(int id, int is_pedestrian, ros::Time now,
   update_pictograms(id, now, pictogram);
   dbg_out_pictogram(pictogram);
 
-  //marker.type = visualization_msgs::Marker::SPHERE;
+  // marker.type = visualization_msgs::Marker::SPHERE;
   pictogram.pose = pose;
   pictogram.pose.position.z += 1.2 + 0.3 + 0.1; // == #1 + #2/2 + alpha
   pictogram.character = "circle";
@@ -308,16 +311,16 @@ static void publish_pedestrian(int id, int is_pedestrian, ros::Time now,
   dbg_out_pictogram(pictogram);
 }
 
-static int result_to_pictogram(const string& idstr, ros::Time now,
-  geometry_msgs::Pose& pose, int type,
-  int diffmsec, int is_swap) {
+static int result_to_pictogram(const string &idstr, ros::Time now,
+                               geometry_msgs::Pose &pose, int type,
+                               int diffmsec, int is_swap) {
   int nid;
 
   switch (type) {
   case TYPE_OWN:
     /* use lower 6 bytes */
     nid = ANON_MARKER_ID_MAX |
-    (std::strtol(idstr.substr(6, 6).c_str(), NULL, 16)) << 1;
+          (std::strtol(idstr.substr(6, 6).c_str(), NULL, 16)) << 1;
     publish_car(nid, 1, now, pose, diffmsec);
     break;
   case TYPE_CAR:
@@ -334,7 +337,7 @@ static int result_to_pictogram(const string& idstr, ros::Time now,
       if (idstr.length() >= 25) {
         /* use lower 6 bytes */
         nid = ANON_MARKER_ID_MAX |
-        (std::strtol((idstr.substr(19, 6)).c_str(), NULL, 16)) << 1;
+              (std::strtol((idstr.substr(19, 6)).c_str(), NULL, 16)) << 1;
         publish_car(nid, 1, now, pose, diffmsec);
       }
     } else if (idstr.find("ndt_pose", 0) != string::npos) {
@@ -342,7 +345,7 @@ static int result_to_pictogram(const string& idstr, ros::Time now,
       if (idstr.length() >= 21) {
         /* use lower 6 bytes */
         nid = ANON_MARKER_ID_MAX |
-        (std::strtol((idstr.substr(15, 6)).c_str(), NULL, 16)) << 1;
+              (std::strtol((idstr.substr(15, 6)).c_str(), NULL, 16)) << 1;
         publish_car(nid, 1, now, pose, diffmsec);
       }
     } else if (idstr.find("car_pose", 0) != string::npos) {
@@ -361,14 +364,15 @@ static int get_timeval(const char *tstr, time_t *sp, int *np) {
   struct tm tm;
   const char *p;
 
-  if (sscanf(tstr, "%d-%d-%d %d:%d:%d", &tm.tm_year, &tm.tm_mon,
-  &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec) != 6) {
+  if (sscanf(tstr, "%d-%d-%d %d:%d:%d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday,
+             &tm.tm_hour, &tm.tm_min, &tm.tm_sec) != 6) {
     std::cerr << "Cannot convert time \"" << tstr << "\"" << std::endl;
     return -1;
   }
   if ((p = strchr(tstr, '.')) != NULL) {
     sscanf(++p, "%d", np);
-    for (int i = strlen(p); i < 9; i++, *np*=10);
+    for (int i = strlen(p); i < 9; i++, *np *= 10)
+      ;
   } else {
     *np = 0;
   }
@@ -378,7 +382,7 @@ static int get_timeval(const char *tstr, time_t *sp, int *np) {
   return 0;
 }
 
-static void pictogram_publisher(const std_msgs::String& msg, int is_swap) {
+static void pictogram_publisher(const std_msgs::String &msg, int is_swap) {
   std::vector<std::string> raw_db_data = split(msg.data, '\n');
   std::vector<std::vector<std::string>> db_data;
   std::vector<std::string> cols;
@@ -388,33 +392,30 @@ static void pictogram_publisher(const std_msgs::String& msg, int is_swap) {
   time_t now_sec, prv_sec = 0;
   int now_nsec, prv_nsec;
 
-  for (const std::string& row : raw_db_data) {
-    if(row.empty())
+  for (const std::string &row : raw_db_data) {
+    if (row.empty())
       continue;
     cols = split(row, '\t');
     // id,x,y,z,or_x,or_y,or_z,or_w,lon,lat,tm,type
-    if(cols.size() != 12)
+    if (cols.size() != 12)
       continue;
     db_data.push_back(cols);
   }
 
-
-  //sort db_data by time
+  // sort db_data by time
   sort(
-    db_data.begin(), db_data.end(),
-    [](const std::vector<string>& cols_x, const std::vector<string>& cols_y){
-      return stod(cols_x[10]) < stod(cols_y[10]);
-    }
-  );
+      db_data.begin(), db_data.end(),
+      [](const std::vector<string> &cols_x, const std::vector<string> &cols_y) {
+        return stod(cols_x[10]) < stod(cols_y[10]);
+      });
 
-  for (const std::vector<string>& cols : db_data) {
+  for (const std::vector<string> &cols : db_data) {
     type = std::stoi(cols[11]);
-    if(ignore_my_pose &&
-      (type == TYPE_OWN ||
-        cols[0].find("current_pose", 0) != string::npos ||
-        cols[0].find("ndt_pose", 0) != string::npos) &&
+    if (ignore_my_pose &&
+        (type == TYPE_OWN || cols[0].find("current_pose", 0) != string::npos ||
+         cols[0].find("ndt_pose", 0) != string::npos) &&
         cols[0].find(mac_addr, 0) != string::npos) {
-          continue;	// don't publish Marker of my pose
+      continue; // don't publish Marker of my pose
     }
 
     if (is_swap) {
@@ -432,20 +433,19 @@ static void pictogram_publisher(const std_msgs::String& msg, int is_swap) {
     pose.orientation.z = std::stod(cols[6]);
     pose.orientation.w = std::stod(cols[7]);
     // VoltDB returns not NULL but -1.7976931348623157E308
-    if (pose.position.x < -1.79E308||
-      pose.position.y < -1.79E308 ||
-      pose.position.z < -1.79E308) {
+    if (pose.position.x < -1.79E308 || pose.position.y < -1.79E308 ||
+        pose.position.z < -1.79E308) {
       geo_pos_conv geo;
       double lon = std::stod(cols[8]);
       double lat = std::stod(cols[9]);
       geo.set_plane(7); // Aichi-ken
-      geo.llh_to_xyz(lat, lon, 0/*h*/);
+      geo.llh_to_xyz(lat, lon, 0 /*h*/);
       if (is_swap) {
         pose.position.x = geo.y();
         pose.position.y = geo.x();
       } else {
-        	pose.position.x = geo.x();
-          pose.position.y = geo.y();
+        pose.position.x = geo.x();
+        pose.position.y = geo.y();
       }
       pose.position.z = geo.z();
       pose.orientation.x = 0;
@@ -454,10 +454,12 @@ static void pictogram_publisher(const std_msgs::String& msg, int is_swap) {
       pose.orientation.w = 1;
     }
     now_sec = now.toSec();
-    now_nsec = now.toNSec()%(1000*1000*1000);
+    now_nsec = now.toNSec() % (1000 * 1000 * 1000);
     get_timeval(cols[10].c_str(), &prv_sec, &prv_nsec);
     result_to_pictogram(cols[0], now, pose, type,
-      (now_sec-prv_sec)*1000+(now_nsec-prv_nsec)/1000/1000, is_swap);
+                        (now_sec - prv_sec) * 1000 +
+                            (now_nsec - prv_nsec) / 1000 / 1000,
+                        is_swap);
   }
 
 #ifndef CURRENT_CAR_DIRECTLY
@@ -471,28 +473,29 @@ static int create_timestr(time_t sec, int nsec, char *str, size_t size) {
 
   nowtm = std::gmtime(&sec);
   return std::snprintf(str, size, "%04d-%02d-%02d %02d:%02d:%02d.%03d",
-  nowtm->tm_year + 1900, nowtm->tm_mon + 1, nowtm->tm_mday,
-  nowtm->tm_hour, nowtm->tm_min, nowtm->tm_sec, nsec/1000/1000);
+                       nowtm->tm_year + 1900, nowtm->tm_mon + 1, nowtm->tm_mday,
+                       nowtm->tm_hour, nowtm->tm_min, nowtm->tm_sec,
+                       nsec / 1000 / 1000);
 }
 
-//wrap SendData class
+// wrap SendData class
 static void send_sql(time_t diff_sec) {
   std::string data;
   string db_response;
   std_msgs::String msg;
   ros::Time now = ros::Time::now();
   time_t now_sec = now.toSec() - diff_sec;
-  int now_nsec = now.toNSec()%(1000*1000*1000);
+  int now_nsec = now.toNSec() % (1000 * 1000 * 1000);
   char timestr[64]; // "YYYY-mm-dd HH:MM:SS.sss..."
   char prevstr[64]; // "YYYY-mm-dd HH:MM:SS.sss..."
 
-  create_timestr(now_sec-TOTAL_LIFETIME, now_nsec, prevstr, sizeof(prevstr));
+  create_timestr(now_sec - TOTAL_LIFETIME, now_nsec, prevstr, sizeof(prevstr));
   create_timestr(now_sec, now_nsec, timestr, sizeof(timestr));
 
   data = make_header(1, 1);
   // select pos data between previous latest timestamp and now
   data += "SELECT id,x,y,z,or_x,or_y,or_z,or_w,lon,lat,tm,type FROM POS "
-  "WHERE tm > '";
+          "WHERE tm > '";
   data += prevstr;
   data += "' AND tm < '";
   data += timestr;
@@ -510,7 +513,7 @@ static void send_sql(time_t diff_sec) {
   }
 }
 
-static void* intervalCall(void *unused) {
+static void *intervalCall(void *unused) {
   double *args = (double *)unused;
   double diff_sec = args[1];
 
@@ -522,7 +525,7 @@ static void* intervalCall(void *unused) {
 
   while (1) {
     send_sql((time_t)diff_sec);
-    usleep(sleep_msec*1000);
+    usleep(sleep_msec * 1000);
   }
 
   return nullptr;
@@ -536,17 +539,19 @@ int main(int argc, char **argv) {
 
   cout << MYNAME << endl;
 
-  if(argc < 2) {
-    std::cerr << "usage : \n\trosrun " << MYNAME << " <user name> [show_my_pose]" << std::endl;
+  if (argc < 2) {
+    std::cerr << "usage : \n\trosrun " << MYNAME
+              << " <user name> [show_my_pose]" << std::endl;
     return -1;
   }
-  if(argc > 2) {
-    if(strncmp(argv[2], "show_my_pose", 12) == 0) ignore_my_pose = 0;
+  if (argc > 2) {
+    if (strncmp(argv[2], "show_my_pose", 12) == 0)
+      ignore_my_pose = 0;
   }
   std::cerr << "ignore_my_pose=" << ignore_my_pose << std::endl;
 
   probe_mac_addr(mac_addr);
-  std::cerr <<  "mac_addr=" << mac_addr << std::endl;
+  std::cerr << "mac_addr=" << mac_addr << std::endl;
 
   string home_dir = getenv("HOME");
 
@@ -564,16 +569,18 @@ int main(int argc, char **argv) {
   cout << "db_host_name=" << db_host_name << endl;
   nh.param<int>("pos_db/db_port", db_port, DB_PORT);
   cout << "db_port=" << db_port << endl;
-  nh.param<string>("pos_db/sshpubkey", sshpubkey, home_dir+SSHPUBKEY);
+  nh.param<string>("pos_db/sshpubkey", sshpubkey, home_dir + SSHPUBKEY);
   cout << "sshpubkey=" << sshpubkey << endl;
-  nh.param<string>("pos_db/sshprivatekey", sshprivatekey, home_dir+SSHPRIVATEKEY);
+  nh.param<string>("pos_db/sshprivatekey", sshprivatekey,
+                   home_dir + SSHPRIVATEKEY);
   cout << "sshprivatekey=" << sshprivatekey << endl;
   nh.param<int>("pos_db/ssh_port", ssh_port, SSHPORT);
   cout << "ssh_port=" << ssh_port << endl;
   nh.param<string>("pos_db/sshtunnelhost", sshtunnelhost, SSHTUNNELHOST);
   cout << "sshtunnelhost=" << sshtunnelhost << endl;
 
-  sd = SendData(db_host_name, db_port, argv[1], sshpubkey, sshprivatekey, ssh_port, sshtunnelhost);
+  sd = SendData(db_host_name, db_port, argv[1], sshpubkey, sshprivatekey,
+                ssh_port, sshtunnelhost);
 
   if (pthread_create(&th, nullptr, intervalCall, (void *)args) != 0) {
     std::perror("pthread_create");

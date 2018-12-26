@@ -1,16 +1,16 @@
 #ifndef UTILS_H
 #define UTILS_H
-#include <stdio.h>
-#include <time.h>
 #include "darknet.h"
 #include "list.h"
+#include <stdio.h>
+#include <time.h>
 
-#define TIME(a) \
-    do { \
-    double start = what_time_is_it_now(); \
-    a; \
-    printf("%s took: %f seconds\n", #a, what_time_is_it_now() - start); \
-    } while (0)
+#define TIME(a)                                                                \
+  do {                                                                         \
+    double start = what_time_is_it_now();                                      \
+    a;                                                                         \
+    printf("%s took: %f seconds\n", #a, what_time_is_it_now() - start);        \
+  } while (0)
 
 #define TWO_PI 6.2831853071795864769252866f
 
@@ -50,4 +50,3 @@ void print_statistics(float *a, int n);
 int int_index(int *a, int val, int n);
 
 #endif
-

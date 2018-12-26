@@ -6,28 +6,26 @@
 #define OBSTACLE_SIM_H
 
 // ROS includes
-#include <ros/ros.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <tf/transform_listener.h>
 #include <geometry_msgs/Polygon.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <ros/ros.h>
+#include <tf/transform_listener.h>
+#include <visualization_msgs/MarkerArray.h>
 
 // C++ includes
 #include <iostream>
 #include <vector>
 
-namespace astar_planner
-{
+namespace astar_planner {
 
-class ObstacleSim
-{
+class ObstacleSim {
 public:
   ObstacleSim();
   ~ObstacleSim();
 
   void run();
-  
+
 private:
   // handle
   ros::NodeHandle nh_;
@@ -43,7 +41,7 @@ private:
   ros::Subscriber nav_goal_sub_;
 
   // callbacks
-  void callbackFromNavGoal(const geometry_msgs::PoseStampedConstPtr& msg);
+  void callbackFromNavGoal(const geometry_msgs::PoseStampedConstPtr &msg);
 
   // initializer
   void initForROS();
@@ -52,7 +50,11 @@ private:
 
   // debug
   void displayObstaclePoints();
-  void displayObstacleMarker(const geometry_msgs::Point& p1, const geometry_msgs::Point& p2, const geometry_msgs::Point& p3, const geometry_msgs::Point& p4, const std::string& frame);
+  void displayObstacleMarker(const geometry_msgs::Point &p1,
+                             const geometry_msgs::Point &p2,
+                             const geometry_msgs::Point &p3,
+                             const geometry_msgs::Point &p4,
+                             const std::string &frame);
 
   // ros param
   double obstacle_height_;
@@ -71,4 +73,4 @@ private:
 
 } // namespace astar_planner
 
-#endif  /* ifndef COMMAND_SENDER_H */
+#endif /* ifndef COMMAND_SENDER_H */

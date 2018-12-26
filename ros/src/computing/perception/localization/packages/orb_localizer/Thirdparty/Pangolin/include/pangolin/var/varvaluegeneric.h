@@ -30,47 +30,38 @@
 
 #include <string>
 
-namespace pangolin
-{
+namespace pangolin {
 
-struct VarMeta
-{
-    std::string full_name;
-    std::string friendly;
-    double range[2];
-    double increment;
-    int flags;
-    bool gui_changed;
-    bool logscale;
-    bool generic;
+struct VarMeta {
+  std::string full_name;
+  std::string friendly;
+  double range[2];
+  double increment;
+  int flags;
+  bool gui_changed;
+  bool logscale;
+  bool generic;
 };
 
 // Forward declaration
-template<typename T>
-class VarValueT;
+template <typename T> class VarValueT;
 
 //! Abstract base class for named Pangolin variables
-class VarValueGeneric
-{
+class VarValueGeneric {
 public:
-    VarValueGeneric()
-        : str(0)
-    {
-    }
+  VarValueGeneric() : str(0) {}
 
-    virtual ~VarValueGeneric()
-    {
-    }
+  virtual ~VarValueGeneric() {}
 
-    virtual const char* TypeId() const = 0;
-    virtual void Reset() = 0;
-    virtual VarMeta& Meta() = 0;
+  virtual const char *TypeId() const = 0;
+  virtual void Reset() = 0;
+  virtual VarMeta &Meta() = 0;
 
-//protected:
-    // String serialisation object.
-    VarValueT<std::string>* str;
+  // protected:
+  // String serialisation object.
+  VarValueT<std::string> *str;
 };
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_VARVALUEGENERIC_H

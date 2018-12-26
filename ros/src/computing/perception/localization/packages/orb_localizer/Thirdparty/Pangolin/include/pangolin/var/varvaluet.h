@@ -28,22 +28,19 @@
 #ifndef PANGOLIN_VARVALUET_H
 #define PANGOLIN_VARVALUET_H
 
-#include <pangolin/var/varvaluegeneric.h>
 #include <pangolin/compat/type_traits.h>
+#include <pangolin/var/varvaluegeneric.h>
 
-namespace pangolin
-{
+namespace pangolin {
 
-template<typename T>
-class VarValueT : public VarValueGeneric
-{
+template <typename T> class VarValueT : public VarValueGeneric {
 public:
-    typedef typename boostd::remove_reference<T>::type VarT;
+  typedef typename boostd::remove_reference<T>::type VarT;
 
-    virtual const VarT& Get() const = 0;
-    virtual void Set(const VarT& val) = 0;
+  virtual const VarT &Get() const = 0;
+  virtual void Set(const VarT &val) = 0;
 };
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_VARVALUET_H

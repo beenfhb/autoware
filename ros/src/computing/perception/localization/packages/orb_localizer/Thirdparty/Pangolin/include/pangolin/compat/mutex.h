@@ -31,9 +31,9 @@
 #include <pangolin/platform.h>
 
 #ifdef CPP11_NO_BOOST
-    #include <mutex>
+#include <mutex>
 #else
-    #include <boost/thread/mutex.hpp>
+#include <boost/thread/mutex.hpp>
 #endif
 
 #include <pangolin/compat/boostd.h>

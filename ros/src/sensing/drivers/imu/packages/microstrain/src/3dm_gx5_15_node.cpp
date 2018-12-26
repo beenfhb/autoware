@@ -1,4 +1,4 @@
-/* 
+/*
 
 Copyright (c) 2017, Brian Bingham
 Copyright (c) 2017, Yuki Kitsukawa
@@ -32,12 +32,10 @@ along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
-
 #include "microstrain.h"
 #include <ros/ros.h>
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   ros::init(argc, argv, "3dm_gx5_15_node");
   Microstrain::Microstrain ustrain;
   ustrain.run();

@@ -30,52 +30,52 @@
 
 #include <pangolin/gl/gltext.h>
 
-#include <cstdio>
 #include <cstdarg>
+#include <cstdio>
 
 namespace pangolin {
 
-class PANGOLIN_EXPORT GlFont
-{
+class PANGOLIN_EXPORT GlFont {
 public:
-    // Singleton instance if requested.
-    static GlFont& I();
+  // Singleton instance if requested.
+  static GlFont &I();
 
-    // Load GL Font data. Delay uploading as texture until first use.
-    GlFont(const unsigned char* ttf_buffer, float pixel_height, int tex_w=512, int tex_h=512);
-    GlFont(const std::string& filename, float pixel_height, int tex_w=512, int tex_h=512);
+  // Load GL Font data. Delay uploading as texture until first use.
+  GlFont(const unsigned char *ttf_buffer, float pixel_height, int tex_w = 512,
+         int tex_h = 512);
+  GlFont(const std::string &filename, float pixel_height, int tex_w = 512,
+         int tex_h = 512);
 
-    virtual ~GlFont();
+  virtual ~GlFont();
 
-    // Generate renderable GlText object from this font.
-    GlText Text( const char* fmt, ... );
+  // Generate renderable GlText object from this font.
+  GlText Text(const char *fmt, ...);
 
-    GlText Text( const std::string& str );
+  GlText Text(const std::string &str);
 
-    inline float Height() const {
-        return font_height_px;
-    }
-    
+  inline float Height() const { return font_height_px; }
+
 protected:
-    void InitialiseFont(const unsigned char* ttf_buffer, float pixel_height, int tex_w, int tex_h);
+  void InitialiseFont(const unsigned char *ttf_buffer, float pixel_height,
+                      int tex_w, int tex_h);
 
-    // This can only be called once GL context is initialised
-    void InitialiseGlTexture();
+  // This can only be called once GL context is initialised
+  void InitialiseGlTexture();
 
-    const static int FIRST_CHAR = 32;
-    const static int NUM_CHARS = 96;
+  const static int FIRST_CHAR = 32;
+  const static int NUM_CHARS = 96;
 
-    float font_height_px;
+  float font_height_px;
 
-    int tex_w;
-    int tex_h;
-    unsigned char* font_bitmap;
-    GlTexture mTex;
+  int tex_w;
+  int tex_h;
+  unsigned char *font_bitmap;
+  GlTexture mTex;
 
-    GlChar chardata[NUM_CHARS];
-    GLfloat kern_table[NUM_CHARS*NUM_CHARS];
+  GlChar chardata[NUM_CHARS];
+  GLfloat kern_table[NUM_CHARS * NUM_CHARS];
 };
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_GLFONT_H

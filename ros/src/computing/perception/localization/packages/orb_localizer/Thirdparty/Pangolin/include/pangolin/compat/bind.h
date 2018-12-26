@@ -31,9 +31,9 @@
 #include <pangolin/platform.h>
 
 #ifdef CPP11_NO_BOOST
-    #include <functional>
+#include <functional>
 #else
-    #include <boost/bind.hpp>
+#include <boost/bind.hpp>
 #endif
 
 #include <pangolin/compat/boostd.h>

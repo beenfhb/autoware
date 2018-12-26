@@ -36,9 +36,9 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <pcl/point_cloud.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sick_ldmrs_msgs/sick_ldmrs_point_type.h>
-#include <pcl/point_cloud.h>
 
 typedef sick_ldmrs_msgs::SICK_LDMRS_Point PointT;
 typedef pcl::PointCloud<PointT> PointCloudT;
@@ -49,49 +49,49 @@ double start_angle_;
 double end_angle_;
 double angular_resolution_;
 
-void callback(const sensor_msgs::PointCloud2::ConstPtr& pc)
-{
+void callback(const sensor_msgs::PointCloud2::ConstPtr &pc) {
 
   PointCloudT::Ptr cloud = boost::make_shared<PointCloudT>();
   pcl::fromROSMsg(*pc, *cloud);
 
-  size_t height = 8;   // 8 layers
+  size_t height = 8; // 8 layers
   size_t width = round((start_angle_ - end_angle_) / angular_resolution_) + 1;
 
   PointT invalid;
   invalid.x = invalid.y = invalid.z = std::numeric_limits<float>::quiet_NaN();
-  PointCloudT::Ptr cloud_out = boost::make_shared<PointCloudT>(width, height, invalid);
+  PointCloudT::Ptr cloud_out =
+      boost::make_shared<PointCloudT>(width, height, invalid);
   cloud_out->is_dense = false;
 
-  for (size_t i = 0; i < cloud->size(); i++)
-  {
+  for (size_t i = 0; i < cloud->size(); i++) {
     const PointT &p = cloud->points[i];
     int col = round((atan2(p.y, p.x) - end_angle_) / angular_resolution_);
     int row = p.layer;
 
-    if (col < 0 || col >= width || row < 0 || row >= height)
-    {
-      ROS_ERROR("Invalid coordinates: (%d, %d) is outside (0, 0)..(%zu, %zu)!", col, row, width, height);
+    if (col < 0 || col >= width || row < 0 || row >= height) {
+      ROS_ERROR("Invalid coordinates: (%d, %d) is outside (0, 0)..(%zu, %zu)!",
+                col, row, width, height);
       continue;
     }
     (*cloud_out)[row * width + col] = p;
   }
 
-  sensor_msgs::PointCloud2::Ptr msg = boost::make_shared<sensor_msgs::PointCloud2>();
+  sensor_msgs::PointCloud2::Ptr msg =
+      boost::make_shared<sensor_msgs::PointCloud2>();
   pcl::toROSMsg(*cloud_out, *msg);
   msg->header = pc->header;
   pub.publish(msg);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   ros::init(argc, argv, "sick_ldmrs_make_organized");
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");
 
   start_angle_ = private_nh.param("start_angle", 0.872664625997);
   end_angle_ = private_nh.param("end_angle", -1.0471975512);
-  angular_resolution_ = private_nh.param("angular_resolution", 0.125 * M_PI / 180.0);
+  angular_resolution_ =
+      private_nh.param("angular_resolution", 0.125 * M_PI / 180.0);
 
   ros::Subscriber sub = nh.subscribe("cloud", 1, callback);
   pub = nh.advertise<sensor_msgs::PointCloud2>("organized", 1);

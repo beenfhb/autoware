@@ -30,11 +30,9 @@
 
 #include <pangolin/gl/glplatform.h>
 
-namespace pangolin
-{
+namespace pangolin {
 
-template<typename T>
-struct GlFormatTraits;
+template <typename T> struct GlFormatTraits;
 //{
 //    static const GLint glinternalformat = 0;
 //    static const GLenum glformat = 0;
@@ -45,34 +43,28 @@ struct GlFormatTraits;
 
 //////////////////////////////////////////////////////////////////
 
-template<>
-struct GlFormatTraits<float>
-{
-    static const GLint glinternalformat = GL_LUMINANCE32F_ARB;
-    static const GLenum glformat = GL_LUMINANCE;
-    static const GLenum gltype = GL_FLOAT;
+template <> struct GlFormatTraits<float> {
+  static const GLint glinternalformat = GL_LUMINANCE32F_ARB;
+  static const GLenum glformat = GL_LUMINANCE;
+  static const GLenum gltype = GL_FLOAT;
 };
 
 //////////////////////////////////////////////////////////////////
 
-template<>
-struct GlFormatTraits<unsigned char>
-{
-    static const GLint glinternalformat = GL_LUMINANCE;
-    static const GLenum glformat = GL_LUMINANCE;
-    static const GLenum gltype = GL_UNSIGNED_BYTE;
+template <> struct GlFormatTraits<unsigned char> {
+  static const GLint glinternalformat = GL_LUMINANCE;
+  static const GLenum glformat = GL_LUMINANCE;
+  static const GLenum gltype = GL_UNSIGNED_BYTE;
 };
 
 //////////////////////////////////////////////////////////////////
 
-template<>
-struct GlFormatTraits<unsigned short>
-{
-    static const GLint glinternalformat = GL_LUMINANCE;
-    static const GLenum glformat = GL_LUMINANCE;
-    static const GLenum gltype = GL_UNSIGNED_SHORT;
+template <> struct GlFormatTraits<unsigned short> {
+  static const GLint glinternalformat = GL_LUMINANCE;
+  static const GLenum glformat = GL_LUMINANCE;
+  static const GLenum gltype = GL_UNSIGNED_SHORT;
 };
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_GLFORMATTRAITS_H

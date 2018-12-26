@@ -1,3 +1,5 @@
+#include "autoware_msgs/DetectedObject.h"
+#include "autoware_msgs/DetectedObjectArray.h"
 #include "tf/transform_listener.h"
 #include <cmath>
 #include <geometry_msgs/PointStamped.h>
@@ -6,8 +8,6 @@
 #include <iostream>
 #include <jsk_recognition_msgs/BoundingBox.h>
 #include <jsk_recognition_msgs/BoundingBoxArray.h>
-#include "autoware_msgs/DetectedObject.h"
-#include "autoware_msgs/DetectedObjectArray.h"
 #include <pcl_conversions/pcl_conversions.h>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>

@@ -31,35 +31,33 @@
 #include <pangolin/platform.h>
 #include <string>
 
-namespace pangolin
-{
+namespace pangolin {
 
-enum ImageFileType
-{
-    ImageFileTypePpm,
-    ImageFileTypeTga,
-    ImageFileTypePng,
-    ImageFileTypeJpg,
-    ImageFileTypeTiff,
-    ImageFileTypeGif,
-    ImageFileTypeExr,
-    ImageFileTypePango,
-    ImageFileTypePvn,
-    ImageFileTypeUnknown
+enum ImageFileType {
+  ImageFileTypePpm,
+  ImageFileTypeTga,
+  ImageFileTypePng,
+  ImageFileTypeJpg,
+  ImageFileTypeTiff,
+  ImageFileTypeGif,
+  ImageFileTypeExr,
+  ImageFileTypePango,
+  ImageFileTypePvn,
+  ImageFileTypeUnknown
 };
 
 PANGOLIN_EXPORT
-std::string FileLowercaseExtention(const std::string& filename);
+std::string FileLowercaseExtention(const std::string &filename);
 
 PANGOLIN_EXPORT
 ImageFileType FileTypeMagic(const unsigned char data[], size_t bytes);
 
 PANGOLIN_EXPORT
-ImageFileType FileTypeExtension(const std::string& ext);
+ImageFileType FileTypeExtension(const std::string &ext);
 
 PANGOLIN_EXPORT
-ImageFileType FileType(const std::string& filename);
+ImageFileType FileType(const std::string &filename);
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_FILE_EXTENSION_H

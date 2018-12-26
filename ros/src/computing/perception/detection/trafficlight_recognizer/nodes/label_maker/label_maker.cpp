@@ -1,6 +1,6 @@
-#include <ros/ros.h>
 #include "label_maker_gui.h"
 #include <QApplication>
+#include <ros/ros.h>
 
 int main(int argc, char *argv[]) {
   // ROS initialization

@@ -1,8 +1,8 @@
 #include "libvelocity_set.h"
 
 // extract edge points from zebra zone
-std::vector<geometry_msgs::Point> removeNeedlessPoints(std::vector<geometry_msgs::Point> &area_points)
-{
+std::vector<geometry_msgs::Point>
+removeNeedlessPoints(std::vector<geometry_msgs::Point> &area_points) {
   area_points.push_back(area_points.front());
   std::map<double, int> length_index;
   for (unsigned int i = 0; i < area_points.size() - 1; i++)
@@ -20,61 +20,50 @@ std::vector<geometry_msgs::Point> removeNeedlessPoints(std::vector<geometry_msgs
   return new_points;
 }
 
-void CrossWalk::crossWalkCallback(const vector_map::CrossWalkArray &msg)
-{
+void CrossWalk::crossWalkCallback(const vector_map::CrossWalkArray &msg) {
   crosswalk_ = msg;
 
   loaded_crosswalk = true;
-  if (loaded_crosswalk && loaded_area && loaded_line && loaded_point)
-  {
+  if (loaded_crosswalk && loaded_area && loaded_line && loaded_point) {
     loaded_all = true;
     ROS_INFO("All VectorMap loaded");
   }
 }
 
-void CrossWalk::areaCallback(const vector_map::AreaArray &msg)
-{
+void CrossWalk::areaCallback(const vector_map::AreaArray &msg) {
   area_ = msg;
 
   loaded_area = true;
-  if (loaded_crosswalk && loaded_area && loaded_line && loaded_point)
-  {
+  if (loaded_crosswalk && loaded_area && loaded_line && loaded_point) {
     loaded_all = true;
     ROS_INFO("All VectorMap loaded");
   }
 }
 
-void CrossWalk::lineCallback(const vector_map::LineArray &msg)
-{
+void CrossWalk::lineCallback(const vector_map::LineArray &msg) {
   line_ = msg;
 
   loaded_line = true;
-  if (loaded_crosswalk && loaded_area && loaded_line && loaded_point)
-  {
+  if (loaded_crosswalk && loaded_area && loaded_line && loaded_point) {
     loaded_all = true;
     ROS_INFO("All VectorMap loaded");
   }
 }
 
-void CrossWalk::pointCallback(const vector_map::PointArray &msg)
-{
+void CrossWalk::pointCallback(const vector_map::PointArray &msg) {
   point_ = msg;
 
   loaded_point = true;
-  if (loaded_crosswalk && loaded_area && loaded_line && loaded_point)
-  {
+  if (loaded_crosswalk && loaded_area && loaded_line && loaded_point) {
     loaded_all = true;
     ROS_INFO("All VectorMap loaded");
   }
 }
 
-geometry_msgs::Point CrossWalk::getPoint(const int &pid) const
-{
+geometry_msgs::Point CrossWalk::getPoint(const int &pid) const {
   geometry_msgs::Point point;
-  for (const auto &p : point_.data)
-  {
-    if (p.pid == pid)
-    {
+  for (const auto &p : point_.data) {
+    if (p.pid == pid) {
       point.x = p.ly;
       point.y = p.bx;
       point.z = p.h;
@@ -86,23 +75,18 @@ geometry_msgs::Point CrossWalk::getPoint(const int &pid) const
   return point;
 }
 
-geometry_msgs::Point CrossWalk::calcCenterofGravity(const int &aid) const
-{
+geometry_msgs::Point CrossWalk::calcCenterofGravity(const int &aid) const {
   int search_lid = -1;
   for (const auto &area : area_.data)
-    if (area.aid == aid)
-    {
+    if (area.aid == aid) {
       search_lid = area.slid;
       break;
     }
 
   std::vector<geometry_msgs::Point> area_points;
-  while (search_lid)
-  {
-    for (const auto &line : line_.data)
-    {
-      if (line.lid == search_lid)
-      {
+  while (search_lid) {
+    for (const auto &line : line_.data) {
+      if (line.lid == search_lid) {
         area_points.push_back(getPoint(line.bpid));
         search_lid = line.flid;
       }
@@ -113,20 +97,16 @@ geometry_msgs::Point CrossWalk::calcCenterofGravity(const int &aid) const
   point.x = 0.0;
   point.y = 0.0;
   point.z = 0.0;
-  if (area_points.size() > 4)
-  {
-    std::vector<geometry_msgs::Point> filterd_points = removeNeedlessPoints(area_points);
-    for (const auto &p : filterd_points)
-    {
+  if (area_points.size() > 4) {
+    std::vector<geometry_msgs::Point> filterd_points =
+        removeNeedlessPoints(area_points);
+    for (const auto &p : filterd_points) {
       point.x += p.x;
       point.y += p.y;
       point.z += p.z;
     }
-  }
-  else
-  {
-    for (const auto &p : area_points)
-    {
+  } else {
+    for (const auto &p : area_points) {
       point.x += p.x;
       point.y += p.y;
       point.z += p.z;
@@ -139,23 +119,18 @@ geometry_msgs::Point CrossWalk::calcCenterofGravity(const int &aid) const
   return point;
 }
 
-double CrossWalk::calcCrossWalkWidth(const int &aid) const
-{
+double CrossWalk::calcCrossWalkWidth(const int &aid) const {
   int search_lid = -1;
   for (const auto &area : area_.data)
-    if (area.aid == aid)
-    {
+    if (area.aid == aid) {
       search_lid = area.slid;
       break;
     }
 
   std::vector<geometry_msgs::Point> area_points;
-  while (search_lid)
-  {
-    for (const auto &line : line_.data)
-    {
-      if (line.lid == search_lid)
-      {
+  while (search_lid) {
+    for (const auto &line : line_.data) {
+      if (line.lid == search_lid) {
         area_points.push_back(getPoint(line.bpid));
         //_points.push_back(area_points.back());///
         search_lid = line.flid;
@@ -165,8 +140,7 @@ double CrossWalk::calcCrossWalkWidth(const int &aid) const
 
   area_points.push_back(area_points.front());
   double max_length = calcSquareOfLength(area_points[0], area_points[1]);
-  for (unsigned int i = 1; i < area_points.size() - 1; i++)
-  {
+  for (unsigned int i = 1; i < area_points.size() - 1; i++) {
     if (calcSquareOfLength(area_points[i], area_points[i + 1]) > max_length)
       max_length = calcSquareOfLength(area_points[i], area_points[i + 1]);
   }
@@ -175,33 +149,29 @@ double CrossWalk::calcCrossWalkWidth(const int &aid) const
 }
 
 // count the number of crosswalks
-int CrossWalk::countAreaSize() const
-{
+int CrossWalk::countAreaSize() const {
   int count = 0;
   for (const auto &x : crosswalk_.data)
-    if (x.type == 0)  // type:0 -> outer frame of crosswalks
+    if (x.type == 0) // type:0 -> outer frame of crosswalks
       count++;
 
   return count;
 }
 
-void CrossWalk::getAID(std::unordered_map<int, std::vector<int>> &bdid2aid_map) const
-{
+void CrossWalk::getAID(
+    std::unordered_map<int, std::vector<int>> &bdid2aid_map) const {
   for (const auto &x : crosswalk_.data)
-    if (x.type == 1)
-    {                                         // if it is zebra
-      bdid2aid_map[x.bdid].push_back(x.aid);  // save area id
+    if (x.type == 1) {                       // if it is zebra
+      bdid2aid_map[x.bdid].push_back(x.aid); // save area id
     }
 }
 
-void CrossWalk::calcDetectionArea(const std::unordered_map<int, std::vector<int>> &bdid2aid_map)
-{
-  for (const auto &crosswalk_aids : bdid2aid_map)
-  {
+void CrossWalk::calcDetectionArea(
+    const std::unordered_map<int, std::vector<int>> &bdid2aid_map) {
+  for (const auto &crosswalk_aids : bdid2aid_map) {
     int bdid = crosswalk_aids.first;
     double width = 0.0;
-    for (const auto &aid : crosswalk_aids.second)
-    {
+    for (const auto &aid : crosswalk_aids.second) {
       detection_points_[bdid].points.push_back(calcCenterofGravity(aid));
       width += calcCrossWalkWidth(aid);
     }
@@ -210,16 +180,13 @@ void CrossWalk::calcDetectionArea(const std::unordered_map<int, std::vector<int>
   }
 }
 
-void CrossWalk::calcCenterPoints()
-{
-  for (const auto &i : bdID_)
-  {
+void CrossWalk::calcCenterPoints() {
+  for (const auto &i : bdID_) {
     geometry_msgs::Point center;
     center.x = 0.0;
     center.y = 0.0;
     center.z = 0.0;
-    for (const auto &p : detection_points_[i].points)
-    {
+    for (const auto &p : detection_points_[i].points) {
       center.x += p.x;
       center.y += p.y;
       center.z += p.z;
@@ -231,8 +198,7 @@ void CrossWalk::calcCenterPoints()
   }
 }
 
-void CrossWalk::setCrossWalkPoints()
-{
+void CrossWalk::setCrossWalkPoints() {
   // bdid2aid_map[BDID] has AIDs of its zebra zone
   std::unordered_map<int, std::vector<int>> bdid2aid_map;
   getAID(bdid2aid_map);
@@ -248,46 +214,41 @@ void CrossWalk::setCrossWalkPoints()
   set_points = true;
 }
 
-int CrossWalk::findClosestCrosswalk(const int closest_waypoint, const autoware_msgs::Lane &lane,
-                                    const int search_distance)
-{
+int CrossWalk::findClosestCrosswalk(const int closest_waypoint,
+                                    const autoware_msgs::Lane &lane,
+                                    const int search_distance) {
   if (!set_points || closest_waypoint < 0)
     return -1;
 
-  double find_distance = 2.0 * 2.0;      // meter
-  double ignore_distance = 20.0 * 20.0;  // meter
+  double find_distance = 2.0 * 2.0;     // meter
+  double ignore_distance = 20.0 * 20.0; // meter
   static std::vector<int> bdid = getBDID();
 
   int _return_val = 0;
 
-  initDetectionCrossWalkIDs();  // for multiple
+  initDetectionCrossWalkIDs(); // for multiple
 
   // Find near cross walk
-  for (int num = closest_waypoint; num < closest_waypoint + search_distance && num < (int)lane.waypoints.size(); num++)
-  {
+  for (int num = closest_waypoint; num < closest_waypoint + search_distance &&
+                                   num < (int)lane.waypoints.size();
+       num++) {
     geometry_msgs::Point waypoint = lane.waypoints[num].pose.pose.position;
-    waypoint.z = 0.0;  // ignore Z axis
-    for (const auto &i : bdid)
-    {
+    waypoint.z = 0.0; // ignore Z axis
+    for (const auto &i : bdid) {
       // ignore far crosswalk
       geometry_msgs::Point crosswalk_center = getDetectionPoints(i).center;
       crosswalk_center.z = 0.0;
       if (calcSquareOfLength(crosswalk_center, waypoint) > ignore_distance)
         continue;
 
-      for (auto p : getDetectionPoints(i).points)
-      {
+      for (auto p : getDetectionPoints(i).points) {
         p.z = waypoint.z;
-        if (calcSquareOfLength(p, waypoint) < find_distance)
-        {
+        if (calcSquareOfLength(p, waypoint) < find_distance) {
           addDetectionCrossWalkIDs(i);
-          if (!this->isMultipleDetection())
-          {
+          if (!this->isMultipleDetection()) {
             setDetectionCrossWalkID(i);
             return num;
-          }
-          else if (!_return_val)
-          {
+          } else if (!_return_val) {
             setDetectionCrossWalkID(i);
             _return_val = num;
           }
@@ -300,17 +261,15 @@ int CrossWalk::findClosestCrosswalk(const int closest_waypoint, const autoware_m
     return _return_val;
 
   setDetectionCrossWalkID(-1);
-  return -1;  // no near crosswalk
+  return -1; // no near crosswalk
 }
 
-geometry_msgs::Point ObstaclePoints::getObstaclePoint(const EControl &kind) const
-{
+geometry_msgs::Point
+ObstaclePoints::getObstaclePoint(const EControl &kind) const {
   geometry_msgs::Point point;
 
-  if (kind == EControl::STOP || kind == EControl::STOPLINE)
-  {
-    for (const auto &p : stop_points_)
-    {
+  if (kind == EControl::STOP || kind == EControl::STOPLINE) {
+    for (const auto &p : stop_points_) {
       point.x += p.x;
       point.y += p.y;
       point.z += p.z;
@@ -320,11 +279,9 @@ geometry_msgs::Point ObstaclePoints::getObstaclePoint(const EControl &kind) cons
     point.z /= stop_points_.size();
 
     return point;
-  }
-  else  // kind == DECELERATE
+  } else // kind == DECELERATE
   {
-    for (const auto &p : decelerate_points_)
-    {
+    for (const auto &p : decelerate_points_) {
       point.x += p.x;
       point.y += p.y;
       point.z += p.z;

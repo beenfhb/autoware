@@ -4,13 +4,11 @@
 #include <map>
 #include <string>
 
-
-class FileSystemOperator
-{
+class FileSystemOperator {
 public:
   // The status of traffic light color.
   // These are defined in the same order used in recognition part
-  enum LightState {GREEN, YELLOW, RED, UNKNOWN};
+  enum LightState { GREEN, YELLOW, RED, UNKNOWN };
 
   FileSystemOperator();
   ~FileSystemOperator();
@@ -22,15 +20,9 @@ public:
   void CheckPreSavedData(std::string target_dir_name);
 
   // The function to write specified state into file
-  void WriteStateToFile(std::string folder_name,
-                        std::string file_name,
-                        LightState state,
-                        int image_height,
-                        int image_width,
-                        int image_depth,
-                        int x_start,
-                        int y_start,
-                        int x_end,
+  void WriteStateToFile(std::string folder_name, std::string file_name,
+                        LightState state, int image_height, int image_width,
+                        int image_depth, int x_start, int y_start, int x_end,
                         int y_end);
 
 private:

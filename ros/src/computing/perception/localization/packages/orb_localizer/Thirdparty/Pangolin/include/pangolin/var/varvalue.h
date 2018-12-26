@@ -31,87 +31,55 @@
 #include <pangolin/var/varvaluet.h>
 #include <pangolin/var/varwrapper.h>
 
-namespace pangolin
-{
+namespace pangolin {
 
-template<typename T>
-class VarValue : public VarValueT<typename boostd::remove_reference<T>::type>
-{
+template <typename T>
+class VarValue : public VarValueT<typename boostd::remove_reference<T>::type> {
 public:
-    typedef typename boostd::remove_reference<T>::type VarT;
+  typedef typename boostd::remove_reference<T>::type VarT;
 
-    ~VarValue()
-    {
-        delete str_ptr;
-    }
+  ~VarValue() { delete str_ptr; }
 
-    VarValue()
-    {
-        Init();
-    }
+  VarValue() { Init(); }
 
-    VarValue(const T& value)
-        : value(value), default_value(value)
-    {
-        Init();
-    }
+  VarValue(const T &value) : value(value), default_value(value) { Init(); }
 
-    VarValue(const T& value, const VarT& default_value)
-        : value(value), default_value(default_value)
-    {
-        Init();
-    }
+  VarValue(const T &value, const VarT &default_value)
+      : value(value), default_value(default_value) {
+    Init();
+  }
 
-    const char* TypeId() const
-    {
-        return typeid(VarT).name();
-    }
+  const char *TypeId() const { return typeid(VarT).name(); }
 
-    void Reset()
-    {
-        value = default_value;
-    }
+  void Reset() { value = default_value; }
 
-    VarMeta& Meta()
-    {
-        return meta;
-    }
+  VarMeta &Meta() { return meta; }
 
-    const VarT& Get() const
-    {
-        return value;
-    }
+  const VarT &Get() const { return value; }
 
-    VarT& Get()
-    {
-        return value;
-    }
+  VarT &Get() { return value; }
 
-    void Set(const VarT& val)
-    {
-        value = val;
-    }
+  void Set(const VarT &val) { value = val; }
 
 protected:
-    void Init()
-    {
-        if(boostd::is_same<VarT,std::string>::value) {
-            str_ptr = 0;
-            this->str = (VarValueT<std::string>*)this;
-        }else{
-            str_ptr = new VarWrapper<std::string,VarT>(*this);
-            this->str = str_ptr;
-        }
+  void Init() {
+    if (boostd::is_same<VarT, std::string>::value) {
+      str_ptr = 0;
+      this->str = (VarValueT<std::string> *)this;
+    } else {
+      str_ptr = new VarWrapper<std::string, VarT>(*this);
+      this->str = str_ptr;
     }
+  }
 
-    // If non-zero, this class owns this str pointer in the base-class.
-    VarValueT<std::string>* str_ptr;
+  // If non-zero, this class owns this str pointer in the base-class.
+  VarValueT<std::string> *str_ptr;
 
-    T value;
-    VarT default_value;
-    VarMeta meta;
+  T value;
+  VarT default_value;
+  VarMeta meta;
 };
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_VARVALUE_H

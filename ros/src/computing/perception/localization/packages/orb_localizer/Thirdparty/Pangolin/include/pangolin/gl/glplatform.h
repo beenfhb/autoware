@@ -35,45 +35,45 @@
 #include <pangolin/platform.h>
 
 #ifdef _WIN_
-    // Define maths quantities when using <cmath> to match posix systems
-    #define _USE_MATH_DEFINES
+// Define maths quantities when using <cmath> to match posix systems
+#define _USE_MATH_DEFINES
 
-    // Don't define min / max macros in windows.h or other unnecessary macros
-    #define NOMINMAX
-    #define WIN32_LEAN_AND_MEAN
-    #include <Windows.h>
+// Don't define min / max macros in windows.h or other unnecessary macros
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 
-    // Undef nuisance Windows.h macros which interfere with our methods
-    #undef LoadImage
-    #undef near
-    #undef far
+// Undef nuisance Windows.h macros which interfere with our methods
+#undef LoadImage
+#undef near
+#undef far
 #endif
 
 #ifdef HAVE_GLEW
-    #include <GL/glew.h>
+#include <GL/glew.h>
 #endif
 
 #ifdef HAVE_GLES
-    #if defined(_ANDROID_)
-        #include <EGL/egl.h>
-        #ifdef HAVE_GLES_2
-            #include <GLES2/gl2.h>
-            #include <GLES2/gl2ext.h>
-        #else
-            #include <GLES/gl.h>
-            #define GL_GLEXT_PROTOTYPES
-            #include <GLES/glext.h>
-        #endif
-    #elif defined(_APPLE_IOS_)
-        #include <OpenGLES/ES2/gl.h>
-        #include <OpenGLES/ES2/glext.h>
-    #endif
+#if defined(_ANDROID_)
+#include <EGL/egl.h>
+#ifdef HAVE_GLES_2
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 #else
-    #ifdef _OSX_
-        #include <OpenGL/gl.h>
-    #else
-        #include <GL/gl.h>
-    #endif
+#include <GLES/gl.h>
+#define GL_GLEXT_PROTOTYPES
+#include <GLES/glext.h>
+#endif
+#elif defined(_APPLE_IOS_)
+#include <OpenGLES/ES2/gl.h>
+#include <OpenGLES/ES2/glext.h>
+#endif
+#else
+#ifdef _OSX_
+#include <OpenGL/gl.h>
+#else
+#include <GL/gl.h>
+#endif
 #endif // HAVE_GLES
 
 #include <pangolin/gl/glpangoglu.h>

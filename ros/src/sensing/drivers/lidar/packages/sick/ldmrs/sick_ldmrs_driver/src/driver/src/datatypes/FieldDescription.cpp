@@ -8,34 +8,28 @@
 #include "FieldDescription.hpp"
 #include "../tools/errorhandler.hpp"
 
-namespace datatypes
-{
+namespace datatypes {
 
-FieldDescription::FieldDescription() :
-		m_fieldType(Undefined)
-{
-	m_datatype = Datatype_FieldDescription;
+FieldDescription::FieldDescription() : m_fieldType(Undefined) {
+  m_datatype = Datatype_FieldDescription;
 }
 
 //
 //
 //
-std::string FieldDescription::fieldTypeToString(FieldType type)
-{
-	switch (type)
-	{
-	case Segmented:
-		return "Segmented";
-	case Rectangle:
-		return "Rectangle";
-	case Radial:
-		return "Radial";
-	case Dynamic:
-		return "Dynamic";
-	default:
-		return "undefined";
-	}
+std::string FieldDescription::fieldTypeToString(FieldType type) {
+  switch (type) {
+  case Segmented:
+    return "Segmented";
+  case Rectangle:
+    return "Rectangle";
+  case Radial:
+    return "Radial";
+  case Dynamic:
+    return "Dynamic";
+  default:
+    return "undefined";
+  }
 }
 
-	
 } // namespace datatypes

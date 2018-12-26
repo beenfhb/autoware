@@ -27,13 +27,11 @@
 
 #include <pangolin/glinclude.h>
 
-namespace pangolin
-{
+namespace pangolin {
 
-GlEngine& glEngine()
-{
-    static GlEngine engine;
-    return engine;
+GlEngine &glEngine() {
+  static GlEngine engine;
+  return engine;
 }
 
-}
+} // namespace pangolin

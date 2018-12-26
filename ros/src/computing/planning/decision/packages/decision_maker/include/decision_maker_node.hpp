@@ -6,10 +6,10 @@
 
 #include <autoware_config_msgs/ConfigDecisionMaker.h>
 #include <autoware_msgs/CloudClusterArray.h>
-#include <autoware_msgs/LaneArray.h>
-#include <autoware_msgs/Waypoint.h>
 #include <autoware_msgs/Lane.h>
+#include <autoware_msgs/LaneArray.h>
 #include <autoware_msgs/TrafficLight.h>
+#include <autoware_msgs/Waypoint.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <jsk_recognition_msgs/BoundingBox.h>
@@ -37,13 +37,10 @@
 #include <state_machine_lib/state.hpp>
 #include <state_machine_lib/state_context.hpp>
 
-namespace decision_maker
-{
+namespace decision_maker {
 using namespace vector_map;
 
-
-enum class EControl : int32_t
-{
+enum class EControl : int32_t {
   KEEP = -1,
   STOP = 1,
   DECELERATE = 2,
@@ -51,8 +48,7 @@ enum class EControl : int32_t
   OTHERS = 4,
 };
 
-enum class E_ChangeFlags : int32_t
-{
+enum class E_ChangeFlags : int32_t {
   STRAIGHT,
   RIGHT,
   LEFT,
@@ -60,20 +56,13 @@ enum class E_ChangeFlags : int32_t
   UNKNOWN = -1,
 };
 
-inline bool hasvMap(void)
-{
-  return true;
-}
+inline bool hasvMap(void) { return true; }
 
-template <class T>
-typename std::underlying_type<T>::type enumToInteger(T t)
-{
+template <class T> typename std::underlying_type<T>::type enumToInteger(T t) {
   return static_cast<typename std::underlying_type<T>::type>(t);
 }
 
-
-class DecisionMakerNode
-{
+class DecisionMakerNode {
 private:
   ros::NodeHandle nh_;
   // Publishers
@@ -96,10 +85,10 @@ private:
 
   std::vector<geometry_msgs::Point> inside_points_;
 
-  autoware_msgs::LaneArray current_based_lane_array_;       // with wpstate
-  autoware_msgs::LaneArray current_shifted_lane_array_;     // with shiftedLane
-  autoware_msgs::LaneArray current_controlled_lane_array_;  // modified lane
-  autoware_msgs::LaneArray current_stopped_lane_array_;     // 0velocity
+  autoware_msgs::LaneArray current_based_lane_array_;      // with wpstate
+  autoware_msgs::LaneArray current_shifted_lane_array_;    // with shiftedLane
+  autoware_msgs::LaneArray current_controlled_lane_array_; // modified lane
+  autoware_msgs::LaneArray current_stopped_lane_array_;    // 0velocity
 
   tf::TransformListener tflistener_baselink;
 
@@ -117,15 +106,14 @@ private:
   double displacement_from_path_;
   autoware_msgs::Waypoint CurrentStoplineTarget_;
 
-  bool foundOtherVehicleForIntersectionStop_; // In fact this should be defined as state.
-  class DetectionArea
-  {
-    public:
-      double x1,x2;
-      double y1,y2;
+  bool foundOtherVehicleForIntersectionStop_; // In fact this should be defined
+                                              // as state.
+  class DetectionArea {
+  public:
+    double x1, x2;
+    double y1, y2;
 
-      DetectionArea(){
-      }
+    DetectionArea() {}
   };
   DetectionArea detectionArea_;
 
@@ -172,21 +160,27 @@ private:
 
   void publishToVelocityArray();
   std::string createStateMessageText();
-  int createCrossRoadAreaMarker(visualization_msgs::Marker &crossroad_marker, double scale);
+  int createCrossRoadAreaMarker(visualization_msgs::Marker &crossroad_marker,
+                                double scale);
 
   // judge method
   // in near future, these methods will be deprecate to decision_maker library
-  bool isCrossRoadByVectorMapServer(const autoware_msgs::Lane &lane_msg, const geometry_msgs::PoseStamped &pose_msg);
-  bool isLocalizationConvergence(double _x, double _y, double _z, double _roll, double _pitch, double _yaw);
+  bool isCrossRoadByVectorMapServer(const autoware_msgs::Lane &lane_msg,
+                                    const geometry_msgs::PoseStamped &pose_msg);
+  bool isLocalizationConvergence(double _x, double _y, double _z, double _roll,
+                                 double _pitch, double _yaw);
   bool handleStateCmd(const uint64_t _state_num);
   // double calcIntersectWayAngle(const CrossRoadArea& area);
   double calcIntersectWayAngle(const autoware_msgs::Lane &laneinArea);
 
-  void insertPointWithinCrossRoad(const std::vector<CrossRoadArea> &_intersects, autoware_msgs::LaneArray &lane_array);
+  void insertPointWithinCrossRoad(const std::vector<CrossRoadArea> &_intersects,
+                                  autoware_msgs::LaneArray &lane_array);
 
   void setWaypointState(autoware_msgs::LaneArray &lane_array);
-  double calcPosesAngleDiff(const geometry_msgs::Pose &p_from, const geometry_msgs::Pose &p_to);
-  double calcPosesAngleDiffN(const geometry_msgs::Pose &p_from, const geometry_msgs::Pose &p_to);
+  double calcPosesAngleDiff(const geometry_msgs::Pose &p_from,
+                            const geometry_msgs::Pose &p_to);
+  double calcPosesAngleDiffN(const geometry_msgs::Pose &p_from,
+                             const geometry_msgs::Pose &p_to);
   double getPoseAngle(const geometry_msgs::Pose &p);
 
   /* for planning according to state*/
@@ -200,7 +194,6 @@ private:
   void removeShiftLane(void);
   void setAllStoplineStop(void);
   void publishStoplineWaypointIdx(int wp_idx);
-
 
   // callback by state context
   void StoplinePlanIn(int status);
@@ -218,12 +211,13 @@ private:
   void callbackInStateKeep(int status);
   void callbackOutStateLaneChange(int status);
   void setupStateCallback(void);
-  
+
   // callback by topic subscribing
   void callbackFromCurrentVelocity(const geometry_msgs::TwistStamped &msg);
   void callbackFromCurrentPose(const geometry_msgs::PoseStamped &msg);
   void callbackFromClosestWaypoint(const std_msgs::Int32 &msg);
-  void callbackFromLightColor(const ros::MessageEvent<autoware_msgs::TrafficLight const> &event);
+  void callbackFromLightColor(
+      const ros::MessageEvent<autoware_msgs::TrafficLight const> &event);
   void callbackFromLaneChangeFlag(const std_msgs::Int32 &msg);
   void callbackFromPointsRaw(const sensor_msgs::PointCloud2::ConstPtr &msg);
   void callbackFromFinalWaypoint(const autoware_msgs::Lane &msg);
@@ -237,14 +231,14 @@ private:
   void callbackFromVectorMapArea(const vector_map_msgs::AreaArray &msg);
   void callbackFromVectorMapPoint(const vector_map_msgs::PointArray &msg);
   void callbackFromVectorMapLine(const vector_map_msgs::LineArray &msg);
-  void callbackFromVectorMapCrossRoad(const vector_map_msgs::CrossRoadArray &msg);
+  void
+  callbackFromVectorMapCrossRoad(const vector_map_msgs::CrossRoadArray &msg);
 
 public:
   state_machine::StateContext *ctx;
   VectorMap g_vmap;
 
-  DecisionMakerNode(int argc, char **argv)
-  {
+  DecisionMakerNode(int argc, char **argv) {
     SimulationMode = false;
     enableDisplayMarker = DEFAULT_DISPLAY_FLAG;
     param_convergence_threshold_ = DEFAULT_CONVERGENCE_THRESHOLD;
@@ -267,8 +261,8 @@ public:
     vector_map_init = false;
     created_shift_lane_flag_ = false;
     closest_waypoint_ = 0;
-    
-    foundOtherVehicleForIntersectionStop_ = false; 
+
+    foundOtherVehicleForIntersectionStop_ = false;
 
     ClosestArea_ = nullptr;
     displacement_from_path_ = 0.0;
@@ -277,17 +271,15 @@ public:
   }
 
   void run(void);
-  geometry_msgs::Point to_geoPoint(const vector_map_msgs::Point &vp)
-  {
-	  geometry_msgs::Point gp;
-	  gp.x = vp.ly;
-	  gp.y = vp.bx;
-	  gp.z = vp.h;
-	  return gp;
+  geometry_msgs::Point to_geoPoint(const vector_map_msgs::Point &vp) {
+    geometry_msgs::Point gp;
+    gp.x = vp.ly;
+    gp.y = vp.bx;
+    gp.z = vp.h;
+    return gp;
   }
-
 };
 
-}  // namespace decision_maker
+} // namespace decision_maker
 
 #endif

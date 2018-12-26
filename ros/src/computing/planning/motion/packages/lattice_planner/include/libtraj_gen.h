@@ -5,15 +5,15 @@
  *  Created by Matthew O'Kelly on 7/17/15.
  *  Copyright (c) 2015 Matthew O'Kelly. All rights reserved.
  *  mokelly@seas.upenn.edu
- *  
-*/
+ *
+ */
 
 /*
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
  *
- *  * Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *  * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  *
  *  * Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
@@ -25,16 +25,17 @@
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- *  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  *
-*/
+ */
 
 #ifndef TRAJECTORYGENERATOR_H
 #define TRAJECTORYGENERATOR_H
@@ -51,7 +52,6 @@
 // --------UNSTABLE MODES-------//
 //#define QUINTIC_STABLE
 //#define FIRST ORDER
-
 
 // ------------BOOLEAN----------//
 #define TRUE 1
@@ -73,7 +73,7 @@
 #define dvmin (-6.000)
 // Control latency (seconds)
 #define tdelay (0.0800)
- //#define tdelay (0.03)
+//#define tdelay (0.03)
 // Speed control logic a coefficient
 #define ascl (0.1681)
 // Speed control logic b coefficient
@@ -129,68 +129,56 @@ ofstream fmm_theta;
 ofstream fmm_kappa;
 
 // --------DATA STRUCTURES-------//
-union State
-{
-    struct 
-    {
-        double sx;
-        double sy;
-        double theta; 
-        double kappa;
-        double v;
-        double vdes;
-        double timestamp;
-    };
+union State {
+  struct {
+    double sx;
+    double sy;
+    double theta;
+    double kappa;
+    double v;
+    double vdes;
+    double timestamp;
+  };
 
-    double state_value[7];
+  double state_value[7];
 };
 
-union Parameters 
-{
-    struct 
-    {
-        double a;
-        double b;
-        double c;
-        double d;
-        double s;
-    };
+union Parameters {
+  struct {
+    double a;
+    double b;
+    double c;
+    double d;
+    double s;
+  };
 
-    double param_value[5];
-
-
+  double param_value[5];
 };
 
-union Spline
-{
-    struct
-    {
-        //double kappa_0;
-        double s;
-        double kappa_1;
-        double kappa_2;
-        //double kappa_2;
-        //double kappa_3;
-        
-        double kappa_0;
-        double kappa_3;
-        bool success;
-        
-    };
+union Spline {
+  struct {
+    // double kappa_0;
+    double s;
+    double kappa_1;
+    double kappa_2;
+    // double kappa_2;
+    // double kappa_3;
 
-    double spline_value[6];
+    double kappa_0;
+    double kappa_3;
+    bool success;
+  };
+
+  double spline_value[6];
 };
 
-union Command
-{
-    struct
-    {
-        double kappa;
-        double v;
-    };
-    double cmd_index[2];
+union Command {
+  struct {
+    double kappa;
+    double v;
+  };
+  double cmd_index[2];
 };
-
 
 // ------------FUNCTION DECLARATIONS----------//
 
@@ -200,37 +188,52 @@ union Spline initParams(union State veh, union State goal);
 // speedControlLogic prevents the vehicle from exceeding dynamic limits
 union State speedControlLogic(union State veh_next);
 
-// responseToControlInputs computes the vehicles next state consider control delay
-union State responseToControlInputs(union State veh, union State veh_next, double dt);
+// responseToControlInputs computes the vehicles next state consider control
+// delay
+union State responseToControlInputs(union State veh, union State veh_next,
+                                    double dt);
 
-// getCurvatureCommand computes curvature based on the selection of trajectory parameters
-double getCurvatureCommand(union Spline curvature, double dt, double v, double t);
+// getCurvatureCommand computes curvature based on the selection of trajectory
+// parameters
+double getCurvatureCommand(union Spline curvature, double dt, double v,
+                           double t);
 
 // getVelocityCommand computes the next velocity command, very naieve right now.
 double getVelocityCommand(double v_goal, double v);
 
-// motionModel computes the vehicles next state, it calls speedControlLogic, responseToControlInputs, getCurvatureCommand and
-// and getVelocityCommand
-union State motionModel(union State veh, union State goal, union Spline curvature, double dt, double horizon, int flag);
+// motionModel computes the vehicles next state, it calls speedControlLogic,
+// responseToControlInputs, getCurvatureCommand and and getVelocityCommand
+union State motionModel(union State veh, union State goal,
+                        union Spline curvature, double dt, double horizon,
+                        int flag);
 
-// checkConvergence determines if the current final state is close enough to the goal state
+// checkConvergence determines if the current final state is close enough to the
+// goal state
 bool checkConvergence(union State veh_next, union State goal);
 
 // pDerivEstimate computes one column of the Jacobian
-union State pDerivEstimate(union State veh, union State veh_next, union State goal, union Spline curvature, int p_id, double h, double dt, double horizon, int stateIndex);
+union State pDerivEstimate(union State veh, union State veh_next,
+                           union State goal, union Spline curvature, int p_id,
+                           double h, double dt, double horizon, int stateIndex);
 
 // generateCorrection inverts the Jacobian and updates the spline parameters
-union Spline generateCorrection(union State veh, union State veh_next, union State goal, union Spline curvature, double dt, double horizon);
+union Spline generateCorrection(union State veh, union State veh_next,
+                                union State goal, union Spline curvature,
+                                double dt, double horizon);
 
-// nextState is used by the robot to compute commands once an adequate set of parameters has been found
-union State nextState(union State veh, union Spline curvature, double vdes, double dt, double elapsedTime);
+// nextState is used by the robot to compute commands once an adequate set of
+// parameters has been found
+union State nextState(union State veh, union Spline curvature, double vdes,
+                      double dt, double elapsedTime);
 
-// trajectoryGenerator is like a "main function" used to iterate through a series of goal states
-union Spline trajectoryGenerator(double sx, double sy, double theta, double v, double kappa);
+// trajectoryGenerator is like a "main function" used to iterate through a
+// series of goal states
+union Spline trajectoryGenerator(double sx, double sy, double theta, double v,
+                                 double kappa);
 
-// plotTraj is used by rViz to compute points for line strip, it is a lighter weight version of nextState
-union State genLineStrip(union State veh, union Spline curvature, double vdes, double t);
-
+// plotTraj is used by rViz to compute points for line strip, it is a lighter
+// weight version of nextState
+union State genLineStrip(union State veh, union Spline curvature, double vdes,
+                         double t);
 
 #endif // TRAJECTORYGENERATOR_H
-

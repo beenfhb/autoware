@@ -25,77 +25,61 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <pangolin/display/viewport.h>
 #include <algorithm>
+#include <pangolin/display/viewport.h>
 
 namespace pangolin {
 
-void Viewport::Activate() const
-{
-    glViewport(l,b,w,h);
+void Viewport::Activate() const { glViewport(l, b, w, h); }
+
+void Viewport::Scissor() const {
+  glEnable(GL_SCISSOR_TEST);
+  glScissor(l, b, w, h);
 }
 
-void Viewport::Scissor() const
-{
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(l,b,w,h);
+void Viewport::ActivateAndScissor() const {
+  glViewport(l, b, w, h);
+  glEnable(GL_SCISSOR_TEST);
+  glScissor(l, b, w, h);
 }
 
-void Viewport::ActivateAndScissor() const
-{
-    glViewport(l,b,w,h);
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(l,b,w,h);
+void Viewport::DisableScissor() { glDisable(GL_SCISSOR_TEST); }
+
+bool Viewport::Contains(int x, int y) const {
+  return l <= x && x < (l + w) && b <= y && y < (b + h);
 }
 
-
-void Viewport::DisableScissor()
-{
-    glDisable(GL_SCISSOR_TEST);
+void Viewport::ActivatePixelOrthographic() const {
+  Activate();
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrtho(-0.5, w - 0.5, -0.5, h - 0.5, -1, 1);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
 }
 
-bool Viewport::Contains(int x, int y) const
-{
-    return l <= x && x < (l+w) && b <= y && y < (b+h);
+void Viewport::ActivateIdentity() const {
+  Activate();
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
 }
 
-void Viewport::ActivatePixelOrthographic() const
-{
-    Activate();
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-0.5, w-0.5, -0.5, h-0.5, -1, 1);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+Viewport Viewport::Inset(int i) const {
+  return Viewport(l + i, b + i, w - 2 * i, h - 2 * i);
 }
 
-void Viewport::ActivateIdentity() const
-{
-    Activate();
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+Viewport Viewport::Inset(int horiz, int vert) const {
+  return Viewport(l + horiz, b + vert, w - horiz, h - vert);
 }
 
-
-Viewport Viewport::Inset(int i) const
-{
-    return Viewport(l+i, b+i, w-2*i, h-2*i);
+Viewport Viewport::Intersect(const Viewport &vp) const {
+  GLint nl = std::max(l, vp.l);
+  GLint nr = std::min(r(), vp.r());
+  GLint nb = std::max(b, vp.b);
+  GLint nt = std::min(t(), vp.t());
+  return Viewport(nl, nb, nr - nl, nt - nb);
 }
 
-Viewport Viewport::Inset(int horiz, int vert) const
-{
-    return Viewport(l+horiz, b+vert, w-horiz, h-vert);
-}
-
-Viewport Viewport::Intersect(const Viewport& vp) const
-{
-    GLint nl = std::max(l,vp.l);
-    GLint nr = std::min(r(),vp.r());
-    GLint nb = std::max(b,vp.b);
-    GLint nt = std::min(t(),vp.t());
-    return Viewport(nl,nb, nr-nl, nt-nb);
-}
-
-}
+} // namespace pangolin

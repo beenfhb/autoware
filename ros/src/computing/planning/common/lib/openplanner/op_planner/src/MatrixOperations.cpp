@@ -5,6 +5,4 @@
 
 #include "op_planner/MatrixOperations.h"
 
-namespace PlannerHNS {
-
-} /* namespace PlannerHNS */
+namespace PlannerHNS {} /* namespace PlannerHNS */

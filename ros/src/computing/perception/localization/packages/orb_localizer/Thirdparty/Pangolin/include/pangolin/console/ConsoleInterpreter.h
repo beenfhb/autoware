@@ -27,54 +27,42 @@
 
 #pragma once
 
-#include <vector>
 #include <string>
+#include <vector>
 
-namespace pangolin
-{
+namespace pangolin {
 
-enum ConsoleLineType
-{
-    ConsoleLineTypeCmd,
-    ConsoleLineTypeCmdOptions,
-    ConsoleLineTypeStdout,
-    ConsoleLineTypeStderr,
-    ConsoleLineTypeOutput,
-    ConsoleLineTypeHelp,
+enum ConsoleLineType {
+  ConsoleLineTypeCmd,
+  ConsoleLineTypeCmdOptions,
+  ConsoleLineTypeStdout,
+  ConsoleLineTypeStderr,
+  ConsoleLineTypeOutput,
+  ConsoleLineTypeHelp,
 };
 
-class ConsoleLine
-{
+class ConsoleLine {
 public:
-    inline ConsoleLine()
-        : linetype(ConsoleLineTypeCmd)
-    {
-    }
+  inline ConsoleLine() : linetype(ConsoleLineTypeCmd) {}
 
-    inline ConsoleLine(std::string text, ConsoleLineType linetype = ConsoleLineTypeOutput)
-        : text(text), linetype(linetype)
-    {
-    }
+  inline ConsoleLine(std::string text,
+                     ConsoleLineType linetype = ConsoleLineTypeOutput)
+      : text(text), linetype(linetype) {}
 
-    std::string text;
-    ConsoleLineType linetype;
+  std::string text;
+  ConsoleLineType linetype;
 };
 
-class ConsoleInterpreter
-{
+class ConsoleInterpreter {
 public:
-    inline virtual ~ConsoleInterpreter()
-    {
-    }
+  inline virtual ~ConsoleInterpreter() {}
 
-    virtual void PushCommand(const std::string& cmd) = 0;
+  virtual void PushCommand(const std::string &cmd) = 0;
 
-    virtual bool PullLine(ConsoleLine& line) = 0;
+  virtual bool PullLine(ConsoleLine &line) = 0;
 
-    virtual std::vector<std::string> Complete(
-        const std::string& cmd, int max_options = 20
-    ) = 0;
-
+  virtual std::vector<std::string> Complete(const std::string &cmd,
+                                            int max_options = 20) = 0;
 };
 
-}
+} // namespace pangolin

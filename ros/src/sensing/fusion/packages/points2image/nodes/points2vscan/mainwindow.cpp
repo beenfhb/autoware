@@ -21,10 +21,11 @@ static double IMAGESIZE;
 
 static bool SYNC;
 
-MainWindow::MainWindow(QWidget* parent)
-  : QMainWindow(parent)
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
 #ifdef DEBUG_GUI
-  , ui(new Ui::MainWindow)
+      ,
+      ui(new Ui::MainWindow)
 #endif
 {
 #ifdef DEBUG_GUI
@@ -51,31 +52,35 @@ MainWindow::MainWindow(QWidget* parent)
 
   private_nh.param("SYNC", SYNC, false);
 
-  if (SYNC == false)
-  {
-    velodyne = new ROSSub<sensor_msgs::PointCloud2ConstPtr>("points_raw", 1000, 10);
+  if (SYNC == false) {
+    velodyne =
+        new ROSSub<sensor_msgs::PointCloud2ConstPtr>("points_raw", 1000, 10);
+  } else {
+    velodyne = new ROSSub<sensor_msgs::PointCloud2ConstPtr>(
+        "/sync_drivers/points_raw", 1000, 10);
   }
-  else
-  {
-    velodyne = new ROSSub<sensor_msgs::PointCloud2ConstPtr>("/sync_drivers/points_raw", 1000, 10);
-  }
-  connect(velodyne, SIGNAL(receiveMessageSignal()), this, SLOT(generateVirtualScanSlot()));
+  connect(velodyne, SIGNAL(receiveMessageSignal()), this,
+          SLOT(generateVirtualScanSlot()));
   vsros = new ROSPub<sensor_msgs::PointCloud2>("/vscan_points", 1000);
   scanros = new ROSPub<sensor_msgs::LaserScan>("/scan", 1000);
 
 #ifdef DEBUG_GUI
   double PI = 3.141592654;
   double density = 2 * PI / BEAMNUM;
-  for (int i = 0; i < BEAMNUM; i++)
-  {
-    ui->comboBox->insertItem(i, QString("%1").arg((i * density - PI) * 180.0 / PI));
+  for (int i = 0; i < BEAMNUM; i++) {
+    ui->comboBox->insertItem(
+        i, QString("%1").arg((i * density - PI) * 180.0 / PI));
   }
   ui->comboBox->insertItem(BEAMNUM, "NULL");
 
-  connect(ui->comboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(showMatrixSlot(int)));
-  connect(ui->step, SIGNAL(valueChanged(double)), this, SLOT(recalculateSlot()));
-  connect(ui->rotation, SIGNAL(valueChanged(double)), this, SLOT(recalculateSlot()));
-  connect(ui->minrange, SIGNAL(valueChanged(double)), this, SLOT(recalculateSlot()));
+  connect(ui->comboBox, SIGNAL(currentIndexChanged(int)), this,
+          SLOT(showMatrixSlot(int)));
+  connect(ui->step, SIGNAL(valueChanged(double)), this,
+          SLOT(recalculateSlot()));
+  connect(ui->rotation, SIGNAL(valueChanged(double)), this,
+          SLOT(recalculateSlot()));
+  connect(ui->minrange, SIGNAL(valueChanged(double)), this,
+          SLOT(recalculateSlot()));
 
   ui->label->resize(IMAGESIZE, IMAGESIZE);
   image = QImage(IMAGESIZE, IMAGESIZE, QImage::Format_RGB888);
@@ -85,8 +90,7 @@ MainWindow::MainWindow(QWidget* parent)
   velodyne->startReceiveSlot();
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow() {
   velodyne->stopReceiveSlot();
   delete velodyne;
   delete vsros;
@@ -96,25 +100,22 @@ MainWindow::~MainWindow()
 #endif
 }
 
-void MainWindow::generateVirtualScanSlot()
-{
+void MainWindow::generateVirtualScanSlot() {
   virtualscan.velodyne = velodyne->getMessage();
   recalculateSlot();
 }
 
-void MainWindow::showMatrixSlot(int beamid)
-{
-  if (beamid >= BEAMNUM)
-  {
+void MainWindow::showMatrixSlot(int beamid) {
+  if (beamid >= BEAMNUM) {
     return;
   }
   ui->tableWidget->clear();
   int size = int((MAXCEILING - MINFLOOR) / STEP + 0.5);
   ui->tableWidget->setRowCount(size);
   ui->tableWidget->setColumnCount(5);
-  for (int i = 0; i < size; i++)
-  {
-    ui->tableWidget->setVerticalHeaderItem(i, new QTableWidgetItem(QString("%1").arg(MINFLOOR + i * STEP)));
+  for (int i = 0; i < size; i++) {
+    ui->tableWidget->setVerticalHeaderItem(
+        i, new QTableWidgetItem(QString("%1").arg(MINFLOOR + i * STEP)));
   }
   ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "RotID"
                                                            << "RotLength"
@@ -122,31 +123,41 @@ void MainWindow::showMatrixSlot(int beamid)
                                                            << "Length"
                                                            << "Height");
 
-  for (int i = 0; i < size; i++)
-  {
-    ui->tableWidget->setItem(i, 0, new QTableWidgetItem(QString("%1").arg(virtualscan.svs[beamid][i].rotid)));
-    ui->tableWidget->setItem(i, 1, new QTableWidgetItem(QString("%1").arg(virtualscan.svs[beamid][i].rotlength)));
-    ui->tableWidget->setItem(i, 2, new QTableWidgetItem(QString("%1").arg(virtualscan.svs[beamid][i].rotheight)));
-    ui->tableWidget->setItem(i, 3, new QTableWidgetItem(QString("%1").arg(virtualscan.svs[beamid][i].length)));
-    ui->tableWidget->setItem(i, 4, new QTableWidgetItem(QString("%1").arg(virtualscan.svs[beamid][i].height)));
+  for (int i = 0; i < size; i++) {
+    ui->tableWidget->setItem(i, 0,
+                             new QTableWidgetItem(QString("%1").arg(
+                                 virtualscan.svs[beamid][i].rotid)));
+    ui->tableWidget->setItem(i, 1,
+                             new QTableWidgetItem(QString("%1").arg(
+                                 virtualscan.svs[beamid][i].rotlength)));
+    ui->tableWidget->setItem(i, 2,
+                             new QTableWidgetItem(QString("%1").arg(
+                                 virtualscan.svs[beamid][i].rotheight)));
+    ui->tableWidget->setItem(i, 3,
+                             new QTableWidgetItem(QString("%1").arg(
+                                 virtualscan.svs[beamid][i].length)));
+    ui->tableWidget->setItem(i, 4,
+                             new QTableWidgetItem(QString("%1").arg(
+                                 virtualscan.svs[beamid][i].height)));
   }
   drawBeam(beamid);
 }
 
-void MainWindow::recalculateSlot()
-{
+void MainWindow::recalculateSlot() {
   double PI = 3.141592654;
   double density = 2 * PI / BEAMNUM;
 #ifdef DEBUG_GUI
   QTime start = QTime::currentTime();
 #endif
-  virtualscan.calculateVirtualScans(BEAMNUM, STEP, MINFLOOR, MAXCEILING, OBSTACLEMINHEIGHT, MAXBACKDISTANCE,
+  virtualscan.calculateVirtualScans(BEAMNUM, STEP, MINFLOOR, MAXCEILING,
+                                    OBSTACLEMINHEIGHT, MAXBACKDISTANCE,
                                     ROTATION * PI / 180.0, MINRANGE);
 #ifdef DEBUG_GUI
   QTime end = QTime::currentTime();
 #endif
-  virtualscan.getVirtualScan(ROADSLOPMINHEIGHT * PI / 180.0, ROADSLOPMAXHEIGHT * PI / 180.0, MAXFLOOR, MINCEILING,
-                             PASSHEIGHT, beams);
+  virtualscan.getVirtualScan(ROADSLOPMINHEIGHT * PI / 180.0,
+                             ROADSLOPMAXHEIGHT * PI / 180.0, MAXFLOOR,
+                             MINCEILING, PASSHEIGHT, beams);
 #ifdef DEBUG_GUI
   ui->tc->setText(QString("%1").arg(start.msecsTo(end)));
 #endif
@@ -160,28 +171,27 @@ void MainWindow::recalculateSlot()
     msg.point_step = 8 * sizeof(float);
     msg.row_step = msg.width * msg.point_step;
     msg.data.resize(msg.height * msg.width * msg.point_step);
-    unsigned char* base = msg.data.data();
+    unsigned char *base = msg.data.data();
 
-    for (int i = 0; i < BEAMNUM; i++)
-    {
+    for (int i = 0; i < BEAMNUM; i++) {
       double theta = i * density - PI;
-      float* data;
-      int* ring;
+      float *data;
+      int *ring;
 
-      data = (float*)(base + (2 * i) * msg.point_step);
+      data = (float *)(base + (2 * i) * msg.point_step);
       data[0] = beams[i] * cos(theta);
       data[1] = beams[i] * sin(theta);
       data[2] = virtualscan.minheights[i];
       data[4] = 255;
-      ring = (int*)(data + 5 * sizeof(float));
+      ring = (int *)(data + 5 * sizeof(float));
       *ring = 0;
 
-      data = (float*)(base + (2 * i + 1) * msg.point_step);
+      data = (float *)(base + (2 * i + 1) * msg.point_step);
       data[0] = beams[i] * cos(theta);
       data[1] = beams[i] * sin(theta);
       data[2] = virtualscan.maxheights[i];
       data[4] = 255;
-      ring = (int*)(data + 5 * sizeof(float));
+      ring = (int *)(data + 5 * sizeof(float));
       *ring = 1;
     }
     vsros->sendMessage(msg);
@@ -201,8 +211,7 @@ void MainWindow::recalculateSlot()
     msg.range_max = 100;
     msg.ranges.resize(BEAMNUM);
     msg.intensities.resize(BEAMNUM);
-    for (int i = 0; i < BEAMNUM; i++)
-    {
+    for (int i = 0; i < BEAMNUM; i++) {
       msg.ranges[i] = beams[i];
       msg.intensities[i] = 255;
     }
@@ -216,8 +225,7 @@ void MainWindow::recalculateSlot()
 #endif
 }
 
-QPointF MainWindow::convert2RealPoint(QPoint point)
-{
+QPointF MainWindow::convert2RealPoint(QPoint point) {
   QPointF result;
   double ratio = 2 * MAXRANGE / IMAGESIZE;
 
@@ -227,8 +235,7 @@ QPointF MainWindow::convert2RealPoint(QPoint point)
   return result;
 }
 
-QPoint MainWindow::convert2ImagePoint(QPointF point)
-{
+QPoint MainWindow::convert2ImagePoint(QPointF point) {
   QPoint result;
   double ratio = IMAGESIZE / (2 * MAXRANGE);
 
@@ -238,8 +245,7 @@ QPoint MainWindow::convert2ImagePoint(QPointF point)
   return result;
 }
 
-void MainWindow::drawGrid()
-{
+void MainWindow::drawGrid() {
   image.fill(QColor(255, 255, 255));
   QPainter painter;
   painter.begin(&image);
@@ -247,38 +253,34 @@ void MainWindow::drawGrid()
 
   QPoint center(IMAGESIZE / 2, IMAGESIZE / 2);
   double gridstep = (GRIDSIZE / MAXRANGE) * (IMAGESIZE / 2);
-  for (int i = gridstep; i <= IMAGESIZE / 2; i += gridstep)
-  {
+  for (int i = gridstep; i <= IMAGESIZE / 2; i += gridstep) {
     painter.drawEllipse(center, i, i);
   }
   painter.end();
   ui->label->setPixmap(QPixmap::fromImage(image));
 }
 
-void MainWindow::drawPoints()
-{
+void MainWindow::drawPoints() {
   QPainter painter;
   painter.begin(&image);
   painter.setPen(QColor(255, 0, 0));
   double PI = 3.141592654;
   double density = 2 * PI / BEAMNUM;
 
-  for (int i = 0; i < BEAMNUM; i++)
-  {
+  for (int i = 0; i < BEAMNUM; i++) {
     double theta = i * density - PI;
-    QPoint point = convert2ImagePoint(QPointF(beams[i] * cos(theta), beams[i] * sin(theta)));
+    QPoint point = convert2ImagePoint(
+        QPointF(beams[i] * cos(theta), beams[i] * sin(theta)));
     painter.drawEllipse(point, 1, 1);
   }
   painter.end();
   ui->label->setPixmap(QPixmap::fromImage(image));
 }
 
-void MainWindow::drawBeam(int beamid)
-{
+void MainWindow::drawBeam(int beamid) {
   drawGrid();
   drawPoints();
-  if (beamid >= BEAMNUM)
-  {
+  if (beamid >= BEAMNUM) {
     return;
   }
   QPainter painter;
@@ -288,7 +290,8 @@ void MainWindow::drawBeam(int beamid)
   double PI = 3.141592654;
   double density = 2 * PI / BEAMNUM;
   double theta = beamid * density - PI;
-  QPoint point = convert2ImagePoint(QPointF(beams[beamid] * cos(theta), beams[beamid] * sin(theta)));
+  QPoint point = convert2ImagePoint(
+      QPointF(beams[beamid] * cos(theta), beams[beamid] * sin(theta)));
   painter.drawLine(center, point);
   painter.end();
   ui->label->setPixmap(QPixmap::fromImage(image));

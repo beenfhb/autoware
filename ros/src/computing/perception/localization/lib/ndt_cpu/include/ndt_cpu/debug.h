@@ -7,7 +7,8 @@
 #include <time.h>
 
 namespace cpu {
-#define timeDiff(start, end) ((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec)
-}
+#define timeDiff(start, end)                                                   \
+  ((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec)
+} // namespace cpu
 
 #endif

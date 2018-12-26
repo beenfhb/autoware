@@ -32,64 +32,63 @@
 #include <pangolin/var/var.h>
 #include <vector>
 
-namespace pangolin
-{
+namespace pangolin {
 
 PANGOLIN_EXPORT
-void ParseVarsFile(const std::string& filename);
+void ParseVarsFile(const std::string &filename);
 
 PANGOLIN_EXPORT
-void LoadJsonFile(const std::string& filename, const std::string& prefix="");
+void LoadJsonFile(const std::string &filename, const std::string &prefix = "");
 
 PANGOLIN_EXPORT
-void SaveJsonFile(const std::string& filename, const std::string& prefix="");
+void SaveJsonFile(const std::string &filename, const std::string &prefix = "");
 
 PANGOLIN_EXPORT
-void ProcessHistoricCallbacks(NewVarCallbackFn callback, void* data, const std::string& filter = "");
+void ProcessHistoricCallbacks(NewVarCallbackFn callback, void *data,
+                              const std::string &filter = "");
 
 PANGOLIN_EXPORT
-void RegisterNewVarCallback(NewVarCallbackFn callback, void* data, const std::string& filter = "");
+void RegisterNewVarCallback(NewVarCallbackFn callback, void *data,
+                            const std::string &filter = "");
 
 PANGOLIN_EXPORT
-void RegisterGuiVarChangedCallback(GuiVarChangedCallbackFn callback, void* data, const std::string& filter = "");
+void RegisterGuiVarChangedCallback(GuiVarChangedCallbackFn callback, void *data,
+                                   const std::string &filter = "");
 
-template<typename T>
-struct SetVarFunctor
-{
-    SetVarFunctor(const std::string& name, T val) : varName(name), setVal(val) {}
-    void operator()() { Var<T>(varName).Ref().Set(setVal); }
-    std::string varName;
-    T setVal;
+template <typename T> struct SetVarFunctor {
+  SetVarFunctor(const std::string &name, T val) : varName(name), setVal(val) {}
+  void operator()() { Var<T>(varName).Ref().Set(setVal); }
+  std::string varName;
+  T setVal;
 };
 
-struct ToggleVarFunctor
-{
-    ToggleVarFunctor(const std::string& name) : varName(name) {}
-    void operator()() { Var<bool> val(varName,false); val = !val; }
-    std::string varName;
+struct ToggleVarFunctor {
+  ToggleVarFunctor(const std::string &name) : varName(name) {}
+  void operator()() {
+    Var<bool> val(varName, false);
+    val = !val;
+  }
+  std::string varName;
 };
 
-inline bool Pushed(Var<bool>& button)
-{
-    bool val = button;
-    button = false;
-    return val;
+inline bool Pushed(Var<bool> &button) {
+  bool val = button;
+  button = false;
+  return val;
 }
 
-inline bool Pushed(bool& button)
-{
-    bool val = button;
-    button = false;
-    return val;
+inline bool Pushed(bool &button) {
+  bool val = button;
+  button = false;
+  return val;
 }
 
-template<typename T>
-inline std::ostream& operator<<(std::ostream& s, Var<T>& rhs)
-{
-    s << rhs.operator const T &();
-    return s;
+template <typename T>
+inline std::ostream &operator<<(std::ostream &s, Var<T> &rhs) {
+  s << rhs.operator const T &();
+  return s;
 }
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_VAREXTRA_H

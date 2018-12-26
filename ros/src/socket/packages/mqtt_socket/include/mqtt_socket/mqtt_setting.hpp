@@ -2,10 +2,10 @@
 #define MQTT_CONFIG_FILE_NAME "/mqtt_config.yml"
 
 // MODE
-#define AUTO_MODE       1
-#define REMOTE_MODE     2
-#define NORMAL_MODE     0
-#define EMERGENCY_MODE  1
+#define AUTO_MODE 1
+#define REMOTE_MODE 2
+#define NORMAL_MODE 0
+#define EMERGENCY_MODE 1
 
 // REMOTE CMD
 static int vehicle_id;

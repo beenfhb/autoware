@@ -5,8 +5,8 @@
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
  *
- *  * Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *  * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  *
  *  * Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
@@ -18,30 +18,30 @@
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- *  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <cmath>
 #include <thread>
 
-#include <ros/ros.h>
-#include <geometry_msgs/TwistStamped.h>
 #include <autoware_msgs/VehicleCmd.h>
+#include <geometry_msgs/TwistStamped.h>
+#include <ros/ros.h>
 
-#include "g30esli_interface_util.h"
 #include "can_utils/cansend.h"
 #include "can_utils/cansend_util.h"
 #include "can_utils/ymc_can.h"
+#include "g30esli_interface_util.h"
 
-namespace
-{
+namespace {
 // ros param
 int g_mode;
 int g_loop_rate;
@@ -62,12 +62,13 @@ double g_steering_offset_deg = 0.0;
 // cansend tool
 mycansend::CanSender g_cansender;
 
-void vehicle_cmd_callback(const autoware_msgs::VehicleCmdConstPtr& msg)
-{
+void vehicle_cmd_callback(const autoware_msgs::VehicleCmdConstPtr &msg) {
   // TODO: use steer angle, shift, turn signal
-  double target_velocity = msg->twist_cmd.twist.linear.x * 3.6;  // [m/s] -> [km/h]
-  double target_steering_angle_deg = ymc::computeTargetSteeringAngleDegree(msg->twist_cmd.twist.angular.z,
-                                                                           msg->twist_cmd.twist.linear.x, g_wheel_base);
+  double target_velocity =
+      msg->twist_cmd.twist.linear.x * 3.6; // [m/s] -> [km/h]
+  double target_steering_angle_deg = ymc::computeTargetSteeringAngleDegree(
+      msg->twist_cmd.twist.angular.z, msg->twist_cmd.twist.linear.x,
+      g_wheel_base);
   target_steering_angle_deg += g_steering_offset_deg;
 
   // factor
@@ -78,45 +79,35 @@ void vehicle_cmd_callback(const autoware_msgs::VehicleCmdConstPtr& msg)
   g_steering_angle_deg_i16 = target_steering_angle_deg * -1.0;
 }
 
-void current_vel_callback(const geometry_msgs::TwistStampedConstPtr& msg)
-{
+void current_vel_callback(const geometry_msgs::TwistStampedConstPtr &msg) {
   g_current_vel_kmph = msg->twist.linear.x * 3.6;
 }
 
 // receive input from keyboard
 // change the mode to manual mode or auto drive mode
-void changeMode()
-{
-  while (!g_terminate_thread)
-  {
-    if (ymc::kbhit())
-    {
+void changeMode() {
+  while (!g_terminate_thread) {
+    if (ymc::kbhit()) {
       char c = getchar();
-      if (c == ' ')
-      {
+      if (c == ' ') {
         g_mode = 3;
-      }
-      else if (c == 's')
-      {
+      } else if (c == 's') {
         g_mode = 8;
       }
     }
-    usleep(20000);  // sleep 20msec
+    usleep(20000); // sleep 20msec
   }
 }
 
 // read can data from the vehicle
-void readCanData(FILE* fp)
-{
+void readCanData(FILE *fp) {
   char buf[64];
-  while (fgets(buf, sizeof(buf), fp) != NULL && !g_terminate_thread)
-  {
+  while (fgets(buf, sizeof(buf), fp) != NULL && !g_terminate_thread) {
     std::string raw_data = std::string(buf);
     std::cout << "received data: " << raw_data << std::endl;
 
     // check if the data is valid
-    if (raw_data.size() > 0)
-    {
+    if (raw_data.size() > 0) {
       // split data to strings
       // data format is like this
       // can0  200   [8]  08 00 00 00 01 00 01 29
@@ -128,8 +119,7 @@ void readCanData(FILE* fp)
 
       int id = std::stoi(parsed_data.at(1), nullptr, 10);
       double _current_vel_mps = ymc::translateCanData(id, data, &g_mode);
-      if (_current_vel_mps != RET_NO_PUBLISH)
-      {
+      if (_current_vel_mps != RET_NO_PUBLISH) {
         geometry_msgs::TwistStamped ts;
         ts.header.frame_id = "base_link";
         ts.header.stamp = ros::Time::now();
@@ -140,10 +130,9 @@ void readCanData(FILE* fp)
   }
 }
 
-}  // namespace
+} // namespace
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char *argv[]) {
   // ROS initialization
   ros::init(argc, argv, "g30esli_interface");
   ros::NodeHandle n;
@@ -160,15 +149,17 @@ int main(int argc, char* argv[])
   g_cansender.init(g_device);
 
   // subscriber
-  ros::Subscriber vehicle_cmd_sub = n.subscribe<autoware_msgs::VehicleCmd>("vehicle_cmd", 1, vehicle_cmd_callback);
-  ros::Subscriber current_vel_sub =
-      n.subscribe<geometry_msgs::TwistStamped>("current_velocity", 1, current_vel_callback);
+  ros::Subscriber vehicle_cmd_sub = n.subscribe<autoware_msgs::VehicleCmd>(
+      "vehicle_cmd", 1, vehicle_cmd_callback);
+  ros::Subscriber current_vel_sub = n.subscribe<geometry_msgs::TwistStamped>(
+      "current_velocity", 1, current_vel_callback);
 
   // publisher
-  g_current_twist_pub = n.advertise<geometry_msgs::TwistStamped>("ymc_current_twist", 10);
+  g_current_twist_pub =
+      n.advertise<geometry_msgs::TwistStamped>("ymc_current_twist", 10);
 
   // read can data from candump
-  FILE* fp = popen("candump can0", "r");
+  FILE *fp = popen("candump can0", "r");
 
   // create threads
   std::thread t1(changeMode);
@@ -176,8 +167,7 @@ int main(int argc, char* argv[])
 
   ros::Rate loop_rate = g_loop_rate;
   bool stopping_flag = true;
-  while (ros::ok())
-  {
+  while (ros::ok()) {
     // data
     unsigned char mode = static_cast<unsigned char>(g_mode);
     unsigned char shift = 0;
@@ -192,8 +182,7 @@ int main(int argc, char* argv[])
 
     // STOPPING
     static int stop_count = 0;
-    if (stopping_flag && g_mode == 8)
-    {
+    if (stopping_flag && g_mode == 8) {
       // TODO: change steering angle according to current velocity ?
       target_velocity_ui16 = 0;
       brake = 1;
@@ -204,8 +193,7 @@ int main(int argc, char* argv[])
 
       std::cout << "stop count: " << stop_count << std::endl;
       // vehicle has stopped, so we can restart
-      if (stop_count > g_loop_rate * g_stop_time_sec)
-      {
+      if (stop_count > g_loop_rate * g_stop_time_sec) {
         brake = 0;
         stop_count = 0;
         stopping_flag = false;
@@ -214,13 +202,15 @@ int main(int argc, char* argv[])
 
     // Insert data to 8 byte array
     unsigned char data[8] = {};
-    ymc::setCanData(data, mode, shift, target_velocity_ui16, steering_angle_deg_i16, brake, heart_beat);
+    ymc::setCanData(data, mode, shift, target_velocity_ui16,
+                    steering_angle_deg_i16, brake, heart_beat);
 
     // send can data
     std::string send_id("200");
     size_t data_size = sizeof(data) / sizeof(data[0]);
     char can_cmd[256];
-    std::strcpy(can_cmd, mycansend::makeCmdArgument(data, data_size, send_id).c_str());
+    std::strcpy(can_cmd,
+                mycansend::makeCmdArgument(data, data_size, send_id).c_str());
     g_cansender.send(can_cmd);
 
     // wait for callbacks

@@ -32,27 +32,29 @@
 
 // If we don't have GLUT, coerce GLConsole to work with our own font rendering.
 #ifdef HAVE_GLES
-#include <pangolin/glinclude.h>
 #include <pangolin/glfont.h>
+#include <pangolin/glinclude.h>
 
 // Define our own GLFont class, preventing GLConsoles from being included.
 #define __GL_FONT_H__
 
-class GLFont
-{
+class GLFont {
 public:
-    void glPrintf(int x, int y, const char *fmt, ...)
-    {
-        glPushMatrix();
-        glTranslatef(x,y,1.0f);
-        pangolin::GlFont::I().Text(fmt).Draw();
-        glPopMatrix();
-    }
-    void glPrintf(int x, int y, const std::string fmt, ...){ glPrintf(x,y, fmt.c_str()); }
-    void glPrintfFast(int x, int y, const char *fmt, ...) { glPrintf(x,y,fmt); }
-    void glPrintfFast(int x, int y, const std::string fmt, ...){ glPrintfFast(x,y, fmt.c_str()); }
-    unsigned int CharHeight() { return 10; }
-    unsigned int CharWidth() { return 10; }
+  void glPrintf(int x, int y, const char *fmt, ...) {
+    glPushMatrix();
+    glTranslatef(x, y, 1.0f);
+    pangolin::GlFont::I().Text(fmt).Draw();
+    glPopMatrix();
+  }
+  void glPrintf(int x, int y, const std::string fmt, ...) {
+    glPrintf(x, y, fmt.c_str());
+  }
+  void glPrintfFast(int x, int y, const char *fmt, ...) { glPrintf(x, y, fmt); }
+  void glPrintfFast(int x, int y, const std::string fmt, ...) {
+    glPrintfFast(x, y, fmt.c_str());
+  }
+  unsigned int CharHeight() { return 10; }
+  unsigned int CharWidth() { return 10; }
 };
 
 // TODO: We should implement these or something...

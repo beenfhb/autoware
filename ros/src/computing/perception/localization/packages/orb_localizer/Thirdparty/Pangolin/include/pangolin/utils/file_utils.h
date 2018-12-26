@@ -30,90 +30,86 @@
 
 #include <pangolin/platform.h>
 
+#include <algorithm>
 #include <string>
 #include <vector>
-#include <algorithm>
 
-namespace pangolin
-{
+namespace pangolin {
 
 PANGOLIN_EXPORT
-std::vector<std::string>& Split(const std::string& s, char delim, std::vector<std::string>& elements);
+std::vector<std::string> &Split(const std::string &s, char delim,
+                                std::vector<std::string> &elements);
 
 PANGOLIN_EXPORT
 std::vector<std::string> Split(const std::string &s, char delim);
 
 PANGOLIN_EXPORT
-std::vector<std::string> Expand(const std::string &s, char open='[', char close=']', char delim=',');
+std::vector<std::string> Expand(const std::string &s, char open = '[',
+                                char close = ']', char delim = ',');
 
 PANGOLIN_EXPORT
-std::string SanitizePath(const std::string& path);
+std::string SanitizePath(const std::string &path);
 
 PANGOLIN_EXPORT
-std::string PathParent(const std::string& path, int levels = 1);
+std::string PathParent(const std::string &path, int levels = 1);
 
 PANGOLIN_EXPORT
-bool FileExists(const std::string& filename);
+bool FileExists(const std::string &filename);
 
 PANGOLIN_EXPORT
-std::string FindPath(const std::string& child_path, const std::string& signature_path);
+std::string FindPath(const std::string &child_path,
+                     const std::string &signature_path);
 
 PANGOLIN_EXPORT
-std::string PathExpand(const std::string& sPath);
+std::string PathExpand(const std::string &sPath);
 
 PANGOLIN_EXPORT
-bool MatchesWildcard(const std::string& str, const std::string& wildcard);
+bool MatchesWildcard(const std::string &str, const std::string &wildcard);
 
 PANGOLIN_EXPORT
-bool FilesMatchingWildcard(const std::string& wildcard_file_path, std::vector<std::string>& file_vec);
-
+bool FilesMatchingWildcard(const std::string &wildcard_file_path,
+                           std::vector<std::string> &file_vec);
 
 // TODO: Tidy these inlines up / move them
 
-inline bool StartsWith(const std::string& str, const std::string& prefix)
-{
-    return !str.compare(0, prefix.size(), prefix);
+inline bool StartsWith(const std::string &str, const std::string &prefix) {
+  return !str.compare(0, prefix.size(), prefix);
 }
 
-inline bool EndsWith(const std::string& str, const std::string& prefix)
-{
-    return !str.compare(str.size() - prefix.size(), prefix.size(), prefix);
+inline bool EndsWith(const std::string &str, const std::string &prefix) {
+  return !str.compare(str.size() - prefix.size(), prefix.size(), prefix);
 }
 
-inline std::string Trim(const std::string& str, const std::string& delimiters = " \f\n\r\t\v" )
-{
-    const size_t f = str.find_first_not_of( delimiters );
-    return f == std::string::npos ?
-                "" :
-                str.substr( f, str.find_last_not_of( delimiters ) + 1 );
+inline std::string Trim(const std::string &str,
+                        const std::string &delimiters = " \f\n\r\t\v") {
+  const size_t f = str.find_first_not_of(delimiters);
+  return f == std::string::npos
+             ? ""
+             : str.substr(f, str.find_last_not_of(delimiters) + 1);
 }
 
-inline void ToUpper( std::string& str )
-{
-    std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+inline void ToUpper(std::string &str) {
+  std::transform(str.begin(), str.end(), str.begin(), ::toupper);
 }
 
-inline void ToLower( std::string& str )
-{
-    std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+inline void ToLower(std::string &str) {
+  std::transform(str.begin(), str.end(), str.begin(), ::tolower);
 }
 
-inline std::string ToUpperCopy( const std::string& str )
-{
-    std::string out;
-    out.resize(str.size());
-    std::transform(str.begin(), str.end(), out.begin(), ::toupper);
-    return out;
+inline std::string ToUpperCopy(const std::string &str) {
+  std::string out;
+  out.resize(str.size());
+  std::transform(str.begin(), str.end(), out.begin(), ::toupper);
+  return out;
 }
 
-inline std::string ToLowerCopy( const std::string& str )
-{
-    std::string out;
-    out.resize(str.size());
-    std::transform(str.begin(), str.end(), out.begin(), ::tolower);
-    return out;
+inline std::string ToLowerCopy(const std::string &str) {
+  std::string out;
+  out.resize(str.size());
+  std::transform(str.begin(), str.end(), out.begin(), ::tolower);
+  return out;
 }
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_FILE_UTILS_H

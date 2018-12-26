@@ -28,17 +28,15 @@
 #ifndef PANGOLIN_USER_APP_H
 #define PANGOLIN_USER_APP_H
 
-namespace pangolin
-{
+namespace pangolin {
 
-class PANGOLIN_EXPORT UserApp
-{
+class PANGOLIN_EXPORT UserApp {
 public:
-    virtual ~UserApp() {}
-    virtual void Init() {}
-    virtual void Render() = 0;
+  virtual ~UserApp() {}
+  virtual void Init() {}
+  virtual void Render() = 0;
 };
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_USER_APP_H

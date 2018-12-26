@@ -31,9 +31,9 @@
 #include <pangolin/platform.h>
 
 #ifdef CPP11_NO_BOOST
-    #include <condition_variable>
+#include <condition_variable>
 #else
-    #include <boost/thread/condition_variable.hpp>
+#include <boost/thread/condition_variable.hpp>
 #endif
 
 #include <pangolin/compat/boostd.h>

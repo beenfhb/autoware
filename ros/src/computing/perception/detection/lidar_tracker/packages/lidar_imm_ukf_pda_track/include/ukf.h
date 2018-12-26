@@ -5,8 +5,8 @@
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
  *
- *  * Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *  * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  *
  *  * Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
@@ -18,47 +18,45 @@
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- *  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef OBJECT_TRACKING_UKF_H
 #define OBJECT_TRACKING_UKF_H
 
 #include "Eigen/Dense"
-#include <ros/ros.h>
-#include <vector>
-#include <string>
 #include <fstream>
-#include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <ros/ros.h>
+#include <string>
+#include <vector>
 
 #include "autoware_msgs/DetectedObject.h"
 
-enum TrackingState : int
-{
-  Die = 0,     // No longer tracking
-  Init = 1,    // Start tracking
-  Stable = 4,  // Stable tracking
+enum TrackingState : int {
+  Die = 0,       // No longer tracking
+  Init = 1,      // Start tracking
+  Stable = 4,    // Stable tracking
   Occlusion = 5, // Lost 1 frame possibly by occlusion
-  Lost = 10,   // About to lose target
+  Lost = 10,     // About to lose target
 };
 
-enum MotionModel : int
-{
-  CV = 0,    // constant velocity
-  CTRV = 1,  // constant turn rate and velocity
-  RM = 2,    // random motion
+enum MotionModel : int {
+  CV = 0,   // constant velocity
+  CTRV = 1, // constant turn rate and velocity
+  RM = 2,   // random motion
 };
 
-class UKF
-{
+class UKF {
   /*
   cv: Constant Velocity
   ctrv: Constatnt Turn Rate and Velocity
@@ -259,9 +257,10 @@ public:
 
   void updateYawWithHighProb();
 
-  void initialize(const Eigen::VectorXd& z, const double timestamp, const int target_ind);
+  void initialize(const Eigen::VectorXd &z, const double timestamp,
+                  const int target_ind);
 
-  void updateModeProb(const std::vector<double>& lambda_vec);
+  void updateModeProb(const std::vector<double> &lambda_vec);
 
   void mergeEstimationAndCovariance();
 
@@ -273,41 +272,54 @@ public:
 
   void predictionIMMUKF(const double dt, const bool has_subscribed_vectormap);
 
-  void findMaxZandS(Eigen::VectorXd& max_det_z, Eigen::MatrixXd& max_det_s);
+  void findMaxZandS(Eigen::VectorXd &max_det_z, Eigen::MatrixXd &max_det_s);
 
-  void updateMeasurementForCTRV(const std::vector<autoware_msgs::DetectedObject>& object_vec);
+  void updateMeasurementForCTRV(
+      const std::vector<autoware_msgs::DetectedObject> &object_vec);
 
   void uppateForCTRV();
 
-  void updateEachMotion(const double detection_probability, const double gate_probability, const double gating_thres,
-                        const std::vector<autoware_msgs::DetectedObject>& object_vec, std::vector<double>& lambda_vec);
+  void
+  updateEachMotion(const double detection_probability,
+                   const double gate_probability, const double gating_thres,
+                   const std::vector<autoware_msgs::DetectedObject> &object_vec,
+                   std::vector<double> &lambda_vec);
 
-  void updateSUKF(const std::vector<autoware_msgs::DetectedObject>& object_vec);
+  void updateSUKF(const std::vector<autoware_msgs::DetectedObject> &object_vec);
 
-  void updateIMMUKF(const double detection_probability, const double gate_probability, const double gating_thres,
-                    const std::vector<autoware_msgs::DetectedObject>& object_vec);
+  void
+  updateIMMUKF(const double detection_probability,
+               const double gate_probability, const double gating_thres,
+               const std::vector<autoware_msgs::DetectedObject> &object_vec);
 
-  void ctrv(const double p_x, const double p_y, const double v, const double yaw, const double yawd,
-            const double delta_t, std::vector<double>& state);
+  void ctrv(const double p_x, const double p_y, const double v,
+            const double yaw, const double yawd, const double delta_t,
+            std::vector<double> &state);
 
-  void cv(const double p_x, const double p_y, const double v, const double yaw, const double yawd, const double delta_t,
-          std::vector<double>& state);
+  void cv(const double p_x, const double p_y, const double v, const double yaw,
+          const double yawd, const double delta_t, std::vector<double> &state);
 
-  void randomMotion(const double p_x, const double p_y, const double v, const double yaw, const double yawd,
-                    const double delta_t, std::vector<double>& state);
+  void randomMotion(const double p_x, const double p_y, const double v,
+                    const double yaw, const double yawd, const double delta_t,
+                    std::vector<double> &state);
 
   void initCovarQs(const double dt, const double yaw);
 
   void predictionMotion(const double delta_t, const int model_ind);
 
-  void checkLaneDirectionAvailability(const autoware_msgs::DetectedObject& in_object,
-                                      const double lane_direction_chi_thres, const bool use_sukf);
+  void
+  checkLaneDirectionAvailability(const autoware_msgs::DetectedObject &in_object,
+                                 const double lane_direction_chi_thres,
+                                 const bool use_sukf);
 
-  void predictionLidarMeasurement(const int motion_ind, const int num_meas_state);
+  void predictionLidarMeasurement(const int motion_ind,
+                                  const int num_meas_state);
 
-  double calculateNIS(const autoware_msgs::DetectedObject& in_object, const int motion_ind);
+  double calculateNIS(const autoware_msgs::DetectedObject &in_object,
+                      const int motion_ind);
 
-  bool isLaneDirectionAvailable(const autoware_msgs::DetectedObject& in_object, const int motion_ind,
+  bool isLaneDirectionAvailable(const autoware_msgs::DetectedObject &in_object,
+                                const int motion_ind,
                                 const double lane_direction_chi_thres);
 
   // void updateKalmanGain(const int motion_ind, const int num_meas_state);
@@ -315,10 +327,12 @@ public:
 
   double normalizeAngle(const double angle);
 
-  void update(const bool use_sukf, const double detection_probability, const double gate_probability,
-              const double gating_thres, const std::vector<autoware_msgs::DetectedObject>& object_vec);
+  void update(const bool use_sukf, const double detection_probability,
+              const double gate_probability, const double gating_thres,
+              const std::vector<autoware_msgs::DetectedObject> &object_vec);
 
-  void prediction(const bool use_sukf, const bool has_subscribed_vectormap, const double dt);
+  void prediction(const bool use_sukf, const bool has_subscribed_vectormap,
+                  const double dt);
 };
 
 #endif /* UKF_H */

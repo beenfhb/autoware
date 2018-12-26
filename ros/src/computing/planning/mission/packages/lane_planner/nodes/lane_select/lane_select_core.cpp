@@ -6,7 +6,8 @@
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
  *
- *  * Redistributions of source code must retain the above copyright notice, this
+ *  * Redistributions of source code must retain the above copyright notice,
+ this
  *    list of conditions and the following disclaimer.
  *
  *  * Redistributions in binary form must reproduce the above copyright notice,
@@ -19,99 +20,93 @@
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE
  *  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
  *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY,
+ *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "lane_select_core.h"
 
-namespace lane_planner
-{
+namespace lane_planner {
 // Constructor
 LaneSelectNode::LaneSelectNode()
-  : private_nh_("~")
-  , current_lane_idx_(-1)
-  , right_lane_idx_(-1)
-  , left_lane_idx_(-1)
-  , is_lane_array_subscribed_(false)
-  , is_current_pose_subscribed_(false)
-  , is_current_velocity_subscribed_(false)
-  , is_current_state_subscribed_(false)
-  , is_config_subscribed_(false)
-  , distance_threshold_(3.0)
-  , lane_change_interval_(10.0)
-  , lane_change_target_ratio_(2.0)
-  , lane_change_target_minimum_(5.0)
-  , vlength_hermite_curve_(10)
-  , current_state_("UNKNOWN")
-{
+    : private_nh_("~"), current_lane_idx_(-1), right_lane_idx_(-1),
+      left_lane_idx_(-1), is_lane_array_subscribed_(false),
+      is_current_pose_subscribed_(false),
+      is_current_velocity_subscribed_(false),
+      is_current_state_subscribed_(false), is_config_subscribed_(false),
+      distance_threshold_(3.0), lane_change_interval_(10.0),
+      lane_change_target_ratio_(2.0), lane_change_target_minimum_(5.0),
+      vlength_hermite_curve_(10), current_state_("UNKNOWN") {
   initForROS();
 }
 
 // Destructor
-LaneSelectNode::~LaneSelectNode()
-{
-}
+LaneSelectNode::~LaneSelectNode() {}
 
-void LaneSelectNode::initForROS()
-{
+void LaneSelectNode::initForROS() {
   // setup subscriber
-  sub1_ = nh_.subscribe("traffic_waypoints_array", 1, &LaneSelectNode::callbackFromLaneArray, this);
-  sub2_ = nh_.subscribe("current_pose", 1, &LaneSelectNode::callbackFromPoseStamped, this);
-  sub3_ = nh_.subscribe("current_velocity", 1, &LaneSelectNode::callbackFromTwistStamped, this);
+  sub1_ = nh_.subscribe("traffic_waypoints_array", 1,
+                        &LaneSelectNode::callbackFromLaneArray, this);
+  sub2_ = nh_.subscribe("current_pose", 1,
+                        &LaneSelectNode::callbackFromPoseStamped, this);
+  sub3_ = nh_.subscribe("current_velocity", 1,
+                        &LaneSelectNode::callbackFromTwistStamped, this);
   sub4_ = nh_.subscribe("state", 1, &LaneSelectNode::callbackFromState, this);
-  sub5_ = nh_.subscribe("/config/lane_select", 1, &LaneSelectNode::callbackFromConfig, this);
-  sub6_ = nh_.subscribe("/decisionmaker/states", 1, &LaneSelectNode::callbackFromStates, this);
+  sub5_ = nh_.subscribe("/config/lane_select", 1,
+                        &LaneSelectNode::callbackFromConfig, this);
+  sub6_ = nh_.subscribe("/decisionmaker/states", 1,
+                        &LaneSelectNode::callbackFromStates, this);
 
   bool enablePlannerDynamicSwitch;
-  private_nh_.param<bool>("enablePlannerDynamicSwitch", enablePlannerDynamicSwitch, false);
+  private_nh_.param<bool>("enablePlannerDynamicSwitch",
+                          enablePlannerDynamicSwitch, false);
   // setup publisher
 
   pub1_ = nh_.advertise<autoware_msgs::Lane>("base_waypoints", 1);
 
-  if (enablePlannerDynamicSwitch)
-  {
+  if (enablePlannerDynamicSwitch) {
     pub2_ = nh_.advertise<std_msgs::Int32>("/astar/closest_waypoint", 1);
-  }
-  else
-  {
+  } else {
     pub2_ = nh_.advertise<std_msgs::Int32>("closest_waypoint", 1);
   }
 
   pub3_ = nh_.advertise<std_msgs::Int32>("change_flag", 1);
-  pub4_ = nh_.advertise<std_msgs::Int32>("/current_lane_id",1);
+  pub4_ = nh_.advertise<std_msgs::Int32>("/current_lane_id", 1);
 
-  vis_pub1_ = nh_.advertise<visualization_msgs::MarkerArray>("lane_select_marker", 1);
+  vis_pub1_ =
+      nh_.advertise<visualization_msgs::MarkerArray>("lane_select_marker", 1);
 
   // get from rosparam
-  private_nh_.param<double>("lane_change_interval", lane_change_interval_, double(2));
-  private_nh_.param<double>("distance_threshold", distance_threshold_, double(3.0));
+  private_nh_.param<double>("lane_change_interval", lane_change_interval_,
+                            double(2));
+  private_nh_.param<double>("distance_threshold", distance_threshold_,
+                            double(3.0));
 }
 
-bool LaneSelectNode::isAllTopicsSubscribed()
-{
-  if (!is_current_pose_subscribed_ || !is_lane_array_subscribed_ || !is_current_velocity_subscribed_)
-  {
+bool LaneSelectNode::isAllTopicsSubscribed() {
+  if (!is_current_pose_subscribed_ || !is_lane_array_subscribed_ ||
+      !is_current_velocity_subscribed_) {
     ROS_WARN("Necessary topics are not subscribed yet. Waiting...");
     return false;
   }
   return true;
 }
 
-void LaneSelectNode::initForLaneSelect()
-{
+void LaneSelectNode::initForLaneSelect() {
   if (!isAllTopicsSubscribed())
     return;
 
   // search closest waypoint number for each lanes
-  if (!getClosestWaypointNumberForEachLanes())
-  {
+  if (!getClosestWaypointNumberForEachLanes()) {
     publishClosestWaypoint(-1);
     resetLaneIdx();
     return;
@@ -131,37 +126,32 @@ void LaneSelectNode::initForLaneSelect()
   return;
 }
 
-void LaneSelectNode::resetLaneIdx()
-{
+void LaneSelectNode::resetLaneIdx() {
   current_lane_idx_ = -1;
   right_lane_idx_ = -1;
   left_lane_idx_ = -1;
   publishVisualizer();
 }
 
-void LaneSelectNode::resetSubscriptionFlag()
-{
+void LaneSelectNode::resetSubscriptionFlag() {
   is_current_pose_subscribed_ = false;
   is_current_velocity_subscribed_ = false;
   is_current_state_subscribed_ = false;
 }
 
-void LaneSelectNode::processing()
-{
+void LaneSelectNode::processing() {
   if (!isAllTopicsSubscribed())
     return;
 
   // search closest waypoint number for each lanes
-  if (!getClosestWaypointNumberForEachLanes())
-  {
+  if (!getClosestWaypointNumberForEachLanes()) {
     publishClosestWaypoint(-1);
     resetLaneIdx();
     return;
   }
 
   // if closest waypoint on current lane is -1,
-  if (std::get<1>(tuple_vec_.at(current_lane_idx_)) == -1)
-  {
+  if (std::get<1>(tuple_vec_.at(current_lane_idx_)) == -1) {
     publishClosestWaypoint(-1);
     resetLaneIdx();
     return;
@@ -172,29 +162,26 @@ void LaneSelectNode::processing()
   ROS_INFO("right_lane_idx: %d", right_lane_idx_);
   ROS_INFO("left_lane_idx: %d", left_lane_idx_);
 
-  if (current_state_ == "LANE_CHANGE")
-  {
-    try
-    {
+  if (current_state_ == "LANE_CHANGE") {
+    try {
       changeLane();
-      std::get<1>(lane_for_change_) =
-          getClosestWaypointNumber(std::get<0>(lane_for_change_), current_pose_.pose, current_velocity_.twist,
-                                   std::get<1>(lane_for_change_), distance_threshold_);
+      std::get<1>(lane_for_change_) = getClosestWaypointNumber(
+          std::get<0>(lane_for_change_), current_pose_.pose,
+          current_velocity_.twist, std::get<1>(lane_for_change_),
+          distance_threshold_);
       std::get<2>(lane_for_change_) = static_cast<ChangeFlag>(
-          std::get<0>(lane_for_change_).waypoints.at(std::get<1>(lane_for_change_)).change_flag);
+          std::get<0>(lane_for_change_)
+              .waypoints.at(std::get<1>(lane_for_change_))
+              .change_flag);
       ROS_INFO("closest: %d", std::get<1>(lane_for_change_));
       publishLane(std::get<0>(lane_for_change_));
       publishLaneID(std::get<0>(lane_for_change_));
       publishClosestWaypoint(std::get<1>(lane_for_change_));
       publishChangeFlag(std::get<2>(lane_for_change_));
-    }
-    catch (std::out_of_range)
-    {
+    } catch (std::out_of_range) {
       ROS_WARN("Failed to get closest waypoint num\n");
     }
-  }
-  else
-  {
+  } else {
     updateChangeFlag();
     createLaneForChange();
 
@@ -206,68 +193,76 @@ void LaneSelectNode::processing()
   resetSubscriptionFlag();
 }
 
-int32_t LaneSelectNode::getClosestLaneChangeWaypointNumber(const std::vector<autoware_msgs::Waypoint> &wps,
-                                                           int32_t cl_wp)
-{
-  for (uint32_t i = cl_wp; i < wps.size(); i++)
-  {
+int32_t LaneSelectNode::getClosestLaneChangeWaypointNumber(
+    const std::vector<autoware_msgs::Waypoint> &wps, int32_t cl_wp) {
+  for (uint32_t i = cl_wp; i < wps.size(); i++) {
     if (static_cast<ChangeFlag>(wps.at(i).change_flag) == ChangeFlag::right ||
-        static_cast<ChangeFlag>(wps.at(i).change_flag) == ChangeFlag::left)
-    {
+        static_cast<ChangeFlag>(wps.at(i).change_flag) == ChangeFlag::left) {
       return i;
     }
   }
   return -1;
 }
 
-void LaneSelectNode::createLaneForChange()
-{
+void LaneSelectNode::createLaneForChange() {
   std::get<0>(lane_for_change_).waypoints.clear();
   std::get<0>(lane_for_change_).waypoints.shrink_to_fit();
   std::get<1>(lane_for_change_) = -1;
 
-  const autoware_msgs::Lane &cur_lane = std::get<0>(tuple_vec_.at(current_lane_idx_));
+  const autoware_msgs::Lane &cur_lane =
+      std::get<0>(tuple_vec_.at(current_lane_idx_));
   const int32_t &clst_wp = std::get<1>(tuple_vec_.at(current_lane_idx_));
 
-  int32_t num_lane_change = getClosestLaneChangeWaypointNumber(cur_lane.waypoints, clst_wp);
+  int32_t num_lane_change =
+      getClosestLaneChangeWaypointNumber(cur_lane.waypoints, clst_wp);
   ROS_INFO("num_lane_change: %d", num_lane_change);
-  if (num_lane_change < 0 || num_lane_change >= static_cast<int32_t>(cur_lane.waypoints.size()))
-  {
+  if (num_lane_change < 0 ||
+      num_lane_change >= static_cast<int32_t>(cur_lane.waypoints.size())) {
     ROS_WARN("current lane doesn't have change flag");
     return;
   }
 
-  if ((static_cast<ChangeFlag>(cur_lane.waypoints.at(num_lane_change).change_flag) == ChangeFlag::right &&
+  if ((static_cast<ChangeFlag>(
+           cur_lane.waypoints.at(num_lane_change).change_flag) ==
+           ChangeFlag::right &&
        right_lane_idx_ < 0) ||
-      (static_cast<ChangeFlag>(cur_lane.waypoints.at(num_lane_change).change_flag) == ChangeFlag::left &&
-       left_lane_idx_ < 0))
-  {
+      (static_cast<ChangeFlag>(
+           cur_lane.waypoints.at(num_lane_change).change_flag) ==
+           ChangeFlag::left &&
+       left_lane_idx_ < 0)) {
     ROS_WARN("current lane doesn't have the lane for lane change");
     return;
   }
 
-  double dt = getTwoDimensionalDistance(cur_lane.waypoints.at(num_lane_change).pose.pose.position,
-                                        cur_lane.waypoints.at(clst_wp).pose.pose.position);
-  double dt_by_vel = current_velocity_.twist.linear.x * lane_change_target_ratio_ > lane_change_target_minimum_ ?
-                         current_velocity_.twist.linear.x * lane_change_target_ratio_ :
-                         lane_change_target_minimum_;
+  double dt = getTwoDimensionalDistance(
+      cur_lane.waypoints.at(num_lane_change).pose.pose.position,
+      cur_lane.waypoints.at(clst_wp).pose.pose.position);
+  double dt_by_vel =
+      current_velocity_.twist.linear.x * lane_change_target_ratio_ >
+              lane_change_target_minimum_
+          ? current_velocity_.twist.linear.x * lane_change_target_ratio_
+          : lane_change_target_minimum_;
   ROS_INFO("dt : %lf, dt_by_vel : %lf", dt, dt_by_vel);
   autoware_msgs::Lane &nghbr_lane =
-      static_cast<ChangeFlag>(cur_lane.waypoints.at(num_lane_change).change_flag) == ChangeFlag::right ?
-          std::get<0>(tuple_vec_.at(right_lane_idx_)) :
-          std::get<0>(tuple_vec_.at(left_lane_idx_));
+      static_cast<ChangeFlag>(
+          cur_lane.waypoints.at(num_lane_change).change_flag) ==
+              ChangeFlag::right
+          ? std::get<0>(tuple_vec_.at(right_lane_idx_))
+          : std::get<0>(tuple_vec_.at(left_lane_idx_));
   const int32_t &nghbr_clst_wp =
-      static_cast<ChangeFlag>(cur_lane.waypoints.at(num_lane_change).change_flag) == ChangeFlag::right ?
-          std::get<1>(tuple_vec_.at(right_lane_idx_)) :
-          std::get<1>(tuple_vec_.at(left_lane_idx_));
+      static_cast<ChangeFlag>(
+          cur_lane.waypoints.at(num_lane_change).change_flag) ==
+              ChangeFlag::right
+          ? std::get<1>(tuple_vec_.at(right_lane_idx_))
+          : std::get<1>(tuple_vec_.at(left_lane_idx_));
 
   int32_t target_num = -1;
-  for (uint32_t i = nghbr_clst_wp; i < nghbr_lane.waypoints.size(); i++)
-  {
+  for (uint32_t i = nghbr_clst_wp; i < nghbr_lane.waypoints.size(); i++) {
     if (i == nghbr_lane.waypoints.size() - 1 ||
-        dt + dt_by_vel < getTwoDimensionalDistance(nghbr_lane.waypoints.at(nghbr_clst_wp).pose.pose.position,
-                                                   nghbr_lane.waypoints.at(i).pose.pose.position))
-    {
+        dt + dt_by_vel <
+            getTwoDimensionalDistance(
+                nghbr_lane.waypoints.at(nghbr_clst_wp).pose.pose.position,
+                nghbr_lane.waypoints.at(i).pose.pose.position)) {
       target_num = i;
       break;
     }
@@ -279,33 +274,39 @@ void LaneSelectNode::createLaneForChange()
 
   std::get<0>(lane_for_change_).header.stamp = nghbr_lane.header.stamp;
   std::vector<autoware_msgs::Waypoint> hermite_wps = generateHermiteCurveForROS(
-      cur_lane.waypoints.at(num_lane_change).pose.pose, nghbr_lane.waypoints.at(target_num).pose.pose,
-      cur_lane.waypoints.at(num_lane_change).twist.twist.linear.x, vlength_hermite_curve_);
+      cur_lane.waypoints.at(num_lane_change).pose.pose,
+      nghbr_lane.waypoints.at(target_num).pose.pose,
+      cur_lane.waypoints.at(num_lane_change).twist.twist.linear.x,
+      vlength_hermite_curve_);
 
   for (auto &&el : hermite_wps)
     el.change_flag = cur_lane.waypoints.at(num_lane_change).change_flag;
 
-  std::get<0>(lane_for_change_).waypoints.reserve(nghbr_lane.waypoints.size() + hermite_wps.size());
-  std::move(hermite_wps.begin(), hermite_wps.end(), std::back_inserter(std::get<0>(lane_for_change_).waypoints));
+  std::get<0>(lane_for_change_)
+      .waypoints.reserve(nghbr_lane.waypoints.size() + hermite_wps.size());
+  std::move(hermite_wps.begin(), hermite_wps.end(),
+            std::back_inserter(std::get<0>(lane_for_change_).waypoints));
   auto itr = nghbr_lane.waypoints.begin();
   std::advance(itr, target_num);
-  for (auto i = itr; i != nghbr_lane.waypoints.end(); i++)
-  {
-    if (getTwoDimensionalDistance(itr->pose.pose.position, i->pose.pose.position) < lane_change_interval_)
+  for (auto i = itr; i != nghbr_lane.waypoints.end(); i++) {
+    if (getTwoDimensionalDistance(itr->pose.pose.position,
+                                  i->pose.pose.position) <
+        lane_change_interval_)
       i->change_flag = enumToInteger(ChangeFlag::straight);
     else
       break;
   }
-  std::copy(itr, nghbr_lane.waypoints.end(), std::back_inserter(std::get<0>(lane_for_change_).waypoints));
+  std::copy(itr, nghbr_lane.waypoints.end(),
+            std::back_inserter(std::get<0>(lane_for_change_).waypoints));
 }
 
-void LaneSelectNode::updateChangeFlag()
-{
-  for (auto &el : tuple_vec_)
-  {
-    std::get<2>(el) = (std::get<1>(el) != -1) ?
-                          static_cast<ChangeFlag>(std::get<0>(el).waypoints.at(std::get<1>(el)).change_flag) :
-                          ChangeFlag::unknown;
+void LaneSelectNode::updateChangeFlag() {
+  for (auto &el : tuple_vec_) {
+    std::get<2>(el) =
+        (std::get<1>(el) != -1)
+            ? static_cast<ChangeFlag>(
+                  std::get<0>(el).waypoints.at(std::get<1>(el)).change_flag)
+            : ChangeFlag::unknown;
 
     if (std::get<2>(el) == ChangeFlag::right && right_lane_idx_ == -1)
       std::get<2>(el) = ChangeFlag::unknown;
@@ -316,16 +317,15 @@ void LaneSelectNode::updateChangeFlag()
   }
 }
 
-void LaneSelectNode::changeLane()
-{
-  if (std::get<2>(tuple_vec_.at(current_lane_idx_)) == ChangeFlag::right && right_lane_idx_ != -1 &&
-      std::get<1>(tuple_vec_.at(right_lane_idx_)) != -1)
-  {
+void LaneSelectNode::changeLane() {
+  if (std::get<2>(tuple_vec_.at(current_lane_idx_)) == ChangeFlag::right &&
+      right_lane_idx_ != -1 &&
+      std::get<1>(tuple_vec_.at(right_lane_idx_)) != -1) {
     current_lane_idx_ = right_lane_idx_;
-  }
-  else if (std::get<2>(tuple_vec_.at(current_lane_idx_)) == ChangeFlag::left && left_lane_idx_ != -1 &&
-           std::get<1>(tuple_vec_.at(left_lane_idx_)) != -1)
-  {
+  } else if (std::get<2>(tuple_vec_.at(current_lane_idx_)) ==
+                 ChangeFlag::left &&
+             left_lane_idx_ != -1 &&
+             std::get<1>(tuple_vec_.at(left_lane_idx_)) != -1) {
     current_lane_idx_ = left_lane_idx_;
   }
 
@@ -333,36 +333,32 @@ void LaneSelectNode::changeLane()
   return;
 }
 
-bool LaneSelectNode::getClosestWaypointNumberForEachLanes()
-{
-  for (auto &el : tuple_vec_)
-  {
-    std::get<1>(el) = getClosestWaypointNumber(std::get<0>(el), current_pose_.pose, current_velocity_.twist,
-                                               std::get<1>(el), distance_threshold_);
+bool LaneSelectNode::getClosestWaypointNumberForEachLanes() {
+  for (auto &el : tuple_vec_) {
+    std::get<1>(el) = getClosestWaypointNumber(
+        std::get<0>(el), current_pose_.pose, current_velocity_.twist,
+        std::get<1>(el), distance_threshold_);
     ROS_INFO("closest: %d", std::get<1>(el));
   }
 
   // confirm if all closest waypoint numbers are -1. If so, output warning
   int32_t accum = 0;
-  for (const auto &el : tuple_vec_)
-  {
+  for (const auto &el : tuple_vec_) {
     accum += std::get<1>(el);
   }
-  if (accum == (-1) * static_cast<int32_t>(tuple_vec_.size()))
-  {
-    ROS_WARN("Cannot get closest waypoints. All closest waypoints are changed to -1...");
+  if (accum == (-1) * static_cast<int32_t>(tuple_vec_.size())) {
+    ROS_WARN("Cannot get closest waypoints. All closest waypoints are changed "
+             "to -1...");
     return false;
   }
 
   return true;
 }
 
-void LaneSelectNode::findCurrentLane()
-{
+void LaneSelectNode::findCurrentLane() {
   std::vector<uint32_t> idx_vec;
   idx_vec.reserve(tuple_vec_.size());
-  for (uint32_t i = 0; i < tuple_vec_.size(); i++)
-  {
+  for (uint32_t i = 0; i < tuple_vec_.size(); i++) {
     if (std::get<1>(tuple_vec_.at(i)) == -1)
       continue;
     idx_vec.push_back(i);
@@ -370,43 +366,48 @@ void LaneSelectNode::findCurrentLane()
   current_lane_idx_ = findMostClosestLane(idx_vec, current_pose_.pose.position);
 }
 
-int32_t LaneSelectNode::findMostClosestLane(const std::vector<uint32_t> idx_vec, const geometry_msgs::Point p)
-{
+int32_t LaneSelectNode::findMostClosestLane(const std::vector<uint32_t> idx_vec,
+                                            const geometry_msgs::Point p) {
   std::vector<double> dist_vec;
   dist_vec.reserve(idx_vec.size());
-  for (const auto &el : idx_vec)
-  {
+  for (const auto &el : idx_vec) {
     int32_t closest_number = std::get<1>(tuple_vec_.at(el));
     dist_vec.push_back(
-        getTwoDimensionalDistance(p, std::get<0>(tuple_vec_.at(el)).waypoints.at(closest_number).pose.pose.position));
+        getTwoDimensionalDistance(p, std::get<0>(tuple_vec_.at(el))
+                                         .waypoints.at(closest_number)
+                                         .pose.pose.position));
   }
-  std::vector<double>::iterator itr = std::min_element(dist_vec.begin(), dist_vec.end());
+  std::vector<double>::iterator itr =
+      std::min_element(dist_vec.begin(), dist_vec.end());
   return idx_vec.at(std::distance(dist_vec.begin(), itr));
 }
 
-void LaneSelectNode::findNeighborLanes()
-{
+void LaneSelectNode::findNeighborLanes() {
   int32_t current_closest_num = std::get<1>(tuple_vec_.at(current_lane_idx_));
   const geometry_msgs::Pose &current_closest_pose =
-      std::get<0>(tuple_vec_.at(current_lane_idx_)).waypoints.at(current_closest_num).pose.pose;
+      std::get<0>(tuple_vec_.at(current_lane_idx_))
+          .waypoints.at(current_closest_num)
+          .pose.pose;
 
   std::vector<uint32_t> left_lane_idx_vec;
   left_lane_idx_vec.reserve(tuple_vec_.size());
   std::vector<uint32_t> right_lane_idx_vec;
   right_lane_idx_vec.reserve(tuple_vec_.size());
-  for (uint32_t i = 0; i < tuple_vec_.size(); i++)
-  {
-    if (i == static_cast<uint32_t>(current_lane_idx_) || std::get<1>(tuple_vec_.at(i)) == -1)
+  for (uint32_t i = 0; i < tuple_vec_.size(); i++) {
+    if (i == static_cast<uint32_t>(current_lane_idx_) ||
+        std::get<1>(tuple_vec_.at(i)) == -1)
       continue;
 
     int32_t target_num = std::get<1>(tuple_vec_.at(i));
-    const geometry_msgs::Point &target_p = std::get<0>(tuple_vec_.at(i)).waypoints.at(target_num).pose.pose.position;
+    const geometry_msgs::Point &target_p = std::get<0>(tuple_vec_.at(i))
+                                               .waypoints.at(target_num)
+                                               .pose.pose.position;
 
-    geometry_msgs::Point converted_p = convertPointIntoRelativeCoordinate(target_p, current_closest_pose);
+    geometry_msgs::Point converted_p =
+        convertPointIntoRelativeCoordinate(target_p, current_closest_pose);
 
     ROS_INFO("distance: %lf", converted_p.y);
-    if (fabs(converted_p.y) > distance_threshold_)
-    {
+    if (fabs(converted_p.y) > distance_threshold_) {
       ROS_INFO("%d lane is far from current lane...", i);
       continue;
     }
@@ -418,24 +419,25 @@ void LaneSelectNode::findNeighborLanes()
   }
 
   if (!left_lane_idx_vec.empty())
-    left_lane_idx_ = findMostClosestLane(left_lane_idx_vec, current_closest_pose.position);
+    left_lane_idx_ =
+        findMostClosestLane(left_lane_idx_vec, current_closest_pose.position);
   else
     left_lane_idx_ = -1;
 
   if (!right_lane_idx_vec.empty())
-    right_lane_idx_ = findMostClosestLane(right_lane_idx_vec, current_closest_pose.position);
+    right_lane_idx_ =
+        findMostClosestLane(right_lane_idx_vec, current_closest_pose.position);
   else
     right_lane_idx_ = -1;
 }
-visualization_msgs::Marker LaneSelectNode::createCurrentLaneMarker()
-{
+visualization_msgs::Marker LaneSelectNode::createCurrentLaneMarker() {
   visualization_msgs::Marker marker;
   marker.header.frame_id = "map";
   marker.header.stamp = ros::Time();
   marker.ns = "current_lane_marker";
 
-  if (current_lane_idx_ == -1 || std::get<0>(tuple_vec_.at(current_lane_idx_)).waypoints.empty())
-  {
+  if (current_lane_idx_ == -1 ||
+      std::get<0>(tuple_vec_.at(current_lane_idx_)).waypoints.empty()) {
     marker.action = visualization_msgs::Marker::DELETE;
     return marker;
   }
@@ -456,15 +458,14 @@ visualization_msgs::Marker LaneSelectNode::createCurrentLaneMarker()
   return marker;
 }
 
-visualization_msgs::Marker LaneSelectNode::createRightLaneMarker()
-{
+visualization_msgs::Marker LaneSelectNode::createRightLaneMarker() {
   visualization_msgs::Marker marker;
   marker.header.frame_id = "map";
   marker.header.stamp = ros::Time();
   marker.ns = "right_lane_marker";
 
-  if (right_lane_idx_ == -1 || std::get<0>(tuple_vec_.at(current_lane_idx_)).waypoints.empty())
-  {
+  if (right_lane_idx_ == -1 ||
+      std::get<0>(tuple_vec_.at(current_lane_idx_)).waypoints.empty()) {
     marker.action = visualization_msgs::Marker::DELETE;
     return marker;
   }
@@ -485,7 +486,8 @@ visualization_msgs::Marker LaneSelectNode::createRightLaneMarker()
   color_neighbor_change.a = 1.0;
 
   const ChangeFlag &change_flag = std::get<2>(tuple_vec_.at(current_lane_idx_));
-  marker.color = change_flag == ChangeFlag::right ? color_neighbor_change : color_neighbor;
+  marker.color =
+      change_flag == ChangeFlag::right ? color_neighbor_change : color_neighbor;
 
   for (const auto &em : std::get<0>(tuple_vec_.at(right_lane_idx_)).waypoints)
     marker.points.push_back(em.pose.pose.position);
@@ -493,15 +495,14 @@ visualization_msgs::Marker LaneSelectNode::createRightLaneMarker()
   return marker;
 }
 
-visualization_msgs::Marker LaneSelectNode::createLeftLaneMarker()
-{
+visualization_msgs::Marker LaneSelectNode::createLeftLaneMarker() {
   visualization_msgs::Marker marker;
   marker.header.frame_id = "map";
   marker.header.stamp = ros::Time();
   marker.ns = "left_lane_marker";
 
-  if (left_lane_idx_ == -1 || std::get<0>(tuple_vec_.at(current_lane_idx_)).waypoints.empty())
-  {
+  if (left_lane_idx_ == -1 ||
+      std::get<0>(tuple_vec_.at(current_lane_idx_)).waypoints.empty()) {
     marker.action = visualization_msgs::Marker::DELETE;
     return marker;
   }
@@ -522,7 +523,8 @@ visualization_msgs::Marker LaneSelectNode::createLeftLaneMarker()
   color_neighbor_change.a = 1.0;
 
   const ChangeFlag &change_flag = std::get<2>(tuple_vec_.at(current_lane_idx_));
-  marker.color = change_flag == ChangeFlag::left ? color_neighbor_change : color_neighbor;
+  marker.color =
+      change_flag == ChangeFlag::left ? color_neighbor_change : color_neighbor;
 
   for (const auto &em : std::get<0>(tuple_vec_.at((left_lane_idx_))).waypoints)
     marker.points.push_back(em.pose.pose.position);
@@ -530,15 +532,13 @@ visualization_msgs::Marker LaneSelectNode::createLeftLaneMarker()
   return marker;
 }
 
-visualization_msgs::Marker LaneSelectNode::createChangeLaneMarker()
-{
+visualization_msgs::Marker LaneSelectNode::createChangeLaneMarker() {
   visualization_msgs::Marker marker;
   marker.header.frame_id = "map";
   marker.header.stamp = ros::Time();
   marker.ns = "change_lane_marker";
 
-  if (std::get<0>(lane_for_change_).waypoints.empty())
-  {
+  if (std::get<0>(lane_for_change_).waypoints.empty()) {
     marker.action = visualization_msgs::Marker::DELETE;
     return marker;
   }
@@ -563,8 +563,7 @@ visualization_msgs::Marker LaneSelectNode::createChangeLaneMarker()
   return marker;
 }
 
-visualization_msgs::Marker LaneSelectNode::createClosestWaypointsMarker()
-{
+visualization_msgs::Marker LaneSelectNode::createClosestWaypointsMarker() {
   visualization_msgs::Marker marker;
   std_msgs::ColorRGBA color_closest_wp;
   color_closest_wp.r = 1.0;
@@ -581,20 +580,19 @@ visualization_msgs::Marker LaneSelectNode::createClosestWaypointsMarker()
   marker.color = color_closest_wp;
 
   marker.points.reserve(tuple_vec_.size());
-  for (uint32_t i = 0; i < tuple_vec_.size(); i++)
-  {
+  for (uint32_t i = 0; i < tuple_vec_.size(); i++) {
     if (std::get<1>(tuple_vec_.at(i)) == -1)
       continue;
 
-    marker.points.push_back(
-        std::get<0>(tuple_vec_.at(i)).waypoints.at(std::get<1>(tuple_vec_.at(i))).pose.pose.position);
+    marker.points.push_back(std::get<0>(tuple_vec_.at(i))
+                                .waypoints.at(std::get<1>(tuple_vec_.at(i)))
+                                .pose.pose.position);
   }
 
   return marker;
 }
 
-void LaneSelectNode::publishVisualizer()
-{
+void LaneSelectNode::publishVisualizer() {
   visualization_msgs::MarkerArray marker_array;
   marker_array.markers.push_back(createChangeLaneMarker());
   marker_array.markers.push_back(createCurrentLaneMarker());
@@ -605,41 +603,36 @@ void LaneSelectNode::publishVisualizer()
   vis_pub1_.publish(marker_array);
 }
 
-void LaneSelectNode::publishLane(const autoware_msgs::Lane &lane)
-{
+void LaneSelectNode::publishLane(const autoware_msgs::Lane &lane) {
   // publish global lane
   pub1_.publish(lane);
 }
 
-void LaneSelectNode::publishLaneID(const autoware_msgs::Lane &lane)
-{
+void LaneSelectNode::publishLaneID(const autoware_msgs::Lane &lane) {
   std_msgs::Int32 msg;
   msg.data = lane.lane_id;
   pub4_.publish(msg);
 }
 
-void LaneSelectNode::publishClosestWaypoint(const int32_t clst_wp)
-{
+void LaneSelectNode::publishClosestWaypoint(const int32_t clst_wp) {
   // publish closest waypoint
   std_msgs::Int32 closest_waypoint;
   closest_waypoint.data = clst_wp;
   pub2_.publish(closest_waypoint);
 }
 
-void LaneSelectNode::publishChangeFlag(const ChangeFlag flag)
-{
+void LaneSelectNode::publishChangeFlag(const ChangeFlag flag) {
   std_msgs::Int32 change_flag;
   change_flag.data = enumToInteger(flag);
   pub3_.publish(change_flag);
 }
 
-void LaneSelectNode::callbackFromLaneArray(const autoware_msgs::LaneArrayConstPtr &msg)
-{
+void LaneSelectNode::callbackFromLaneArray(
+    const autoware_msgs::LaneArrayConstPtr &msg) {
   tuple_vec_.clear();
   tuple_vec_.shrink_to_fit();
   tuple_vec_.reserve(msg->lanes.size());
-  for (const auto &el : msg->lanes)
-  {
+  for (const auto &el : msg->lanes) {
     auto t = std::make_tuple(el, -1, ChangeFlag::unknown);
     tuple_vec_.push_back(t);
   }
@@ -655,8 +648,8 @@ void LaneSelectNode::callbackFromLaneArray(const autoware_msgs::LaneArrayConstPt
     processing();
 }
 
-void LaneSelectNode::callbackFromPoseStamped(const geometry_msgs::PoseStampedConstPtr &msg)
-{
+void LaneSelectNode::callbackFromPoseStamped(
+    const geometry_msgs::PoseStampedConstPtr &msg) {
   current_pose_ = *msg;
   is_current_pose_subscribed_ = true;
 
@@ -666,8 +659,8 @@ void LaneSelectNode::callbackFromPoseStamped(const geometry_msgs::PoseStampedCon
     processing();
 }
 
-void LaneSelectNode::callbackFromTwistStamped(const geometry_msgs::TwistStampedConstPtr &msg)
-{
+void LaneSelectNode::callbackFromTwistStamped(
+    const geometry_msgs::TwistStampedConstPtr &msg) {
   current_velocity_ = *msg;
   is_current_velocity_subscribed_ = true;
 
@@ -677,8 +670,7 @@ void LaneSelectNode::callbackFromTwistStamped(const geometry_msgs::TwistStampedC
     processing();
 }
 
-void LaneSelectNode::callbackFromState(const std_msgs::StringConstPtr &msg)
-{
+void LaneSelectNode::callbackFromState(const std_msgs::StringConstPtr &msg) {
   current_state_ = msg->data;
   is_current_state_subscribed_ = true;
 
@@ -687,17 +679,14 @@ void LaneSelectNode::callbackFromState(const std_msgs::StringConstPtr &msg)
   else
     processing();
 }
-void LaneSelectNode::callbackFromStates(const autoware_msgs::StateConstPtr &msg)
-{
+void LaneSelectNode::callbackFromStates(
+    const autoware_msgs::StateConstPtr &msg) {
   is_current_state_subscribed_ = true;
 
-  if (msg->behavior_state.find("LaneChange") != std::string::npos)
-  {
+  if (msg->behavior_state.find("LaneChange") != std::string::npos) {
     current_state_ = std::string("LANE_CHANGE");
     ;
-  }
-  else
-  {
+  } else {
     current_state_ = msg->main_state;
   }
 
@@ -707,8 +696,8 @@ void LaneSelectNode::callbackFromStates(const autoware_msgs::StateConstPtr &msg)
     processing();
 }
 
-void LaneSelectNode::callbackFromConfig(const autoware_config_msgs::ConfigLaneSelectConstPtr &msg)
-{
+void LaneSelectNode::callbackFromConfig(
+    const autoware_config_msgs::ConfigLaneSelectConstPtr &msg) {
   distance_threshold_ = msg->distance_threshold_neighbor_lanes;
   lane_change_interval_ = msg->lane_change_interval;
   lane_change_target_ratio_ = msg->lane_change_target_ratio;
@@ -722,21 +711,19 @@ void LaneSelectNode::callbackFromConfig(const autoware_config_msgs::ConfigLaneSe
     processing();
 }
 
-void LaneSelectNode::run()
-{
-  ros::spin();
-}
+void LaneSelectNode::run() { ros::spin(); }
 
 // distance between target 1 and target2 in 2-D
-double getTwoDimensionalDistance(const geometry_msgs::Point &target1, const geometry_msgs::Point &target2)
-{
-  double distance = sqrt(pow(target1.x - target2.x, 2) + pow(target1.y - target2.y, 2));
+double getTwoDimensionalDistance(const geometry_msgs::Point &target1,
+                                 const geometry_msgs::Point &target2) {
+  double distance =
+      sqrt(pow(target1.x - target2.x, 2) + pow(target1.y - target2.y, 2));
   return distance;
 }
 
-geometry_msgs::Point convertPointIntoRelativeCoordinate(const geometry_msgs::Point &input_point,
-                                                        const geometry_msgs::Pose &pose)
-{
+geometry_msgs::Point
+convertPointIntoRelativeCoordinate(const geometry_msgs::Point &input_point,
+                                   const geometry_msgs::Pose &pose) {
   tf::Transform inverse;
   tf::poseMsgToTF(pose, inverse);
   tf::Transform transform = inverse.inverse();
@@ -749,9 +736,9 @@ geometry_msgs::Point convertPointIntoRelativeCoordinate(const geometry_msgs::Poi
   return tf_point_msg;
 }
 
-geometry_msgs::Point convertPointIntoWorldCoordinate(const geometry_msgs::Point &input_point,
-                                                     const geometry_msgs::Pose &pose)
-{
+geometry_msgs::Point
+convertPointIntoWorldCoordinate(const geometry_msgs::Point &input_point,
+                                const geometry_msgs::Pose &pose) {
   tf::Transform inverse;
   tf::poseMsgToTF(pose, inverse);
 
@@ -764,8 +751,8 @@ geometry_msgs::Point convertPointIntoWorldCoordinate(const geometry_msgs::Point 
   return tf_point_msg;
 }
 
-double getRelativeAngle(const geometry_msgs::Pose &waypoint_pose, const geometry_msgs::Pose &current_pose)
-{
+double getRelativeAngle(const geometry_msgs::Pose &waypoint_pose,
+                        const geometry_msgs::Pose &current_pose) {
   tf::Vector3 x_axis(1, 0, 0);
   tf::Transform waypoint_tfpose;
   tf::poseMsgToTF(waypoint_pose, waypoint_tfpose);
@@ -778,48 +765,53 @@ double getRelativeAngle(const geometry_msgs::Pose &waypoint_pose, const geometry
 }
 
 // get closest waypoint from current pose
-int32_t getClosestWaypointNumber(const autoware_msgs::Lane &current_lane, const geometry_msgs::Pose &current_pose,
-                                 const geometry_msgs::Twist &current_velocity, const int32_t previous_number,
-                                 const double distance_threshold)
-{
+int32_t getClosestWaypointNumber(const autoware_msgs::Lane &current_lane,
+                                 const geometry_msgs::Pose &current_pose,
+                                 const geometry_msgs::Twist &current_velocity,
+                                 const int32_t previous_number,
+                                 const double distance_threshold) {
   if (current_lane.waypoints.empty())
     return -1;
 
   std::vector<uint32_t> idx_vec;
-  // if previous number is -1, search closest waypoint from waypoints in front of current pose
-  if (previous_number == -1)
-  {
+  // if previous number is -1, search closest waypoint from waypoints in front
+  // of current pose
+  if (previous_number == -1) {
     idx_vec.reserve(current_lane.waypoints.size());
-    for (uint32_t i = 0; i < current_lane.waypoints.size(); i++)
-    {
-      geometry_msgs::Point converted_p =
-          convertPointIntoRelativeCoordinate(current_lane.waypoints.at(i).pose.pose.position, current_pose);
-      double angle = getRelativeAngle(current_lane.waypoints.at(i).pose.pose, current_pose);
+    for (uint32_t i = 0; i < current_lane.waypoints.size(); i++) {
+      geometry_msgs::Point converted_p = convertPointIntoRelativeCoordinate(
+          current_lane.waypoints.at(i).pose.pose.position, current_pose);
+      double angle = getRelativeAngle(current_lane.waypoints.at(i).pose.pose,
+                                      current_pose);
       if (converted_p.x > 0 && angle < 90)
         idx_vec.push_back(i);
     }
-  }
-  else
-  {
+  } else {
     if (distance_threshold <
-        getTwoDimensionalDistance(current_lane.waypoints.at(previous_number).pose.pose.position, current_pose.position))
-    {
-      ROS_WARN("Current_pose is far away from previous closest waypoint. Initilized...");
+        getTwoDimensionalDistance(
+            current_lane.waypoints.at(previous_number).pose.pose.position,
+            current_pose.position)) {
+      ROS_WARN("Current_pose is far away from previous closest waypoint. "
+               "Initilized...");
       return -1;
     }
 
     double ratio = 3;
     double minimum_dt = 2.0;
-    double dt = current_velocity.linear.x * ratio > minimum_dt ? current_velocity.linear.x * ratio : minimum_dt;
+    double dt = current_velocity.linear.x * ratio > minimum_dt
+                    ? current_velocity.linear.x * ratio
+                    : minimum_dt;
 
-    auto range_max = static_cast<uint32_t>(previous_number + dt) < current_lane.waypoints.size() ?
-                         static_cast<uint32_t>(previous_number + dt) :
-                         current_lane.waypoints.size();
-    for (uint32_t i = static_cast<uint32_t>(previous_number); i < range_max; i++)
-    {
-      geometry_msgs::Point converted_p =
-          convertPointIntoRelativeCoordinate(current_lane.waypoints.at(i).pose.pose.position, current_pose);
-      double angle = getRelativeAngle(current_lane.waypoints.at(i).pose.pose, current_pose);
+    auto range_max = static_cast<uint32_t>(previous_number + dt) <
+                             current_lane.waypoints.size()
+                         ? static_cast<uint32_t>(previous_number + dt)
+                         : current_lane.waypoints.size();
+    for (uint32_t i = static_cast<uint32_t>(previous_number); i < range_max;
+         i++) {
+      geometry_msgs::Point converted_p = convertPointIntoRelativeCoordinate(
+          current_lane.waypoints.at(i).pose.pose.position, current_pose);
+      double angle = getRelativeAngle(current_lane.waypoints.at(i).pose.pose,
+                                      current_pose);
       if (converted_p.x > 0 && angle < 90)
         idx_vec.push_back(i);
     }
@@ -830,27 +822,30 @@ int32_t getClosestWaypointNumber(const autoware_msgs::Lane &current_lane, const 
 
   std::vector<double> dist_vec;
   dist_vec.reserve(idx_vec.size());
-  for (const auto &el : idx_vec)
-  {
-    double dt = getTwoDimensionalDistance(current_pose.position, current_lane.waypoints.at(el).pose.pose.position);
+  for (const auto &el : idx_vec) {
+    double dt = getTwoDimensionalDistance(
+        current_pose.position,
+        current_lane.waypoints.at(el).pose.pose.position);
     dist_vec.push_back(dt);
   }
-  std::vector<double>::iterator itr = std::min_element(dist_vec.begin(), dist_vec.end());
-  int32_t found_number = idx_vec.at(static_cast<uint32_t>(std::distance(dist_vec.begin(), itr)));
+  std::vector<double>::iterator itr =
+      std::min_element(dist_vec.begin(), dist_vec.end());
+  int32_t found_number =
+      idx_vec.at(static_cast<uint32_t>(std::distance(dist_vec.begin(), itr)));
   return found_number;
 }
 
 // let the linear equation be "ax + by + c = 0"
-// if there are two points (x1,y1) , (x2,y2), a = "y2-y1, b = "(-1) * x2 - x1" ,c = "(-1) * (y2-y1)x1 + (x2-x1)y1"
-bool getLinearEquation(geometry_msgs::Point start, geometry_msgs::Point end, double *a, double *b, double *c)
-{
+// if there are two points (x1,y1) , (x2,y2), a = "y2-y1, b = "(-1) * x2 - x1"
+// ,c = "(-1) * (y2-y1)x1 + (x2-x1)y1"
+bool getLinearEquation(geometry_msgs::Point start, geometry_msgs::Point end,
+                       double *a, double *b, double *c) {
   //(x1, y1) = (start.x, star.y), (x2, y2) = (end.x, end.y)
   double sub_x = fabs(start.x - end.x);
   double sub_y = fabs(start.y - end.y);
-  double error = pow(10, -5);  // 0.00001
+  double error = pow(10, -5); // 0.00001
 
-  if (sub_x < error && sub_y < error)
-  {
+  if (sub_x < error && sub_y < error) {
     ROS_INFO("two points are the same point!!");
     return false;
   }
@@ -861,11 +856,11 @@ bool getLinearEquation(geometry_msgs::Point start, geometry_msgs::Point end, dou
 
   return true;
 }
-double getDistanceBetweenLineAndPoint(geometry_msgs::Point point, double a, double b, double c)
-{
+double getDistanceBetweenLineAndPoint(geometry_msgs::Point point, double a,
+                                      double b, double c) {
   double d = fabs(a * point.x + b * point.y + c) / sqrt(pow(a, 2) + pow(b, 2));
 
   return d;
 }
 
-}  // lane_planner
+} // namespace lane_planner

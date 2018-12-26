@@ -6,7 +6,8 @@
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
  *
- *  * Redistributions of source code must retain the above copyright notice, this
+ *  * Redistributions of source code must retain the above copyright notice,
+ this
  *    list of conditions and the following disclaimer.
  *
  *  * Redistributions in binary form must reproduce the above copyright notice,
@@ -19,13 +20,16 @@
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE
  *  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
  *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY,
+ *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -51,10 +55,8 @@
 #include "hermite_curve.h"
 #include "waypoint_follower/libwaypoint_follower.h"
 
-namespace lane_planner
-{
-enum class ChangeFlag : int32_t
-{
+namespace lane_planner {
+enum class ChangeFlag : int32_t {
   straight,
   right,
   left,
@@ -62,14 +64,11 @@ enum class ChangeFlag : int32_t
   unknown = -1,
 };
 
-template <class T>
-typename std::underlying_type<T>::type enumToInteger(T t)
-{
+template <class T> typename std::underlying_type<T>::type enumToInteger(T t) {
   return static_cast<typename std::underlying_type<T>::type>(t);
 }
 
-class LaneSelectNode
-{
+class LaneSelectNode {
 public:
   LaneSelectNode();
   ~LaneSelectNode();
@@ -89,18 +88,20 @@ private:
   ros::Subscriber sub1_, sub2_, sub3_, sub4_, sub5_, sub6_;
 
   // variables
-  int32_t current_lane_idx_;  // the index of the lane we are driving
+  int32_t current_lane_idx_; // the index of the lane we are driving
   int32_t right_lane_idx_;
   int32_t left_lane_idx_;
-  std::vector<std::tuple<autoware_msgs::Lane, int32_t, ChangeFlag>> tuple_vec_;  // lane, closest_waypoint,
-                                                                                 // change_flag
+  std::vector<std::tuple<autoware_msgs::Lane, int32_t, ChangeFlag>>
+      tuple_vec_; // lane, closest_waypoint,
+                  // change_flag
   std::tuple<autoware_msgs::Lane, int32_t, ChangeFlag> lane_for_change_;
-  bool is_lane_array_subscribed_, is_current_pose_subscribed_, is_current_velocity_subscribed_,
-      is_current_state_subscribed_, is_config_subscribed_;
+  bool is_lane_array_subscribed_, is_current_pose_subscribed_,
+      is_current_velocity_subscribed_, is_current_state_subscribed_,
+      is_config_subscribed_;
 
   // parameter from runtime manager
-  double distance_threshold_, lane_change_interval_, lane_change_target_ratio_, lane_change_target_minimum_,
-      vlength_hermite_curve_;
+  double distance_threshold_, lane_change_interval_, lane_change_target_ratio_,
+      lane_change_target_minimum_, vlength_hermite_curve_;
 
   // topics
   geometry_msgs::PoseStamped current_pose_;
@@ -113,7 +114,8 @@ private:
   void callbackFromTwistStamped(const geometry_msgs::TwistStampedConstPtr &msg);
   void callbackFromState(const std_msgs::StringConstPtr &msg);
   void callbackFromStates(const autoware_msgs::StateConstPtr &msg);
-  void callbackFromConfig(const autoware_config_msgs::ConfigLaneSelectConstPtr &msg);
+  void
+  callbackFromConfig(const autoware_config_msgs::ConfigLaneSelectConstPtr &msg);
 
   // initializer
   void initForROS();
@@ -137,28 +139,38 @@ private:
   void publishClosestWaypoint(const int32_t clst_wp);
   void publishChangeFlag(const ChangeFlag flag);
   bool getClosestWaypointNumberForEachLanes();
-  int32_t findMostClosestLane(const std::vector<uint32_t> idx_vec, const geometry_msgs::Point p);
+  int32_t findMostClosestLane(const std::vector<uint32_t> idx_vec,
+                              const geometry_msgs::Point p);
   void findCurrentLane();
   void findNeighborLanes();
   void changeLane();
   void updateChangeFlag();
   void createLaneForChange();
-  int32_t getClosestLaneChangeWaypointNumber(const std::vector<autoware_msgs::Waypoint> &wps, int32_t cl_wp);
+  int32_t getClosestLaneChangeWaypointNumber(
+      const std::vector<autoware_msgs::Waypoint> &wps, int32_t cl_wp);
 };
 
-int32_t getClosestWaypointNumber(const autoware_msgs::Lane &current_lane, const geometry_msgs::Pose &current_pose,
-                                 const geometry_msgs::Twist &current_velocity, const int32_t previous_number,
+int32_t getClosestWaypointNumber(const autoware_msgs::Lane &current_lane,
+                                 const geometry_msgs::Pose &current_pose,
+                                 const geometry_msgs::Twist &current_velocity,
+                                 const int32_t previous_number,
                                  const double distance_threshold);
 
-double getTwoDimensionalDistance(const geometry_msgs::Point &target1, const geometry_msgs::Point &target2);
+double getTwoDimensionalDistance(const geometry_msgs::Point &target1,
+                                 const geometry_msgs::Point &target2);
 
-geometry_msgs::Point convertPointIntoRelativeCoordinate(const geometry_msgs::Point &input_point,
-                                                        const geometry_msgs::Pose &pose);
+geometry_msgs::Point
+convertPointIntoRelativeCoordinate(const geometry_msgs::Point &input_point,
+                                   const geometry_msgs::Pose &pose);
 
-geometry_msgs::Point convertPointIntoWorldCoordinate(const geometry_msgs::Point &input_point,
-                                                     const geometry_msgs::Pose &pose);
-double getRelativeAngle(const geometry_msgs::Pose &waypoint_pose, const geometry_msgs::Pose &current_pose);
-bool getLinearEquation(geometry_msgs::Point start, geometry_msgs::Point end, double *a, double *b, double *c);
-double getDistanceBetweenLineAndPoint(geometry_msgs::Point point, double sa, double b, double c);
-}
-#endif  // LANE_SELECT_CORE_H
+geometry_msgs::Point
+convertPointIntoWorldCoordinate(const geometry_msgs::Point &input_point,
+                                const geometry_msgs::Pose &pose);
+double getRelativeAngle(const geometry_msgs::Pose &waypoint_pose,
+                        const geometry_msgs::Pose &current_pose);
+bool getLinearEquation(geometry_msgs::Point start, geometry_msgs::Point end,
+                       double *a, double *b, double *c);
+double getDistanceBetweenLineAndPoint(geometry_msgs::Point point, double sa,
+                                      double b, double c);
+} // namespace lane_planner
+#endif // LANE_SELECT_CORE_H

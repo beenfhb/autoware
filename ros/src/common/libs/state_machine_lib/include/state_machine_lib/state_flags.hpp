@@ -1,10 +1,8 @@
 #ifndef __STATE_FLAGS_HPP__
 #define __STATE_FLAGS_HPP__
 
-namespace state_machine
-{
-enum StateFlags
-{
+namespace state_machine {
+enum StateFlags {
   NULL_STATE = 1ULL << 0,
   START_STATE = 1ULL << 1,
   INITIAL_STATE = 1ULL << 2,
@@ -37,8 +35,7 @@ enum StateFlags
   STATE_END = 1ULL << 41,
 };
 
-enum StateKinds
-{
+enum StateKinds {
   MAIN_STATE = 1,
   ACC_STATE = 2,
   STR_STATE = 3,
@@ -48,13 +45,12 @@ enum StateKinds
   UNKNOWN_STATE = 7,
 };
 
-enum TrafficLightColors
-{
+enum TrafficLightColors {
   E_RED = 0,
   E_YELLOW = 0,
   E_GREEN = 1,
   E_COLOR_ERROR = 2
 };
-}
+} // namespace state_machine
 
 #endif

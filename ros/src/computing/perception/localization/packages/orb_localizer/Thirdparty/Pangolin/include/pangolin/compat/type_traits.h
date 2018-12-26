@@ -33,26 +33,21 @@
 #include <typeinfo>
 
 #ifdef CPP11_NO_BOOST
-    #include <type_traits>
+#include <type_traits>
 #else
-    #include <boost/type_traits.hpp>
+#include <boost/type_traits.hpp>
 #endif
 
 #include <pangolin/compat/boostd.h>
 
 // enable_if From Boost
-namespace pangolin
-{
-    template <bool B, class T = void>
-    struct enable_if_c {
-      typedef T type;
-    };
+namespace pangolin {
+template <bool B, class T = void> struct enable_if_c { typedef T type; };
 
-    template <class T>
-    struct enable_if_c<false, T> {};
+template <class T> struct enable_if_c<false, T> {};
 
-    template <class Cond, class T = void>
-    struct enable_if : public enable_if_c<Cond::value, T> {};
-}
+template <class Cond, class T = void>
+struct enable_if : public enable_if_c<Cond::value, T> {};
+} // namespace pangolin
 
 #endif // PANGOLIN_COMPAT_TYPE_TRAITS_H

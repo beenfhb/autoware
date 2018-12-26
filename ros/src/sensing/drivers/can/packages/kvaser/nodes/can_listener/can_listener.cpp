@@ -7,7 +7,8 @@
 ** COPYING file for details.
 **
 ** License: BSD-new
-** ===============================================================================
+**
+*===============================================================================
 ** Redistribution and use in source and binary forms, with or without
 ** modification, are permitted provided that the following conditions are met:
 **     * Redistributions of source code must retain the above copyright
@@ -19,7 +20,8 @@
 **       names of its contributors may be used to endorse or promote products
 **       derived from this software without specific prior written permission.
 **
-** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+*AND
 ** ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 ** WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
 ** DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
@@ -32,7 +34,8 @@
 **
 **
 ** License: GPLv2
-** ===============================================================================
+**
+*===============================================================================
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
 ** as published by the Free Software Foundation; either version 2
@@ -45,7 +48,8 @@
 **
 ** You should have received a copy of the GNU General Public License
 ** along with this program; if not, write to the Free Software
-** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+*USA.
 **
 ** ---------------------------------------------------------------------------
 **/
@@ -55,23 +59,21 @@
  * Read CAN messages and print out their contents
  */
 
-#include <canlib.h>
-#include <stdio.h>
-#include <signal.h>
-#include <errno.h>
-#include <unistd.h>
-#include <time.h>
-#include <ros/ros.h>
 #include "autoware_can_msgs/CANPacket.h"
+#include <canlib.h>
+#include <errno.h>
+#include <ros/ros.h>
+#include <signal.h>
+#include <stdio.h>
+#include <time.h>
+#include <unistd.h>
 
 int i = 0;
 unsigned char willExit = 0;
 int last;
 time_t last_time = 0;
 
-
-void sighand (int sig)
-{
+void sighand(int sig) {
   switch (sig) {
   case SIGINT:
     willExit = 1;
@@ -80,13 +82,12 @@ void sighand (int sig)
   }
 }
 
- 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 
 {
   canHandle h;
   int ret = -1;
-  long id; 
+  long id;
   unsigned char msg[8];
   unsigned int dlc;
   unsigned int flag;
@@ -94,12 +95,13 @@ int main (int argc, char *argv[])
   int channel = 0;
   int bitrate = BAUD_500K;
   int j;
-	autoware_can_msgs::CANPacket candat;
+  autoware_can_msgs::CANPacket candat;
 
   ros::init(argc, argv, "can_listener");
   ros::NodeHandle n;
- 
-  ros::Publisher can_pub = n.advertise<autoware_can_msgs::CANPacket>("can_raw", 10);
+
+  ros::Publisher can_pub =
+      n.advertise<autoware_can_msgs::CANPacket>("can_raw", 10);
 
   errno = 0;
   if (argc != 2 || (channel = atoi(argv[1]), errno) != 0) {
@@ -116,22 +118,22 @@ int main (int argc, char *argv[])
 
   /* Allow signals to interrupt syscalls(in canReadBlock) */
   siginterrupt(SIGINT, 1);
-  
+
   /* Open channels, parameters and go on bus */
   h = canOpenChannel(channel, canOPEN_EXCLUSIVE | canOPEN_REQUIRE_EXTENDED);
   if (h < 0) {
     printf("canOpenChannel %d failed\n", channel);
     return -1;
   }
-    
+
   canSetBusParams(h, bitrate, 4, 3, 1, 1, 0);
   canSetBusOutputControl(h, canDRIVER_NORMAL);
   canBusOn(h);
 
   i = 0;
   //  while (!willExit) {
-  while(ros::ok()){ 
-    do { 
+  while (ros::ok()) {
+    do {
       ret = canReadWait(h, &id, &msg, &dlc, &flag, &t, -1);
       switch (ret) {
       case 0:
@@ -139,28 +141,28 @@ int main (int argc, char *argv[])
         if (dlc > 8) {
           dlc = 8;
         }
-        for (j = 0; j < dlc; j++){
+        for (j = 0; j < dlc; j++) {
           printf("%2.2x ", msg[j]);
-	  candat.dat[j]=msg[j];
-	}
+          candat.dat[j] = msg[j];
+        }
         printf(" flags:0x%x time:%ld\n", flag, t);
-	candat.count =i;
-	candat.time=t;
-	candat.id = id;
-	candat.len=dlc;
-	candat.header.stamp=ros::Time::now();
-	can_pub.publish(candat);
-	ros::spinOnce();
-	i++;
-	if (last_time == 0) {
-	  last_time = time(0);
-	} else if (time(0) > last_time) {
-	  last_time = time(0);
-	  if (i != last) {
-	    printf("rx : %d total: %d\n", i - last, i);
-	  }
-	  last = i;
-	}
+        candat.count = i;
+        candat.time = t;
+        candat.id = id;
+        candat.len = dlc;
+        candat.header.stamp = ros::Time::now();
+        can_pub.publish(candat);
+        ros::spinOnce();
+        i++;
+        if (last_time == 0) {
+          last_time = time(0);
+        } else if (time(0) > last_time) {
+          last_time = time(0);
+          if (i != last) {
+            printf("rx : %d total: %d\n", i - last, i);
+          }
+          last = i;
+        }
         break;
       case canERR_NOMSG:
         break;
@@ -171,16 +173,11 @@ int main (int argc, char *argv[])
     } while (ret == canOK);
     willExit = 1;
   }
-   
+
   canClose(h);
-   
+
   sighand(SIGALRM);
   printf("Ready\n");
 
   return 0;
 }
-
-
-
-
-

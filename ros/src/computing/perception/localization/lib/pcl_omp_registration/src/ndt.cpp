@@ -37,15 +37,17 @@
  *
  */
 
-
-#include <pcl/point_types.h>
 #include <pcl/impl/instantiate.hpp>
+#include <pcl/point_types.h>
 
 //#include <pcl/registration/ndt.h>
 //#include <pcl/registration/impl/ndt.hpp>
-#include "pcl_omp_registration/ndt.h"
 #include "pcl_omp_registration/impl/ndt.hpp"
+#include "pcl_omp_registration/ndt.h"
 
-template class PCL_EXPORTS pcl_omp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>;
-template class PCL_EXPORTS pcl_omp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>;
-template class PCL_EXPORTS pcl_omp::NormalDistributionsTransform<pcl::PointXYZRGB, pcl::PointXYZRGB>;
+template class PCL_EXPORTS
+    pcl_omp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>;
+template class PCL_EXPORTS
+    pcl_omp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>;
+template class PCL_EXPORTS
+    pcl_omp::NormalDistributionsTransform<pcl::PointXYZRGB, pcl::PointXYZRGB>;

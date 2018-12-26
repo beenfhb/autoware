@@ -5,8 +5,8 @@
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
  *
- *  * Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *  * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  *
  *  * Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
@@ -18,42 +18,40 @@
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- *  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <QPainter>
 #include <QVBoxLayout>
 
 #include "state_panel.h"
 
-namespace autoware_rviz_plugins
-{
-StatePanel::StatePanel(QWidget *parent) : rviz::Panel(parent)
-{
-  sub_ = nh_.subscribe("state",10, &StatePanel::processMessage, this);
+namespace autoware_rviz_plugins {
+StatePanel::StatePanel(QWidget *parent) : rviz::Panel(parent) {
+  sub_ = nh_.subscribe("state", 10, &StatePanel::processMessage, this);
 
   current_state_ = new QLabel;
 
   QVBoxLayout *layout = new QVBoxLayout;
   current_state_->setText("INITIAL_STATE");
   layout->addWidget(current_state_);
-  setLayout( layout );
+  setLayout(layout);
 }
 
-void StatePanel::processMessage(const std_msgs::String::ConstPtr &msg)
-{
+void StatePanel::processMessage(const std_msgs::String::ConstPtr &msg) {
   QString qstr = QString::fromStdString(msg->data);
   current_state_->setText(qstr);
 }
 
-}  // autoware_rviz_plugins
+} // namespace autoware_rviz_plugins
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(autoware_rviz_plugins::StatePanel, rviz::Panel)

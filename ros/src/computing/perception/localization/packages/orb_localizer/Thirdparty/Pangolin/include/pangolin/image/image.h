@@ -30,66 +30,46 @@
 
 #include <cstddef>
 
-namespace pangolin
-{
+namespace pangolin {
 
 // Simple image wrapper
-template<typename T>
-struct Image {
-    inline Image()
-        : pitch(0), ptr(0), w(0), h(0)
-    {
-    }
+template <typename T> struct Image {
+  inline Image() : pitch(0), ptr(0), w(0), h(0) {}
 
-    inline Image(size_t w, size_t h, size_t pitch, T* ptr)
-        : pitch(pitch), ptr(ptr), w(w), h(h)
-    {
-    }
-    
-    void Dealloc()
-    {
-        if(ptr) {
-            delete[] ptr;
-            ptr = NULL;
-        }
-    }
-    
-    void Alloc(size_t w, size_t h, size_t pitch)
-    {
-        Dealloc();
-        this->w = w;
-        this->h = h;
-        this->pitch = pitch;
-        this->ptr = new unsigned char[h*pitch];
-    }
+  inline Image(size_t w, size_t h, size_t pitch, T *ptr)
+      : pitch(pitch), ptr(ptr), w(w), h(h) {}
 
-    size_t SizeBytes() const
-    {
-        return pitch * h;
+  void Dealloc() {
+    if (ptr) {
+      delete[] ptr;
+      ptr = NULL;
     }
-    
-    size_t Area() const
-    {
-        return w * h;
-    }
+  }
 
-    template<typename To>
-    Image<To> Reinterpret()
-    {
-        return Image<To>(w,h,pitch, (To*)ptr);
-    }
+  void Alloc(size_t w, size_t h, size_t pitch) {
+    Dealloc();
+    this->w = w;
+    this->h = h;
+    this->pitch = pitch;
+    this->ptr = new unsigned char[h * pitch];
+  }
 
-    T* RowPtr(int r)
-    {
-        return (T*)((char*)ptr + r*pitch);
-    }
+  size_t SizeBytes() const { return pitch * h; }
 
-    size_t pitch;
-    T* ptr;
-    size_t w;
-    size_t h;
+  size_t Area() const { return w * h; }
+
+  template <typename To> Image<To> Reinterpret() {
+    return Image<To>(w, h, pitch, (To *)ptr);
+  }
+
+  T *RowPtr(int r) { return (T *)((char *)ptr + r * pitch); }
+
+  size_t pitch;
+  T *ptr;
+  size_t w;
+  size_t h;
 };
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_IMAGE_H

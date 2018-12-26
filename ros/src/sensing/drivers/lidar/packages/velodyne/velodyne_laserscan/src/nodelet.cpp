@@ -1,13 +1,11 @@
-#include <ros/ros.h>
-#include <pluginlib/class_list_macros.h>
-#include <nodelet/nodelet.h>
 #include "VelodyneLaserScan.h"
+#include <nodelet/nodelet.h>
+#include <pluginlib/class_list_macros.h>
+#include <ros/ros.h>
 
-namespace velodyne_laserscan
-{
+namespace velodyne_laserscan {
 
-class LaserScanNodelet: public nodelet::Nodelet
-{
+class LaserScanNodelet : public nodelet::Nodelet {
 public:
   LaserScanNodelet() {}
   ~LaserScanNodelet() {}
@@ -19,6 +17,6 @@ private:
   boost::shared_ptr<VelodyneLaserScan> node_;
 };
 
-}
+} // namespace velodyne_laserscan
 
 PLUGINLIB_EXPORT_CLASS(velodyne_laserscan::LaserScanNodelet, nodelet::Nodelet);

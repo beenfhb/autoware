@@ -8,10 +8,8 @@
 
 #include <autoware_msgs/Lane.h>
 
-namespace decision_maker
-{
-class CrossRoadArea
-{
+namespace decision_maker {
+class CrossRoadArea {
 public:
   int id;
   int area_id;
@@ -21,8 +19,7 @@ public:
   std::vector<autoware_msgs::Lane> insideLanes;
   std::vector<geometry_msgs::Point> insideWaypoint_points;
 
-  CrossRoadArea(void)
-  {
+  CrossRoadArea(void) {
     id = 0;
     area_id = 0;
     points.clear();
@@ -30,17 +27,17 @@ public:
     insideWaypoint_points.clear();
   }
 
-  static CrossRoadArea *findClosestCrossRoad(const autoware_msgs::Lane &_finalwaypoints,
-                                             std::vector<CrossRoadArea> &intersects);
-  static bool isInsideArea(const CrossRoadArea *_TargetArea, geometry_msgs::Point pt);
+  static CrossRoadArea *
+  findClosestCrossRoad(const autoware_msgs::Lane &_finalwaypoints,
+                       std::vector<CrossRoadArea> &intersects);
+  static bool isInsideArea(const CrossRoadArea *_TargetArea,
+                           geometry_msgs::Point pt);
 
-  static CrossRoadArea *getCrossRoadArea(std::vector<CrossRoadArea> &areas, int aid)
-  {
+  static CrossRoadArea *getCrossRoadArea(std::vector<CrossRoadArea> &areas,
+                                         int aid) {
     CrossRoadArea *ret = nullptr;
-    for (auto &area : areas)
-    {
-      if (area.area_id == aid)
-      {
+    for (auto &area : areas) {
+      if (area.area_id == aid) {
         ret = &area;
         break;
       }
@@ -48,6 +45,6 @@ public:
     return ret;
   }
 };
-}
+} // namespace decision_maker
 
 #endif

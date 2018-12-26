@@ -29,78 +29,73 @@
 #define PANGOLIN_VARSTATE_H
 
 #include <map>
-#include <vector>
 #include <pangolin/platform.h>
-#include <pangolin/var/varvalue.h>
 #include <pangolin/utils/file_utils.h>
+#include <pangolin/var/varvalue.h>
+#include <vector>
 
-namespace pangolin
-{
+namespace pangolin {
 
-typedef void (*NewVarCallbackFn)(void* data, const std::string& name, VarValueGeneric& var, bool brand_new);
-typedef void (*GuiVarChangedCallbackFn)(void* data, const std::string& name, VarValueGeneric& var);
+typedef void (*NewVarCallbackFn)(void *data, const std::string &name,
+                                 VarValueGeneric &var, bool brand_new);
+typedef void (*GuiVarChangedCallbackFn)(void *data, const std::string &name,
+                                        VarValueGeneric &var);
 
-struct PANGOLIN_EXPORT NewVarCallback
-{
-    NewVarCallback(const std::string& filter, NewVarCallbackFn fn, void* data)
-        :filter(filter),fn(fn),data(data) {}
-    std::string filter;
-    NewVarCallbackFn fn;
-    void* data;
+struct PANGOLIN_EXPORT NewVarCallback {
+  NewVarCallback(const std::string &filter, NewVarCallbackFn fn, void *data)
+      : filter(filter), fn(fn), data(data) {}
+  std::string filter;
+  NewVarCallbackFn fn;
+  void *data;
 };
 
-struct PANGOLIN_EXPORT GuiVarChangedCallback
-{
-    GuiVarChangedCallback(const std::string& filter, GuiVarChangedCallbackFn fn, void* data)
-        :filter(filter),fn(fn),data(data) {}
-    std::string filter;
-    GuiVarChangedCallbackFn fn;
-    void* data;
+struct PANGOLIN_EXPORT GuiVarChangedCallback {
+  GuiVarChangedCallback(const std::string &filter, GuiVarChangedCallbackFn fn,
+                        void *data)
+      : filter(filter), fn(fn), data(data) {}
+  std::string filter;
+  GuiVarChangedCallbackFn fn;
+  void *data;
 };
 
-class PANGOLIN_EXPORT VarState
-{
+class PANGOLIN_EXPORT VarState {
 public:
-    static VarState& I();
+  static VarState &I();
 
-    ~VarState();
+  ~VarState();
 
-    void Clear();
+  void Clear();
 
-    template<typename T>
-    void NotifyNewVar(const std::string& name, VarValue<T>& var )
-    {
-        var_adds.push_back(name);
+  template <typename T>
+  void NotifyNewVar(const std::string &name, VarValue<T> &var) {
+    var_adds.push_back(name);
 
-        // notify those watching new variables
-        for(std::vector<NewVarCallback>::iterator invc = new_var_callbacks.begin(); invc != new_var_callbacks.end(); ++invc) {
-            if( StartsWith(name,invc->filter) ) {
-               invc->fn( invc->data, name, var, true);
-            }
-        }
+    // notify those watching new variables
+    for (std::vector<NewVarCallback>::iterator invc = new_var_callbacks.begin();
+         invc != new_var_callbacks.end(); ++invc) {
+      if (StartsWith(name, invc->filter)) {
+        invc->fn(invc->data, name, var, true);
+      }
     }
+  }
 
-    VarValueGeneric*& operator[](const std::string& str)
-    {
-        return vars[str];
-    }
+  VarValueGeneric *&operator[](const std::string &str) { return vars[str]; }
 
-    bool Exists(const std::string& str) const
-    {
-        return vars.find(str) != vars.end();
-    }
+  bool Exists(const std::string &str) const {
+    return vars.find(str) != vars.end();
+  }
 
-//protected:
-    typedef std::map<std::string, VarValueGeneric*> VarStoreContainer;
-    typedef std::vector<std::string> VarStoreAdditions;
+  // protected:
+  typedef std::map<std::string, VarValueGeneric *> VarStoreContainer;
+  typedef std::vector<std::string> VarStoreAdditions;
 
-    VarStoreContainer vars;
-    VarStoreAdditions var_adds;
+  VarStoreContainer vars;
+  VarStoreAdditions var_adds;
 
-    std::vector<NewVarCallback> new_var_callbacks;
-    std::vector<GuiVarChangedCallback> gui_var_changed_callbacks;
+  std::vector<NewVarCallback> new_var_callbacks;
+  std::vector<GuiVarChangedCallback> gui_var_changed_callbacks;
 };
 
-}
+} // namespace pangolin
 
 #endif // PANGOLIN_VARSTATE_H

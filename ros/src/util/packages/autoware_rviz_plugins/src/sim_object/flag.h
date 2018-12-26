@@ -29,16 +29,14 @@
 #ifndef FLAG_H
 #define FLAG_H
 
-namespace autoware_sim_object
-{
+namespace autoware_sim_object {
 
-class Flag: public rviz::Property
-{
-Q_OBJECT
+class Flag : public rviz::Property {
+  Q_OBJECT
 public:
   Flag();
 };
 
-}
+} // namespace autoware_sim_object
 
 #endif // FLAG_H

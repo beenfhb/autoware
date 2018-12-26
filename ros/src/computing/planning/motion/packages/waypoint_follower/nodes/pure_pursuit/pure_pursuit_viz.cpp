@@ -5,8 +5,8 @@
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
  *
- *  * Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *  * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  *
  *  * Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
@@ -18,24 +18,23 @@
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- *  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include "pure_pursuit_viz.h"
 
-namespace waypoint_follower
-{
+namespace waypoint_follower {
 const std::string MAP_FRAME = "map";
 // display the next waypoint by markers.
-visualization_msgs::Marker displayNextWaypoint(geometry_msgs::Point position)
-{
+visualization_msgs::Marker displayNextWaypoint(geometry_msgs::Point position) {
   visualization_msgs::Marker marker;
   marker.header.frame_id = MAP_FRAME;
   marker.header.stamp = ros::Time();
@@ -56,8 +55,7 @@ visualization_msgs::Marker displayNextWaypoint(geometry_msgs::Point position)
 }
 
 // display the next target by markers.
-visualization_msgs::Marker displayNextTarget(geometry_msgs::Point target)
-{
+visualization_msgs::Marker displayNextTarget(geometry_msgs::Point target) {
   visualization_msgs::Marker marker;
   marker.header.frame_id = MAP_FRAME;
   marker.header.stamp = ros::Time();
@@ -79,8 +77,8 @@ visualization_msgs::Marker displayNextTarget(geometry_msgs::Point target)
   return marker;
 }
 
-double calcRadius(geometry_msgs::Point target, geometry_msgs::Pose current_pose)
-{
+double calcRadius(geometry_msgs::Point target,
+                  geometry_msgs::Pose current_pose) {
   double radius;
   double denominator = 2 * calcRelativeCoordinate(target, current_pose).y;
   double numerator = pow(getPlaneDistance(target, current_pose.position), 2);
@@ -95,16 +93,15 @@ double calcRadius(geometry_msgs::Point target, geometry_msgs::Pose current_pose)
 }
 
 // generate the locus of pure pursuit
-std::vector<geometry_msgs::Point> generateTrajectoryCircle(geometry_msgs::Point target,
-                                                           geometry_msgs::Pose current_pose)
-{
+std::vector<geometry_msgs::Point>
+generateTrajectoryCircle(geometry_msgs::Point target,
+                         geometry_msgs::Pose current_pose) {
   std::vector<geometry_msgs::Point> traj_circle_array;
   double radius = calcRadius(target, current_pose);
   double range = M_PI / 8;
   double increment = 0.01;
 
-  for (double i = 0; i < range; i += increment)
-  {
+  for (double i = 0; i < range; i += increment) {
     // calc a point of circumference
     geometry_msgs::Point p;
     p.x = radius * cos(i);
@@ -127,8 +124,7 @@ std::vector<geometry_msgs::Point> generateTrajectoryCircle(geometry_msgs::Point 
   // reverse vector
   std::reverse(traj_circle_array.begin(), traj_circle_array.end());
 
-  for (double i = 0; i > (-1) * range; i -= increment)
-  {
+  for (double i = 0; i > (-1) * range; i -= increment) {
     // calc a point of circumference
     geometry_msgs::Point p;
     p.x = radius * cos(i);
@@ -151,8 +147,8 @@ std::vector<geometry_msgs::Point> generateTrajectoryCircle(geometry_msgs::Point 
   return traj_circle_array;
 }
 // display the locus of pure pursuit by markers.
-visualization_msgs::Marker displayTrajectoryCircle(std::vector<geometry_msgs::Point> traj_circle_array)
-{
+visualization_msgs::Marker
+displayTrajectoryCircle(std::vector<geometry_msgs::Point> traj_circle_array) {
   visualization_msgs::Marker traj_circle;
   traj_circle.header.frame_id = MAP_FRAME;
   traj_circle.header.stamp = ros::Time();
@@ -168,9 +164,9 @@ visualization_msgs::Marker displayTrajectoryCircle(std::vector<geometry_msgs::Po
   white.g = 1.0;
   //
   for (auto el : traj_circle_array)
-    for (std::vector<geometry_msgs::Point>::iterator it = traj_circle_array.begin(); it != traj_circle_array.end();
-         it++)
-    {
+    for (std::vector<geometry_msgs::Point>::iterator it =
+             traj_circle_array.begin();
+         it != traj_circle_array.end(); it++) {
       // traj_circle.points.push_back(*it);
       traj_circle.points.push_back(el);
       traj_circle.colors.push_back(white);
@@ -186,8 +182,8 @@ visualization_msgs::Marker displayTrajectoryCircle(std::vector<geometry_msgs::Po
 }
 
 // display the search radius by markers.
-visualization_msgs::Marker displaySearchRadius(geometry_msgs::Point current_pose, double search_radius)
-{
+visualization_msgs::Marker
+displaySearchRadius(geometry_msgs::Point current_pose, double search_radius) {
   visualization_msgs::Marker marker;
   marker.header.frame_id = MAP_FRAME;
   marker.header.stamp = ros::Time();
@@ -208,8 +204,8 @@ visualization_msgs::Marker displaySearchRadius(geometry_msgs::Point current_pose
 }
 /*
 // debug tool for interpolateNextTarget
-void displayLinePoint(double a, double b, double c, geometry_msgs::Point target, geometry_msgs::Point target2,
-                      geometry_msgs::Point target3)
+void displayLinePoint(double a, double b, double c, geometry_msgs::Point target,
+geometry_msgs::Point target2, geometry_msgs::Point target3)
 {
   visualization_msgs::Marker line;
   line.header.frame_id = MAP_FRAME;
@@ -290,4 +286,4 @@ void displayLinePoint(double a, double b, double c, geometry_msgs::Point target,
   _line_point_pub.publish(marker);
 }
 */
-}
+} // namespace waypoint_follower

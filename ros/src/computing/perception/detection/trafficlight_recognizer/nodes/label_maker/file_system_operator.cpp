@@ -1,7 +1,7 @@
 #include "file_system_operator.h"
 
-#include <sys/stat.h>
 #include <dirent.h>
+#include <sys/stat.h>
 
 #include <fstream>
 #include <sstream>
@@ -9,18 +9,14 @@
 
 #include <tinyxml.h>
 
-FileSystemOperator::FileSystemOperator():
-  target_directory_path_("") {
-}
+FileSystemOperator::FileSystemOperator() : target_directory_path_("") {}
 
-
-FileSystemOperator::~FileSystemOperator() {
-}
-
+FileSystemOperator::~FileSystemOperator() {}
 
 // The function to return std::map structure which contains
 // image ID and its filename in the specified directory path
-std::map<int, std::string> FileSystemOperator::GetImageList(const std::string directory_path) {
+std::map<int, std::string>
+FileSystemOperator::GetImageList(const std::string directory_path) {
   std::map<int, std::string> list;
 
   struct dirent *entry;
@@ -45,8 +41,7 @@ std::map<int, std::string> FileSystemOperator::GetImageList(const std::string di
   closedir(directory_handler);
 
   return list;
-}  // std::map<int, std::string> FileSystemOperation::GetImageList()
-
+} // std::map<int, std::string> FileSystemOperation::GetImageList()
 
 void FileSystemOperator::CheckPreSavedData(std::string target_dir_name) {
   target_directory_path_ = target_dir_name;
@@ -62,7 +57,6 @@ void FileSystemOperator::CheckPreSavedData(std::string target_dir_name) {
   }
 }
 
-
 void FileSystemOperator::LoadPreSavedContents() {
   struct dirent *entry;
   DIR *directory_handler = opendir(target_directory_path_.c_str());
@@ -71,7 +65,8 @@ void FileSystemOperator::LoadPreSavedContents() {
   while ((entry = readdir(directory_handler)) != NULL) {
     // Get entry's status (file name, permission...etc)
     struct stat status;
-    std::string absolute_path = target_directory_path_ + std::string(entry->d_name);
+    std::string absolute_path =
+        target_directory_path_ + std::string(entry->d_name);
 
     if (stat(absolute_path.c_str(), &status) == 0 &&
         S_ISREG(status.st_mode)) { // This entry is surely nomal file
@@ -82,31 +77,31 @@ void FileSystemOperator::LoadPreSavedContents() {
       xml_document.LoadFile();
 
       // Parse its contents and insert into the structure
-      TiXmlElement* root = xml_document.FirstChildElement("annotation");
+      TiXmlElement *root = xml_document.FirstChildElement("annotation");
 
-      TiXmlElement* folder = root->FirstChildElement("folder");
+      TiXmlElement *folder = root->FirstChildElement("folder");
       loaded_data.folder_name = std::string(folder->GetText());
 
-      TiXmlElement* file = root->FirstChildElement("filename");
+      TiXmlElement *file = root->FirstChildElement("filename");
       loaded_data.file_name = std::string(file->GetText());
 
-      TiXmlElement* size = root->FirstChildElement("size");
-      TiXmlElement* width = size->FirstChildElement("width");
-      TiXmlElement* height = size->FirstChildElement("height");
-      TiXmlElement* depth = size->FirstChildElement("depth");
+      TiXmlElement *size = root->FirstChildElement("size");
+      TiXmlElement *width = size->FirstChildElement("width");
+      TiXmlElement *height = size->FirstChildElement("height");
+      TiXmlElement *depth = size->FirstChildElement("depth");
       loaded_data.width = std::atoi(width->GetText());
       loaded_data.height = std::atoi(height->GetText());
       loaded_data.depth = std::atoi(depth->GetText());
 
-      TiXmlElement* object = root->FirstChildElement("object");
-      TiXmlElement* name = object->FirstChildElement("name");
+      TiXmlElement *object = root->FirstChildElement("object");
+      TiXmlElement *name = object->FirstChildElement("name");
       loaded_data.state = static_cast<LightState>(std::atoi(name->GetText()));
 
-      TiXmlElement* bounding_box = object->FirstChildElement("bndbox");
-      TiXmlElement* x_min = bounding_box->FirstChildElement("xmin");
-      TiXmlElement* y_min = bounding_box->FirstChildElement("ymin");
-      TiXmlElement* x_max = bounding_box->FirstChildElement("xmax");
-      TiXmlElement* y_max = bounding_box->FirstChildElement("ymax");
+      TiXmlElement *bounding_box = object->FirstChildElement("bndbox");
+      TiXmlElement *x_min = bounding_box->FirstChildElement("xmin");
+      TiXmlElement *y_min = bounding_box->FirstChildElement("ymin");
+      TiXmlElement *x_max = bounding_box->FirstChildElement("xmax");
+      TiXmlElement *y_max = bounding_box->FirstChildElement("ymax");
       loaded_data.x_start = std::atoi(x_min->GetText());
       loaded_data.y_start = std::atoi(y_min->GetText());
       loaded_data.x_end = std::atoi(x_max->GetText());
@@ -119,72 +114,69 @@ void FileSystemOperator::LoadPreSavedContents() {
   }
 }
 
-
 void FileSystemOperator::WriteStateToFile(std::string folder_name,
                                           std::string file_name,
-                                          LightState state,
-                                          int image_height,
-                                          int image_width,
-                                          int image_depth,
-                                          int x_start,
-                                          int y_start,
-                                          int x_end,
+                                          LightState state, int image_height,
+                                          int image_width, int image_depth,
+                                          int x_start, int y_start, int x_end,
                                           int y_end) {
   int image_id = GetFileIDFromFilePath(file_name);
-  LabelData label_data{folder_name,
-        file_name,
-        state,
-        image_height,
-        image_width,
-        image_depth,
-        x_start,
-        y_start,
-        x_end,
-        y_end};
+  LabelData label_data{folder_name, file_name,   state,   image_height,
+                       image_width, image_depth, x_start, y_start,
+                       x_end,       y_end};
 
-  // Insert specified data into data list (if this ID's data already exist, it will be overwritten)
+  // Insert specified data into data list (if this ID's data already exist, it
+  // will be overwritten)
   label_data_list_[image_id] = label_data;
 
   // Create XML data
   TiXmlDocument xml_data;
 
-  TiXmlElement* root = new TiXmlElement("annotation");
+  TiXmlElement *root = new TiXmlElement("annotation");
   xml_data.LinkEndChild(root);
 
-  TiXmlElement* folder = new TiXmlElement("folder");
+  TiXmlElement *folder = new TiXmlElement("folder");
   folder->LinkEndChild(new TiXmlText(label_data_list_[image_id].folder_name));
   root->LinkEndChild(folder);
 
-  TiXmlElement* file = new TiXmlElement("filename");
+  TiXmlElement *file = new TiXmlElement("filename");
   file->LinkEndChild(new TiXmlText(label_data_list_[image_id].file_name));
   root->LinkEndChild(file);
 
-  TiXmlElement* size = new TiXmlElement("size");
-  TiXmlElement* width = new TiXmlElement("width");
-  width->LinkEndChild(new TiXmlText(std::to_string(label_data_list_[image_id].width)));
-  TiXmlElement* height = new TiXmlElement("height");
-  height->LinkEndChild(new TiXmlText(std::to_string(label_data_list_[image_id].height)));
-  TiXmlElement* depth = new TiXmlElement("depth");
-  depth->LinkEndChild(new TiXmlText(std::to_string(label_data_list_[image_id].depth)));
+  TiXmlElement *size = new TiXmlElement("size");
+  TiXmlElement *width = new TiXmlElement("width");
+  width->LinkEndChild(
+      new TiXmlText(std::to_string(label_data_list_[image_id].width)));
+  TiXmlElement *height = new TiXmlElement("height");
+  height->LinkEndChild(
+      new TiXmlText(std::to_string(label_data_list_[image_id].height)));
+  TiXmlElement *depth = new TiXmlElement("depth");
+  depth->LinkEndChild(
+      new TiXmlText(std::to_string(label_data_list_[image_id].depth)));
   size->LinkEndChild(width);
   size->LinkEndChild(height);
   size->LinkEndChild(depth);
   root->LinkEndChild(size);
 
-  TiXmlElement* object = new TiXmlElement("object");
-  TiXmlElement* name = new TiXmlElement("name");
-  name->LinkEndChild(new TiXmlText(std::to_string(label_data_list_[image_id].state)));
+  TiXmlElement *object = new TiXmlElement("object");
+  TiXmlElement *name = new TiXmlElement("name");
+  name->LinkEndChild(
+      new TiXmlText(std::to_string(label_data_list_[image_id].state)));
   object->LinkEndChild(name);
 
-  TiXmlElement* bounding_box = new TiXmlElement("bndbox");
-  TiXmlElement* x_min = new TiXmlElement("xmin");
-  x_min->LinkEndChild(new TiXmlText(std::to_string(label_data_list_[image_id].x_start)));
-  TiXmlElement* y_min = new TiXmlElement("ymin");
-  y_min->LinkEndChild(new TiXmlText(std::to_string(label_data_list_[image_id].y_start)));
-  TiXmlElement* x_max = new TiXmlElement("xmax");
-  x_max->LinkEndChild(new TiXmlText(std::to_string(label_data_list_[image_id].x_end)));
-  TiXmlElement* y_max = new TiXmlElement("ymax");
-  y_max->LinkEndChild(new TiXmlText(std::to_string(label_data_list_[image_id].y_end)));
+  TiXmlElement *bounding_box = new TiXmlElement("bndbox");
+  TiXmlElement *x_min = new TiXmlElement("xmin");
+  x_min->LinkEndChild(
+      new TiXmlText(std::to_string(label_data_list_[image_id].x_start)));
+  TiXmlElement *y_min = new TiXmlElement("ymin");
+  y_min->LinkEndChild(
+      new TiXmlText(std::to_string(label_data_list_[image_id].y_start)));
+  TiXmlElement *x_max = new TiXmlElement("xmax");
+  x_max->LinkEndChild(
+      new TiXmlText(std::to_string(label_data_list_[image_id].x_end)));
+  TiXmlElement *y_max = new TiXmlElement("ymax");
+  y_max->LinkEndChild(
+      new TiXmlText(std::to_string(label_data_list_[image_id].y_end)));
   bounding_box->LinkEndChild(x_min);
   bounding_box->LinkEndChild(y_min);
   bounding_box->LinkEndChild(x_max);
@@ -195,13 +187,14 @@ void FileSystemOperator::WriteStateToFile(std::string folder_name,
   root->LinkEndChild(object);
 
   // Save XML data
-  std::string xml_file_name = target_directory_path_ + std::to_string(image_id) + ".xml";
+  std::string xml_file_name =
+      target_directory_path_ + std::to_string(image_id) + ".xml";
   xml_data.SaveFile(xml_file_name);
 }
 
-
 // The utility function to get image ID from image file name
-// This function assumes that image files are named by its ID like "0.png, Images/1.png,..."
+// This function assumes that image files are named by its ID like "0.png,
+// Images/1.png,..."
 int FileSystemOperator::GetFileIDFromFilePath(std::string path) {
   // Extract only file name from path
   std::string file_name = path.substr(path.find_last_of("/") + 1);
@@ -212,4 +205,3 @@ int FileSystemOperator::GetFileIDFromFilePath(std::string path) {
   // Convert string to integer and return the value
   return std::atoi(id_string.c_str());
 }
-

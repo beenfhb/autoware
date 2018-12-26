@@ -30,219 +30,149 @@
 
 #include <limits>
 
-namespace pangolin
-{
+namespace pangolin {
 
-template<typename T>
-struct Range
-{
-    Range()
-        : min(+std::numeric_limits<T>::max()),
-          max(-std::numeric_limits<T>::max())
-    {
-    }
+template <typename T> struct Range {
+  Range()
+      : min(+std::numeric_limits<T>::max()),
+        max(-std::numeric_limits<T>::max()) {}
 
-    Range(T rmin, T rmax)
-        : min(rmin), max(rmax)
-    {
-    }
+  Range(T rmin, T rmax) : min(rmin), max(rmax) {}
 
-    Range operator+(T v)
-    {
-        return Range(min+v, max+v);
-    }
+  Range operator+(T v) { return Range(min + v, max + v); }
 
-    Range operator-(T v)
-    {
-        return Range(min-v, max-v);
-    }
+  Range operator-(T v) { return Range(min - v, max - v); }
 
-    Range& operator+=(T v)
-    {
-        min += v;
-        max += v;
-        return *this;
-    }
+  Range &operator+=(T v) {
+    min += v;
+    max += v;
+    return *this;
+  }
 
-    Range& operator-=(T v)
-    {
-        min -= v;
-        max -= v;
-        return *this;
-    }
+  Range &operator-=(T v) {
+    min -= v;
+    max -= v;
+    return *this;
+  }
 
-    Range& operator*=(T v)
-    {
-        min *= v;
-        max *= v;
-        return *this;
-    }
+  Range &operator*=(T v) {
+    min *= v;
+    max *= v;
+    return *this;
+  }
 
-    Range& operator/=(T v)
-    {
-        min /= v;
-        max /= v;
-        return *this;
-    }
+  Range &operator/=(T v) {
+    min /= v;
+    max /= v;
+    return *this;
+  }
 
-    Range& operator+=(const Range& o)
-    {
-        min += o.min;
-        max += o.max;
-        return *this;
-    }
+  Range &operator+=(const Range &o) {
+    min += o.min;
+    max += o.max;
+    return *this;
+  }
 
-    Range& operator-=(const Range& o)
-    {
-        min -= o.min;
-        max -= o.max;
-        return *this;
-    }
+  Range &operator-=(const Range &o) {
+    min -= o.min;
+    max -= o.max;
+    return *this;
+  }
 
-    Range operator+(const Range& o) const
-    {
-        return Range(min + o.min, max + o.max);
-    }
+  Range operator+(const Range &o) const {
+    return Range(min + o.min, max + o.max);
+  }
 
-    Range operator-(const Range& o) const
-    {
-        return Range(min - o.min, max - o.max);
-    }
+  Range operator-(const Range &o) const {
+    return Range(min - o.min, max - o.max);
+  }
 
-    Range operator*(float s) const
-    {
-        return Range(T(s*min), T(s*max));
-    }
+  Range operator*(float s) const { return Range(T(s * min), T(s * max)); }
 
-    T Size() const
-    {
-        return max - min;
-    }
+  T Size() const { return max - min; }
 
-    T AbsSize() const
-    {
-        return std::abs(max - min);
-    }
+  T AbsSize() const { return std::abs(max - min); }
 
-    T Mid() const
-    {
-        return (min + max) / (T)2.0f;
-    }
+  T Mid() const { return (min + max) / (T)2.0f; }
 
-    void Scale(float s, float center = 0.0f)
-    {
-        min = T(s*(min-center) + center);
-        max = T(s*(max-center) + center);
-    }
+  void Scale(float s, float center = 0.0f) {
+    min = T(s * (min - center) + center);
+    max = T(s * (max - center) + center);
+  }
 
-    void Insert(T v)
-    {
-        min = std::min(min,v);
-        max = std::max(max,v);
-    }
+  void Insert(T v) {
+    min = std::min(min, v);
+    max = std::max(max, v);
+  }
 
-    void Clamp(T vmin, T vmax)
-    {
-        min = std::min(std::max(vmin, min), vmax);
-        max = std::min(std::max(vmin, max), vmax);
-    }
+  void Clamp(T vmin, T vmax) {
+    min = std::min(std::max(vmin, min), vmax);
+    max = std::min(std::max(vmin, max), vmax);
+  }
 
-    void Clamp(const Range& o)
-    {
-        Clamp(o.min, o.max);
-    }
+  void Clamp(const Range &o) { Clamp(o.min, o.max); }
 
-    void Clear()
-    {
-        min = +std::numeric_limits<T>::max();
-        max = -std::numeric_limits<T>::max();
-    }
+  void Clear() {
+    min = +std::numeric_limits<T>::max();
+    max = -std::numeric_limits<T>::max();
+  }
 
-    template<typename To>
-    Range<To> Cast()
-    {
-        return Range<To>(To(min), To(max));
-    }
+  template <typename To> Range<To> Cast() {
+    return Range<To>(To(min), To(max));
+  }
 
-    T min;
-    T max;
+  T min;
+  T max;
 };
 
-template<typename T>
-struct XYRange
-{
-    XYRange()
-    {
-    }
+template <typename T> struct XYRange {
+  XYRange() {}
 
-    XYRange(const Range<T>& xrange, const Range<T>& yrange)
-        : x(xrange), y(yrange)
-    {
-    }
+  XYRange(const Range<T> &xrange, const Range<T> &yrange)
+      : x(xrange), y(yrange) {}
 
-    XYRange(T xmin, T xmax, T ymin, T ymax)
-        : x(xmin,xmax), y(ymin,ymax)
-    {
-    }
+  XYRange(T xmin, T xmax, T ymin, T ymax) : x(xmin, xmax), y(ymin, ymax) {}
 
-    XYRange operator-(const XYRange& o) const
-    {
-        return XYRange(x - o.x, y - o.y);
-    }
+  XYRange operator-(const XYRange &o) const {
+    return XYRange(x - o.x, y - o.y);
+  }
 
-    XYRange operator*(float s) const
-    {
-        return XYRange(x*s, y*s);
-    }
+  XYRange operator*(float s) const { return XYRange(x * s, y * s); }
 
-    XYRange& operator+=(const XYRange& o)
-    {
-        x += o.x;
-        y += o.y;
-        return *this;
-    }
+  XYRange &operator+=(const XYRange &o) {
+    x += o.x;
+    y += o.y;
+    return *this;
+  }
 
-    void Scale(float sx, float sy, float centerx, float centery)
-    {
-        x.Scale(sx, centerx);
-        y.Scale(sy, centery);
-    }
+  void Scale(float sx, float sy, float centerx, float centery) {
+    x.Scale(sx, centerx);
+    y.Scale(sy, centery);
+  }
 
-    void Clear()
-    {
-        x.Clear();
-        y.Clear();
-    }
+  void Clear() {
+    x.Clear();
+    y.Clear();
+  }
 
-    void Clamp(T xmin, T xmax, T ymin, T ymax)
-    {
-        x.Clamp(xmin,xmax);
-        y.Clamp(ymin,ymax);
-    }
+  void Clamp(T xmin, T xmax, T ymin, T ymax) {
+    x.Clamp(xmin, xmax);
+    y.Clamp(ymin, ymax);
+  }
 
-    void Clamp(const XYRange& o)
-    {
-        x.Clamp(o.x);
-        y.Clamp(o.y);
-    }
+  void Clamp(const XYRange &o) {
+    x.Clamp(o.x);
+    y.Clamp(o.y);
+  }
 
+  float Area() const { return x.Size() * y.Size(); }
 
-    float Area() const
-    {
-        return x.Size() * y.Size();
-    }
+  template <typename To> XYRange<To> Cast() {
+    return XYRange<To>(x.template Cast<To>(), y.template Cast<To>());
+  }
 
-    template<typename To>
-    XYRange<To> Cast()
-    {
-        return XYRange<To>(
-            x.template Cast<To>(),
-            y.template Cast<To>()
-        );
-    }
-
-    Range<T> x;
-    Range<T> y;
+  Range<T> x;
+  Range<T> y;
 };
 
 typedef Range<int> Rangei;
@@ -253,6 +183,6 @@ typedef XYRange<int> XYRangei;
 typedef XYRange<float> XYRangef;
 typedef XYRange<double> XYRanged;
 
-}
+} // namespace pangolin
 
-#endif //PANGOLIN_RANGE_H
+#endif // PANGOLIN_RANGE_H

@@ -1,10 +1,9 @@
+#include "algebra.h"
+#include "ndt.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
-#include "algebra.h"
-#include "ndt.h"
-
 
 NDMapPtr NDmap;
 NDPtr NDs;
@@ -14,8 +13,7 @@ int g_map_x, g_map_y, g_map_z;
 double g_map_cellsize;
 
 /*add point to ndcell */
-int add_point_covariance(NDPtr nd, PointPtr p)
-{
+int add_point_covariance(NDPtr nd, PointPtr p) {
   /*add data num*/
   nd->num++;
   nd->flag = 0; /*need to update*/
@@ -37,12 +35,9 @@ int add_point_covariance(NDPtr nd, PointPtr p)
   return 1;
 }
 
-int inv_check(double inv[3][3])
-{
-  for (int i = 0; i < 3; i++)
-  {
-    for (int j = 0; j < 3; j++)
-    {
+int inv_check(double inv[3][3]) {
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
       if (isnan(inv[i][j]))
         return 0;
       if (fabs(inv[i][j]) > 1000)
@@ -53,11 +48,9 @@ int inv_check(double inv[3][3])
 }
 
 /*calcurate covariances*/
-int update_covariance(NDPtr nd)
-{
-  double a, b, c; /*for calcurate*/
-  if (!nd->flag)
-  { /*need calcurate?*/
+int update_covariance(NDPtr nd) {
+  double a, b, c;  /*for calcurate*/
+  if (!nd->flag) { /*need calcurate?*/
     /*means*/
     nd->mean.x = a = nd->m_x / nd->num;
     nd->mean.y = b = nd->m_y / nd->num;
@@ -67,13 +60,15 @@ int update_covariance(NDPtr nd)
     nd->covariance[0][0] = (nd->c_xx - 2 * a * nd->m_x) / nd->num + a * a;
     nd->covariance[1][1] = (nd->c_yy - 2 * b * nd->m_y) / nd->num + b * b;
     nd->covariance[2][2] = (nd->c_zz - 2 * c * nd->m_z) / nd->num + c * c;
-    nd->covariance[0][1] = nd->covariance[1][0] = (nd->c_xy - nd->m_x * b - nd->m_y * a) / nd->num + a * b;
-    nd->covariance[1][2] = nd->covariance[2][1] = (nd->c_yz - nd->m_y * c - nd->m_z * b) / nd->num + b * c;
-    nd->covariance[2][0] = nd->covariance[0][2] = (nd->c_zx - nd->m_z * a - nd->m_x * c) / nd->num + c * a;
+    nd->covariance[0][1] = nd->covariance[1][0] =
+        (nd->c_xy - nd->m_x * b - nd->m_y * a) / nd->num + a * b;
+    nd->covariance[1][2] = nd->covariance[2][1] =
+        (nd->c_yz - nd->m_y * c - nd->m_z * b) / nd->num + b * c;
+    nd->covariance[2][0] = nd->covariance[0][2] =
+        (nd->c_zx - nd->m_z * a - nd->m_x * c) / nd->num + c * a;
     nd->sign = 0;
     nd->flag = 1; /*this ND updated*/
-    if (nd->num >= 5)
-    {
+    if (nd->num >= 5) {
       if (ginverse_matrix3d(nd->covariance, nd->inv_covariance))
         if (inv_check(nd->inv_covariance))
           nd->sign = 1;
@@ -84,8 +79,7 @@ int update_covariance(NDPtr nd)
 }
 
 /*add point to ndmap*/
-int add_point_map(NDMapPtr ndmap, PointPtr point)
-{
+int add_point_map(NDMapPtr ndmap, PointPtr point) {
   double x, y, z;
   NDPtr *ndp[8];
 
@@ -113,16 +107,14 @@ int add_point_map(NDMapPtr ndmap, PointPtr point)
   ndp[7] = ndp[3] - 1;
 
   /*add  point to map */
-  for (int i = 0; i < 8; i++)
-  {
+  for (int i = 0; i < 8; i++) {
     if ((*ndp[i]) == 0)
       *ndp[i] = add_ND();
     if ((*ndp[i]) != 0)
       add_point_covariance(*ndp[i], point);
   }
 
-  if (ndmap->next)
-  {
+  if (ndmap->next) {
     add_point_map(ndmap->next, point);
   }
 
@@ -130,21 +122,17 @@ int add_point_map(NDMapPtr ndmap, PointPtr point)
 }
 
 /*get nd cell at point*/
-int get_ND(NDMapPtr ndmap, PointPtr point, NDPtr *nd, int ndmode)
-{
+int get_ND(NDMapPtr ndmap, PointPtr point, NDPtr *nd, int ndmode) {
   double x, y, z;
   int i;
   NDPtr *ndp[8];
 
   /*mapping*/
-  if (ndmode < 3)
-  {
+  if (ndmode < 3) {
     x = (point->x / ndmap->size) + ndmap->x / 2 - 0.5;
     y = (point->y / ndmap->size) + ndmap->y / 2 - 0.5;
     z = (point->z / ndmap->size) + ndmap->z / 2 - 0.5;
-  }
-  else
-  {
+  } else {
     x = (point->x / ndmap->size) + ndmap->x / 2;
     y = (point->y / ndmap->size) + ndmap->y / 2;
     z = (point->z / ndmap->size) + ndmap->z / 2;
@@ -168,16 +156,12 @@ int get_ND(NDMapPtr ndmap, PointPtr point, NDPtr *nd, int ndmode)
   ndp[6] = ndp[4] - ndmap->to_y;
   ndp[7] = ndp[3] - 1;
 
-  for (i = 0; i < 8; i++)
-  {
-    if (*ndp[i] != 0)
-    {
+  for (i = 0; i < 8; i++) {
+    if (*ndp[i] != 0) {
       if (!(*ndp[i])->flag)
         update_covariance(*ndp[i]);
       nd[i] = *ndp[i];
-    }
-    else
-    {
+    } else {
       nd[i] = NDs;
       // return 0;
     }
@@ -186,13 +170,11 @@ int get_ND(NDMapPtr ndmap, PointPtr point, NDPtr *nd, int ndmode)
   return 1;
 }
 
-NDPtr add_ND(void)
-{
+NDPtr add_ND(void) {
   NDPtr ndp;
   // int m;
 
-  if (NDs_num >= MAX_ND_NUM)
-  {
+  if (NDs_num >= MAX_ND_NUM) {
     printf("over flow\n");
     return 0;
   }
@@ -218,8 +200,7 @@ NDPtr add_ND(void)
   return ndp;
 }
 
-NDMapPtr initialize_NDmap_layer(int layer, NDMapPtr child)
-{
+NDMapPtr initialize_NDmap_layer(int layer, NDMapPtr child) {
   // int i,j,k,i2,i3,m;
   int i, j, k;
   int x, y, z;
@@ -245,12 +226,9 @@ NDMapPtr initialize_NDmap_layer(int layer, NDMapPtr child)
 
   ndp = nd;
 
-  for (i = 0; i < x; i++)
-  {
-    for (j = 0; j < y; j++)
-    {
-      for (k = 0; k < z; k++)
-      {
+  for (i = 0; i < x; i++) {
+    for (j = 0; j < y; j++) {
+      for (k = 0; k < z; k++) {
         *ndp = 0;
         ndp++;
       }
@@ -260,8 +238,7 @@ NDMapPtr initialize_NDmap_layer(int layer, NDMapPtr child)
   return ndmap;
 }
 
-NDMapPtr initialize_NDmap(void)
-{
+NDMapPtr initialize_NDmap(void) {
   int i;
   NDMapPtr ndmap;
   NDPtr null_nd;
@@ -274,21 +251,18 @@ NDMapPtr initialize_NDmap(void)
   NDs_num = 0;
 
   null_nd = add_ND();
-  if (null_nd == 0)
-  {
+  if (null_nd == 0) {
     return 0;
   }
 
-  for (i = LAYER_NUM - 1; i >= 0; i--)
-  {
+  for (i = LAYER_NUM - 1; i >= 0; i--) {
     ndmap = initialize_NDmap_layer(i, ndmap);
   }
 
   return ndmap;
 }
 
-int round_covariance(NDPtr nd)
-{
+int round_covariance(NDPtr nd) {
   double v[3][3], a;
 
   eigenvecter_matrix3d(nd->covariance, v, nd->l);
@@ -303,24 +277,25 @@ int round_covariance(NDPtr nd)
     printf("!03");
 
   a = fabs(nd->l[1] / nd->l[0]);
-  if (a < 0.001)
-  {
+  if (a < 0.001) {
     return 0;
   }
   return 1;
 }
 
-double probability_on_ND(NDPtr nd, double xp, double yp, double zp)
-{
+double probability_on_ND(NDPtr nd, double xp, double yp, double zp) {
   //  double xp,yp,zp;
   double e;
 
   if (nd->num < 5)
     return 0;
 
-  e = exp((xp * xp * nd->inv_covariance[0][0] + yp * yp * nd->inv_covariance[1][1] +
-           zp * zp * nd->inv_covariance[2][2] + 2.0 * xp * yp * nd->inv_covariance[0][1] +
-           2.0 * yp * zp * nd->inv_covariance[1][2] + 2.0 * zp * xp * nd->inv_covariance[2][0]) /
+  e = exp((xp * xp * nd->inv_covariance[0][0] +
+           yp * yp * nd->inv_covariance[1][1] +
+           zp * zp * nd->inv_covariance[2][2] +
+           2.0 * xp * yp * nd->inv_covariance[0][1] +
+           2.0 * yp * zp * nd->inv_covariance[1][2] +
+           2.0 * zp * xp * nd->inv_covariance[2][0]) /
           -2.0);
 
   if (e > 1)

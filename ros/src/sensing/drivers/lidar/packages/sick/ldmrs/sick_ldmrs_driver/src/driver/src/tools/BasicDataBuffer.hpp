@@ -7,38 +7,34 @@
 
 #include "../BasicDatatypes.hpp"
 #include "Mutex.hpp"
-#include <vector>	// for std::vector
-#include <list>		// for std::list
+#include <list>   // for std::list
+#include <vector> // for std::vector
 
 using namespace datatypes;
 
 //
 // Buffer for Data of base-type BasicData.
 //
-class BasicDataBuffer
-{
+class BasicDataBuffer {
 public:
-	/// Default constructor.
-	BasicDataBuffer();
+  /// Default constructor.
+  BasicDataBuffer();
 
-	/// Destructor.
-	~BasicDataBuffer();
-	
-	void setLimit(UINT32 maxBytesToBeUsed);
-	bool pushData(BasicData* data);
-	BasicData* popData();
-	UINT32 getUsedBytes();
-	UINT32 getBufferSize();	// # gespeicherter Datensaetze
-	
+  /// Destructor.
+  ~BasicDataBuffer();
+
+  void setLimit(UINT32 maxBytesToBeUsed);
+  bool pushData(BasicData *data);
+  BasicData *popData();
+  UINT32 getUsedBytes();
+  UINT32 getBufferSize(); // # gespeicherter Datensaetze
 
 private:
-	bool m_beVerbose;
-	UINT32 m_bytesMax;
-	std::list<BasicData*> m_buffer;
-	UINT32 m_bytesUsed;
-	Mutex m_mutex;	// Thread-Safety
+  bool m_beVerbose;
+  UINT32 m_bytesMax;
+  std::list<BasicData *> m_buffer;
+  UINT32 m_bytesUsed;
+  Mutex m_mutex; // Thread-Safety
 };
-
-
 
 #endif
