@@ -3,8 +3,15 @@
 
 #include <autoware_map/autoware_map.h>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979
+#endif
+
+inline double degreeToRadian(double x) {return x * M_PI / 180.0;}
+
 autoware_map_msgs::Point getPointFromWaypointId(int waypoint_id, autoware_map::AutowareMap autoware_map);
 geometry_msgs::Point convertPointToGeomPoint(const autoware_map_msgs::Point& autoware_point);
+geometry_msgs::Quaternion convertAngleToGeomQuaternion(const double horizontal_angle, const double vertical_angle);
 bool isJapaneseCoordinate(int epsg);
 
 //

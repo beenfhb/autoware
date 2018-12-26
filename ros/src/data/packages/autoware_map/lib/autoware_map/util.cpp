@@ -1,5 +1,6 @@
 #include <autoware_map/autoware_map.h>
 #include <autoware_map/util.h>
+#include <tf/transform_datatypes.h>
 
 using autoware_map::Key;
 
@@ -14,6 +15,14 @@ bool isJapaneseCoordinate(int epsg)
     //EPSG CODE 2443~2461 for JGD2000
     //EPSG CODE 6669~6687 for JGD2011
   return (epsg >= 2443 && epsg <= 2461) || (epsg >= 6669 && epsg <= 6687);
+}
+
+geometry_msgs::Quaternion convertAngleToGeomQuaternion(const double horizontal_angle, const double vertical_angle)
+{
+
+  double pitch = degreeToRadian(vertical_angle - 90); // convert vertical angle to pitch
+  double yaw = degreeToRadian(-horizontal_angle + 90); // convert horizontal angle to yaw
+  return tf::createQuaternionMsgFromRollPitchYaw(0, pitch, yaw);
 }
 
 geometry_msgs::Point convertPointToGeomPoint(const autoware_map_msgs::Point& autoware_point)
@@ -186,16 +195,16 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::Lane& obj)
     {
         columns.push_back(column);
     }
-    obj.lane_id = std::stoi(columns[0]);
-    obj.start_waypoint_id = std::stoi(columns[1]);
-    obj.end_waypoint_id = std::stoi(columns[2]);
-    obj.lane_number = std::stoi(columns[3]);
-    obj.num_of_lanes = std::stoi(columns[4]);
-    obj.speed_limit = std::stod(columns[5]);
-    obj.length = std::stod(columns[6]);
-    obj.width_limit = std::stod(columns[7]);
-    obj.height_limit = std::stod(columns[8]);
-    obj.weight_limit = std::stod(columns[9]);
+    obj.lane_id = std::stoi(columns.at(0));
+    obj.start_waypoint_id = std::stoi(columns.at(1));
+    obj.end_waypoint_id = std::stoi(columns.at(2));
+    obj.lane_number = std::stoi(columns.at(3));
+    obj.num_of_lanes = std::stoi(columns.at(4));
+    obj.speed_limit = std::stod(columns.at(5));
+    obj.length = std::stod(columns.at(6));
+    obj.width_limit = std::stod(columns.at(7));
+    obj.height_limit = std::stod(columns.at(8));
+    obj.weight_limit = std::stod(columns.at(9));
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::LaneAttrRelation& obj)
@@ -206,9 +215,9 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::LaneAttrRelation& 
     {
         columns.push_back(column);
     }
-    obj.lane_id = std::stoi(columns[0]);
-    obj.attribute_type = std::stoi(columns[1]);
-    obj.area_id = std::stoi(columns[2]);
+    obj.lane_id = std::stoi(columns.at(0));
+    obj.attribute_type = std::stoi(columns.at(1));
+    obj.area_id = std::stoi(columns.at(2));
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::LaneRelation& obj)
@@ -219,9 +228,9 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::LaneRelation& obj)
     {
         columns.push_back(column);
     }
-    obj.lane_id = std::stoi(columns[0]);
-    obj.next_lane_id = std::stoi(columns[1]);
-    obj.blinker = std::stoi(columns[2]);
+    obj.lane_id = std::stoi(columns.at(0));
+    obj.next_lane_id = std::stoi(columns.at(1));
+    obj.blinker = std::stoi(columns.at(2));
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::LaneSignalLightRelation& obj)
@@ -232,8 +241,8 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::LaneSignalLightRel
     {
         columns.push_back(column);
     }
-    obj.lane_id = std::stoi(columns[0]);
-    obj.signal_light_id = std::stoi(columns[1]);
+    obj.lane_id = std::stoi(columns.at(0));
+    obj.signal_light_id = std::stoi(columns.at(1));
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::LaneChangeRelation& obj)
@@ -244,9 +253,9 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::LaneChangeRelation
     {
         columns.push_back(column);
     }
-    obj.lane_id = std::stoi(columns[0]);
-    obj.next_lane_id = std::stoi(columns[1]);
-    obj.blinker = std::stoi(columns[2]);
+    obj.lane_id = std::stoi(columns.at(0));
+    obj.next_lane_id = std::stoi(columns.at(1));
+    obj.blinker = std::stoi(columns.at(2));
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::OppositeLaneRelation& obj)
@@ -257,8 +266,8 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::OppositeLaneRelati
     {
         columns.push_back(column);
     }
-    obj.lane_id = std::stoi(columns[0]);
-    obj.opposite_lane_id = std::stoi(columns[1]);
+    obj.lane_id = std::stoi(columns.at(0));
+    obj.opposite_lane_id = std::stoi(columns.at(1));
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::Point& obj)
@@ -269,22 +278,22 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::Point& obj)
     {
         columns.push_back(column);
     }
-    obj.point_id = std::stoi(columns[0]);
-    obj.x = std::stod(columns[1]);
-    obj.y = std::stod(columns[2]);
-    obj.z = std::stod(columns[3]);
-    obj.lat = std::stod(columns[4]);
-    obj.lng = std::stod(columns[5]);
-    obj.pcd = columns[6];
+    obj.point_id = std::stoi(columns.at(0));
+    obj.x = std::stod(columns.at(1));
+    obj.y = std::stod(columns.at(2));
+    obj.z = std::stod(columns.at(3));
+    obj.lat = std::stod(columns.at(4));
+    obj.lng = std::stod(columns.at(5));
+    obj.pcd = columns.at(6);
     try{
-        obj.mgrs = std::stoi(columns[7]);
+        obj.mgrs = std::stoi(columns.at(7));
     }
     catch (const std::invalid_argument& e)
     {
         ROS_WARN_STREAM("invalid argument for mgrs: " << e.what());
         obj.mgrs = 0;
     }
-    obj.epsg = std::stoi(columns[8]);
+    obj.epsg = std::stoi(columns.at(8));
 
     return is;
 }
@@ -296,8 +305,8 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::Area& obj)
     {
         columns.push_back(column);
     }
-    obj.area_id = std::stoi(columns[0]);
-    std::stringstream ss(columns[1]);
+    obj.area_id = std::stoi(columns.at(0));
+    std::stringstream ss(columns.at(1));
     while (std::getline(ss, column, ':' )) {
         obj.point_ids.push_back( std::stoi(column) );
     }
@@ -312,15 +321,15 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::Route& obj)
     {
         columns.push_back(column);
     }
-    obj.route_id = std::stoi(columns[0]);
-    obj.start_waypoint_id = std::stoi(columns[1]);
-    obj.end_waypoint_id = std::stoi(columns[2]);
-    obj.begin_lane_id = std::stoi(columns[3]);
-    obj.finish_lane_id = std::stoi(columns[4]);
-    obj.min_lane_width = std::stod(columns[5]);
-    obj.max_lane_width = std::stod(columns[6]);
-    obj.length = std::stod(columns[7]);
-    obj.max_weight = std::stod(columns[8]);
+    obj.route_id = std::stoi(columns.at(0));
+    obj.start_waypoint_id = std::stoi(columns.at(1));
+    obj.end_waypoint_id = std::stoi(columns.at(2));
+    obj.begin_lane_id = std::stoi(columns.at(3));
+    obj.finish_lane_id = std::stoi(columns.at(4));
+    obj.min_lane_width = std::stod(columns.at(5));
+    obj.max_lane_width = std::stod(columns.at(6));
+    obj.length = std::stod(columns.at(7));
+    obj.max_weight = std::stod(columns.at(8));
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::Signal& obj)
@@ -331,8 +340,8 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::Signal& obj)
     {
         columns.push_back(column);
     }
-    obj.signal_id = std::stoi(columns[0]);
-    // obj.signal_light_id = std::stoi(columns[1]);
+    obj.signal_id = std::stoi(columns.at(0));
+    // obj.signal_light_id = std::stoi(columns.at(1));
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::SignalLight& obj)
@@ -343,15 +352,16 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::SignalLight& obj)
     {
         columns.push_back(column);
     }
-    obj.signal_light_id = std::stoi(columns[0]);
-    obj.signal_id = std::stoi(columns[1]);
-    obj.point_id = std::stoi(columns[2]);
-    obj.horizontal_angle = std::stod(columns[3]);
-    obj.vertical_angle = std::stod(columns[4]);
-    obj.color_type = std::stoi(columns[5]);
-    obj.arrow_type = std::stoi(columns[6]);
+    obj.signal_light_id = std::stoi(columns.at(0));
+    obj.signal_id = std::stoi(columns.at(1));
+    obj.point_id = std::stoi(columns.at(2));
+    obj.horizontal_angle = std::stod(columns.at(3));
+    obj.vertical_angle = std::stod(columns.at(4));
+    obj.color_type = std::stoi(columns.at(5));
+    obj.arrow_type = std::stoi(columns.at(6));
     return is;
 }
+
 std::istream& operator>>(std::istream& is, autoware_map_msgs::Wayarea& obj)
 {
     std::vector<std::string> columns;
@@ -360,8 +370,8 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::Wayarea& obj)
     {
         columns.push_back(column);
     }
-    obj.wayarea_id = std::stoi(columns[0]);
-    obj.area_id = std::stoi(columns[1]);
+    obj.wayarea_id = std::stoi(columns.at(0));
+    obj.area_id = std::stoi(columns.at(1));
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::Waypoint& obj)
@@ -372,12 +382,12 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::Waypoint& obj)
     {
         columns.push_back(column);
     }
-    obj.waypoint_id = std::stoi(columns[0]);
-    obj.point_id = std::stoi(columns[1]);
-    obj.velocity = std::stod(columns[2]);
-    obj.stop_line = std::stoi(columns[3]);
-    obj.width = std::stod(columns[4]);
-    obj.height = std::stod(columns[5]);
+    obj.waypoint_id = std::stoi(columns.at(0));
+    obj.point_id = std::stoi(columns.at(1));
+    obj.velocity = std::stod(columns.at(2));
+    obj.stop_line = std::stoi(columns.at(3));
+    obj.width = std::stod(columns.at(4));
+    obj.height = std::stod(columns.at(5));
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::WaypointLaneRelation& obj)
@@ -388,8 +398,8 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::WaypointLaneRelati
     {
         columns.push_back(column);
     }
-    obj.waypoint_id = std::stoi(columns[0]);
-    obj.lane_id = std::stoi(columns[1]);
+    obj.waypoint_id = std::stoi(columns.at(0));
+    obj.lane_id = std::stoi(columns.at(1));
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::WaypointRelation& obj)
@@ -400,11 +410,11 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::WaypointRelation& 
     {
         columns.push_back(column);
     }
-    obj.waypoint_id = std::stoi(columns[0]);
-    obj.next_waypoint_id = std::stoi(columns[1]);
-    obj.yaw = std::stod(columns[2]);
-    obj.blinker = std::stoi(columns[3]);
-    obj.distance = std::stod(columns[4]);
+    obj.waypoint_id = std::stoi(columns.at(0));
+    obj.next_waypoint_id = std::stoi(columns.at(1));
+    obj.yaw = std::stod(columns.at(2));
+    obj.blinker = std::stoi(columns.at(3));
+    obj.distance = std::stod(columns.at(4));
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::WaypointSignalRelation& obj)
@@ -415,7 +425,7 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::WaypointSignalRela
     {
         columns.push_back(column);
     }
-    obj.waypoint_id = std::stoi(columns[0]);
-    obj.signal_id = std::stoi(columns[1]);
+    obj.waypoint_id = std::stoi(columns.at(0));
+    obj.signal_id = std::stoi(columns.at(1));
     return is;
 }

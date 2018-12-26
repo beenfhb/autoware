@@ -12,6 +12,12 @@
 // void disableMarker(visualization_msgs::Marker& marker);
 // bool isValidMarker(const visualization_msgs::Marker& marker);
 // void insertMarkerArray(visualization_msgs::MarkerArray& a1, const visualization_msgs::MarkerArray& a2);
+const double MARKER_SCALE_POINT = 0.1;
+const double MARKER_SCALE_VECTOR = 0.08;
+const double MARKER_SCALE_VECTOR_LENGTH = 0.64;
+
+
+
 using autoware_map::AutowareMap;
 std_msgs::ColorRGBA createColorRGBA(Color color)
 {
@@ -25,7 +31,7 @@ std_msgs::ColorRGBA createColorRGBA(Color color)
     color_rgba.r = COLOR_VALUE_MIN;
     color_rgba.g = COLOR_VALUE_MIN;
     color_rgba.b = COLOR_VALUE_MIN;
-    color_rgba.a = COLOR_VALUE_MAX;
+    color_rgba.a = COLOR_VALUE_MEDIAN;
 
     switch (color)
     {
@@ -187,25 +193,108 @@ visualization_msgs::Marker createMarker(const std::string& ns, int id, int type)
 //                                                  const Wayarea& wayarea);
 // visualization_msgs::MarkerArray createWaypointMarkerArray(const AutowareMap& amap, Color color);
 
+visualization_msgs::MarkerArray createAreaMarkerArray(const AutowareMap& autoware_map, Color color)
+{
+    visualization_msgs::MarkerArray marker_array;
+    int id = 0;
+    for (const auto& area : autoware_map.findByFilter([] (const autoware_map_msgs::Area &area){return true; }))
+    {
+        visualization_msgs::Marker line_strip = createMarker("area", id++, visualization_msgs::Marker::LINE_STRIP);;
+        for (auto point_id: area.point_ids){
+          autoware_map_msgs::Point point = autoware_map.findByKey(autoware_map::Key<autoware_map_msgs::Point>(point_id));
+          line_strip.points.push_back(convertPointToGeomPoint(point));
+        }
+        autoware_map_msgs::Point closing_point = autoware_map.findByKey(autoware_map::Key<autoware_map_msgs::Point>(area.point_ids.front()));
+
+        line_strip.points.push_back(convertPointToGeomPoint(closing_point));
+        line_strip.scale.x = MARKER_SCALE_POINT;
+        line_strip.color = createColorRGBA(color);
+        enableMarker(line_strip);
+        marker_array.markers.push_back(line_strip);
+    }
+    return marker_array;
+}
 
 
+visualization_msgs::Marker createVectorMarkerFromSignal(const std::string& ns, int id, Color color, const AutowareMap& autoware_map,
+                                              const autoware_map_msgs::SignalLight signal_light)
+{
+    visualization_msgs::Marker marker = createMarker(ns, id, visualization_msgs::Marker::ARROW);
 
-visualization_msgs::MarkerArray createWaypointMarkerArray(const AutowareMap& autoware_map, Color color)
+    autoware_map_msgs::Point point = autoware_map.findByKey(autoware_map::Key<autoware_map_msgs::Point>(signal_light.point_id));
+    if (point.point_id == 0)
+        return marker;
+
+    marker.pose.position = convertPointToGeomPoint(point);
+    marker.pose.orientation = convertAngleToGeomQuaternion(signal_light.horizontal_angle, signal_light.vertical_angle);
+    marker.scale.x = MARKER_SCALE_VECTOR_LENGTH;
+    marker.scale.y = MARKER_SCALE_VECTOR;
+    marker.scale.z = MARKER_SCALE_VECTOR;
+    marker.color = createColorRGBA(color);
+
+    enableMarker(marker);
+    return marker;
+}
+
+visualization_msgs::MarkerArray createSignalMarkerArray(const AutowareMap& autoware_map, Color red_color, Color blue_color,
+                                                        Color yellow_color, Color other_color)
+{
+    visualization_msgs::MarkerArray marker_array;
+    int id = 0;
+    for (const auto& signal_light : autoware_map.findByFilter([] (const autoware_map_msgs::SignalLight &signal){return true; }))
+    {
+        visualization_msgs::Marker vector_marker;
+        switch (signal_light.color_type)
+        {
+            case 1: //RED
+            case 11: //RED flashing
+                vector_marker = createVectorMarkerFromSignal("signal", id++, red_color, autoware_map, signal_light);
+                break;
+            case 2:  //GREEN
+            case 12: //GREEN Flashing
+                vector_marker = createVectorMarkerFromSignal("signal", id++, blue_color, autoware_map, signal_light);
+                break;
+            case 3: //YELLOW
+            case 13: //YELLOW Flashing
+                vector_marker = createVectorMarkerFromSignal("signal", id++, yellow_color, autoware_map, signal_light);
+                break;
+            default:
+                ROS_WARN_STREAM("[createSignalMarkerArray] unknown signal.type: " << signal_light.color_type << " Creating Marker as OTHER.");
+                vector_marker = createVectorMarkerFromSignal("signal", id++, other_color, autoware_map, signal_light);
+                break;
+        }
+        if (isValidMarker(vector_marker))
+            marker_array.markers.push_back(vector_marker);
+        else
+            ROS_ERROR_STREAM("[createSignalMarkerArray] failed createVectorMarker: " << signal_light);
+    }
+    return marker_array;
+}
+
+visualization_msgs::MarkerArray createWaypointMarkerArray(const AutowareMap& autoware_map, Color color, Color stop_color)
 {
     visualization_msgs::MarkerArray marker_array;
     int id = 1;
     visualization_msgs::Marker marker = createMarker("waypoints", id++, visualization_msgs::Marker::POINTS);
+    visualization_msgs::Marker stop_marker = createMarker("waypoints", id++, visualization_msgs::Marker::POINTS);
     for ( auto waypoint : autoware_map.findByFilter([] (const autoware_map_msgs::Waypoint &){return true; }))
     {
-
-        marker.points.push_back(convertPointToGeomPoint(getPointFromWaypointId(waypoint.waypoint_id,autoware_map)));
+        if(waypoint.stop_line == 1) {
+            stop_marker.points.push_back(convertPointToGeomPoint(getPointFromWaypointId(waypoint.waypoint_id,autoware_map)));
+        }
+        else
+        {
+            marker.points.push_back(convertPointToGeomPoint(getPointFromWaypointId(waypoint.waypoint_id,autoware_map)));
+        }
     }
-    marker.scale.x = 0.05;
-    marker.scale.y = 0.05;
+    marker.scale.x = stop_marker.scale.x = MARKER_SCALE_POINT;
+    marker.scale.y = stop_marker.scale.y = MARKER_SCALE_POINT;
     marker.color = createColorRGBA(color);
+    stop_marker.color = createColorRGBA(stop_color);
     enableMarker(marker);
+    enableMarker(stop_marker);
     marker_array.markers.push_back(marker);
-    return marker_array;
+    marker_array.markers.push_back(stop_marker);
     return marker_array;
 }
 
@@ -265,8 +354,8 @@ visualization_msgs::MarkerArray createPointMarkerArray(const AutowareMap& autowa
     {
         marker.points.push_back(convertPointToGeomPoint(point));
     }
-    marker.scale.x = 0.05;
-    marker.scale.y = 0.05;
+    marker.scale.x = MARKER_SCALE_POINT;
+    marker.scale.y = MARKER_SCALE_POINT;
     marker.color = createColorRGBA(color);
     enableMarker(marker);
     marker_array.markers.push_back(marker);

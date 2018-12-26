@@ -285,28 +285,9 @@ int main(int argc, char **argv)
     insertMarkerArray(marker_array, createWaypointMarkerArray(autoware_map, Color::GREEN));
     insertMarkerArray(marker_array, createWaypointSignalRelationMarkerArray(autoware_map, Color::RED));
     insertMarkerArray(marker_array, createWaypointRelationMarkerArray(autoware_map, Color::YELLOW));
-    // insertMarkerArray(marker_array, createGutterMarkerArray(vmap, Color::GRAY, Color::GRAY, Color::GRAY));
-    // insertMarkerArray(marker_array, createCurbMarkerArray(vmap, Color::GRAY));
-    // insertMarkerArray(marker_array, createWhiteLineMarkerArray(vmap, Color::WHITE, Color::YELLOW));
-    // insertMarkerArray(marker_array, createStopLineMarkerArray(vmap, Color::WHITE));
-    // insertMarkerArray(marker_array, createZebraZoneMarkerArray(vmap, Color::WHITE));
-    // insertMarkerArray(marker_array, createCrossWalkMarkerArray(vmap, Color::WHITE));
-    // insertMarkerArray(marker_array, createRoadMarkMarkerArray(vmap, Color::WHITE));
-    // insertMarkerArray(marker_array, createRoadPoleMarkerArray(vmap, Color::GRAY));
-    // insertMarkerArray(marker_array, createRoadSignMarkerArray(vmap, Color::GREEN, Color::GRAY));
-    // insertMarkerArray(marker_array, createSignalMarkerArray(vmap, Color::RED, Color::BLUE, Color::YELLOW, Color::CYAN,
-    //                                                         Color::GRAY));
-    // insertMarkerArray(marker_array, createStreetLightMarkerArray(vmap, Color::YELLOW, Color::GRAY));
-    // insertMarkerArray(marker_array, createUtilityPoleMarkerArray(vmap, Color::GRAY));
-    // insertMarkerArray(marker_array, createGuardRailMarkerArray(vmap, Color::LIGHT_BLUE));
-    // insertMarkerArray(marker_array, createSideWalkMarkerArray(vmap, Color::GRAY));
-    // insertMarkerArray(marker_array, createDriveOnPortionMarkerArray(vmap, Color::LIGHT_CYAN));
-    // insertMarkerArray(marker_array, createCrossRoadMarkerArray(vmap, Color::LIGHT_GREEN));
-    // insertMarkerArray(marker_array, createSideStripMarkerArray(vmap, Color::GRAY));
-    // insertMarkerArray(marker_array, createCurveMirrorMarkerArray(vmap, Color::MAGENTA, Color::GRAY));
-    // insertMarkerArray(marker_array, createWallMarkerArray(vmap, Color::LIGHT_YELLOW));
-    // insertMarkerArray(marker_array, createFenceMarkerArray(vmap, Color::LIGHT_RED));
-    // insertMarkerArray(marker_array, createRailCrossingMarkerArray(vmap, Color::LIGHT_MAGENTA));
+    insertMarkerArray(marker_array, createSignalMarkerArray(autoware_map));
+    insertMarkerArray(marker_array, createAreaMarkerArray(autoware_map, Color::WHITE));
+
     marker_array_pub.publish(marker_array);
 
 
