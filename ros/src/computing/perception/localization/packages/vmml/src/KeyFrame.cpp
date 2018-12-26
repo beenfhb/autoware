@@ -305,3 +305,21 @@ KeyFrame::debugKeyPoints() const
 }
 
 
+void
+KeyFrame::matchMapPoints (
+	const BaseFrame &frame,
+	cv::Ptr<cv::DescriptorMatcher> matcher,
+	std::map<mpid, kpid> &featurePairs)
+const
+{
+	cv::Mat mmask(parentMap->framePoints[id].size(), frame.numOfKeyPoints(), CV_8UC1, 0);
+	cv::Mat ones(frame.numOfKeyPoints(), mmask.type(), 0xff);
+
+	for (auto mpIdPair: parentMap->framePoints[id]) {
+		mpid pointId = mpIdPair.first;
+		kpid pointIdKf = mpIdPair.second;
+		ones.copyTo(mmask.row(pointIdKf));
+	}
+
+	// XXX: Unfinished
+}

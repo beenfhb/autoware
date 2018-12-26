@@ -92,6 +92,12 @@ public:
 		const kpidField &kp1list, const kpidField &kp2list
 	);
 
+	void matchMapPoints (
+		const BaseFrame &frame,
+		cv::Ptr<cv::DescriptorMatcher> matcher,
+		std::map<mpid, kpid> &featurePairs)
+	const;
+
 	static void
 	match (const KeyFrame &k1,
 			const Frame &frame,
