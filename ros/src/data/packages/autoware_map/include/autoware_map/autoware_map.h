@@ -249,6 +249,9 @@ public:
     void subscribe(ros::NodeHandle& nh, category_t category, const ros::Duration& timeout);
     void subscribe(ros::NodeHandle& nh, category_t category, const size_t max_retries);
 
+    template<typename T>
+    T findById(const int id) const;
+
     Lane findByKey(const autoware_map::Key<Lane>& key) const;
     LaneAttrRelation findByKey(const autoware_map::Key<LaneAttrRelation>& key) const;
     LaneRelation findByKey(const autoware_map::Key<LaneRelation>& key) const;
@@ -282,6 +285,8 @@ public:
     std::vector<WaypointLaneRelation> findByFilter(const Filter<WaypointLaneRelation>& filter) const;
     std::vector<WaypointRelation> findByFilter(const Filter<WaypointRelation>& filter) const;
     std::vector<WaypointSignalRelation> findByFilter(const Filter<WaypointSignalRelation>& filter) const;
+
+
 
     bool hasSubscribed(category_t category) const;
     category_t hasSubscribed() const;

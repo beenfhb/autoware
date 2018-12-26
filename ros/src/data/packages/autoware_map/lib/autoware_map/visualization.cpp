@@ -16,9 +16,20 @@ const double MARKER_SCALE_POINT = 0.1;
 const double MARKER_SCALE_VECTOR = 0.08;
 const double MARKER_SCALE_VECTOR_LENGTH = 0.64;
 
-
-
 using autoware_map::AutowareMap;
+using autoware_map_msgs::Area;
+using autoware_map_msgs::Lane;
+using autoware_map_msgs::Point;
+using autoware_map_msgs::Route;
+using autoware_map_msgs::Signal;
+using autoware_map_msgs::SignalLight;
+using autoware_map_msgs::Wayarea;
+using autoware_map_msgs::Waypoint;
+using autoware_map_msgs::WaypointRelation;
+using autoware_map_msgs::WaypointSignalRelation;
+
+
+
 std_msgs::ColorRGBA createColorRGBA(Color color)
 {
     const double COLOR_VALUE_MIN = 0.0;
@@ -146,7 +157,7 @@ visualization_msgs::Marker createMarker(const std::string& ns, int id, int type)
 // visualization_msgs::Marker createAreaMarkerArray(const std::string& ns, int id, Color color, const AutowareMap& amap,
 //   const Area& area){
 //     visualization_msgs::MarkerArray marker_array;
-//     for (const auto& area : amap.findByFilter([] (const autoware_map_msgs::Area& a){return true; }))
+//     for (const auto& area : amap.findByFilter([] (const Area& a){return true; }))
 //     {
 //         if (area.area_id == 0 || area.point_ids.empty())
 //         continue;
@@ -172,7 +183,7 @@ visualization_msgs::Marker createMarker(const std::string& ns, int id, int type)
 //                                             const Lane& lane)
 // {
 //     visualization_msgs::MarkerArray marker_array;
-//     for (const auto lane : amap.findByFilter([] (const autoware_map_msgs::Lane& a){return true; }))
+//     for (const auto lane : amap.findByFilter([] (const Lane& a){return true; }))
 //     {
 //         if (area.area_id == 0 || area.point_ids.empty())
 //           continue;
@@ -197,14 +208,14 @@ visualization_msgs::MarkerArray createAreaMarkerArray(const AutowareMap& autowar
 {
     visualization_msgs::MarkerArray marker_array;
     int id = 0;
-    for (const auto& area : autoware_map.findByFilter([] (const autoware_map_msgs::Area &area){return true; }))
+    for (const auto& area : autoware_map.findByFilter([] (const Area &area){return true; }))
     {
         visualization_msgs::Marker line_strip = createMarker("area", id++, visualization_msgs::Marker::LINE_STRIP);;
         for (auto point_id: area.point_ids){
-          autoware_map_msgs::Point point = autoware_map.findByKey(autoware_map::Key<autoware_map_msgs::Point>(point_id));
+          Point point = autoware_map.findById<Point>(point_id);
           line_strip.points.push_back(convertPointToGeomPoint(point));
         }
-        autoware_map_msgs::Point closing_point = autoware_map.findByKey(autoware_map::Key<autoware_map_msgs::Point>(area.point_ids.front()));
+        Point closing_point = autoware_map.findById<Point>(area.point_ids.front());
 
         line_strip.points.push_back(convertPointToGeomPoint(closing_point));
         line_strip.scale.x = MARKER_SCALE_POINT;
@@ -217,11 +228,11 @@ visualization_msgs::MarkerArray createAreaMarkerArray(const AutowareMap& autowar
 
 
 visualization_msgs::Marker createVectorMarkerFromSignal(const std::string& ns, int id, Color color, const AutowareMap& autoware_map,
-                                              const autoware_map_msgs::SignalLight signal_light)
+                                              const SignalLight signal_light)
 {
     visualization_msgs::Marker marker = createMarker(ns, id, visualization_msgs::Marker::ARROW);
 
-    autoware_map_msgs::Point point = autoware_map.findByKey(autoware_map::Key<autoware_map_msgs::Point>(signal_light.point_id));
+    Point point = autoware_map.findById<Point>(signal_light.point_id);
     if (point.point_id == 0)
         return marker;
 
@@ -241,7 +252,7 @@ visualization_msgs::MarkerArray createSignalMarkerArray(const AutowareMap& autow
 {
     visualization_msgs::MarkerArray marker_array;
     int id = 0;
-    for (const auto& signal_light : autoware_map.findByFilter([] (const autoware_map_msgs::SignalLight &signal){return true; }))
+    for (const auto& signal_light : autoware_map.findByFilter([] (const SignalLight &signal){return true; }))
     {
         visualization_msgs::Marker vector_marker;
         switch (signal_light.color_type)
@@ -277,7 +288,7 @@ visualization_msgs::MarkerArray createWaypointMarkerArray(const AutowareMap& aut
     int id = 1;
     visualization_msgs::Marker marker = createMarker("waypoints", id++, visualization_msgs::Marker::POINTS);
     visualization_msgs::Marker stop_marker = createMarker("waypoints", id++, visualization_msgs::Marker::POINTS);
-    for ( auto waypoint : autoware_map.findByFilter([] (const autoware_map_msgs::Waypoint &){return true; }))
+    for ( auto waypoint : autoware_map.findByFilter([] (const Waypoint &){return true; }))
     {
         if(waypoint.stop_line == 1) {
             stop_marker.points.push_back(convertPointToGeomPoint(getPointFromWaypointId(waypoint.waypoint_id,autoware_map)));
@@ -302,14 +313,15 @@ visualization_msgs::MarkerArray createWaypointSignalRelationMarkerArray(const Au
 {
     visualization_msgs::MarkerArray marker_array;
     int id = 1;
-    for ( auto relation : autoware_map.findByFilter([] (const autoware_map_msgs::WaypointSignalRelation &){return true; }))
+    for ( auto relation : autoware_map.findByFilter([] (const WaypointSignalRelation &){return true; }))
     {
-        autoware_map_msgs::Waypoint waypoint = autoware_map.findByKey(autoware_map::Key<autoware_map_msgs::Waypoint>(relation.waypoint_id));
-        autoware_map_msgs::Point waypoint_point = autoware_map.findByKey(autoware_map::Key<autoware_map_msgs::Point>(waypoint.point_id));
-        std::vector<autoware_map_msgs::SignalLight> signals = autoware_map.findByFilter([&](autoware_map_msgs::SignalLight light){return light.signal_id == relation.signal_id; });
+        Waypoint waypoint = autoware_map.findById<Waypoint>(relation.waypoint_id);
+        // Waypoint waypoint = autoware_map.findByKey(autoware_map::Key<Waypoint>(relation.waypoint_id));
+        Point waypoint_point = autoware_map.findById<Point>(waypoint.point_id);
+        std::vector<SignalLight> signals = autoware_map.findByFilter([&](SignalLight light){return light.signal_id == relation.signal_id; });
         if(!signals.empty())
         {
-            autoware_map_msgs::Point signal_point = autoware_map.findByKey(autoware_map::Key<autoware_map_msgs::Point>(signals.front().point_id));
+            Point signal_point = autoware_map.findById<Point>(signals.front().point_id);
             visualization_msgs::Marker marker = createMarker("waypoint_signal_relation", id++, visualization_msgs::Marker::ARROW );
             marker.points.push_back(convertPointToGeomPoint(signal_point));
             marker.points.push_back(convertPointToGeomPoint(waypoint_point));
@@ -327,10 +339,10 @@ visualization_msgs::MarkerArray createWaypointRelationMarkerArray(const Autoware
 {
     visualization_msgs::MarkerArray marker_array;
     int id = 1;
-    for ( auto relation : autoware_map.findByFilter([] (const autoware_map_msgs::WaypointRelation &){return true; }))
+    for ( auto relation : autoware_map.findByFilter([] (const WaypointRelation &){return true; }))
     {
-        autoware_map_msgs::Point point = getPointFromWaypointId(relation.waypoint_id, autoware_map);
-        autoware_map_msgs::Point next_point = getPointFromWaypointId(relation.next_waypoint_id, autoware_map);
+        Point point = getPointFromWaypointId(relation.waypoint_id, autoware_map);
+        Point next_point = getPointFromWaypointId(relation.next_waypoint_id, autoware_map);
 
         visualization_msgs::Marker marker = createMarker("waypoint_relations", id++, visualization_msgs::Marker::ARROW );
         marker.points.push_back(convertPointToGeomPoint(point));
@@ -350,7 +362,7 @@ visualization_msgs::MarkerArray createPointMarkerArray(const AutowareMap& autowa
     visualization_msgs::MarkerArray marker_array;
     int id = 1;
     visualization_msgs::Marker marker = createMarker("points", id++, visualization_msgs::Marker::POINTS);
-    for ( auto point : autoware_map.findByFilter([] (const autoware_map_msgs::Point &){return true; }))
+    for ( auto point : autoware_map.findByFilter([] (const Point &){return true; }))
     {
         marker.points.push_back(convertPointToGeomPoint(point));
     }

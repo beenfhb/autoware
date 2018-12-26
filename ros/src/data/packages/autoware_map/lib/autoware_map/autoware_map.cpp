@@ -463,6 +463,28 @@ void AutowareMap::subscribe(ros::NodeHandle& nh, category_t category, const size
     }
 }
 
+template<typename T> // for the member template
+T AutowareMap::findById(const int id) const
+{
+  return findByKey(Key<T>(id));
+}
+template Lane AutowareMap::findById<Lane>(int) const;
+template LaneAttrRelation AutowareMap::findById<LaneAttrRelation>(int) const;
+template LaneRelation AutowareMap::findById<LaneRelation>(int) const;
+template LaneSignalLightRelation AutowareMap::findById<LaneSignalLightRelation>(int) const;
+template LaneChangeRelation AutowareMap::findById<LaneChangeRelation>(int) const;
+template OppositeLaneRelation AutowareMap::findById<OppositeLaneRelation>(int) const;
+template Point AutowareMap::findById<Point>(int) const;
+template Area AutowareMap::findById<Area>(int) const;
+template Route AutowareMap::findById<Route>(int) const;
+template Signal AutowareMap::findById<Signal>(int) const;
+template SignalLight AutowareMap::findById<SignalLight>(int) const;
+template Wayarea AutowareMap::findById<Wayarea>(int) const;
+template Waypoint AutowareMap::findById<Waypoint>(int) const;
+template WaypointRelation AutowareMap::findById<WaypointRelation>(int) const;
+template WaypointLaneRelation AutowareMap::findById<WaypointLaneRelation>(int) const;
+template WaypointSignalRelation AutowareMap::findById<WaypointSignalRelation>(int) const;
+
 
 Lane AutowareMap::findByKey(const Key<Lane>& key) const
 {

@@ -28,6 +28,14 @@ int convertESPG2Ref(int epsg)
     }
     return 0;
 }
+double convertDecimalToDDMMSS(const double decimal)
+{
+    int degree, minutes,seconds;
+    degree = floor(decimal);
+    minutes = floor( (decimal - degree )*60);
+    seconds = floor( (decimal - degree - minutes*1.0/60) * 3600);
+    return degree + minutes * 0.01 + seconds * 0.0001;
+}
 void insertMarkerArray(visualization_msgs::MarkerArray& a1, const visualization_msgs::MarkerArray& a2)
 {
     a1.markers.insert(a1.markers.end(), a2.markers.begin(), a2.markers.end());
@@ -337,14 +345,6 @@ void createCrossWalks(std::vector<autoware_map_msgs::LaneAttrRelation> awm_lane_
             vmap_cross_walks.push_back(cross_walk);
         }
     }
-}
-double convertDecimalToDDMMSS(const double decimal)
-{
-    int degree, minutes,seconds;
-    degree = floor(decimal);
-    minutes = floor( (decimal - degree )*60);
-    seconds = floor( (decimal - degree - minutes*1.0/60) * 3600);
-    return degree + minutes * 0.01 + seconds * 0.0001;
 }
 
 void createPoints(std::vector<autoware_map_msgs::Point> awm_points, std::vector<vector_map_msgs::Point> &vmap_points)
@@ -878,6 +878,9 @@ int main(int argc, char **argv)
                                                      autoware_map::Category::WAYPOINT_RELATION |
                                                      autoware_map::Category::WAYPOINT_LANE_RELATION |
                                                      autoware_map::Category::WAYPOINT_SIGNAL_RELATION;
+
+
+    ROS_INFO_STREAM("Waiting for the map to be ready");
 
     awm.subscribe(nh, awm_required_category, ros::Duration(5));
     if(awm.hasSubscribed(awm_required_category) == false)
