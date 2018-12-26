@@ -701,7 +701,12 @@ private:
 	void map_create_cmd (const stringTokens &cmd)
 	{
 		ptime ptstart, ptstop;
-		double start, stop, duration;
+		InputOffsetPosition start, stop;
+		double duration;
+		int numOfFrames;
+		bool
+			useAllFrames = false,
+			useIntPosition = false;
 
 		MapBuilder2 mapBuilder;
 		mapBuilder.setMask(loadedDataset->getMask());
@@ -718,23 +723,43 @@ private:
 		}
 
 		if (cmd.size() >= 2) {
-			start = stod(cmd[0]);
-/*
 			start = InputOffsetPosition::parseString(cmd[0]);
 			stop = InputOffsetPosition::parseString(cmd[1]);
-*/
-			stop = stod(cmd[1]);
-			duration = stop - start;
 
-			loadedDataset->convertStartDurationToTime(start, duration, ptstart, ptstop);
+			if (start.asPosition==-1 and stop.asPosition==-1) {
+				duration = stop.asSecondsFromStart - start.asSecondsFromStart;
+				loadedDataset->convertStartDurationToTime(start.asSecondsFromStart, duration, ptstart, ptstop);
+				numOfFrames = loadedDataset->size(ptstart, ptstop);
+				useIntPosition = false;
+			}
+
+			else if(start.asSecondsFromStart==-1 and stop.asSecondsFromStart==-1) {
+				try {
+					ptstart = loadedDataset->get(start.asPosition)->getTimestamp();
+					ptstop  = loadedDataset->get(stop .asPosition)->getTimestamp();
+					duration = toSeconds(ptstop-ptstart);
+					numOfFrames = stop.asPosition - start.asPosition;
+					useIntPosition = true;
+				} catch(exception &e) {
+					debug("Requested position(s) does not exist");
+					return;
+				}
+			}
+
+			else {
+				debug("Invalid position specification");
+				return;
+			}
 		}
+
 		else {
 			ptstart = loadedDataset->get(0)->getTimestamp();
 			ptstop = loadedDataset->last()->getTimestamp();
-			duration = toSeconds((ptstart-ptstop));
+			duration = toSeconds((ptstop-ptstart));
+			numOfFrames = loadedDataset->size();
+			useAllFrames = true;
 		}
 
-		int numOfFrames = loadedDataset->size(ptstart, ptstop);
 		debug ("About to run mapping with duration "+to_string(duration) +" seconds, " +to_string(numOfFrames) + " frames");
 
 		// build map here
@@ -745,6 +770,7 @@ private:
 		dataItemId currentItemId;
 		int _callbackFrameId = 1;
 
+		/* KeyFrame Callback */
 		MapBuilder2::frameCallback frmCallback =
 		[&] (const InputFrame &f)
 		{
@@ -754,7 +780,15 @@ private:
 		};
 		mapBuilder.registerFrameCallback(frmCallback);
 
-		mapBuilder.runFromDataset(loadedDataset, ptstart, ptstop);
+		if (useAllFrames==true) {
+			mapBuilder.runFromDataset(loadedDataset, numeric_limits<dataItemId>::max(), numeric_limits<dataItemId>::max());
+		}
+		else {
+			if (useIntPosition==true)
+				mapBuilder.runFromDataset(loadedDataset, start.asPosition, stop.asPosition);
+			else
+				mapBuilder.runFromDataset(loadedDataset, ptstart, ptstop);
+		}
 
 		delete(imgViewer);
 		// Stop here

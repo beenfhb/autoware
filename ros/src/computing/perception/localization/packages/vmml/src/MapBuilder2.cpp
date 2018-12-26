@@ -191,8 +191,8 @@ MapBuilder2::runFromDataset(GenericDataset::Ptr sourceDs, const ptime startTime,
 		throw runtime_error("Requested times are outside of dataset range");
 
 	dataItemId
-		startId = sourceDataset->getLowerBound(startTime),
-		stopId = sourceDataset->getLowerBound(stopTime);
+		startId = sourceDs->getLowerBound(startTime),
+		stopId = sourceDs->getLowerBound(stopTime);
 
 	return runFromDataset(sourceDs, startId, stopId);
 }
@@ -203,7 +203,13 @@ MapBuilder2::runFromDataset(GenericDataset::Ptr sourceDs, dataItemId startPos, d
 {
 	sourceDataset = sourceDs;
 
-	for (auto currentId=startPos; currentId<=stopPos; ++stopPos) {
+	if (startPos==std::numeric_limits<dataItemId>::max() and
+		stopPos==std::numeric_limits<dataItemId>::max()) {
+		startPos = 0;
+		stopPos = sourceDataset->size()-1;
+	}
+
+	for (auto currentId=startPos; currentId<=stopPos; ++currentId) {
 		InputFrame cFrame = createInputFrameX (sourceDataset->get(currentId));
 		this->input(cFrame);
 	}
@@ -222,6 +228,20 @@ const
 		stopId = sourceDs->getLowerBound(stopTime);
 
 	for (auto currentId=startId; currentId<=stopId; ++currentId) {
+		auto curFrame = sourceDs->get(currentId);
+		if (curFrame->getPose().isValid()==false)
+			return false;
+	}
+
+	return true;
+}
+
+
+bool
+MapBuilder2::checkDataPoints (GenericDataset::ConstPtr sourceDs, const dataItemId startPos, const dataItemId stopPos)
+const
+{
+	for (auto currentId=startPos; currentId<=stopPos; ++currentId) {
 		auto curFrame = sourceDs->get(currentId);
 		if (curFrame->getPose().isValid()==false)
 			return false;

@@ -85,16 +85,23 @@ public:
 
 	void runFromDataset
 		(GenericDataset::Ptr sourceDs,
-		const ptime startTime = MIN_TIME,
-		const ptime stopTime = MAX_TIME);
+		const ptime startTime,
+		const ptime stopTime);
 
 	void runFromDataset
-		(GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos);
+		(GenericDataset::Ptr sourceDs,
+			dataItemId startPos=std::numeric_limits<dataItemId>::max(),
+			dataItemId stopPos=std::numeric_limits<dataItemId>::max()
+		);
 
 	void setMask (const cv::Mat &m);
 
 	bool
 	checkDataPoints (GenericDataset::ConstPtr sourceDs, const ptime startTime, const ptime stopTime)
+	const;
+
+	bool
+	checkDataPoints (GenericDataset::ConstPtr sourceDs, const dataItemId startPos, const dataItemId stopPos)
 	const;
 
 
