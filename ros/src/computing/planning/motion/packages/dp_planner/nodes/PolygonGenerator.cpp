@@ -10,67 +10,68 @@
 namespace PlannerXNS
 {
 
-
-PolygonGenerator::PolygonGenerator() {
-	// TODO Auto-generated constructor stub
+PolygonGenerator::PolygonGenerator()
+{
+  // TODO Auto-generated constructor stub
 
 }
 
-PolygonGenerator::~PolygonGenerator() {
-	// TODO Auto-generated destructor stub
+PolygonGenerator::~PolygonGenerator()
+{
+  // TODO Auto-generated destructor stub
 }
 
 PlannerHNS::GPSPoint PolygonGenerator::CalculateCentroid(const pcl::PointCloud<pcl::PointXYZ>& cluster)
 {
-	PlannerHNS::GPSPoint c;
+  PlannerHNS::GPSPoint c;
 
-	for(unsigned int i=0; i< cluster.points.size(); i++)
-	{
-		c.x += cluster.points.at(i).x;
-		c.y += cluster.points.at(i).y;
-	}
+  for (unsigned int i = 0; i < cluster.points.size(); i++)
+  {
+    c.x += cluster.points.at(i).x;
+    c.y += cluster.points.at(i).y;
+  }
 
-	c.x = c.x/cluster.points.size();
-	c.y = c.y/cluster.points.size();
+  c.x = c.x / cluster.points.size();
+  c.y = c.y / cluster.points.size();
 
-	return c;
+  return c;
 }
 
-std::vector<PlannerHNS::GPSPoint> PolygonGenerator::EstimateClusterPolygon(const pcl::PointCloud<pcl::PointXYZ>& cluster, const PlannerHNS::GPSPoint& original_centroid )
+std::vector<PlannerHNS::GPSPoint> PolygonGenerator::EstimateClusterPolygon(
+    const pcl::PointCloud<pcl::PointXYZ>& cluster, const PlannerHNS::GPSPoint& original_centroid)
 {
-	std::vector<QuarterView> quarters = CreateQuarterViews(QUARTERS_NUMBER);
+  std::vector<QuarterView> quarters = CreateQuarterViews(QUARTERS_NUMBER);
 
+  for (unsigned int i = 0; i < cluster.points.size(); i++)
+  {
+    PlannerHNS::WayPoint p;
+    p.pos.x = cluster.points.at(i).x;
+    p.pos.y = cluster.points.at(i).y;
+    p.pos.z = original_centroid.z;
 
-	for(unsigned int i=0; i< cluster.points.size(); i++)
-	{
-		PlannerHNS::WayPoint p;
-		p.pos.x = cluster.points.at(i).x;
-		p.pos.y = cluster.points.at(i).y;
-		p.pos.z = original_centroid.z;
+    PlannerHNS::GPSPoint v(p.pos.x - original_centroid.x, p.pos.y - original_centroid.y, p.pos.z, 0);
+    p.cost = pointNorm(v);
+    p.pos.a = op_utility_ns::UtilityH::FixNegativeAngle(atan2(v.y, v.x)) * (180. / M_PI);
 
-		PlannerHNS::GPSPoint v(p.pos.x - original_centroid.x , p.pos.y - original_centroid.y,p.pos.z,0);
-		p.cost = pointNorm(v);
-		p.pos.a = UtilityHNS::UtilityH::FixNegativeAngle(atan2(v.y, v.x))*(180. / M_PI);
+    for (unsigned int j = 0; j < quarters.size(); j++)
+    {
+      if (quarters.at(j).UpdateQuarterView(p))
+        break;
+    }
+  }
 
-		for(unsigned int j = 0 ; j < quarters.size(); j++)
-		{
-			if(quarters.at(j).UpdateQuarterView(p))
-				break;
-		}
-	}
+  std::vector<PlannerHNS::GPSPoint> polygon;
 
-	std::vector<PlannerHNS::GPSPoint> polygon;
+  for (unsigned int j = 0; j < quarters.size(); j++)
+  {
 
-	for(unsigned int j = 0 ; j < quarters.size(); j++)
-	{
-
-		PlannerHNS::WayPoint wp;
-		int nPoints = quarters.at(j).GetMaxPoint(wp);
-		if(nPoints >= MIN_POINTS_PER_QUARTER)
-		{
-			polygon.push_back(wp.pos);
-		}
-	}
+    PlannerHNS::WayPoint wp;
+    int nPoints = quarters.at(j).GetMaxPoint(wp);
+    if (nPoints >= MIN_POINTS_PER_QUARTER)
+    {
+      polygon.push_back(wp.pos);
+    }
+  }
 
 //	//Fix Resolution:
 //	bool bChange = true;
@@ -96,26 +97,26 @@ std::vector<PlannerHNS::GPSPoint> PolygonGenerator::EstimateClusterPolygon(const
 //		}
 //	}
 
-	return polygon;
+  return polygon;
 
 }
 
 std::vector<QuarterView> PolygonGenerator::CreateQuarterViews(const int& nResolution)
 {
-	std::vector<QuarterView> quarters;
-	if(nResolution <= 0)
-		return quarters;
+  std::vector<QuarterView> quarters;
+  if (nResolution <= 0)
+    return quarters;
 
-	double range = 360.0 / nResolution;
-	double angle = 0;
-	for(int i = 0; i < nResolution; i++)
-	{
-		QuarterView q(angle, angle+range, i);
-		quarters.push_back(q);
-		angle+=range;
-	}
+  double range = 360.0 / nResolution;
+  double angle = 0;
+  for (int i = 0; i < nResolution; i++)
+  {
+    QuarterView q(angle, angle + range, i);
+    quarters.push_back(q);
+    angle += range;
+  }
 
-	return quarters;
+  return quarters;
 }
 
 void CheckConvexPoligon(std::vector<PlannerHNS::WayPoint>& polygon)

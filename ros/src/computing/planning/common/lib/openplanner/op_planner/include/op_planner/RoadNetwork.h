@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include "op_utility/UtilityH.h"
+#include "op_utility/utility.h"
 #include "float.h"
 
 #define OPENPLANNER_ENABLE_LOGS
@@ -360,6 +360,7 @@ public:
 	double  	totalReward;
 	double  	collisionCost;
 	double 		laneChangeCost;
+	double          width;
 	int 		laneId;
 	int 		id;
 	int 		LeftPointId;
@@ -406,7 +407,7 @@ public:
 		state = INITIAL_STATE;
 		beh_state = BEH_STOPPING_STATE;
 		iOriginalIndex = 0;
-
+		width = 0;
 		gid = 0;
 		originalMapID = -1;
 	}
@@ -438,7 +439,7 @@ public:
 		iOriginalIndex = 0;
 		state = INITIAL_STATE;
 		beh_state = BEH_STOPPING_STATE;
-
+		width = 0;
 		gid = 0;
 		originalMapID = -1;
 	}

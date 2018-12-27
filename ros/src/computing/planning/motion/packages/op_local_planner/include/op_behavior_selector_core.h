@@ -63,7 +63,7 @@
 
 #include "op_planner/PlannerCommonDef.h"
 #include "op_planner/DecisionMaker.h"
-#include "op_utility/DataRW.h"
+#include "op_utility/data_rw.h"
 
 
 namespace BehaviorGeneratorNS
@@ -115,6 +115,8 @@ protected: //Planning Related variables
 	geometry_msgs::TwistStamped m_Twist_raw;
 	geometry_msgs::TwistStamped m_Twist_cmd;
 	autoware_msgs::ControlCommand m_Ctrl_cmd;
+
+	std::string m_ExperimentFolderName;
 
 	//ROS messages (topics)
 	ros::NodeHandle nh;
@@ -172,7 +174,7 @@ public:
 
 	//Mapping Section
 
-	UtilityHNS::MapRaw m_MapRaw;
+	op_utility_ns::MapRaw m_MapRaw;
 
 	ros::Subscriber sub_lanes;
 	ros::Subscriber sub_points;

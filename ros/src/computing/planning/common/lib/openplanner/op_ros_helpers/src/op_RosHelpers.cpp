@@ -57,8 +57,11 @@ visualization_msgs::Marker RosHelpers::CreateGenMarker(const double& x, const do
 	mkr.ns = ns;
 	mkr.type = type;
 	mkr.action = visualization_msgs::Marker::ADD;
+	if(type == visualization_msgs::Marker::ARROW)
+		mkr.scale.y = scale/2.0;
+	else
+		mkr.scale.y = scale;
 	mkr.scale.x = scale;
-	mkr.scale.y = scale;
 	mkr.scale.z = scale;
 	mkr.color.a = 0.8;
 	mkr.color.r = r;
@@ -285,10 +288,11 @@ int RosHelpers::ConvertTrackedObjectsMarkers(const PlannerHNS::WayPoint& currSta
 	return i_next_id +1;
 }
 
-void RosHelpers::CreateCircleMarker(const PlannerHNS::WayPoint& _center, const double& radius, const int& start_id, visualization_msgs::Marker& circle_points)
+void RosHelpers::CreateCircleMarker(const PlannerHNS::WayPoint& _center, const double& radius, const double& r, const double& g, const double& b, const int& start_id, const std::string& name_space, visualization_msgs::Marker& circle_points)
 {
-	circle_points = CreateGenMarker(0,0,0,0,1,1,1,0.2,start_id,"Detection_Circles", visualization_msgs::Marker::LINE_STRIP);
-	for (float i = 0; i < M_PI*2.0+0.05; i+=0.05)
+	//"Detection_Circles"
+	circle_points = CreateGenMarker(0,0,0,0,r,g,b,0.1,start_id,name_space, visualization_msgs::Marker::LINE_STRIP);
+	for (float i = 0; i < M_PI*2.0+0.1; i+=0.1)
 	{
 		geometry_msgs::Point point;
 		point.x = _center.pos.x + (radius * cos(i));
@@ -443,7 +447,7 @@ void RosHelpers::ConvertFromPlannerHToAutowarePathFormat(const std::vector<Plann
 		wp.pose.pose.position.x = path.at(i).pos.x;
 		wp.pose.pose.position.y = path.at(i).pos.y;
 		wp.pose.pose.position.z = path.at(i).pos.z;
-		wp.pose.pose.orientation = tf::createQuaternionMsgFromYaw(UtilityHNS::UtilityH::SplitPositiveAngle(path.at(i).pos.a));
+		wp.pose.pose.orientation = tf::createQuaternionMsgFromYaw(op_utility_ns::UtilityH::SplitPositiveAngle(path.at(i).pos.a));
 		wp.twist.twist.linear.x = path.at(i).v;
 		if(path.at(i).bDir == FORWARD_DIR)
 			wp.dtlane.dir = 0;
@@ -531,32 +535,32 @@ void RosHelpers::ConvertParticles(std::vector<PlannerHNS::WayPoint>& points, vis
 		if(bOld)
 		{
 			if(points.at(i).bDir == PlannerHNS::STANDSTILL_DIR)
-				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,0,0,0.25,i,"Particles", visualization_msgs::Marker::CUBE);
+				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,0,0,0.1,i,"Particles", visualization_msgs::Marker::CUBE);
 			else if(points.at(i).bDir == PlannerHNS::FORWARD_DIR)
-				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,1,1,0.25,i,"Particles", visualization_msgs::Marker::CUBE);
+				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,1,1,0.1,i,"Particles", visualization_msgs::Marker::CUBE);
 			else if(points.at(i).bDir == PlannerHNS::FORWARD_RIGHT_DIR)
-				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,0,1,0,0.25,i,"Particles", visualization_msgs::Marker::CUBE);
+				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,0,1,0,0.1,i,"Particles", visualization_msgs::Marker::CUBE);
 			else if(points.at(i).bDir == PlannerHNS::FORWARD_LEFT_DIR)
-				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,0,0,1,0.25,i,"Particles", visualization_msgs::Marker::CUBE);
+				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,0,0,1,0.1,i,"Particles", visualization_msgs::Marker::CUBE);
 			else if(points.at(i).bDir == PlannerHNS::BACKWARD_DIR)
-				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,0,1,0.25,i,"Particles", visualization_msgs::Marker::CUBE);
+				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,0,1,0.1,i,"Particles", visualization_msgs::Marker::CUBE);
 			else
-				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,1,0,0.25,i,"Particles", visualization_msgs::Marker::CUBE);
+				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,1,0,0.1,i,"Particles", visualization_msgs::Marker::CUBE);
 		}
 		else
 		{
 			if(points.at(i).bDir == PlannerHNS::STANDSTILL_DIR)
-				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,0,0,0.25,i,"Particles", visualization_msgs::Marker::ARROW);
+				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,0,0,0.15,i,"Particles", visualization_msgs::Marker::ARROW);
 			else if(points.at(i).bDir == PlannerHNS::FORWARD_DIR)
-				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,1,1,0.25,i,"Particles", visualization_msgs::Marker::ARROW);
+				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,1,1,0.15,i,"Particles", visualization_msgs::Marker::ARROW);
 			else if(points.at(i).bDir == PlannerHNS::FORWARD_RIGHT_DIR)
-				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,0,1,0,0.25,i,"Particles", visualization_msgs::Marker::ARROW);
+				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,0,1,0,0.15,i,"Particles", visualization_msgs::Marker::ARROW);
 			else if(points.at(i).bDir == PlannerHNS::FORWARD_LEFT_DIR)
-				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,0,0,1,0.25,i,"Particles", visualization_msgs::Marker::ARROW);
+				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,0,0,1,0.15,i,"Particles", visualization_msgs::Marker::ARROW);
 			else if(points.at(i).bDir == PlannerHNS::BACKWARD_DIR)
-				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,0,1,0.25,i,"Particles", visualization_msgs::Marker::ARROW);
+				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,0,1,0.15,i,"Particles", visualization_msgs::Marker::ARROW);
 			else
-				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,1,0,0.25,i,"Particles", visualization_msgs::Marker::ARROW);
+				mkr = CreateGenMarker(points.at(i).pos.x, points.at(i).pos.y,points.at(i).pos.z,points.at(i).pos.a,1,1,0,0.15,i,"Particles", visualization_msgs::Marker::ARROW);
 		}
 
 		//mkr.scale.x = 0.3;
@@ -675,6 +679,28 @@ void RosHelpers::TrajectoriesToMarkers(const std::vector<std::vector<std::vector
 			count++;
 		}
 	}
+}
+
+void RosHelpers::TrajectoryToMarkersWithCircles(const std::vector<PlannerHNS::WayPoint>& path, const double& r_path, const double& g_path, const double& b_path, const double& r_circle, const double& g_circle, const double& b_circle, const double& radius, visualization_msgs::MarkerArray& markerArray)
+{
+	visualization_msgs::Marker path_part, circle_part;
+
+	int count = 0;
+	path_part = CreateGenMarker(0,0,0,0,r_path,g_path,b_path,0.1,count,"Path_Part", visualization_msgs::Marker::LINE_STRIP);
+	for (unsigned int i = 0; i < path.size(); i++)
+	{
+		  geometry_msgs::Point point;
+		  point.x = path.at(i).pos.x;
+		  point.y = path.at(i).pos.y;
+		  point.z = path.at(i).pos.z;
+		  path_part.points.push_back(point);
+
+		  count++;
+		  CreateCircleMarker(path.at(i), radius, r_circle, g_circle, b_circle, count, "circle_part", circle_part);
+		  markerArray.markers.push_back(circle_part);
+	}
+
+	markerArray.markers.push_back(path_part);
 }
 
 void RosHelpers::TrajectoriesToColoredMarkers(const std::vector<std::vector<PlannerHNS::WayPoint> >& paths, const std::vector<PlannerHNS::TrajectoryCost>& traj_costs,const int& iClosest, visualization_msgs::MarkerArray& markerArray)
@@ -1013,7 +1039,7 @@ void RosHelpers::ConvertFromPlannerObstaclesToAutoware(const PlannerHNS::WayPoin
 	    direction_marker.id = i;
 	    direction_marker.pose.position = point;
 	    direction_marker.pose.position.z += 0.5;
-	    direction_marker.pose.orientation = tf::createQuaternionMsgFromYaw(UtilityHNS::UtilityH::SplitPositiveAngle(trackedObstacles.at(i).center.pos.a));
+	    direction_marker.pose.orientation = tf::createQuaternionMsgFromYaw(op_utility_ns::UtilityH::SplitPositiveAngle(trackedObstacles.at(i).center.pos.a));
 
 
 		for(unsigned int iq = 0; iq < 8; iq++)
@@ -1022,7 +1048,7 @@ void RosHelpers::ConvertFromPlannerObstaclesToAutoware(const PlannerHNS::WayPoin
 			quarters_marker.id = quartersIds;
 			quarters_marker.points.push_back(point);
 			geometry_msgs::Point point2 = point;
-			double a_q = UtilityHNS::UtilityH::SplitPositiveAngle(trackedObstacles.at(i).center.pos.a+(iq*M_PI_4));
+			double a_q = op_utility_ns::UtilityH::SplitPositiveAngle(trackedObstacles.at(i).center.pos.a+(iq*M_PI_4));
 			point2.x += 2.0*cos(a_q);
 			point2.y += 1.5*sin(a_q);
 			quarters_marker.points.push_back(point2);
@@ -1126,7 +1152,7 @@ void RosHelpers::VisualizeBehaviorState(const PlannerHNS::WayPoint& currState, c
 
 	point.x = currState.pos.x;
 	point.y = currState.pos.y;
-	point.z = currState.pos.z+3.0;
+	point.z = currState.pos.z+2.0;
 
 	behaviorMarker.pose.position = point;
 
@@ -1374,7 +1400,7 @@ void RosHelpers::ConvertFromLocalLaneToAutowareLane(const std::vector<PlannerHNS
 		wp.pose.pose.position.x = path.at(i).pos.x;
 		wp.pose.pose.position.y = path.at(i).pos.y;
 		wp.pose.pose.position.z = path.at(i).pos.z;
-		wp.pose.pose.orientation = tf::createQuaternionMsgFromYaw(UtilityHNS::UtilityH::SplitPositiveAngle(path.at(i).pos.a));
+		wp.pose.pose.orientation = tf::createQuaternionMsgFromYaw(op_utility_ns::UtilityH::SplitPositiveAngle(path.at(i).pos.a));
 
 		wp.twist.twist.linear.x = path.at(i).v;
 		wp.lane_id = path.at(i).laneId;
@@ -1408,7 +1434,7 @@ void RosHelpers::ConvertFromLocalLaneToAutowareLane(const std::vector<PlannerHNS
 		wp.pose.pose.position.x = path.at(i).x;
 		wp.pose.pose.position.y = path.at(i).y;
 		wp.pose.pose.position.z = path.at(i).z;
-		wp.pose.pose.orientation = tf::createQuaternionMsgFromYaw(UtilityHNS::UtilityH::SplitPositiveAngle(path.at(i).a));
+		wp.pose.pose.orientation = tf::createQuaternionMsgFromYaw(op_utility_ns::UtilityH::SplitPositiveAngle(path.at(i).a));
 
 		trajectory.waypoints.push_back(wp);
 	}
@@ -1631,8 +1657,8 @@ void RosHelpers::ConvertFromAutowareDetectedObjectToOpenPlannerDetectedObject(co
 {
 	obj.id = det_obj.id;
 	obj.label = det_obj.label;
-	obj.l = det_obj.dimensions.x;
-	obj.w = det_obj.dimensions.y;
+	obj.l = det_obj.dimensions.y;
+	obj.w = det_obj.dimensions.x;
 	obj.h = det_obj.dimensions.z;
 
 	obj.center.pos.x = det_obj.pose.position.x;
@@ -1689,14 +1715,14 @@ void RosHelpers::ConvertFromOpenPlannerDetectedObjectToAutowareDetectedObject(co
 
 	obj.label = det_obj.label;
 	obj.indicator_state = det_obj.indicator_state;
-	obj.dimensions.x = det_obj.l;
-	obj.dimensions.y = det_obj.w;
+	obj.dimensions.x = det_obj.w;
+	obj.dimensions.y = det_obj.l;
 	obj.dimensions.z = det_obj.h;
 
 	obj.pose.position.x = det_obj.center.pos.x;
 	obj.pose.position.y = det_obj.center.pos.y;
 	obj.pose.position.z = det_obj.center.pos.z;
-	obj.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, UtilityHNS::UtilityH::SplitPositiveAngle(det_obj.center.pos.a));
+	obj.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, op_utility_ns::UtilityH::SplitPositiveAngle(det_obj.center.pos.a));
 
 	obj.velocity.linear.x = det_obj.center.v;
 	obj.velocity.linear.y = det_obj.acceleration_raw;
@@ -1732,10 +1758,10 @@ void RosHelpers::ConvertFromOpenPlannerDetectedObjectToAutowareDetectedObject(co
 
 void RosHelpers::UpdateRoadMap(const AutowareRoadNetwork& src_map, PlannerHNS::RoadNetwork& out_map)
 {
-	std::vector<UtilityHNS::AisanLanesFileReader::AisanLane> lanes;
+	std::vector<op_utility_ns::AisanLanesFileReader::AisanLane> lanes;
 	for(unsigned int i=0; i < src_map.lanes.data.size();i++)
 	{
-		UtilityHNS::AisanLanesFileReader::AisanLane l;
+		op_utility_ns::AisanLanesFileReader::AisanLane l;
 		l.BLID 		=  src_map.lanes.data.at(i).blid;
 		l.BLID2 	=  src_map.lanes.data.at(i).blid2;
 		l.BLID3 	=  src_map.lanes.data.at(i).blid3;
@@ -1766,11 +1792,11 @@ void RosHelpers::UpdateRoadMap(const AutowareRoadNetwork& src_map, PlannerHNS::R
 		lanes.push_back(l);
 	}
 
-	std::vector<UtilityHNS::AisanPointsFileReader::AisanPoints> points;
+	std::vector<op_utility_ns::AisanPointsFileReader::AisanPoints> points;
 
 	for(unsigned int i=0; i < src_map.points.data.size();i++)
 	{
-		UtilityHNS::AisanPointsFileReader::AisanPoints p;
+		op_utility_ns::AisanPointsFileReader::AisanPoints p;
 		double integ_part = src_map.points.data.at(i).l;
 		double deg = trunc(src_map.points.data.at(i).l);
 		double min = trunc((src_map.points.data.at(i).l - deg) * 100.0) / 60.0;
@@ -1797,10 +1823,10 @@ void RosHelpers::UpdateRoadMap(const AutowareRoadNetwork& src_map, PlannerHNS::R
 	}
 
 
-	std::vector<UtilityHNS::AisanCenterLinesFileReader::AisanCenterLine> dts;
+	std::vector<op_utility_ns::AisanCenterLinesFileReader::AisanCenterLine> dts;
 	for(unsigned int i=0; i < src_map.dtlanes.data.size();i++)
 	{
-		UtilityHNS::AisanCenterLinesFileReader::AisanCenterLine dt;
+		op_utility_ns::AisanCenterLinesFileReader::AisanCenterLine dt;
 
 		dt.Apara 	= src_map.dtlanes.data.at(i).apara;
 		dt.DID 		= src_map.dtlanes.data.at(i).did;
@@ -1816,18 +1842,18 @@ void RosHelpers::UpdateRoadMap(const AutowareRoadNetwork& src_map, PlannerHNS::R
 		dts.push_back(dt);
 	}
 
-	std::vector<UtilityHNS::AisanAreasFileReader::AisanArea> areas;
-	std::vector<UtilityHNS::AisanIntersectionFileReader::AisanIntersection> inters;
-	std::vector<UtilityHNS::AisanLinesFileReader::AisanLine> line_data;
-	std::vector<UtilityHNS::AisanStopLineFileReader::AisanStopLine> stop_line_data;
-	std::vector<UtilityHNS::AisanSignalFileReader::AisanSignal> signal_data;
-	std::vector<UtilityHNS::AisanVectorFileReader::AisanVector> vector_data;
-	std::vector<UtilityHNS::AisanCurbFileReader::AisanCurb> curb_data;
-	std::vector<UtilityHNS::AisanRoadEdgeFileReader::AisanRoadEdge> roadedge_data;
-	std::vector<UtilityHNS::AisanWayareaFileReader::AisanWayarea> way_area;
-	std::vector<UtilityHNS::AisanCrossWalkFileReader::AisanCrossWalk> crossing;
-	std::vector<UtilityHNS::AisanNodesFileReader::AisanNode > nodes_data;
-	std::vector<UtilityHNS::AisanDataConnFileReader::DataConn> conn_data;
+	std::vector<op_utility_ns::AisanAreasFileReader::AisanArea> areas;
+	std::vector<op_utility_ns::AisanIntersectionFileReader::AisanIntersection> inters;
+	std::vector<op_utility_ns::AisanLinesFileReader::AisanLine> line_data;
+	std::vector<op_utility_ns::AisanStopLineFileReader::AisanStopLine> stop_line_data;
+	std::vector<op_utility_ns::AisanSignalFileReader::AisanSignal> signal_data;
+	std::vector<op_utility_ns::AisanVectorFileReader::AisanVector> vector_data;
+	std::vector<op_utility_ns::AisanCurbFileReader::AisanCurb> curb_data;
+	std::vector<op_utility_ns::AisanRoadEdgeFileReader::AisanRoadEdge> roadedge_data;
+	std::vector<op_utility_ns::AisanWayareaFileReader::AisanWayarea> way_area;
+	std::vector<op_utility_ns::AisanCrossWalkFileReader::AisanCrossWalk> crossing;
+	std::vector<op_utility_ns::AisanNodesFileReader::AisanNode > nodes_data;
+	std::vector<op_utility_ns::AisanDataConnFileReader::DataConn> conn_data;
 
 	PlannerHNS::GPSPoint origin;//(m_OriginPos.position.x, m_OriginPos.position.y, m_OriginPos.position.z, 0);
 	PlannerHNS::MappingHelpers::ConstructRoadNetworkFromRosMessage(lanes, points, dts, inters, areas, line_data, stop_line_data, signal_data, vector_data, curb_data, roadedge_data,way_area, crossing, nodes_data,  conn_data, origin, out_map);

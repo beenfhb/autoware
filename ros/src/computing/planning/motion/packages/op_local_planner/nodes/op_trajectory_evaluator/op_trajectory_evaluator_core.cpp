@@ -108,7 +108,7 @@ void TrajectoryEval::UpdatePlanningParams(ros::NodeHandle& _nh)
 	else
 		m_PlanningParams.rollOutNumber = 0;
 
-	std::cout << "Rolls Number: " << m_PlanningParams.rollOutNumber << std::endl;
+//	std::cout << "Rolls Number: " << m_PlanningParams.rollOutNumber << std::endl;
 
 	_nh.getParam("/op_common_params/horizonDistance", m_PlanningParams.horizonDistance);
 	_nh.getParam("/op_common_params/minFollowingDistance", m_PlanningParams.minFollowingDistance);
@@ -128,6 +128,17 @@ void TrajectoryEval::UpdatePlanningParams(ros::NodeHandle& _nh)
 	m_CarInfo.max_speed_forward = m_PlanningParams.maxSpeed;
 	m_CarInfo.min_speed_forward = m_PlanningParams.minSpeed;
 
+	_nh.getParam("/op_common_params/experimentName" , m_ExperimentFolderName);
+	if(m_ExperimentFolderName.size() > 0)
+	{
+		if(m_ExperimentFolderName.at(m_ExperimentFolderName.size()-1) != '/')
+			m_ExperimentFolderName.push_back('/');
+	}
+
+	op_utility_ns::DataRW::CreateLoggingMainFolder();
+	if(m_ExperimentFolderName.size() > 1)
+		op_utility_ns::DataRW::CreateExperimentFolder(m_ExperimentFolderName);
+
 }
 
 void TrajectoryEval::callbackGetCurrentPose(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -142,7 +153,7 @@ void TrajectoryEval::callbackGetVehicleStatus(const geometry_msgs::TwistStampedC
 	m_CurrentPos.v = m_VehicleStatus.speed;
 	if(fabs(msg->twist.linear.x) > 0.25)
 		m_VehicleStatus.steer = atan(m_CarInfo.wheel_base * msg->twist.angular.z/msg->twist.linear.x);
-	UtilityHNS::UtilityH::GetTickCount(m_VehicleStatus.tStamp);
+	op_utility_ns::UtilityH::GetTickCount(m_VehicleStatus.tStamp);
 	bVehicleStatus = true;
 }
 
@@ -151,7 +162,7 @@ void TrajectoryEval::callbackGetCanInfo(const autoware_msgs::CanInfoConstPtr &ms
 	m_VehicleStatus.speed = msg->speed/3.6;
 	m_CurrentPos.v = m_VehicleStatus.speed;
 	m_VehicleStatus.steer = msg->angle * m_CarInfo.max_steer_angle / m_CarInfo.max_steer_value;
-	UtilityHNS::UtilityH::GetTickCount(m_VehicleStatus.tStamp);
+	op_utility_ns::UtilityH::GetTickCount(m_VehicleStatus.tStamp);
 	bVehicleStatus = true;
 }
 
@@ -161,7 +172,7 @@ void TrajectoryEval::callbackGetRobotOdom(const nav_msgs::OdometryConstPtr& msg)
 	m_CurrentPos.v = m_VehicleStatus.speed;
 	if(fabs(msg->twist.twist.linear.x) > 0.25)
 		m_VehicleStatus.steer = atan(m_CarInfo.wheel_base * msg->twist.twist.angular.z/msg->twist.twist.linear.x);
-	UtilityHNS::UtilityH::GetTickCount(m_VehicleStatus.tStamp);
+	op_utility_ns::UtilityH::GetTickCount(m_VehicleStatus.tStamp);
 	bVehicleStatus = true;
 }
 
@@ -238,6 +249,7 @@ void TrajectoryEval::callbackGetPredictedObjects(const autoware_msgs::DetectedOb
 	bPredictedObjects = true;
 
 	PlannerHNS::DetectedObject obj;
+
 	for(unsigned int i = 0 ; i <msg->objects.size(); i++)
 	{
 		if(msg->objects.at(i).id > 0)
@@ -282,9 +294,9 @@ void TrajectoryEval::MainLoop()
 			if(m_GlobalPathSections.size()>0)
 			{
 				if(m_bUseMoveingObjectsPrediction)
-					tc = m_TrajectoryCostsCalculator.DoOneStepDynamic(m_GeneratedRollOuts, m_GlobalPathSections.at(0), m_CurrentPos,m_PlanningParams,	m_CarInfo,m_VehicleStatus, m_PredictedObjects, m_CurrentBehavior.iTrajectory);
+					tc = m_TrajectoryCostsCalculator.DoOneStepDynamic(m_GeneratedRollOuts, m_GlobalPathSections.at(0), m_CurrentPos,m_PlanningParams, m_CarInfo,m_VehicleStatus, m_PredictedObjects, m_CurrentBehavior.iTrajectory);
 				else
-					tc = m_TrajectoryCostsCalculator.DoOneStepStatic(m_GeneratedRollOuts, m_GlobalPathSections.at(0), m_CurrentPos,	m_PlanningParams,	m_CarInfo,m_VehicleStatus, m_PredictedObjects);
+					tc = m_TrajectoryCostsCalculator.DoOneStepStatic(m_GeneratedRollOuts, m_GlobalPathSections.at(0), m_CurrentPos,	m_PlanningParams, m_CarInfo,m_VehicleStatus, m_PredictedObjects);
 
 				autoware_msgs::lane l;
 				l.closest_object_distance = tc.closest_obj_distance;

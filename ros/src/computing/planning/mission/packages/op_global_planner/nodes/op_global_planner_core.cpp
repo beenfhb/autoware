@@ -41,12 +41,30 @@ GlobalPlanner::GlobalPlanner()
 	m_bKmlMap = false;
 	m_bFirstStart = false;
 	m_GlobalPathID = 1;
-	UtilityHNS::UtilityH::GetTickCount(m_ReplnningTimer);
+
+	tf::StampedTransform transform;
+	PlannerHNS::RosHelpers::GetTransformFromTF("map", "world", transform);
+	m_OriginPos.position.x  = transform.getOrigin().x();
+	m_OriginPos.position.y  = transform.getOrigin().y();
+	m_OriginPos.position.z  = transform.getOrigin().z();
+
+	op_utility_ns::UtilityH::GetTickCount(m_ReplnningTimer);
 
 	nh.getParam("/op_global_planner/pathDensity" , m_params.pathDensity);
 	nh.getParam("/op_global_planner/enableSmoothing" , m_params.bEnableSmoothing);
 	nh.getParam("/op_global_planner/enableLaneChange" , m_params.bEnableLaneChange);
 	nh.getParam("/op_global_planner/enableRvizInput" , m_params.bEnableRvizInput);
+	nh.getParam("/op_global_planner/experimentName" , m_params.exprimentName);
+	if(m_params.exprimentName.size() > 0)
+	{
+		if(m_params.exprimentName.at(m_params.exprimentName.size()-1) != '/')
+			m_params.exprimentName.push_back('/');
+	}
+
+	op_utility_ns::DataRW::CreateLoggingMainFolder();
+	if(m_params.exprimentName.size() > 1)
+		op_utility_ns::DataRW::CreateExperimentFolder(m_params.exprimentName);
+
 	nh.getParam("/op_global_planner/enableReplan" , m_params.bEnableReplanning);
 	nh.getParam("/op_global_planner/enableDynamicMapUpdate" , m_params.bEnableDynamicMapUpdate);
 	nh.getParam("/op_global_planner/mapFileName" , m_params.KmlMapPath);
@@ -59,12 +77,6 @@ GlobalPlanner::GlobalPlanner()
 		m_params.mapSource = PlannerHNS::MAP_FOLDER;
 	else if(iSource == 2)
 		m_params.mapSource = PlannerHNS::MAP_KML_FILE;
-
-	tf::StampedTransform transform;
-	PlannerHNS::RosHelpers::GetTransformFromTF("map", "world", transform);
-	m_OriginPos.position.x  = transform.getOrigin().x();
-	m_OriginPos.position.y  = transform.getOrigin().y();
-	m_OriginPos.position.z  = transform.getOrigin().z();
 
 	pub_Paths = nh.advertise<autoware_msgs::LaneArray>("lane_waypoints_array", 1, true);
 	pub_PathsRviz = nh.advertise<visualization_msgs::MarkerArray>("global_waypoints_rviz", 1, true);
@@ -96,21 +108,23 @@ GlobalPlanner::GlobalPlanner()
 	  sub_road_status_occupancy = nh.subscribe<>("/occupancy_road_status", 1, &GlobalPlanner::callbackGetRoadStatusOccupancyGrid, this);
 
 	//Mapping Section
-	sub_lanes = nh.subscribe("/vector_map_info/lane", 1, &GlobalPlanner::callbackGetVMLanes,  this);
-	sub_points = nh.subscribe("/vector_map_info/point", 1, &GlobalPlanner::callbackGetVMPoints,  this);
-	sub_dt_lanes = nh.subscribe("/vector_map_info/dtlane", 1, &GlobalPlanner::callbackGetVMdtLanes,  this);
-	sub_intersect = nh.subscribe("/vector_map_info/cross_road", 1, &GlobalPlanner::callbackGetVMIntersections,  this);
-	sup_area = nh.subscribe("/vector_map_info/area", 1, &GlobalPlanner::callbackGetVMAreas,  this);
-	sub_lines = nh.subscribe("/vector_map_info/line", 1, &GlobalPlanner::callbackGetVMLines,  this);
-	sub_stop_line = nh.subscribe("/vector_map_info/stop_line", 1, &GlobalPlanner::callbackGetVMStopLines,  this);
-	sub_signals = nh.subscribe("/vector_map_info/signal", 1, &GlobalPlanner::callbackGetVMSignal,  this);
-	sub_vectors = nh.subscribe("/vector_map_info/vector", 1, &GlobalPlanner::callbackGetVMVectors,  this);
-	sub_curbs = nh.subscribe("/vector_map_info/curb", 1, &GlobalPlanner::callbackGetVMCurbs,  this);
-	sub_edges = nh.subscribe("/vector_map_info/road_edge", 1, &GlobalPlanner::callbackGetVMRoadEdges,  this);
-	sub_way_areas = nh.subscribe("/vector_map_info/way_area", 1, &GlobalPlanner::callbackGetVMWayAreas,  this);
-	sub_cross_walk = nh.subscribe("/vector_map_info/cross_walk", 1, &GlobalPlanner::callbackGetVMCrossWalks,  this);
-	sub_nodes = nh.subscribe("/vector_map_info/node", 1, &GlobalPlanner::callbackGetVMNodes,  this);
-
+	if(m_params.mapSource == PlannerHNS::MAP_AUTOWARE)
+	{
+		sub_lanes = nh.subscribe("/vector_map_info/lane", 1, &GlobalPlanner::callbackGetVMLanes,  this);
+		sub_points = nh.subscribe("/vector_map_info/point", 1, &GlobalPlanner::callbackGetVMPoints,  this);
+		sub_dt_lanes = nh.subscribe("/vector_map_info/dtlane", 1, &GlobalPlanner::callbackGetVMdtLanes,  this);
+		sub_intersect = nh.subscribe("/vector_map_info/cross_road", 1, &GlobalPlanner::callbackGetVMIntersections,  this);
+		sup_area = nh.subscribe("/vector_map_info/area", 1, &GlobalPlanner::callbackGetVMAreas,  this);
+		sub_lines = nh.subscribe("/vector_map_info/line", 1, &GlobalPlanner::callbackGetVMLines,  this);
+		sub_stop_line = nh.subscribe("/vector_map_info/stop_line", 1, &GlobalPlanner::callbackGetVMStopLines,  this);
+		sub_signals = nh.subscribe("/vector_map_info/signal", 1, &GlobalPlanner::callbackGetVMSignal,  this);
+		sub_vectors = nh.subscribe("/vector_map_info/vector", 1, &GlobalPlanner::callbackGetVMVectors,  this);
+		sub_curbs = nh.subscribe("/vector_map_info/curb", 1, &GlobalPlanner::callbackGetVMCurbs,  this);
+		sub_edges = nh.subscribe("/vector_map_info/road_edge", 1, &GlobalPlanner::callbackGetVMRoadEdges,  this);
+		sub_way_areas = nh.subscribe("/vector_map_info/way_area", 1, &GlobalPlanner::callbackGetVMWayAreas,  this);
+		sub_cross_walk = nh.subscribe("/vector_map_info/cross_walk", 1, &GlobalPlanner::callbackGetVMCrossWalks,  this);
+		sub_nodes = nh.subscribe("/vector_map_info/node", 1, &GlobalPlanner::callbackGetVMNodes,  this);
+	}
 }
 
 GlobalPlanner::~GlobalPlanner()
@@ -146,7 +160,7 @@ void GlobalPlanner::callbackGetRoadStatusOccupancyGrid(const nav_msgs::Occupancy
 	PlannerHNS::OccupancyToGridMap grid(msg->info.width,msg->info.height, msg->info.resolution, center);
 	std::vector<PlannerHNS::WayPoint*> modified_nodes;
 	timespec t;
-	UtilityHNS::UtilityH::GetTickCount(t);
+	op_utility_ns::UtilityH::GetTickCount(t);
 	PlannerHNS::MappingHelpers::UpdateMapWithOccupancyGrid(grid, m_GridMapIntType, m_Map, modified_nodes);
 	m_ModifiedMapItemsTimes.push_back(std::make_pair(modified_nodes, t));
 
@@ -164,7 +178,7 @@ void GlobalPlanner::ClearOldCostFromMap()
 {
 	for(int i=0; i < (int)m_ModifiedMapItemsTimes.size(); i++)
 	{
-		if(UtilityHNS::UtilityH::GetTimeDiffNow(m_ModifiedMapItemsTimes.at(i).second) > CLEAR_COSTS_TIME)
+		if(op_utility_ns::UtilityH::GetTimeDiffNow(m_ModifiedMapItemsTimes.at(i).second) > CLEAR_COSTS_TIME)
 		{
 			for(unsigned int j= 0 ; j < m_ModifiedMapItemsTimes.at(i).first.size(); j++)
 			{
@@ -193,6 +207,7 @@ void GlobalPlanner::callbackGetGoalPose(const geometry_msgs::PoseStampedConstPtr
 void GlobalPlanner::callbackGetStartPose(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg)
 {
 	m_CurrentPose = PlannerHNS::WayPoint(msg->pose.pose.position.x+m_OriginPos.position.x, msg->pose.pose.position.y+m_OriginPos.position.y, msg->pose.pose.position.z+m_OriginPos.position.z, tf::getYaw(msg->pose.pose.orientation));
+	m_StartPose = m_CurrentPose;
 	ROS_INFO("Received Start pose");
 }
 
@@ -215,7 +230,7 @@ void GlobalPlanner::callbackGetVehicleStatus(const geometry_msgs::TwistStampedCo
 	m_CurrentPose.v = m_VehicleState.speed;
 	if(fabs(msg->twist.linear.x) > 0.25)
 		m_VehicleState.steer = atan(2.7 * msg->twist.angular.z/msg->twist.linear.x);
-	UtilityHNS::UtilityH::GetTickCount(m_VehicleState.tStamp);
+	op_utility_ns::UtilityH::GetTickCount(m_VehicleState.tStamp);
 }
 
 void GlobalPlanner::callbackGetCanInfo(const autoware_msgs::CanInfoConstPtr &msg)
@@ -223,7 +238,7 @@ void GlobalPlanner::callbackGetCanInfo(const autoware_msgs::CanInfoConstPtr &msg
 	m_VehicleState.speed = msg->speed/3.6;
 	m_CurrentPose.v = m_VehicleState.speed;
 	m_VehicleState.steer = msg->angle * 0.45 / 660;
-	UtilityHNS::UtilityH::GetTickCount(m_VehicleState.tStamp);
+	op_utility_ns::UtilityH::GetTickCount(m_VehicleState.tStamp);
 }
 
 bool GlobalPlanner::GenerateGlobalPlan(PlannerHNS::WayPoint& startPoint, PlannerHNS::WayPoint& goalPoint, std::vector<std::vector<PlannerHNS::WayPoint> >& generatedTotalPaths)
@@ -301,9 +316,13 @@ void GlobalPlanner::VisualizeAndSend(const std::vector<std::vector<PlannerHNS::W
 	for(unsigned int i=0; i < generatedTotalPaths.size(); i++)
 	{
 		std::ostringstream str_out;
-		str_out << UtilityHNS::UtilityH::GetHomeDirectory();
-		str_out << UtilityHNS::DataRW::LoggingMainfolderName;
-		str_out << UtilityHNS::DataRW::GlobalPathLogFolderName;
+		str_out << op_utility_ns::UtilityH::GetHomeDirectory();
+		if(m_params.exprimentName.size() == 0)
+			str_out << op_utility_ns::DataRW::LoggingMainfolderName;
+		else
+			str_out << op_utility_ns::DataRW::LoggingMainfolderName + op_utility_ns::DataRW::ExperimentsFolderName + m_params.exprimentName;
+
+		str_out << op_utility_ns::DataRW::GlobalPathLogFolderName;
 		str_out << "GlobalPath_";
 		str_out << i;
 		str_out << "_";
@@ -358,7 +377,7 @@ void GlobalPlanner::SaveSimulationData()
 {
 	std::vector<std::string> simulationDataPoints;
 	std::ostringstream startStr;
-	startStr << m_CurrentPose.pos.x << "," << m_CurrentPose.pos.y << "," << m_CurrentPose.pos.z << "," << m_CurrentPose.pos.a << ","<< m_CurrentPose.cost << "," << 0 << ",";
+	startStr << m_StartPose.pos.x << "," << m_StartPose.pos.y << "," << m_StartPose.pos.z << "," << m_StartPose.pos.a << ","<< m_StartPose.cost << "," << 0 << ",";
 	simulationDataPoints.push_back(startStr.str());
 
 	for(unsigned int i=0; i < m_GoalsPos.size(); i++)
@@ -371,7 +390,11 @@ void GlobalPlanner::SaveSimulationData()
 	std::string header = "X,Y,Z,A,C,V,name,";
 
 	std::ostringstream fileName;
-	fileName << UtilityHNS::UtilityH::GetHomeDirectory()+UtilityHNS::DataRW::LoggingMainfolderName+UtilityHNS::DataRW::SimulationFolderName;
+	if(m_params.exprimentName.size() == 0)
+		fileName << op_utility_ns::UtilityH::GetHomeDirectory()+op_utility_ns::DataRW::LoggingMainfolderName+ op_utility_ns::DataRW::SimulationFolderName;
+	else
+		fileName << op_utility_ns::UtilityH::GetHomeDirectory()+op_utility_ns::DataRW::LoggingMainfolderName+ op_utility_ns::DataRW::ExperimentsFolderName + m_params.exprimentName + op_utility_ns::DataRW::SimulationFolderName;
+
 	fileName << "EgoCar.csv";
 	std::ofstream f(fileName.str().c_str());
 
@@ -391,9 +414,12 @@ int GlobalPlanner::LoadSimulationData()
 	std::ostringstream fileName;
 	fileName << "EgoCar.csv";
 
-	std::string simuDataFileName = UtilityHNS::UtilityH::GetHomeDirectory()+UtilityHNS::DataRW::LoggingMainfolderName+UtilityHNS::DataRW::SimulationFolderName + fileName.str();
-	UtilityHNS::SimulationFileReader sfr(simuDataFileName);
-	UtilityHNS::SimulationFileReader::SimulationData data;
+	std::string simuDataFileName = op_utility_ns::UtilityH::GetHomeDirectory()+op_utility_ns::DataRW::LoggingMainfolderName+op_utility_ns::DataRW::SimulationFolderName + fileName.str();
+	if(m_params.exprimentName.size() > 1)
+		simuDataFileName = op_utility_ns::UtilityH::GetHomeDirectory()+op_utility_ns::DataRW::LoggingMainfolderName + op_utility_ns::DataRW::ExperimentsFolderName + m_params.exprimentName + op_utility_ns::DataRW::SimulationFolderName + fileName.str();
+
+	op_utility_ns::SimulationFileReader sfr(simuDataFileName);
+	op_utility_ns::SimulationFileReader::SimulationData data;
 
 	int nData = sfr.ReadAllData(data);
 	if(nData == 0)
@@ -414,7 +440,7 @@ void GlobalPlanner::MainLoop()
 {
 	ros::Rate loop_rate(25);
 	timespec animation_timer;
-	UtilityHNS::UtilityH::GetTickCount(animation_timer);
+	op_utility_ns::UtilityH::GetTickCount(animation_timer);
 
 	while (ros::ok())
 	{
@@ -440,7 +466,7 @@ void GlobalPlanner::MainLoop()
 		}
 		else if (m_params.mapSource == PlannerHNS::MAP_AUTOWARE && !m_bKmlMap)
 		{
-			std::vector<UtilityHNS::AisanDataConnFileReader::DataConn> conn_data;;
+			std::vector<op_utility_ns::AisanDataConnFileReader::DataConn> conn_data;;
 
 			if(m_MapRaw.GetVersion()==2)
 			{
@@ -498,9 +524,9 @@ void GlobalPlanner::MainLoop()
 			else
 				bMakeNewPlan = true;
 
-			if(bMakeNewPlan || (m_params.bEnableDynamicMapUpdate && UtilityHNS::UtilityH::GetTimeDiffNow(m_ReplnningTimer) > REPLANNING_TIME))
+			if(bMakeNewPlan || (m_params.bEnableDynamicMapUpdate && op_utility_ns::UtilityH::GetTimeDiffNow(m_ReplnningTimer) > REPLANNING_TIME))
 			{
-				UtilityHNS::UtilityH::GetTickCount(m_ReplnningTimer);
+				op_utility_ns::UtilityH::GetTickCount(m_ReplnningTimer);
 				PlannerHNS::WayPoint goalPoint = m_GoalsPos.at(m_iCurrentGoalIndex);
 				bool bNewPlan = GenerateGlobalPlan(m_CurrentPose, goalPoint, m_GeneratedTotalPaths);
 
@@ -525,98 +551,98 @@ void GlobalPlanner::callbackGetVMLanes(const vector_map_msgs::LaneArray& msg)
 {
 	std::cout << "Received Lanes" << msg.data.size() << endl;
 	if(m_MapRaw.pLanes == nullptr)
-		m_MapRaw.pLanes = new UtilityHNS::AisanLanesFileReader(msg);
+		m_MapRaw.pLanes = new op_utility_ns::AisanLanesFileReader(msg);
 }
 
 void GlobalPlanner::callbackGetVMPoints(const vector_map_msgs::PointArray& msg)
 {
 	std::cout << "Received Points" << msg.data.size() << endl;
 	if(m_MapRaw.pPoints  == nullptr)
-		m_MapRaw.pPoints = new UtilityHNS::AisanPointsFileReader(msg);
+		m_MapRaw.pPoints = new op_utility_ns::AisanPointsFileReader(msg);
 }
 
 void GlobalPlanner::callbackGetVMdtLanes(const vector_map_msgs::DTLaneArray& msg)
 {
 	std::cout << "Received dtLanes" << msg.data.size() << endl;
 	if(m_MapRaw.pCenterLines == nullptr)
-		m_MapRaw.pCenterLines = new UtilityHNS::AisanCenterLinesFileReader(msg);
+		m_MapRaw.pCenterLines = new op_utility_ns::AisanCenterLinesFileReader(msg);
 }
 
 void GlobalPlanner::callbackGetVMIntersections(const vector_map_msgs::CrossRoadArray& msg)
 {
 	std::cout << "Received CrossRoads" << msg.data.size() << endl;
 	if(m_MapRaw.pIntersections == nullptr)
-		m_MapRaw.pIntersections = new UtilityHNS::AisanIntersectionFileReader(msg);
+		m_MapRaw.pIntersections = new op_utility_ns::AisanIntersectionFileReader(msg);
 }
 
 void GlobalPlanner::callbackGetVMAreas(const vector_map_msgs::AreaArray& msg)
 {
 	std::cout << "Received Areas" << msg.data.size() << endl;
 	if(m_MapRaw.pAreas == nullptr)
-		m_MapRaw.pAreas = new UtilityHNS::AisanAreasFileReader(msg);
+		m_MapRaw.pAreas = new op_utility_ns::AisanAreasFileReader(msg);
 }
 
 void GlobalPlanner::callbackGetVMLines(const vector_map_msgs::LineArray& msg)
 {
 	std::cout << "Received Lines" << msg.data.size() << endl;
 	if(m_MapRaw.pLines == nullptr)
-		m_MapRaw.pLines = new UtilityHNS::AisanLinesFileReader(msg);
+		m_MapRaw.pLines = new op_utility_ns::AisanLinesFileReader(msg);
 }
 
 void GlobalPlanner::callbackGetVMStopLines(const vector_map_msgs::StopLineArray& msg)
 {
 	std::cout << "Received StopLines" << msg.data.size() << endl;
 	if(m_MapRaw.pStopLines == nullptr)
-		m_MapRaw.pStopLines = new UtilityHNS::AisanStopLineFileReader(msg);
+		m_MapRaw.pStopLines = new op_utility_ns::AisanStopLineFileReader(msg);
 }
 
 void GlobalPlanner::callbackGetVMSignal(const vector_map_msgs::SignalArray& msg)
 {
 	std::cout << "Received Signals" << msg.data.size() << endl;
 	if(m_MapRaw.pSignals  == nullptr)
-		m_MapRaw.pSignals = new UtilityHNS::AisanSignalFileReader(msg);
+		m_MapRaw.pSignals = new op_utility_ns::AisanSignalFileReader(msg);
 }
 
 void GlobalPlanner::callbackGetVMVectors(const vector_map_msgs::VectorArray& msg)
 {
 	std::cout << "Received Vectors" << msg.data.size() << endl;
 	if(m_MapRaw.pVectors  == nullptr)
-		m_MapRaw.pVectors = new UtilityHNS::AisanVectorFileReader(msg);
+		m_MapRaw.pVectors = new op_utility_ns::AisanVectorFileReader(msg);
 }
 
 void GlobalPlanner::callbackGetVMCurbs(const vector_map_msgs::CurbArray& msg)
 {
 	std::cout << "Received Curbs" << msg.data.size() << endl;
 	if(m_MapRaw.pCurbs == nullptr)
-		m_MapRaw.pCurbs = new UtilityHNS::AisanCurbFileReader(msg);
+		m_MapRaw.pCurbs = new op_utility_ns::AisanCurbFileReader(msg);
 }
 
 void GlobalPlanner::callbackGetVMRoadEdges(const vector_map_msgs::RoadEdgeArray& msg)
 {
 	std::cout << "Received Edges" << msg.data.size() << endl;
 	if(m_MapRaw.pRoadedges  == nullptr)
-		m_MapRaw.pRoadedges = new UtilityHNS::AisanRoadEdgeFileReader(msg);
+		m_MapRaw.pRoadedges = new op_utility_ns::AisanRoadEdgeFileReader(msg);
 }
 
 void GlobalPlanner::callbackGetVMWayAreas(const vector_map_msgs::WayAreaArray& msg)
 {
 	std::cout << "Received Wayareas" << msg.data.size() << endl;
 	if(m_MapRaw.pWayAreas  == nullptr)
-		m_MapRaw.pWayAreas = new UtilityHNS::AisanWayareaFileReader(msg);
+		m_MapRaw.pWayAreas = new op_utility_ns::AisanWayareaFileReader(msg);
 }
 
 void GlobalPlanner::callbackGetVMCrossWalks(const vector_map_msgs::CrossWalkArray& msg)
 {
 	std::cout << "Received CrossWalks" << msg.data.size() << endl;
 	if(m_MapRaw.pCrossWalks == nullptr)
-		m_MapRaw.pCrossWalks = new UtilityHNS::AisanCrossWalkFileReader(msg);
+		m_MapRaw.pCrossWalks = new op_utility_ns::AisanCrossWalkFileReader(msg);
 }
 
 void GlobalPlanner::callbackGetVMNodes(const vector_map_msgs::NodeArray& msg)
 {
 	std::cout << "Received Nodes" << msg.data.size() << endl;
 	if(m_MapRaw.pNodes == nullptr)
-		m_MapRaw.pNodes = new UtilityHNS::AisanNodesFileReader(msg);
+		m_MapRaw.pNodes = new op_utility_ns::AisanNodesFileReader(msg);
 }
 
 }

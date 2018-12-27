@@ -51,12 +51,14 @@
 #include "SimpleTracker.h"
 #include "PolygonGenerator.h"
 
+#include <tf/transform_listener.h>
 #include <autoware_msgs/CanInfo.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <autoware_msgs/CloudClusterArray.h>
 #include <autoware_msgs/DetectedObjectArray.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <jsk_recognition_msgs/BoundingBoxArray.h>
 #include <visualization_msgs/MarkerArray.h>
 
 
@@ -81,6 +83,7 @@ public:
 	bool 	bEnableLogging;
 	bool bEnableTTC;
 	bool bEnableLaneChange;
+	bool bEnableBenchmark;
 
 	PerceptionParams()
 	{
@@ -97,6 +100,7 @@ public:
 		bEnableLogging = false;
 		bEnableTTC = false;
 		bEnableLaneChange = false;
+		bEnableBenchmark = false;
 	}
 };
 
@@ -135,6 +139,10 @@ protected:
 	bool bMap;
 	double m_MapFilterDistance;
 
+	int frame_count_;
+	  std::string kitti_data_dir_;
+	  std::string result_file_path_;
+
 	std::vector<PlannerHNS::Lane*> m_ClosestLanesList;
 
 	int m_nOriginalPoints;
@@ -144,6 +152,13 @@ protected:
 	double m_tracking_time;
 	double m_dt;
 	struct timespec  m_loop_timer;
+
+
+	std::string pointcloud_frame ;
+	std::string tracking_frame;
+
+	tf::TransformListener tf_listener;
+	tf::StampedTransform local2global;
 
 	//ROS subscribers
 	ros::NodeHandle nh;
@@ -156,6 +171,7 @@ protected:
 	ros::Publisher pub_TTC_PathRviz;
 
 	// define subscribers.
+	ros::Subscriber sub_detected_objects;
 	ros::Subscriber sub_cloud_clusters;
 	ros::Subscriber sub_current_pose ;
 	ros::Subscriber sub_current_velocity;
@@ -164,21 +180,27 @@ protected:
 
 
 	// Callback function for subscriber.
-	void callbackGetCloudClusters(const autoware_msgs::CloudClusterArrayConstPtr &msg);
+	void callbackGetDetectedObjects(const autoware_msgs::DetectedObjectArrayConstPtr& msg);
+	void callbackGetCloudClusters(const autoware_msgs::CloudClusterArrayConstPtr& msg);
 	void callbackGetCurrentPose(const geometry_msgs::PoseStampedConstPtr& msg);
 	void callbackGetVehicleStatus(const geometry_msgs::TwistStampedConstPtr& msg);
-	void callbackGetCanInfo(const autoware_msgs::CanInfoConstPtr &msg);
+	void callbackGetCanInfo(const autoware_msgs::CanInfoConstPtr & msg);
 	void callbackGetRobotOdom(const nav_msgs::OdometryConstPtr& msg);
 
 	//Helper Functions
 	void VisualizeLocalTracking();
-	void ImportCloudClusters(const autoware_msgs::CloudClusterArrayConstPtr& msg, std::vector<PlannerHNS::DetectedObject>& originalClusters);
+	void ImportCloudClusters(const autoware_msgs::CloudClusterArray& msg, std::vector<PlannerHNS::DetectedObject>& originalClusters);
+	void ImportDetectedObjects(const autoware_msgs::DetectedObjectArray& msg, std::vector<PlannerHNS::DetectedObject>& originalClusters);
 	bool IsCar(const PlannerHNS::DetectedObject& obj, const PlannerHNS::WayPoint& currState, PlannerHNS::RoadNetwork& map);
 	void CalculateTTC(const std::vector<PlannerHNS::DetectedObject>& objs, const PlannerHNS::WayPoint& currState, PlannerHNS::RoadNetwork& map);
 	void GetFrontTrajectories(std::vector<PlannerHNS::Lane*>& lanes, const PlannerHNS::WayPoint& currState, const double& max_distance, std::vector<std::vector<PlannerHNS::WayPoint> >& trajectories);
 	void ReadNodeParams();
 	void ReadCommonParams();
 	void LogAndSend();
+	void transformPoseToGlobal(const autoware_msgs::CloudClusterArray& input, autoware_msgs::CloudClusterArray& transformed_input);
+	void transformPoseToGlobal(const autoware_msgs::DetectedObjectArray& input, autoware_msgs::DetectedObjectArray& transformed_input);
+	void transformPoseToLocal(jsk_recognition_msgs::BoundingBoxArray& jskbboxes_output, autoware_msgs::DetectedObjectArray& detected_objects_output);
+	void dumpResultText(autoware_msgs::DetectedObjectArray& detected_objects);
 
 public:
   ContourTracker();
@@ -187,7 +209,7 @@ public:
 
 	//Mapping Section
 
-	UtilityHNS::MapRaw m_MapRaw;
+	op_utility_ns::MapRaw m_MapRaw;
 
 	ros::Subscriber sub_lanes;
 	ros::Subscriber sub_points;

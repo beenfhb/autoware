@@ -9,7 +9,6 @@
 #include <iostream>
 
 using namespace std;
-using namespace UtilityHNS;
 
 namespace PlannerHNS
 {
@@ -330,7 +329,7 @@ double PlannerH::PredictPlanUsingDP(PlannerHNS::Lane* l, const WayPoint& start, 
 	return totalPlanDistance;
 }
 
-double PlannerH::PredictTrajectoriesUsingDP(const WayPoint& startPose, std::vector<WayPoint*> closestWPs, const double& maxPlanningDistance, std::vector<std::vector<WayPoint> >& paths, const bool& bFindBranches , const bool bDirectionBased, const bool pathDensity)
+double PlannerH::PredictTrajectoriesUsingDP(const WayPoint& startPose, std::vector<WayPoint*> closestWPs, const double& maxPlanningDistance, std::vector<std::vector<WayPoint> >& paths, const bool& bFindBranches , const bool& bDirectionBased, const double& pathDensity)
 {
 	vector<vector<WayPoint> > tempCurrentForwardPathss;
 	vector<WayPoint*> all_cell_to_delete;

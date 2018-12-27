@@ -10,10 +10,38 @@
 
 #include <boost/random.hpp>
 #include <boost/math/distributions/normal.hpp>
-
+#include "op_planner/PlanningHelpers.h"
 #include "PlannerH.h"
-#include "op_utility/UtilityH.h"
+#include "op_utility/utility.h"
 #include "PassiveDecisionMaker.h"
+
+class PredictionParams
+{
+public:
+
+int PARTICLES_NUM;
+int MIN_PARTICLE_NUM;
+double KEEP_PERCENTAGE;
+
+double  POSE_FACTOR;
+double  DIRECTION_FACTOR;
+double  VELOCITY_FACTOR ;
+double  ACCELERATE_FACTOR;
+double  INDICATOR_FACTOR;
+
+	PredictionParams()
+	{
+		PARTICLES_NUM = 30;
+		MIN_PARTICLE_NUM = 1;
+		KEEP_PERCENTAGE = 0.5;
+
+		POSE_FACTOR = 0.1;
+		DIRECTION_FACTOR = 0.0;
+		VELOCITY_FACTOR = 0.35;
+		ACCELERATE_FACTOR = 0.35;
+		INDICATOR_FACTOR = 0.2;
+	}
+};
 
 namespace PlannerHNS
 {
@@ -24,25 +52,16 @@ namespace PlannerHNS
 #define MOTION_ACC_ERROR 0.1
 #define MOTION_IND_ERROR 0.1
 
-#define MEASURE_POSE_ERROR 0.0
-#define MEASURE_ANGLE_ERROR 0.0
-#define MEASURE_VEL_ERROR 0.0
+#define MEASURE_POSE_ERROR 0.15
+#define MEASURE_ANGLE_ERROR 0.05
+#define MEASURE_VEL_ERROR 0.1
 #define MEASURE_ACC_ERROR 0.1
 #define MEASURE_IND_ERROR 0.1
 
 #define PREDICTION_DISTANCE_PERCENTAGE 0.25
 
-#define BEH_PARTICLES_NUM 30
-#define BEH_MIN_PARTICLE_NUM 1
-#define KEEP_PERCENTAGE 0.5
 
-constexpr double  POSE_FACTOR = 0.1;
-constexpr double  DIRECTION_FACTOR = 0.0;
-constexpr double  VELOCITY_FACTOR = 0.35;
-constexpr double  ACCELERATE_FACTOR = 0.35;
-constexpr double  INDICATOR_FACTOR = 0.2;
-
-#define FIXED_PLANNING_DISTANCE 10
+#define FIXED_MIN_PLANNING_DISTANCE 10
 
 #define MIN_PREDICTION_TIME 5
 #define USE_OPEN_PLANNER_MOVE 0
@@ -53,14 +72,19 @@ constexpr double  INDICATOR_FACTOR = 0.2;
 #define ACCELERATION_DECISION_VALUE 0.25
 
 #define ENABLE_STOP_BEHAVIOR_GEN 1
-
 #define WEIGHT_CRITICAL_DIFF 0.1
+
+#define THREE_PERC_POINTS(x) (int)(x * 1000.0) / 1000.0
+#define TWO_PERC_POINTS(x) (int)(x * 100.0) / 100.0
 
 typedef boost::mt19937 ENG;
 typedef boost::normal_distribution<double> NormalDIST;
 typedef boost::variate_generator<ENG, NormalDIST> VariatGEN;
 
+
+
 class TrajectoryTracker;
+
 
 class Particle
 {
@@ -80,6 +104,9 @@ public:
 	WayPoint car_prev_pose;
 	bool bStopLine;
 	double w;
+	double w_real;
+	double pose_w_real;
+	double dir_w_real;
 	double w_raw;
 	double pose_w;
 	double dir_w;
@@ -101,9 +128,12 @@ public:
 		bStopLine = false;
 		pTraj = nullptr;
 		w = 0;
+		w_real = 0;
 		w_raw = 0;
 		pose_w = 0;
+		pose_w_real = 0;
 		dir_w = 0;
+		dir_w_real = 0;
 		vel_w = 0;
 		acl_w = 0;
 		ind_w = 0;
@@ -119,6 +149,7 @@ class TrajectoryTracker
 {
 public:
 	unsigned int index;
+	std::string id_;
 	BEH_STATE_TYPE beh;
 	BEH_STATE_TYPE best_beh_by_p;
 	BEH_STATE_TYPE best_beh_by_w;
@@ -126,6 +157,7 @@ public:
 	double best_p;
 	double all_p;
 	double all_w;
+	double all_w_real;
 	std::vector<int> ids;
 	std::vector<int> path_ids;
 	WayPoint path_last_pose;
@@ -160,6 +192,9 @@ public:
 	double w_avg_left;
 	double w_avg_right;
 
+	static int particle_numbers;
+	static int min_particle_numbers;
+
 	PassiveDecisionMaker m_SinglePathDecisionMaker;
 
 	TrajectoryTracker()
@@ -184,6 +219,7 @@ public:
 		best_w = 0;
 		all_p = 0;
 		all_w = 0;
+		all_w_real = 0;
 
 		w_avg_forward = 0;
 		w_avg_stop = 0;
@@ -203,8 +239,9 @@ public:
 	TrajectoryTracker(const TrajectoryTracker& obj)
 	{
 
-	  rms_error = 0;
+		rms_error = 0;
 		ids = obj.ids;
+		id_ = obj.id_;
 		path_ids = obj.path_ids;
 		path_last_pose = obj.path_last_pose;
 		beh = obj.beh;
@@ -227,6 +264,7 @@ public:
 		best_w = obj.best_w;
 		all_p = obj.all_p;
 		all_w = obj.all_w;
+		all_w_real = obj.all_w_real;
 		m_SinglePathDecisionMaker = obj.m_SinglePathDecisionMaker;
 
 		m_CurrParts = obj.m_CurrParts;
@@ -253,6 +291,7 @@ public:
 			//std::cout << "New Path: Beh: " << beh << ", index: " << _index << ", LaneID_0: " << path.at(0).laneId << ", LaneID_1: "<< path.at(1).laneId << std::endl;
 		}
 
+		id_ = PlannerHNS::PlanningHelpers::MakePathDirectionID(path);
 		index = _index;
 		trajectory = path;
 		int prev_id = -10;
@@ -302,6 +341,7 @@ public:
 
 		beh = _path.at(0).beh_state;
 		index = _index;
+		id_ = PlannerHNS::PlanningHelpers::MakePathDirectionID(_path);
 		trajectory = _path;
 		int prev_id = -10;
 		int curr_id = -10;
@@ -383,12 +423,12 @@ public:
 		double nMatch = (double)nIds/(double)nCount;
 		double _d = hypot(path_last_pose.pos.y-curr_last_pose.pos.y, path_last_pose.pos.x-curr_last_pose.pos.x);
 
-		double dCost = _d/FIXED_PLANNING_DISTANCE;
+		double dCost = _d/FIXED_MIN_PLANNING_DISTANCE;
 		if(dCost > 1.0)
 			dCost = 1.0;
 		double dMatch = 1.0 - dCost;
 
-		double _a_diff = UtilityHNS::UtilityH::AngleBetweenTwoAnglesPositive(path_last_pose.pos.a, curr_last_pose.pos.a);
+		double _a_diff = op_utility_ns::UtilityH::AngleBetweenTwoAnglesPositive(path_last_pose.pos.a, curr_last_pose.pos.a);
 		double aCost = _a_diff/M_PI;
 		if(aCost > 1.0)
 			aCost = 1.0;
@@ -401,7 +441,7 @@ public:
 
 	void InsertNewParticle(const Particle& p)
 	{
-		if(m_CurrParts.size() > BEH_PARTICLES_NUM) return;
+		if(m_CurrParts.size() > particle_numbers) return;
 
 		m_CurrParts.push_back(p);
 
@@ -476,27 +516,27 @@ public:
 		{
 			if(parts_list.at(i).beh == PlannerHNS::BEH_STOPPING_STATE)
 			{
-				if(nAliveStop == BEH_MIN_PARTICLE_NUM && bForce == true) continue;
+				if(nAliveStop == min_particle_numbers && bForce == true) continue;
 				nAliveStop--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_YIELDING_STATE)
 			{
-				if(nAliveYield == BEH_MIN_PARTICLE_NUM && bForce == true) continue;
+				if(nAliveYield == min_particle_numbers && bForce == true) continue;
 				nAliveYield--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_FORWARD_STATE)
 			{
-				if(nAliveForward == BEH_MIN_PARTICLE_NUM  && bForce == true) continue;
+				if(nAliveForward == min_particle_numbers  && bForce == true) continue;
 				nAliveForward--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_BRANCH_LEFT_STATE)
 			{
-				if(nAliveLeft == BEH_MIN_PARTICLE_NUM && bForce == true) continue;
+				if(nAliveLeft == min_particle_numbers && bForce == true) continue;
 				nAliveLeft--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_BRANCH_RIGHT_STATE)
 			{
-				if(nAliveRight == BEH_MIN_PARTICLE_NUM && bForce == true) continue;
+				if(nAliveRight == min_particle_numbers && bForce == true) continue;
 				nAliveRight--;
 			}
 
@@ -515,14 +555,15 @@ public:
 		if(cut_off > 0 && cut_off < 1)
 			DeleteParticlesWithWeightLessThan(m_CurrParts, cut_off, bForce);
 
-		for(int i=0; i < m_CurrParts.size(); i++)
-		{
-			if(m_CurrParts.at(i).info_to_path.bAfter ||  (m_CurrParts.at(i).info_to_path.bBefore && m_CurrParts.at(i).info_to_path.to_front_distance > 15)  || m_CurrParts.at(i).info_to_path.perp_distance >= 15)
-			{
-				m_CurrParts.erase(m_CurrParts.begin()+i);
-				i--;
-			}
-		}
+		//when particle filter is so bad , and doesn't filter particles, we try to delete far and strange ones forcibly
+//		for(int i=0; i < m_CurrParts.size(); i++)
+//		{
+//			if(m_CurrParts.at(i).info_to_path.bAfter ||  (m_CurrParts.at(i).info_to_path.bBefore && m_CurrParts.at(i).info_to_path.to_front_distance > 15)  || m_CurrParts.at(i).info_to_path.perp_distance >= 15)
+//			{
+//				m_CurrParts.erase(m_CurrParts.begin()+i);
+//				i--;
+//			}
+//		}
 	}
 
 	void DeleteParticlesWithWeightLessThan(std::vector<Particle>& parts_list, double cut_off, const bool& bForce = false)
@@ -544,27 +585,27 @@ public:
 		{
 			if(parts_list.at(i).beh == PlannerHNS::BEH_STOPPING_STATE)
 			{
-				if(nAliveStop == BEH_MIN_PARTICLE_NUM && bForce == true) continue;
+				if(nAliveStop == min_particle_numbers && bForce == true) continue;
 				nAliveStop--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_YIELDING_STATE)
 			{
-				if(nAliveYield == BEH_MIN_PARTICLE_NUM && bForce == true) continue;
+				if(nAliveYield == min_particle_numbers && bForce == true) continue;
 				nAliveYield--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_FORWARD_STATE)
 			{
-				if(nAliveForward == BEH_MIN_PARTICLE_NUM  && bForce == true) continue;
+				if(nAliveForward == min_particle_numbers  && bForce == true) continue;
 				nAliveForward--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_BRANCH_LEFT_STATE)
 			{
-				if(nAliveLeft == BEH_MIN_PARTICLE_NUM && bForce == true) continue;
+				if(nAliveLeft == min_particle_numbers && bForce == true) continue;
 				nAliveLeft--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_BRANCH_RIGHT_STATE)
 			{
-				if(nAliveRight == BEH_MIN_PARTICLE_NUM && bForce == true) continue;
+				if(nAliveRight == min_particle_numbers && bForce == true) continue;
 				nAliveRight--;
 			}
 
@@ -581,10 +622,22 @@ public:
 		double l_sum = 0;
 		double r_sum = 0;
 		double all_sum = 0;
+		double all_sum_real = 0;
+		w_avg_forward = 0;
+		w_avg_stop = 0;
+		w_avg_yield = 0;
+		w_avg_left = 0;
+		w_avg_right = 0;
+		pStop = 0;
+		pYield = 0;
+		pForward = 0;
+		pLeft = 0;
+		pRight = 0;
 
 		for(unsigned int i = 0; i < m_CurrParts.size(); i++)
 		{
 			all_sum += m_CurrParts.at(i).w;
+			all_sum_real += m_CurrParts.at(i).w_real;
 
 			if(m_CurrParts.at(i).beh == PlannerHNS::BEH_STOPPING_STATE)
 				s_sum += m_CurrParts.at(i).w;
@@ -610,16 +663,19 @@ public:
 			w_avg_right = r_sum/(double)nAliveRight;
 
 		if(m_CurrParts.size() > 0)
+		{
 			all_w = all_sum/(double)m_CurrParts.size();
+			all_w_real = all_sum_real/(double)m_CurrParts.size();
+		}
 
 
-		pStop  = (double)nAliveStop/(double)BEH_PARTICLES_NUM;
-		pYield = (double)nAliveYield/(double)BEH_PARTICLES_NUM;
-		pForward = (double)nAliveForward/(double)BEH_PARTICLES_NUM;
-		pLeft = (double)nAliveLeft/(double)BEH_PARTICLES_NUM;
-		pRight = (double)nAliveRight/(double)BEH_PARTICLES_NUM;
+		pStop  = (double)nAliveStop/(double)particle_numbers;
+		pYield = (double)nAliveYield/(double)particle_numbers;
+		pForward = (double)nAliveForward/(double)particle_numbers;
+		pLeft = (double)nAliveLeft/(double)particle_numbers;
+		pRight = (double)nAliveRight/(double)particle_numbers;
 
-		all_p = (double)(nAliveStop + nAliveForward + nAliveYield + nAliveLeft + nAliveRight) / (double)BEH_PARTICLES_NUM;
+		all_p = (double)(nAliveStop + nAliveForward + nAliveYield + nAliveLeft + nAliveRight) / (double)particle_numbers;
 
 //		for(unsigned int i = 0; i < m_ForwardPart.size(); i++)
 //		{
@@ -747,53 +803,64 @@ public:
 	int i_best_for_track;
 
 	//PlannerHNS::BehaviorState m_beh;
-	double m_PredictionTime;
+	double m_PredictionDistance;
 
-	double all_w;
+	//double all_w;
+	//double all_w_real;
 	double max_w;
 	double min_w;
 	double max_w_raw;
 	double min_w_raw;
 
+	double pose_w_real_t;
 	double pose_w_t;
 	double dir_w_t;
+	double dir_w_real_t;
 	double vel_w_t;
 	double acl_w_t;
 	double ind_w_t;
 
 	double pose_w_max;
+	double pose_w_real_max;
 	double dir_w_max;
+	double dir_w_real_max;
 	double vel_w_max;
 	double acl_w_max;
 	double ind_w_max;
 
 	double pose_w_min;
+	double pose_w_real_min;
 	double dir_w_min;
+	double dir_w_real_min;
 	double vel_w_min;
 	double acl_w_min;
 	double ind_w_min;
 
-	double pose_w_max_norm;
-	double dir_w_max_norm;
-	double vel_w_max_norm;
-	double acl_w_max_norm;
-	double ind_w_max_norm;
-
-	double pose_w_min_norm;
-	double dir_w_min_norm;
-	double vel_w_min_norm;
-	double acl_w_min_norm;
-	double ind_w_min_norm;
+//	double pose_w_max_norm;
+//	double dir_w_max_norm;
+//	double vel_w_max_norm;
+//	double acl_w_max_norm;
+//	double ind_w_max_norm;
+//
+//	double pose_w_min_norm;
+//	double dir_w_min_norm;
+//	double vel_w_min_norm;
+//	double acl_w_min_norm;
+//	double ind_w_min_norm;
 
 	double pose_diff_raw;
+	double pose_real_diff_raw;
 	double dir_diff_raw ;
+	double dir_real_diff_raw ;
 	double vel_diff_raw ;
 	double ind_diff_raw ;
 	double acl_diff_raw ;
 	double total_diff_raw ;
 
 	double pose_factor;
+	double pose_factor_real;
 	double dir_factor;
+	double dir_factor_real;
 	double vel_factor;
 	double acl_factor;
 	double ind_factor;
@@ -806,23 +873,26 @@ public:
 		m_TrajectoryTracker_temp.clear();
 	}
 
-	ObjParticles()
+	ObjParticles(PredictionParams _predParams)
 	{
 		bCanDecide = true;
-		m_PredictionTime = 0;
+		m_PredictionDistance = 0;
 		best_behavior_track = nullptr;
 		best_forward_track = nullptr;
 		i_best_beh_track = -1;
 		i_best_for_track = -1;
 
-		InitWeightsVariables();
+		InitWeightsVariables(_predParams);
 	}
 
-	void InitWeightsVariables()
+	void InitWeightsVariables(PredictionParams _predParams)
 	{
-		all_w = 0;
+		//all_w = 0;
+		//all_w_real = 0;
 		pose_w_t = 0;
+		pose_w_real_t = 0;
 		dir_w_t = 0;
+		dir_w_real_t = 0;
 		vel_w_t = 0;
 		acl_w_t = 0;
 		ind_w_t = 0;
@@ -832,42 +902,50 @@ public:
 		min_w_raw = DBL_MAX;
 
 		pose_w_max = DBL_MIN;
+		pose_w_real_max = DBL_MIN;
 		dir_w_max = DBL_MIN;
+		dir_w_real_max = DBL_MIN;
 		vel_w_max = DBL_MIN;
 		acl_w_max = DBL_MIN;
 		ind_w_max = DBL_MIN;
 
 		pose_w_min = DBL_MAX;
+		pose_w_real_min = DBL_MAX;
 		dir_w_min = DBL_MAX;
+		dir_w_real_min = DBL_MAX;
 		vel_w_min = DBL_MAX;
 		acl_w_min = DBL_MAX;
 		ind_w_min = DBL_MAX;
 
-		pose_w_max_norm = DBL_MIN;
-		dir_w_max_norm = DBL_MIN;
-		vel_w_max_norm = DBL_MIN;
-		acl_w_max_norm = DBL_MIN;
-		ind_w_max_norm = DBL_MIN;
-
-		pose_w_min_norm = DBL_MAX;
-		dir_w_min_norm = DBL_MAX;
-		vel_w_min_norm = DBL_MAX;
-		acl_w_min_norm = DBL_MAX;
-		ind_w_min_norm = DBL_MAX;
+//		pose_w_max_norm = DBL_MIN;
+//		dir_w_max_norm = DBL_MIN;
+//		vel_w_max_norm = DBL_MIN;
+//		acl_w_max_norm = DBL_MIN;
+//		ind_w_max_norm = DBL_MIN;
+//
+//		pose_w_min_norm = DBL_MAX;
+//		dir_w_min_norm = DBL_MAX;
+//		vel_w_min_norm = DBL_MAX;
+//		acl_w_min_norm = DBL_MAX;
+//		ind_w_min_norm = DBL_MAX;
 
 
 		pose_diff_raw = 0.0;
+		pose_real_diff_raw = 0.0;
 		dir_diff_raw = 0.0;
+		dir_real_diff_raw = 0.0;
 		vel_diff_raw = 0.0;
 		ind_diff_raw = 0.0;
 		acl_diff_raw = 0.0;
 		total_diff_raw = 0.0;
 
-		pose_factor = POSE_FACTOR;
-		dir_factor = DIRECTION_FACTOR;
-		vel_factor = VELOCITY_FACTOR;
-		acl_factor = ACCELERATE_FACTOR;
-		ind_factor = INDICATOR_FACTOR;
+		pose_factor = _predParams.POSE_FACTOR;
+		pose_factor_real = _predParams.POSE_FACTOR;
+		dir_factor = _predParams.DIRECTION_FACTOR;
+		dir_factor_real = _predParams.DIRECTION_FACTOR;
+		vel_factor = _predParams.VELOCITY_FACTOR;
+		acl_factor = _predParams.ACCELERATE_FACTOR;
+		ind_factor = _predParams.INDICATOR_FACTOR;
 	}
 
 	void BalanceFactorsToOne()
@@ -923,6 +1001,51 @@ public:
 
 		pose_factor = factors_list.at(0);
 		dir_factor = factors_list.at(1);
+		vel_factor = factors_list.at(2);
+		acl_factor = factors_list.at(3);
+		ind_factor = factors_list.at(4);
+
+	}
+
+	void BalanceFactorsToOneReal()
+	{
+		std::vector<double> factors_list = {pose_factor_real, dir_factor_real, vel_factor, acl_factor, ind_factor};
+		int nNonZero = 0;
+		for(unsigned int i=0;i < factors_list.size(); i++)
+		{
+			if(factors_list.at(i) > 0.0)
+				nNonZero++;
+		}
+		double all_factors = std::accumulate(factors_list.begin(), factors_list.end(), 0.0);
+
+		while(all_factors > 1.01 || all_factors < 0.99)
+		{
+			double every_one_share = (1.0 - all_factors)/(double)nNonZero;
+			for(unsigned int i=0;i < factors_list.size(); i++)
+			{
+				if(factors_list.at(i) > 0.0)
+				{
+					factors_list.at(i) += every_one_share;
+				}
+
+				if(factors_list.at(i) < 0.0)
+					factors_list.at(i) = 0.0;
+			}
+
+			nNonZero = 0;
+			for(unsigned int i=0;i < factors_list.size(); i++)
+			{
+				if(factors_list.at(i) > 0.0)
+					nNonZero++;
+			}
+			all_factors = std::accumulate(factors_list.begin(), factors_list.end(), 0.0);
+
+			if(all_factors == 0)
+				break;
+		}
+
+		pose_factor_real = factors_list.at(0);
+		dir_factor_real = factors_list.at(1);
 		vel_factor = factors_list.at(2);
 		acl_factor = factors_list.at(3);
 		ind_factor = factors_list.at(4);
@@ -1077,6 +1200,11 @@ public:
 		m_TrajectoryTracker = m_TrajectoryTracker_temp;
 	}
 
+	static bool IsBeggerRealW(const TrajectoryTracker* T1, const TrajectoryTracker* T2)
+	{
+		return T1->all_w_real > T2->all_w_real;
+	}
+
 	void FindBestTracks()
 	{
 		for(unsigned int t=0; t < m_TrajectoryTracker.size(); t++)
@@ -1084,17 +1212,53 @@ public:
 			m_TrajectoryTracker.at(t)->CalcBest();
 		}
 
+//		if(m_TrajectoryTracker.size() == 1)
+//		{
+//			best_forward_track = m_TrajectoryTracker.at(0);
+//			i_best_for_track = 0;
+//		}
+//		else
+//		{
+//			best_forward_track = nullptr;
+//			i_best_for_track = -1;
+//			std::vector<TrajectoryTracker*> trajectoryTracker_srt = m_TrajectoryTracker;
+//			std::sort(trajectoryTracker_srt.begin(), trajectoryTracker_srt.end(), IsBeggerRealW);
+//			if(trajectoryTracker_srt.at(0)->all_w_real - trajectoryTracker_srt.at(1)->all_w_real > 0.2)
+//			{
+//				best_forward_track = trajectoryTracker_srt.at(0);
+//				i_best_for_track = trajectoryTracker_srt.at(0)->index;
+//			}
+//			else // check if can't find the previous in the current list
+//			{
+//				bool bFound = false;
+//				for(unsigned int t = 0; t < m_TrajectoryTracker.size(); t++)
+//				{
+//					if(best_forward_track == m_TrajectoryTracker.at(t))
+//					{
+//						bFound = true;
+//						break;
+//					}
+//				}
+//
+//				if(!bFound)
+//				{
+//					best_forward_track = nullptr;
+//					i_best_for_track = -1;
+//				}
+//			}
+//		}
+
 		if(m_TrajectoryTracker.size() > 0)
 		{
 			best_behavior_track = m_TrajectoryTracker.at(0);
-			best_forward_track = m_TrajectoryTracker.at(0);
 			i_best_beh_track = 0;
+			best_forward_track = m_TrajectoryTracker.at(0);
 			i_best_for_track = 0;
 		}
 
 		for(unsigned int t = 1; t < m_TrajectoryTracker.size(); t++)
 		{
-			if(m_TrajectoryTracker.at(t)->w_avg_forward > best_forward_track->w_avg_forward)
+			if(m_TrajectoryTracker.at(t)->all_w_real > best_forward_track->all_w_real)
 			{
 				best_forward_track = m_TrajectoryTracker.at(t);
 				i_best_for_track = t;
@@ -1105,12 +1269,6 @@ public:
 				best_behavior_track = m_TrajectoryTracker.at(t);
 				i_best_beh_track = t;
 			}
-
-//			if(m_TrajectoryTracker.at(t)->all_w > best_behavior_track->all_w)
-//			{
-//				best_behavior_track = m_TrajectoryTracker.at(t);
-//				i_best_beh_track = t;
-//			}
 		}
 	}
 };
@@ -1126,9 +1284,9 @@ public:
 	std::vector<PassiveDecisionMaker*> m_d_makers;
 	double m_PredictionHorizon;
 	double m_MaxLaneDetectionDistance;
-	double m_PredictionDistance;
+	double m_MaxPredictionDistance;
 	bool m_bGenerateBranches;
-	bool m_bUseFixedPrediction;
+	//bool m_bUseFixedPrediction;
 	bool m_bStepByStep;
 	bool m_bParticleFilter;
 	//std::vector<DetectedObject> m_PredictedObjects;
@@ -1143,9 +1301,10 @@ public:
 	struct timespec m_GenerationTimer;
 	timespec m_ResamplingTimer;
 
-	bool m_bCanDecide;
+	//bool m_bCanDecide;
 	bool m_bFirstMove;
 	bool m_bDebugOut;
+	bool m_bDebugMotion;
 	bool m_bDebugOutWeights;
 
 
@@ -1156,7 +1315,7 @@ protected:
 	double CalcIndicatorWeight(PlannerHNS::LIGHT_INDICATOR p_ind, PlannerHNS::LIGHT_INDICATOR obj_ind);
 	double CalcAccelerationWeight(int p_acl, int obj_acl);
 
-	void CalPredictionTimeForObject(ObjParticles* pCarPart);
+	void CalPredictionTimeForObject(ObjParticles* pCarPart, const double& max_pre_distance);
 	void PredictCurrentTrajectory(RoadNetwork& map, ObjParticles* pCarPart);
 	void FilterObservations(const std::vector<DetectedObject>& obj_list, RoadNetwork& map, std::vector<DetectedObject>& filtered_list);
 	void ExtractTrajectoriesFromMap(const std::vector<DetectedObject>& obj_list, RoadNetwork& map, std::vector<ObjParticles*>& old_list);
@@ -1185,6 +1344,14 @@ protected:
 
 
 public:
+	PredictionParams g_PredParams;
+
+	void SetForTrajTracker()
+	{
+		TrajectoryTracker::particle_numbers = g_PredParams.PARTICLES_NUM;
+		TrajectoryTracker::min_particle_numbers = g_PredParams.MIN_PARTICLE_NUM;
+	}
+
 	//move to CPP later
 	void DeleteFromList(std::vector<ObjParticles*>& delete_me, const ObjParticles* pElement)
 	{
@@ -1206,6 +1373,62 @@ public:
 		}
 
 		delete_me.clear();
+	}
+
+	void GetBestParticleWeight(std::vector<Particle>& part_list, Particle* pBestF, Particle* pBestS, Particle* pBestY)
+	{
+		pBestF = nullptr;
+		pBestS = nullptr;
+		pBestY = nullptr;
+
+		if(part_list.size() < 1) return;
+
+		double f_max_w = DBL_MIN;
+		unsigned int f_max_i = -1;
+
+		double s_max_w = DBL_MIN;
+		unsigned int s_max_i = -1;
+
+		double y_max_w = DBL_MIN;
+		unsigned int y_max_i = -1;
+
+		for(unsigned int i=0; i < part_list.size(); i++)
+		{
+			if(part_list.at(i).beh == BEH_FORWARD_STATE)
+			{
+				if(part_list.at(i).w > f_max_w)
+				{
+					f_max_w = part_list.at(i).w;
+					f_max_i = i;
+				}
+			}
+			else if(part_list.at(i).beh == BEH_STOPPING_STATE)
+			{
+				if(part_list.at(i).w > s_max_w)
+				{
+					s_max_w = part_list.at(i).w;
+					s_max_i = i;
+				}
+			}
+			else if(part_list.at(i).beh == BEH_YIELDING_STATE)
+			{
+				if(part_list.at(i).w > y_max_w)
+				{
+					y_max_w = part_list.at(i).w;
+					y_max_i = i;
+				}
+			}
+		}
+
+		if(f_max_i >= 0)
+			pBestF = &part_list.at(f_max_i);
+
+		if(s_max_i >= 0)
+			pBestS = &part_list.at(s_max_i);
+
+		if(y_max_i >= 0)
+			pBestY = &part_list.at(y_max_i);
+
 	}
 
 	Particle* GetBestParticleWeight(std::vector<Particle>& part_list)

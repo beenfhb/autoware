@@ -37,21 +37,21 @@
 
 	<arg name="steeringDelay" 			default="1.2" />
 	<arg name="minPursuiteDistance" 	default="3.0"  />
-	<arg name="additionalBrakingDistance" default="5.0"  />
+	<arg name="additionalBrakingDistance" default="10.0"  />
 	
 	<arg name="giveUpDistance" 			default="-4.0"  />
 	
 	<arg name="maxAcceleration" 			default="3.0" />
 	<arg name="maxDeceleration" 			default="-3.0" />
 			
-	<arg name="velocitySource"			default="1" /> <!-- read velocities from (0- Odometry, 1- autoware current_velocities, 2- car_info) "" -->		
+	<arg name="velocitySource"			default="1" /> <!-- read velocities from (0- Odometry, 1- autoware current_velocities, 2- car_info) "" -->
+	
+	<arg name="experimentName" 				default="" />		
 
 
 	<node pkg="op_local_planner" type="op_common_params" name="op_common_params" output="screen">
-	
-	<!-- Common Parameters -->
-	
-	<param name="mapSource" 				value="$(arg mapSource)" /> <!-- Autoware=0, Vector Map Folder=1, kml=2 -->
+		
+	<param name="mapSource" 				value="$(arg mapSource)" /> 
 	<param name="mapFileName" 				value="$(arg mapFileName)" />
 		
 	<param name="pathDensity" 			    value="$(arg pathDensity)" />
@@ -63,9 +63,9 @@
 	<param name="maxLocalPlanDistance" 		value="$(arg maxLocalPlanDistance)" />	
 	<param name="horizonDistance" 			value="$(arg horizonDistance)" />
 	
-	<param name="minFollowingDistance" 		value="$(arg minFollowingDistance)"  /> <!-- should be bigger than Distance to follow -->	
-	<param name="minDistanceToAvoid" 		value="$(arg minDistanceToAvoid)" /> <!-- should be smaller than minFollowingDistance and larger than maxDistanceToAvoid -->
-	<param name="maxDistanceToAvoid" 		value="$(arg maxDistanceToAvoid)"  /> <!-- should be smaller than minDistanceToAvoid -->
+	<param name="minFollowingDistance" 		value="$(arg minFollowingDistance)"  /> 	
+	<param name="minDistanceToAvoid" 		value="$(arg minDistanceToAvoid)" /> 
+	<param name="maxDistanceToAvoid" 		value="$(arg maxDistanceToAvoid)"  /> 
 	<param name="speedProfileFactor"		value="$(arg speedProfileFactor)"  />
 	
 	<param name="smoothingDataWeight"		value="$(arg smoothingDataWeight)"  />
@@ -95,7 +95,9 @@
 	<param name="maxAcceleration" 			value="$(arg maxAcceleration)" />
 	<param name="maxDeceleration" 			value="$(arg maxDeceleration)" />
 			
-	<param name="velocitySource"			value="$(arg velocitySource)" /> <!-- read velocities from (0- Odometry, 1- autoware current_velocities, 2- car_info) "" -->		
+	<param name="velocitySource"			value="$(arg velocitySource)" /> 
+	
+	<param name="experimentName" 			value="$(arg experimentName)" />		
 			
 	</node>				
 			

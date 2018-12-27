@@ -90,6 +90,8 @@ protected:
   	visualization_msgs::MarkerArray m_CollisionsDummy;
 	visualization_msgs::MarkerArray m_CollisionsActual;
 
+	std::string m_ExperimentFolderName;
+
 	//ROS messages (topics)
 	ros::NodeHandle nh;
 

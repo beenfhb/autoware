@@ -30,7 +30,6 @@
 
 #include "op_car_simulator_core.h"
 
-#include "op_utility/UtilityH.h"
 #include "math.h"
 #include "op_planner/MatrixOperations.h"
 #include <geometry_msgs/PoseArray.h>
@@ -155,22 +154,25 @@ OpenPlannerCarSimulator::OpenPlannerCarSimulator()
 	}
 
 	//Mapping Section
-	sub_lanes = nh.subscribe("/vector_map_info/lane", 1, &OpenPlannerCarSimulator::callbackGetVMLanes,  this);
-	sub_points = nh.subscribe("/vector_map_info/point", 1, &OpenPlannerCarSimulator::callbackGetVMPoints,  this);
-	sub_dt_lanes = nh.subscribe("/vector_map_info/dtlane", 1, &OpenPlannerCarSimulator::callbackGetVMdtLanes,  this);
-	sub_intersect = nh.subscribe("/vector_map_info/cross_road", 1, &OpenPlannerCarSimulator::callbackGetVMIntersections,  this);
-	sup_area = nh.subscribe("/vector_map_info/area", 1, &OpenPlannerCarSimulator::callbackGetVMAreas,  this);
-	sub_lines = nh.subscribe("/vector_map_info/line", 1, &OpenPlannerCarSimulator::callbackGetVMLines,  this);
-	sub_stop_line = nh.subscribe("/vector_map_info/stop_line", 1, &OpenPlannerCarSimulator::callbackGetVMStopLines,  this);
-	sub_signals = nh.subscribe("/vector_map_info/signal", 1, &OpenPlannerCarSimulator::callbackGetVMSignal,  this);
-	sub_vectors = nh.subscribe("/vector_map_info/vector", 1, &OpenPlannerCarSimulator::callbackGetVMVectors,  this);
-	sub_curbs = nh.subscribe("/vector_map_info/curb", 1, &OpenPlannerCarSimulator::callbackGetVMCurbs,  this);
-	sub_edges = nh.subscribe("/vector_map_info/road_edge", 1, &OpenPlannerCarSimulator::callbackGetVMRoadEdges,  this);
-	sub_way_areas = nh.subscribe("/vector_map_info/way_area", 1, &OpenPlannerCarSimulator::callbackGetVMWayAreas,  this);
-	sub_cross_walk = nh.subscribe("/vector_map_info/cross_walk", 1, &OpenPlannerCarSimulator::callbackGetVMCrossWalks,  this);
-	sub_nodes = nh.subscribe("/vector_map_info/node", 1, &OpenPlannerCarSimulator::callbackGetVMNodes,  this);
+	if(m_SimParams.mapSource == PlannerHNS::MAP_AUTOWARE)
+	{
+		sub_lanes = nh.subscribe("/vector_map_info/lane", 1, &OpenPlannerCarSimulator::callbackGetVMLanes,  this);
+		sub_points = nh.subscribe("/vector_map_info/point", 1, &OpenPlannerCarSimulator::callbackGetVMPoints,  this);
+		sub_dt_lanes = nh.subscribe("/vector_map_info/dtlane", 1, &OpenPlannerCarSimulator::callbackGetVMdtLanes,  this);
+		sub_intersect = nh.subscribe("/vector_map_info/cross_road", 1, &OpenPlannerCarSimulator::callbackGetVMIntersections,  this);
+		sup_area = nh.subscribe("/vector_map_info/area", 1, &OpenPlannerCarSimulator::callbackGetVMAreas,  this);
+		sub_lines = nh.subscribe("/vector_map_info/line", 1, &OpenPlannerCarSimulator::callbackGetVMLines,  this);
+		sub_stop_line = nh.subscribe("/vector_map_info/stop_line", 1, &OpenPlannerCarSimulator::callbackGetVMStopLines,  this);
+		sub_signals = nh.subscribe("/vector_map_info/signal", 1, &OpenPlannerCarSimulator::callbackGetVMSignal,  this);
+		sub_vectors = nh.subscribe("/vector_map_info/vector", 1, &OpenPlannerCarSimulator::callbackGetVMVectors,  this);
+		sub_curbs = nh.subscribe("/vector_map_info/curb", 1, &OpenPlannerCarSimulator::callbackGetVMCurbs,  this);
+		sub_edges = nh.subscribe("/vector_map_info/road_edge", 1, &OpenPlannerCarSimulator::callbackGetVMRoadEdges,  this);
+		sub_way_areas = nh.subscribe("/vector_map_info/way_area", 1, &OpenPlannerCarSimulator::callbackGetVMWayAreas,  this);
+		sub_cross_walk = nh.subscribe("/vector_map_info/cross_walk", 1, &OpenPlannerCarSimulator::callbackGetVMCrossWalks,  this);
+		sub_nodes = nh.subscribe("/vector_map_info/node", 1, &OpenPlannerCarSimulator::callbackGetVMNodes,  this);
+	}
 
-	UtilityHNS::UtilityH::GetTickCount(m_PlanningTimer);
+	op_utility_ns::UtilityH::GetTickCount(m_PlanningTimer);
 	std::cout << "OpenPlannerCarSimulator initialized successfully " << std::endl;
 }
 
@@ -189,7 +191,7 @@ void OpenPlannerCarSimulator::ReadParamFromLaunchFile(PlannerHNS::CAR_BASIC_INFO
 	_nh.getParam("baseColorG" 			, m_SimParams.modelColor.g);
 	_nh.getParam("baseColorB" 			, m_SimParams.modelColor.b);
 	m_SimParams.modelColor.a = 0.9;
-	_nh.getParam("logFolder" 			, m_SimParams.logPath);
+	//_nh.getParam("logFolder" 			, m_SimParams.logPath);
 
 
 	_nh.getParam("maxVelocity", m_PlanningParams.maxSpeed);
@@ -253,6 +255,17 @@ void OpenPlannerCarSimulator::ReadParamFromLaunchFile(PlannerHNS::CAR_BASIC_INFO
 		m_SimParams.mapSource = MAP_KML_FILE;
 
 	_nh.getParam("mapFileName" 		, m_SimParams.KmlMapPath);
+
+	_nh.getParam("experimentName" , m_ExperimentFolderName);
+	if(m_ExperimentFolderName.size() > 0)
+	{
+		if(m_ExperimentFolderName.at(m_ExperimentFolderName.size()-1) != '/')
+			m_ExperimentFolderName.push_back('/');
+	}
+
+	op_utility_ns::DataRW::CreateLoggingMainFolder();
+	if(m_ExperimentFolderName.size() > 1)
+		op_utility_ns::DataRW::CreateExperimentFolder(m_ExperimentFolderName);
 
 	//m_SimParams.KmlMapPath = "/media/hatem/8ac0c5d5-8793-4b98-8728-55f8d67ec0f4/data/ToyotaCity2/map/vector_map/";
 	m_PlanningParams.additionalBrakingDistance = ADDITIONAL_BREAK_DISTANCE;
@@ -409,6 +422,7 @@ void OpenPlannerCarSimulator::callbackGetPredictedObjects(const autoware_msgs::D
 			PlannerHNS::RosHelpers::ConvertFromAutowareDetectedObjectToOpenPlannerDetectedObject(msg->objects.at(i), obj);
 			m_PredictedObjects.push_back(obj);
 		}
+
 //		else
 //		{
 //			std::cout << " Simulated Car avoid detecting itself, ID=" << msg->objects.at(i).id <<  std::endl;
@@ -433,7 +447,7 @@ void OpenPlannerCarSimulator::displayFollowingInfo(const std::vector<PlannerHNS:
   m1.pose.position.y = pose_center.pos.y;
   m1.pose.position.z = pose_center.pos.z;
 
-  m1.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, UtilityHNS::UtilityH::SplitPositiveAngle(curr_pose.pos.a));
+  m1.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, op_utility_ns::UtilityH::SplitPositiveAngle(curr_pose.pos.a));
   m1.color = m_SimParams.modelColor;
   m1.scale.x = 1.0*m_CarInfo.length/4.2;
   m1.scale.y = 1.0*m_CarInfo.width/1.85;
@@ -709,7 +723,10 @@ void OpenPlannerCarSimulator::SaveSimulationData()
 	std::string header = "X,Y,Z,A,C,V,";
 
 	ostringstream fileName;
-	fileName << UtilityHNS::UtilityH::GetHomeDirectory()+UtilityHNS::DataRW::LoggingMainfolderName+UtilityHNS::DataRW::SimulationFolderName;
+	if(m_ExperimentFolderName.size() == 0)
+		fileName << op_utility_ns::UtilityH::GetHomeDirectory()+op_utility_ns::DataRW::LoggingMainfolderName+op_utility_ns::DataRW::SimulationFolderName;
+	else
+		fileName << op_utility_ns::UtilityH::GetHomeDirectory()+op_utility_ns::DataRW::LoggingMainfolderName+op_utility_ns::DataRW::ExperimentsFolderName + m_ExperimentFolderName + op_utility_ns::DataRW::SimulationFolderName;
 	fileName << "SimuCar_";
 	fileName << m_SimParams.id;
 	fileName << ".csv";
@@ -734,9 +751,12 @@ int OpenPlannerCarSimulator::LoadSimulationData(PlannerHNS::WayPoint& start_p, P
 	fileName << m_SimParams.id;
 	fileName << ".csv";
 
-	string simuDataFileName = UtilityHNS::UtilityH::GetHomeDirectory()+UtilityHNS::DataRW::LoggingMainfolderName+UtilityHNS::DataRW::SimulationFolderName + fileName.str();
-	UtilityHNS::SimulationFileReader sfr(simuDataFileName);
-	UtilityHNS::SimulationFileReader::SimulationData data;
+	string simuDataFileName = op_utility_ns::UtilityH::GetHomeDirectory()+op_utility_ns::DataRW::LoggingMainfolderName+op_utility_ns::DataRW::SimulationFolderName + fileName.str();
+	if(m_ExperimentFolderName.size() > 1)
+		simuDataFileName = op_utility_ns::UtilityH::GetHomeDirectory()+op_utility_ns::DataRW::LoggingMainfolderName+op_utility_ns::DataRW::ExperimentsFolderName + m_ExperimentFolderName +op_utility_ns::DataRW::SimulationFolderName + fileName.str();
+
+	op_utility_ns::SimulationFileReader sfr(simuDataFileName);
+	op_utility_ns::SimulationFileReader::SimulationData data;
 
 	int nData = sfr.ReadAllData(data);
 	if(nData == 0)
@@ -765,7 +785,7 @@ void OpenPlannerCarSimulator::PublishSpecialTF(const PlannerHNS::WayPoint& pose)
 	base_link_trans.transform.translation.x = pose.pos.x;
 	base_link_trans.transform.translation.y = pose.pos.y;
 	base_link_trans.transform.translation.z = pose.pos.z;
-	base_link_trans.transform.rotation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, UtilityHNS::UtilityH::SplitPositiveAngle(pose.pos.a));
+	base_link_trans.transform.rotation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, op_utility_ns::UtilityH::SplitPositiveAngle(pose.pos.a));
 
 	// send the transform
 	map_base_link_broadcaster.sendTransform(base_link_trans);
@@ -812,7 +832,7 @@ void OpenPlannerCarSimulator::MainLoop()
 		}
 		else if (m_SimParams.mapSource == PlannerHNS::MAP_AUTOWARE && !m_bMap)
 		{
-			std::vector<UtilityHNS::AisanDataConnFileReader::DataConn> conn_data;;
+			std::vector<op_utility_ns::AisanDataConnFileReader::DataConn> conn_data;;
 
 			if(m_MapRaw.GetVersion()==2)
 			{
@@ -849,9 +869,9 @@ void OpenPlannerCarSimulator::MainLoop()
 
 		if(m_bMap && bInitPos && bGoalPos)
 		{
-			double dt  = UtilityHNS::UtilityH::GetTimeDiffNow(m_PlanningTimer);
+			double dt  = op_utility_ns::UtilityH::GetTimeDiffNow(m_PlanningTimer);
 
-			UtilityHNS::UtilityH::GetTickCount(m_PlanningTimer);
+			op_utility_ns::UtilityH::GetTickCount(m_PlanningTimer);
 
 			//Global Planning Step
 			if(m_GlobalPaths.size() > 0 && m_GlobalPaths.at(0).size() > 3)
@@ -978,7 +998,7 @@ void OpenPlannerCarSimulator::MainLoop()
 
 			PlannerHNS::WayPoint pose_center = PlannerHNS::PlanningHelpers::GetRealCenter(m_LocalPlanner->state, m_CarInfo.wheel_base);
 
-			p_pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, UtilityHNS::UtilityH::SplitPositiveAngle(pose_center.pos.a));
+			p_pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, op_utility_ns::UtilityH::SplitPositiveAngle(pose_center.pos.a));
 			p_pose.position.x = pose_center.pos.x;
 			p_pose.position.y = pose_center.pos.y;
 			p_pose.position.z = pose_center.pos.z;
@@ -999,13 +1019,13 @@ void OpenPlannerCarSimulator::MainLoop()
 			//if(m_bSimulatedVelodyne)
 				PublishSpecialTF(pose_center);
 
-			if(m_CurrBehavior.bNewPlan && m_SimParams.bEnableLogs)
-			{
-				std::ostringstream str_out;
-				str_out << m_SimParams.logPath;
-				str_out << "LocalPath_";
-				PlannerHNS::PlanningHelpers::WritePathToFile(str_out.str(),  m_LocalPlanner->m_Path);
-			}
+//			if(m_CurrBehavior.bNewPlan && m_SimParams.bEnableLogs)
+//			{
+//				std::ostringstream str_out;
+//				str_out << m_SimParams.logPath;
+//				str_out << "LocalPath_";
+//				PlannerHNS::PlanningHelpers::WritePathToFile(str_out.str(),  m_LocalPlanner->m_Path);
+//			}
 
 			if(m_SimParams.bLooper && m_CurrBehavior.state == PlannerHNS::FINISH_STATE)
 			{
@@ -1039,98 +1059,98 @@ void OpenPlannerCarSimulator::callbackGetVMLanes(const vector_map_msgs::LaneArra
 {
 	std::cout << "Received Lanes" << endl;
 	if(m_MapRaw.pLanes == nullptr)
-		m_MapRaw.pLanes = new UtilityHNS::AisanLanesFileReader(msg);
+		m_MapRaw.pLanes = new op_utility_ns::AisanLanesFileReader(msg);
 }
 
 void OpenPlannerCarSimulator::callbackGetVMPoints(const vector_map_msgs::PointArray& msg)
 {
 	std::cout << "Received Points" << endl;
 	if(m_MapRaw.pPoints  == nullptr)
-		m_MapRaw.pPoints = new UtilityHNS::AisanPointsFileReader(msg);
+		m_MapRaw.pPoints = new op_utility_ns::AisanPointsFileReader(msg);
 }
 
 void OpenPlannerCarSimulator::callbackGetVMdtLanes(const vector_map_msgs::DTLaneArray& msg)
 {
 	std::cout << "Received dtLanes" << endl;
 	if(m_MapRaw.pCenterLines == nullptr)
-		m_MapRaw.pCenterLines = new UtilityHNS::AisanCenterLinesFileReader(msg);
+		m_MapRaw.pCenterLines = new op_utility_ns::AisanCenterLinesFileReader(msg);
 }
 
 void OpenPlannerCarSimulator::callbackGetVMIntersections(const vector_map_msgs::CrossRoadArray& msg)
 {
 	std::cout << "Received CrossRoads" << endl;
 	if(m_MapRaw.pIntersections == nullptr)
-		m_MapRaw.pIntersections = new UtilityHNS::AisanIntersectionFileReader(msg);
+		m_MapRaw.pIntersections = new op_utility_ns::AisanIntersectionFileReader(msg);
 }
 
 void OpenPlannerCarSimulator::callbackGetVMAreas(const vector_map_msgs::AreaArray& msg)
 {
 	std::cout << "Received Areas" << endl;
 	if(m_MapRaw.pAreas == nullptr)
-		m_MapRaw.pAreas = new UtilityHNS::AisanAreasFileReader(msg);
+		m_MapRaw.pAreas = new op_utility_ns::AisanAreasFileReader(msg);
 }
 
 void OpenPlannerCarSimulator::callbackGetVMLines(const vector_map_msgs::LineArray& msg)
 {
 	std::cout << "Received Lines" << endl;
 	if(m_MapRaw.pLines == nullptr)
-		m_MapRaw.pLines = new UtilityHNS::AisanLinesFileReader(msg);
+		m_MapRaw.pLines = new op_utility_ns::AisanLinesFileReader(msg);
 }
 
 void OpenPlannerCarSimulator::callbackGetVMStopLines(const vector_map_msgs::StopLineArray& msg)
 {
 	std::cout << "Received StopLines" << endl;
 	if(m_MapRaw.pStopLines == nullptr)
-		m_MapRaw.pStopLines = new UtilityHNS::AisanStopLineFileReader(msg);
+		m_MapRaw.pStopLines = new op_utility_ns::AisanStopLineFileReader(msg);
 }
 
 void OpenPlannerCarSimulator::callbackGetVMSignal(const vector_map_msgs::SignalArray& msg)
 {
 	std::cout << "Received Signals" << endl;
 	if(m_MapRaw.pSignals  == nullptr)
-		m_MapRaw.pSignals = new UtilityHNS::AisanSignalFileReader(msg);
+		m_MapRaw.pSignals = new op_utility_ns::AisanSignalFileReader(msg);
 }
 
 void OpenPlannerCarSimulator::callbackGetVMVectors(const vector_map_msgs::VectorArray& msg)
 {
 	std::cout << "Received Vectors" << endl;
 	if(m_MapRaw.pVectors  == nullptr)
-		m_MapRaw.pVectors = new UtilityHNS::AisanVectorFileReader(msg);
+		m_MapRaw.pVectors = new op_utility_ns::AisanVectorFileReader(msg);
 }
 
 void OpenPlannerCarSimulator::callbackGetVMCurbs(const vector_map_msgs::CurbArray& msg)
 {
 	std::cout << "Received Curbs" << endl;
 	if(m_MapRaw.pCurbs == nullptr)
-		m_MapRaw.pCurbs = new UtilityHNS::AisanCurbFileReader(msg);
+		m_MapRaw.pCurbs = new op_utility_ns::AisanCurbFileReader(msg);
 }
 
 void OpenPlannerCarSimulator::callbackGetVMRoadEdges(const vector_map_msgs::RoadEdgeArray& msg)
 {
 	std::cout << "Received Edges" << endl;
 	if(m_MapRaw.pRoadedges  == nullptr)
-		m_MapRaw.pRoadedges = new UtilityHNS::AisanRoadEdgeFileReader(msg);
+		m_MapRaw.pRoadedges = new op_utility_ns::AisanRoadEdgeFileReader(msg);
 }
 
 void OpenPlannerCarSimulator::callbackGetVMWayAreas(const vector_map_msgs::WayAreaArray& msg)
 {
 	std::cout << "Received Wayareas" << endl;
 	if(m_MapRaw.pWayAreas  == nullptr)
-		m_MapRaw.pWayAreas = new UtilityHNS::AisanWayareaFileReader(msg);
+		m_MapRaw.pWayAreas = new op_utility_ns::AisanWayareaFileReader(msg);
 }
 
 void OpenPlannerCarSimulator::callbackGetVMCrossWalks(const vector_map_msgs::CrossWalkArray& msg)
 {
 	std::cout << "Received CrossWalks" << endl;
 	if(m_MapRaw.pCrossWalks == nullptr)
-		m_MapRaw.pCrossWalks = new UtilityHNS::AisanCrossWalkFileReader(msg);
+		m_MapRaw.pCrossWalks = new op_utility_ns::AisanCrossWalkFileReader(msg);
 }
 
 void OpenPlannerCarSimulator::callbackGetVMNodes(const vector_map_msgs::NodeArray& msg)
 {
 	std::cout << "Received Nodes" << endl;
 	if(m_MapRaw.pNodes == nullptr)
-		m_MapRaw.pNodes = new UtilityHNS::AisanNodesFileReader(msg);
+		m_MapRaw.pNodes = new op_utility_ns::AisanNodesFileReader(msg);
 }
 
 }

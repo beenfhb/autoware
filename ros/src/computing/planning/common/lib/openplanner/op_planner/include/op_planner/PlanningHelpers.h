@@ -9,8 +9,7 @@
 #define PLANNINGHELPERS_H_
 
 #include "RoadNetwork.h"
-#include "op_utility/UtilityH.h"
-#include "op_utility/DataRW.h"
+#include "op_utility/data_rw.h"
 #include "tinyxml.h"
 
 
@@ -178,7 +177,10 @@ public:
 
 	static LIGHT_INDICATOR GetIndicatorsFromPath(const std::vector<WayPoint>& path, const WayPoint& pose, const double& seachDistance);
 
-	static PlannerHNS::WayPoint GetRealCenter(const PlannerHNS::WayPoint& currState, const double& wheel_base);
+	static WayPoint GetRealCenter(const PlannerHNS::WayPoint& currState, const double& wheel_base);
+
+	static std::string MakePathID(const std::vector<PlannerHNS::WayPoint>& _path);
+	static std::string MakePathDirectionID(const std::vector<PlannerHNS::WayPoint>& _path);
 
 	static double GetDistanceFromPoseToEnd(const PlannerHNS::WayPoint& pose, const std::vector<WayPoint>& path);
 

@@ -627,6 +627,11 @@ subs :
         desc : Send step by step simulation signal, read ready for localization rosbags and navigate them frame by frame
         cmd  : roslaunch op_utilities op_bag_player.launch
         param: op_bag_player
+      - name : op_data_logger
+        desc : Log data comparing ground truth and predicted 
+        cmd  : roslaunch op_utilities op_data_logger.launch
+        param: 
+        
     - name : OpenPlanner - Simulator
       desc : Car, Signs, Detection Simulation for OpenPlanner Test
       subs :
@@ -2652,30 +2657,6 @@ params :
 
   - name  : op_global_planner
     vars  :
-    - name : enableLaneChange
-      desc : global plan extended by lane changes
-      label: Lane Changing
-      kind : checkbox
-      v    : False
-      cmd_param:
-        dash     : ''
-        delim    : ':='
-    - name : enableReplan
-      desc : infinite replanning to multiple goals including the start position
-      label: Replanning
-      kind : checkbox
-      v    : False
-      cmd_param:
-        dash     : ''
-        delim    : ':='
-    - name : enableSmoothing
-      desc : smooth and fix global path
-      label: Smoothing
-      kind : checkbox
-      v    : False
-      cmd_param:
-        dash     : ''
-        delim    : ':='
     - name : enableRvizInput
       desc : Enable Destination selection by Rviz or from Log file
       label: Rviz Goals
@@ -2684,7 +2665,30 @@ params :
       cmd_param:
         dash   : ''
         delim  : ':='
-
+    - name : enableLaneChange
+      desc : global plan extended by lane changes
+      label: Enable Lane Changing
+      kind : checkbox
+      v    : False
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name : enableReplan
+      desc : infinite replanning to multiple goals including the start position
+      label: Enable Replanning
+      kind : checkbox
+      v    : False
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name : enableSmoothing
+      desc : smooth and fix global path
+      label: Enable Smoothing
+      kind : checkbox
+      v    : False
+      cmd_param:
+        dash     : ''
+        delim    : ':='
     - name : pathDensity
       desc : distance between each two waypoints
       label: Path Density
@@ -2710,6 +2714,14 @@ params :
       cmd_param:
         dash     : ''
         delim    : ':='
+    - name : experimentName
+      desc : experiment name, should be one for all OpenPlanner nodes, leave empty to use default log folder
+      label: Experiment Name
+      kind : str
+      v    : ''
+      cmd_param:
+        dash     : ''
+        delim    : ':='        
   - name  : dp_planner
     vars  :
     - name : enabTrajectoryVelocities
@@ -3182,6 +3194,14 @@ params :
       cmd_param:
         dash     : ''
         delim    : ':='
+    - name : experimentName
+      desc : experiment name, should be one for all OpenPlanner nodes, leave empty to use default log folder
+      label: Experiment Name
+      kind : str
+      v    : ''
+      cmd_param:
+        dash     : ''
+        delim    : ':='        
 
   - name  : op_trajectory_generator
     vars  :
@@ -3240,6 +3260,78 @@ params :
       cmd_param:
         dash     : ''
         delim    : ':='
+    - name : particles_number
+      desc : Max Number of particles  
+      label: Particles Number
+      min  : 2
+      max  : 1000
+      v    : 30
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name : min_particles_num
+      desc : Min Number of particles
+      label: Min Particles
+      min  : 0
+      max  : 100
+      v    : 1
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name : keep_percentage
+      desc : Deleting weak particles percentage 
+      label: Keep Percentage
+      min  : 0.0
+      max  : 1.0
+      v    : 0.5
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name : pose_weight_factor
+      desc : Position Weight Factor 
+      label: Pose Factor
+      min  : 0.0
+      max  : 1.0
+      v    : 0.2
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name : dir_weight_factor
+      desc : Direction  Weight Factor 
+      label: Direction Factor
+      min  : 0.0
+      max  : 1.0
+      v    : 0.2
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name : vel_weight_factor
+      desc : Velocity  Weight Factor 
+      label: Velocity Factor
+      min  : 0.0
+      max  : 1.0
+      v    : 0.2
+      cmd_param:
+        dash     : ''
+        delim    : ':='     
+    - name : acc_weight_factor
+      desc : Acceleration Weight Factor 
+      label: Acceleration Factor 
+      min  : 0.0
+      max  : 1.0
+      v    : 0.2
+      cmd_param:
+        dash     : ''
+        delim    : ':='     
+    - name : ind_weight_factor
+      desc : Indicator Weight Factor 
+      label: Indicators Factor
+      min  : 0.0
+      max  : 1.0
+      v    : 0.2
+      cmd_param:
+        dash     : ''
+        delim    : ':='                                                               
     - name : enableStepByStepSignal
       desc : Enable Step by Step Prediction Test
       label: Enable Step by Step Test
@@ -3386,13 +3478,6 @@ params :
       label: Auto restart
       kind : checkbox
       v    : false
-      cmd_param:
-        dash     : ''
-        delim    : ':='
-    - name : logFolder
-      desc : Folder for simulation data logging 
-      label: Log Folder
-      kind : path
       cmd_param:
         dash     : ''
         delim    : ':='
@@ -3586,6 +3671,14 @@ params :
       cmd_param:
         dash     : ''
         delim    : ':='
+    - name : experimentName
+      desc : experiment name, should be one for all OpenPlanner nodes, leave empty to use default log folder
+      label: Experiment Name
+      kind : str
+      v    : ''
+      cmd_param:
+        dash     : ''
+        delim    : ':='        
 
   - name  : waypoint_saver
     vars  :

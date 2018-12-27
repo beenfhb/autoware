@@ -1,13 +1,13 @@
 <!-- -->
 <launch>
-	<arg name="maxVelocity" 				default="6.0" />
+	<arg name="maxVelocity" 				default="1.0" />
 	<arg name="minVelocity" 				default="0.0" />	
 	<arg name="maxLocalPlanDistance" 		default="60" />
-	<arg name="samplingTipMargin" 			default="4"  /> 
-	<arg name="samplingOutMargin" 			default="16" /> 
+	<arg name="samplingTipMargin" 			default="1"  /> 
+	<arg name="samplingOutMargin" 			default="5" /> 
 	<arg name="samplingSpeedFactor" 		default="0.25" />
-	<arg name="pathDensity" 				default="0.75" />
-	<arg name="rollOutDensity" 				default="0.75" />
+	<arg name="pathDensity" 				default="0.2" />
+	<arg name="rollOutDensity" 				default="0.2" />
 	<arg name="rollOutsNumber" 				default="8"    />
 	<arg name="horizonDistance" 			default="100"  />
 	
@@ -38,10 +38,11 @@
 	
 	<arg name="enableObjectTracking" 		default="true" /> <!-- use internal kalman filter for track obstacles " -->
 	<arg name="enableOutsideControl" 		default="false" /> <!-- use internal kalman filter for track obstacles " -->	
-	<arg name="velocitySource"				default="2" /> <!-- read velocities from (0- Odometry, 1- autoware current_velocities, 2- car_info) "" -->
+	<arg name="velocitySource"				default="1" /> <!-- read velocities from (0- Odometry, 1- autoware current_velocities, 2- car_info) "" -->
 	
-	<arg name="mapSource" 					default="1" /> <!-- Autoware=0, Vector Map Folder=1, kml=2 -->
-	<arg name="mapFileName" 				default="/media/hatem/8ac0c5d5-8793-4b98-8728-55f8d67ec0f4/data/ToyotaCity2/map/vector_map/" />
+	<arg name="mapSource" 					default="2" /> <!-- Autoware=0, Vector Map Folder=1, kml=2 -->
+	<arg name="mapFileName" 				default="/media/hatem/SamsungKURI/for_hatem/nu_garden_map.kml" />
+	<arg name="enablePlannerDynamicSwitch" 	default="false" />
 
 	<node pkg="dp_planner" type="dp_planner" name="dp_planner" output="screen">
 		<param name="maxVelocity" 					value="$(arg maxVelocity)" />

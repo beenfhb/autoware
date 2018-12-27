@@ -95,6 +95,8 @@ protected:
 	bool bMap;
 	int m_iSimuCarsNumber;
 
+	std::string m_ExperimentFolderName;
+
 	std::vector<std::vector<std::string> >  m_LogData;
 
 	void callbackGetSimuPose(const geometry_msgs::PoseArray &msg);

@@ -1,13 +1,14 @@
 <!-- -->
 <launch>
 	<arg name="id" 							default="1" />		
-	<arg name="enableRvizPoseSelect"		default="true"   />	
+	<arg name="enableRvizPoseSelect"		default="true"   />
+	<arg name="experimentName" 				default="" />	
 	<arg name="enableLooper"				default="true"   />	
 	<arg name="meshPath" 					default="package://model_publisher/../../../.config/model/default.dae" />
 	<arg name="baseColorR"					default="0" />
 	<arg name="baseColorG"					default="0" />
 	<arg name="baseColorB"					default="0.8" />
-	<arg name="logFolder" 					default="/home/hatem/SimuLogs/SimulatedCar1/" />	
+	<arg name="logFolder" 					default="" />	
 	
 	<arg name="maxVelocity" 				default="5" />
 	<arg name="minVelocity" 				default="0.0" />	
@@ -63,6 +64,7 @@
 	<node pkg="op_simulation_package" type="op_car_simulator" name="op_car_simulator1" output="screen">		
 		<param name="id" 							value="$(arg id)" />				
 		<param name="enableRvizPoseSelect" 			value="$(arg enableRvizPoseSelect)" />			
+		<param name="experimentName" 				value="$(arg experimentName)" />
 		<param name="enableLooper" 					value="$(arg enableLooper)" />				
 		<param name="meshPath" 						value="$(arg meshPath)" />
 		<param name="baseColorR" 					value="$(arg baseColorR)" />

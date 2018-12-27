@@ -52,7 +52,7 @@
 #include "op_planner/RoadNetwork.h"
 #include "op_planner/MappingHelpers.h"
 #include "op_planner/PlannerCommonDef.h"
-#include "op_utility/DataRW.h"
+#include "op_utility/data_rw.h"
 
 
 namespace MAPCONVERTERNS
@@ -62,23 +62,23 @@ class Vector2OP
 {
 
 protected:
-//	UtilityHNS::AisanLanesFileReader* pLanes;
-//	UtilityHNS::AisanPointsFileReader* pPoints;
-//	UtilityHNS::AisanCenterLinesFileReader* pCenterLines;
-//	UtilityHNS::AisanIntersectionFileReader* pIntersections;
-//	UtilityHNS::AisanAreasFileReader* pAreas;
-//	UtilityHNS::AisanLinesFileReader* pLines;
-//	UtilityHNS::AisanStopLineFileReader* pStopLines;
-//	UtilityHNS::AisanSignalFileReader* pSignals;
-//	UtilityHNS::AisanVectorFileReader* pVectors;
-//	UtilityHNS::AisanCurbFileReader* pCurbs;
-//	UtilityHNS::AisanRoadEdgeFileReader* pRoadedges;
-//	UtilityHNS::AisanWayareaFileReader* pWayAreas;
-//	UtilityHNS::AisanCrossWalkFileReader* pCrossWalks;
-//	UtilityHNS::AisanNodesFileReader* pNodes;
-//	UtilityHNS::AisanDataConnFileReader* pConnections;
+//	op_utility_ns::AisanLanesFileReader* pLanes;
+//	op_utility_ns::AisanPointsFileReader* pPoints;
+//	op_utility_ns::AisanCenterLinesFileReader* pCenterLines;
+//	op_utility_ns::AisanIntersectionFileReader* pIntersections;
+//	op_utility_ns::AisanAreasFileReader* pAreas;
+//	op_utility_ns::AisanLinesFileReader* pLines;
+//	op_utility_ns::AisanStopLineFileReader* pStopLines;
+//	op_utility_ns::AisanSignalFileReader* pSignals;
+//	op_utility_ns::AisanVectorFileReader* pVectors;
+//	op_utility_ns::AisanCurbFileReader* pCurbs;
+//	op_utility_ns::AisanRoadEdgeFileReader* pRoadedges;
+//	op_utility_ns::AisanWayareaFileReader* pWayAreas;
+//	op_utility_ns::AisanCrossWalkFileReader* pCrossWalks;
+//	op_utility_ns::AisanNodesFileReader* pNodes;
+//	op_utility_ns::AisanDataConnFileReader* pConnections;
 
-	UtilityHNS::MapRaw m_MapRaw;
+	op_utility_ns::MapRaw m_MapRaw;
 
 	ros::NodeHandle nh;
 

@@ -29,7 +29,6 @@
 */
 
 #include "op_data_logger_core.h"
-#include "op_utility/UtilityH.h"
 #include "math.h"
 #include "op_planner/MatrixOperations.h"
 #include "op_ros_helpers/op_RosHelpers.h"
@@ -43,19 +42,37 @@ OpenPlannerDataLogger::OpenPlannerDataLogger()
 	bMap = false;
 	m_iSimuCarsNumber = 5;
 
-	std::string first_str, second_str;
+//	std::string first_str, second_str;
 	ros::NodeHandle _nh("~");
 
+//	int iSource = 0;
+//	_nh.getParam("mapSource" , iSource);
+//	if(iSource == 0)
+//		m_MapType = PlannerHNS::MAP_FOLDER;
+//	else if(iSource == 1)
+//		m_MapType = PlannerHNS::MAP_KML_FILE;
+//
+//	_nh.getParam("mapFileName" , m_MapPath);
+//
+
+	op_utility_ns::UtilityH::GetTickCount(m_Timer);
+
 	int iSource = 0;
-	_nh.getParam("mapSource" , iSource);
+	_nh.getParam("/op_common_params/mapSource" , iSource);
 	if(iSource == 0)
+		m_MapType = PlannerHNS::MAP_AUTOWARE;
+	else if (iSource == 1)
 		m_MapType = PlannerHNS::MAP_FOLDER;
-	else if(iSource == 1)
+	else if(iSource == 2)
 		m_MapType = PlannerHNS::MAP_KML_FILE;
 
-	_nh.getParam("mapFileName" , m_MapPath);
-
-	UtilityHNS::UtilityH::GetTickCount(m_Timer);
+	_nh.getParam("/op_common_params/mapFileName" , m_MapPath);
+	_nh.getParam("/op_common_params/experimentName" , m_ExperimentFolderName);
+	if(m_ExperimentFolderName.size() > 0)
+	{
+		if(m_ExperimentFolderName.at(m_ExperimentFolderName.size()-1) != '/')
+			m_ExperimentFolderName.push_back('/');
+	}
 
 	//Subscription for the Ego vehicle !
 	sub_predicted_objects = nh.subscribe("/predicted_objects", 1, &OpenPlannerDataLogger::callbackGetPredictedObjects, this);
@@ -93,11 +110,17 @@ OpenPlannerDataLogger::~OpenPlannerDataLogger()
 {
 	for(int i=0; i < m_iSimuCarsNumber; i++)
 	{
-		ostringstream car_name;
-		car_name << "sim_car_no_" << i+1;
+		std::ostringstream fileName, car_name;
+		car_name << "logs_for_car_" << i+1;
 		car_name << "_";
-		UtilityHNS::DataRW::WriteLogData(UtilityHNS::UtilityH::GetHomeDirectory()+UtilityHNS::DataRW::LoggingMainfolderName+UtilityHNS::DataRW::PredictionFolderName,
-				car_name.str(),
+
+		if(m_ExperimentFolderName.size() == 0)
+			fileName << op_utility_ns::UtilityH::GetHomeDirectory()+op_utility_ns::DataRW::LoggingMainfolderName + op_utility_ns::DataRW::PredictionFolderName;
+		else
+			fileName << op_utility_ns::UtilityH::GetHomeDirectory()+op_utility_ns::DataRW::LoggingMainfolderName + op_utility_ns::DataRW::ExperimentsFolderName + m_ExperimentFolderName + op_utility_ns::DataRW::PredictionFolderName;
+
+
+		op_utility_ns::DataRW::WriteLogData(fileName.str(), car_name.str(),
 				"time_diff,distance_diff, heading_diff, velocity_diff, rms, state_diff," , m_LogData.at(i));
 	}
 }
@@ -294,7 +317,7 @@ void OpenPlannerDataLogger::CompareAndLog(VehicleDataContainer& ground_truth, Pl
 
 	double t_diff = fabs(ground_truth.path_time.toSec() - m_pred_time.toSec());
 	double d_diff = hypot(ground_truth.pose.pos.y - predicted.center.pos.y, ground_truth.pose.pos.x - predicted.center.pos.x);
-	double o_diff = UtilityHNS::UtilityH::AngleBetweenTwoAnglesPositive(ground_truth.pose.pos.a, predicted.center.pos.a);
+	double o_diff = op_utility_ns::UtilityH::AngleBetweenTwoAnglesPositive(ground_truth.pose.pos.a, predicted.center.pos.a);
 	double v_diff = fabs(ground_truth.pose.v - predicted.center.v);
 	double rms = -1;
 	int beh_state_diff = -1;

@@ -77,43 +77,49 @@ MotionPrediction::MotionPrediction()
 	else if(bVelSource == 2)
 		sub_can_info = nh.subscribe("/can_info", 10, &MotionPrediction::callbackGetCanInfo, this);
 
-	UtilityHNS::UtilityH::GetTickCount(m_VisualizationTimer);
+	op_utility_ns::UtilityH::GetTickCount(m_VisualizationTimer);
 	PlannerHNS::RosHelpers::InitPredMarkers(100, m_PredictedTrajectoriesDummy);
 	PlannerHNS::RosHelpers::InitCurbsMarkers(100, m_CurbsDummy);
 	PlannerHNS::RosHelpers::InitPredParticlesMarkers(1000, m_PredictedParticlesDummy);
 	PlannerHNS::RosHelpers::InitPredParticlesMarkers(2000, m_GeneratedParticlesDummy, true);
 
 	//Mapping Section
-	sub_lanes = nh.subscribe("/vector_map_info/lane", 1, &MotionPrediction::callbackGetVMLanes,  this);
-	sub_points = nh.subscribe("/vector_map_info/point", 1, &MotionPrediction::callbackGetVMPoints,  this);
-	sub_dt_lanes = nh.subscribe("/vector_map_info/dtlane", 1, &MotionPrediction::callbackGetVMdtLanes,  this);
-	sub_intersect = nh.subscribe("/vector_map_info/cross_road", 1, &MotionPrediction::callbackGetVMIntersections,  this);
-	sup_area = nh.subscribe("/vector_map_info/area", 1, &MotionPrediction::callbackGetVMAreas,  this);
-	sub_lines = nh.subscribe("/vector_map_info/line", 1, &MotionPrediction::callbackGetVMLines,  this);
-	sub_stop_line = nh.subscribe("/vector_map_info/stop_line", 1, &MotionPrediction::callbackGetVMStopLines,  this);
-	sub_signals = nh.subscribe("/vector_map_info/signal", 1, &MotionPrediction::callbackGetVMSignal,  this);
-	sub_vectors = nh.subscribe("/vector_map_info/vector", 1, &MotionPrediction::callbackGetVMVectors,  this);
-	sub_curbs = nh.subscribe("/vector_map_info/curb", 1, &MotionPrediction::callbackGetVMCurbs,  this);
-	sub_edges = nh.subscribe("/vector_map_info/road_edge", 1, &MotionPrediction::callbackGetVMRoadEdges,  this);
-	sub_way_areas = nh.subscribe("/vector_map_info/way_area", 1, &MotionPrediction::callbackGetVMWayAreas,  this);
-	sub_cross_walk = nh.subscribe("/vector_map_info/cross_walk", 1, &MotionPrediction::callbackGetVMCrossWalks,  this);
-	sub_nodes = nh.subscribe("/vector_map_info/node", 1, &MotionPrediction::callbackGetVMNodes,  this);
+	if(m_MapType == PlannerHNS::MAP_AUTOWARE)
+	{
+		sub_lanes = nh.subscribe("/vector_map_info/lane", 1, &MotionPrediction::callbackGetVMLanes,  this);
+		sub_points = nh.subscribe("/vector_map_info/point", 1, &MotionPrediction::callbackGetVMPoints,  this);
+		sub_dt_lanes = nh.subscribe("/vector_map_info/dtlane", 1, &MotionPrediction::callbackGetVMdtLanes,  this);
+		sub_intersect = nh.subscribe("/vector_map_info/cross_road", 1, &MotionPrediction::callbackGetVMIntersections,  this);
+		sup_area = nh.subscribe("/vector_map_info/area", 1, &MotionPrediction::callbackGetVMAreas,  this);
+		sub_lines = nh.subscribe("/vector_map_info/line", 1, &MotionPrediction::callbackGetVMLines,  this);
+		sub_stop_line = nh.subscribe("/vector_map_info/stop_line", 1, &MotionPrediction::callbackGetVMStopLines,  this);
+		sub_signals = nh.subscribe("/vector_map_info/signal", 1, &MotionPrediction::callbackGetVMSignal,  this);
+		sub_vectors = nh.subscribe("/vector_map_info/vector", 1, &MotionPrediction::callbackGetVMVectors,  this);
+		sub_curbs = nh.subscribe("/vector_map_info/curb", 1, &MotionPrediction::callbackGetVMCurbs,  this);
+		sub_edges = nh.subscribe("/vector_map_info/road_edge", 1, &MotionPrediction::callbackGetVMRoadEdges,  this);
+		sub_way_areas = nh.subscribe("/vector_map_info/way_area", 1, &MotionPrediction::callbackGetVMWayAreas,  this);
+		sub_cross_walk = nh.subscribe("/vector_map_info/cross_walk", 1, &MotionPrediction::callbackGetVMCrossWalks,  this);
+		sub_nodes = nh.subscribe("/vector_map_info/node", 1, &MotionPrediction::callbackGetVMNodes,  this);
+	}
 
 	std::cout << "OpenPlanner Motion Predictor initialized successfully " << std::endl;
 }
 
 MotionPrediction::~MotionPrediction()
 {
-	std::cout << " ^^^^^^ Start Logging Data Raws : " << m_LogData.size() << ", To Folder: " << UtilityHNS::UtilityH::GetHomeDirectory()+UtilityHNS::DataRW::LoggingMainfolderName+UtilityHNS::DataRW::PredictionFolderName << std::endl;
-	ostringstream car_name;
-	car_name << "Moving_stopping_";
-	UtilityHNS::DataRW::WriteLogData(UtilityHNS::UtilityH::GetHomeDirectory()+UtilityHNS::DataRW::LoggingMainfolderName+UtilityHNS::DataRW::PredictionFolderName,
-			car_name.str(),
+	std::ostringstream fileName;
+	if(m_ExperimentFolderName.size() == 0)
+		fileName << op_utility_ns::UtilityH::GetHomeDirectory()+op_utility_ns::DataRW::LoggingMainfolderName + op_utility_ns::DataRW::PredictionFolderName;
+	else
+		fileName << op_utility_ns::UtilityH::GetHomeDirectory()+op_utility_ns::DataRW::LoggingMainfolderName + op_utility_ns::DataRW::ExperimentsFolderName + m_ExperimentFolderName + op_utility_ns::DataRW::PredictionFolderName;
+
+	op_utility_ns::DataRW::WriteLogData(fileName.str(),
+			"PredictionLog_",
 			"time,x,y,heading,Velocity,Acceleration,Indicator,"
-			"n_part_forward_1,p_forward_1,w_forward_1,n_part_stopping_1,p_stopping_1,w_stopping_1,n_part_yielding_1,p_yielding_1,w_yielding_1,best_beh_1,all_p_1,all_w_1,best_p_1, best_w_1,"
-			"n_part_forward_2,p_forward_2,w_forward_2,n_part_stopping_2,p_stopping_2,w_stopping_2,n_part_yielding_2,p_yielding_2,w_yielding_2,best_beh_2,all_p_2,all_w_2,best_p_2, best_w_2,"
-			"n_part_forward_3,p_forward_3,w_forward_3,n_part_stopping_3,p_stopping_3,w_stopping_3,n_part_yielding_3,p_yielding_3,w_yielding_3,best_beh_3,all_p_3,all_w_3,best_p_3, best_w_3,"
-			"n_part_forward_4,p_forward_4,w_forward_4,n_part_stopping_4,p_stopping_4,w_stopping_4,n_part_yielding_4,p_yielding_4,w_yielding_4,best_beh_4,all_p_4,all_w_4,best_p_4, best_w_4," , m_LogData);
+			"id_1,n_part_forward_1,p_forward_1,w_forward_1,n_part_stopping_1,p_stopping_1,w_stopping_1,n_part_yielding_1,p_yielding_1,w_yielding_1,best_beh_1,all_p_1,all_w_1,best_p_1, best_w_1,"
+			"id_2,n_part_forward_2,p_forward_2,w_forward_2,n_part_stopping_2,p_stopping_2,w_stopping_2,n_part_yielding_2,p_yielding_2,w_yielding_2,best_beh_2,all_p_2,all_w_2,best_p_2, best_w_2,"
+			"id_3,n_part_forward_3,p_forward_3,w_forward_3,n_part_stopping_3,p_stopping_3,w_stopping_3,n_part_yielding_3,p_yielding_3,w_yielding_3,best_beh_3,all_p_3,all_w_3,best_p_3, best_w_3,"
+			"id_4,n_part_forward_4,p_forward_4,w_forward_4,n_part_stopping_4,p_stopping_4,w_stopping_4,n_part_yielding_4,p_yielding_4,w_yielding_4,best_beh_4,all_p_4,all_w_4,best_p_4, best_w_4," , m_LogData);
 }
 
 void MotionPrediction::UpdatePlanningParams(ros::NodeHandle& _nh)
@@ -172,18 +178,42 @@ void MotionPrediction::UpdatePlanningParams(ros::NodeHandle& _nh)
 		m_MapType = PlannerHNS::MAP_KML_FILE;
 
 	_nh.getParam("/op_common_params/mapFileName" , m_MapPath);
+	_nh.getParam("/op_common_params/experimentName" , m_ExperimentFolderName);
+	if(m_ExperimentFolderName.size() > 0)
+	{
+		if(m_ExperimentFolderName.at(m_ExperimentFolderName.size()-1) != '/')
+			m_ExperimentFolderName.push_back('/');
+	}
+
+	op_utility_ns::DataRW::CreateLoggingMainFolder();
+	if(m_ExperimentFolderName.size() > 1)
+		op_utility_ns::DataRW::CreateExperimentFolder(m_ExperimentFolderName);
 
 	_nh.getParam("/op_motion_predictor/enableGenrateBranches" , m_PredictBeh.m_bGenerateBranches);
 	_nh.getParam("/op_motion_predictor/max_distance_to_lane" , m_PredictBeh.m_MaxLaneDetectionDistance);
-	_nh.getParam("/op_motion_predictor/prediction_distance" , m_PredictBeh.m_PredictionDistance);
+	_nh.getParam("/op_motion_predictor/prediction_distance" , m_PredictBeh.m_MaxPredictionDistance);
 	_nh.getParam("/op_motion_predictor/enableCurbObstacles"	, m_bEnableCurbObstacles);
 	_nh.getParam("/op_motion_predictor/distanceBetweenCurbs", m_DistanceBetweenCurbs);
 	_nh.getParam("/op_motion_predictor/visualizationTime", m_VisualizationTime);
 	_nh.getParam("/op_motion_predictor/enableStepByStepSignal", 	m_PredictBeh.m_bStepByStep );
+	if(m_PredictBeh.m_bStepByStep)
+		m_PredictBeh.m_bDebugOut = true;
+
 	_nh.getParam("/op_motion_predictor/enableParticleFilterPrediction", 	m_PredictBeh.m_bParticleFilter);
 
+	std::cout << "Particles Num Before : " <<  m_PredictBeh.g_PredParams.PARTICLES_NUM << std::endl;
+	_nh.getParam("/op_motion_predictor/pose_weight_factor", 	m_PredictBeh.g_PredParams.POSE_FACTOR);
+	_nh.getParam("/op_motion_predictor/dir_weight_factor", 	m_PredictBeh.g_PredParams.DIRECTION_FACTOR);
+	_nh.getParam("/op_motion_predictor/vel_weight_factor", 	m_PredictBeh.g_PredParams.VELOCITY_FACTOR);
+	_nh.getParam("/op_motion_predictor/acc_weight_factor", 	m_PredictBeh.g_PredParams.ACCELERATE_FACTOR);
+	_nh.getParam("/op_motion_predictor/ind_weight_factor", 	m_PredictBeh.g_PredParams.INDICATOR_FACTOR);
 
-	UtilityHNS::UtilityH::GetTickCount(m_SensingTimer);
+	_nh.getParam("/op_motion_predictor/particles_number", 	m_PredictBeh.g_PredParams.PARTICLES_NUM);
+	_nh.getParam("/op_motion_predictor/min_particles_num", 	m_PredictBeh.g_PredParams.MIN_PARTICLE_NUM);
+	_nh.getParam("/op_motion_predictor/keep_percentage", 	m_PredictBeh.g_PredParams.KEEP_PERCENTAGE);
+	m_PredictBeh.SetForTrajTracker();
+
+	op_utility_ns::UtilityH::GetTickCount(m_SensingTimer);
 }
 
 void MotionPrediction::callbackGetStepForwardSignals(const geometry_msgs::TwistStampedConstPtr& msg)
@@ -206,7 +236,7 @@ void MotionPrediction::callbackGetVehicleStatus(const geometry_msgs::TwistStampe
 	m_CurrentPos.v = m_VehicleStatus.speed;
 	if(fabs(msg->twist.linear.x) > 0.25)
 		m_VehicleStatus.steer = atan(m_CarInfo.wheel_base * msg->twist.angular.z/msg->twist.linear.x);
-	UtilityHNS::UtilityH::GetTickCount(m_VehicleStatus.tStamp);
+	op_utility_ns::UtilityH::GetTickCount(m_VehicleStatus.tStamp);
 	bVehicleStatus = true;
 }
 
@@ -214,7 +244,7 @@ void MotionPrediction::callbackGetCanInfo(const autoware_msgs::CanInfoConstPtr &
 {
 	m_VehicleStatus.speed = msg->speed/3.6;
 	m_VehicleStatus.steer = msg->angle * m_CarInfo.max_steer_angle / m_CarInfo.max_steer_value;
-	UtilityHNS::UtilityH::GetTickCount(m_VehicleStatus.tStamp);
+	op_utility_ns::UtilityH::GetTickCount(m_VehicleStatus.tStamp);
 	bVehicleStatus = true;
 }
 
@@ -222,13 +252,13 @@ void MotionPrediction::callbackGetRobotOdom(const nav_msgs::OdometryConstPtr& ms
 {
 	m_VehicleStatus.speed = msg->twist.twist.linear.x;
 	m_VehicleStatus.steer += atan(m_CarInfo.wheel_base * msg->twist.twist.angular.z/msg->twist.twist.linear.x);
-	UtilityHNS::UtilityH::GetTickCount(m_VehicleStatus.tStamp);
+	op_utility_ns::UtilityH::GetTickCount(m_VehicleStatus.tStamp);
 	bVehicleStatus = true;
 }
 
 void MotionPrediction::callbackGetTrackedObjects(const autoware_msgs::DetectedObjectArrayConstPtr& msg)
 {
-	UtilityHNS::UtilityH::GetTickCount(m_SensingTimer);
+	op_utility_ns::UtilityH::GetTickCount(m_SensingTimer);
 	m_TrackedObjects.clear();
 	bTrackedObjects = true;
 
@@ -337,6 +367,7 @@ void MotionPrediction::LogDataRaw()
 	if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 0)
 	{
 		PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(0);
+		dataLine << pTrajectoryTracker->id_ << ",";
 		dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
 		dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
 		dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
@@ -345,6 +376,7 @@ void MotionPrediction::LogDataRaw()
 		if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 1)
 		{
 			PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(1);
+			dataLine << pTrajectoryTracker->id_ << ",";
 			dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
 			dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
 			dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
@@ -353,6 +385,7 @@ void MotionPrediction::LogDataRaw()
 			if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 2)
 			{
 				PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(2);
+				dataLine << pTrajectoryTracker->id_ << ",";
 				dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
 				dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
 				dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
@@ -361,6 +394,7 @@ void MotionPrediction::LogDataRaw()
 				if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 3)
 				{
 					PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(3);
+					dataLine << pTrajectoryTracker->id_ << ",";
 					dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
 					dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
 					dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
@@ -368,43 +402,43 @@ void MotionPrediction::LogDataRaw()
 				}
 				else
 				{
-					dataLine << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+					dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
 				}
 			}
 			else
 			{
-				dataLine << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-				dataLine << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+				dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+				dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
 			}
 
 		}
 		else
 		{
-			dataLine << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-			dataLine << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-			dataLine << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+			dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+			dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+			dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
 		}
 
 	}
 	else
 	{
-		dataLine << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-		dataLine << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-		dataLine << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-		dataLine << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
 	}
 
 	m_LogData.push_back(dataLine.str());
 
 	if(m_t==0)
 	{
-		UtilityHNS::UtilityH::GetTickCount(m_LogTime);
+		op_utility_ns::UtilityH::GetTickCount(m_LogTime);
 		m_t = 0.01;
 	}
 	else
 	{
-		m_t += UtilityHNS::UtilityH::GetTimeDiffNow(m_LogTime);
-		UtilityHNS::UtilityH::GetTickCount(m_LogTime);
+		m_t += op_utility_ns::UtilityH::GetTimeDiffNow(m_LogTime);
+		op_utility_ns::UtilityH::GetTickCount(m_LogTime);
 	}
 }
 
@@ -504,7 +538,7 @@ void MotionPrediction::VisualizePrediction()
 
 	pub_TargetPointsRviz.publish(m_TargetPointsOnTrajectories);
 
-	UtilityHNS::UtilityH::GetTickCount(m_VisualizationTimer);
+	op_utility_ns::UtilityH::GetTickCount(m_VisualizationTimer);
 }
 
 void MotionPrediction::MainLoop()
@@ -528,7 +562,7 @@ void MotionPrediction::MainLoop()
 		}
 		else if (m_MapType == PlannerHNS::MAP_AUTOWARE && !bMap)
 		{
-			std::vector<UtilityHNS::AisanDataConnFileReader::DataConn> conn_data;
+			std::vector<op_utility_ns::AisanDataConnFileReader::DataConn> conn_data;
 
 			if(m_MapRaw.GetVersion()==2)
 			{
@@ -561,14 +595,14 @@ void MotionPrediction::MainLoop()
 			}
 		}
 
-		if(UtilityHNS::UtilityH::GetTimeDiffNow(m_VisualizationTimer) > m_VisualizationTime)
+		if(op_utility_ns::UtilityH::GetTimeDiffNow(m_VisualizationTimer) > m_VisualizationTime)
 		{
 			VisualizePrediction();
-			UtilityHNS::UtilityH::GetTickCount(m_VisualizationTimer);
+			op_utility_ns::UtilityH::GetTickCount(m_VisualizationTimer);
 		}
 
 		//For the debugging of prediction
-//		if(UtilityHNS::UtilityH::GetTimeDiffNow(m_SensingTimer) > 5)
+//		if(op_utility_ns::UtilityH::GetTimeDiffNow(m_SensingTimer) > 5)
 //		{
 //			ROS_INFO("op_motion_prediction sensing timeout, can't receive tracked object data ! Reset .. Reset");
 //			m_PredictedResultsResults.objects.clear();
@@ -585,98 +619,98 @@ void MotionPrediction::callbackGetVMLanes(const vector_map_msgs::LaneArray& msg)
 {
 	std::cout << "Received Lanes" << endl;
 	if(m_MapRaw.pLanes == nullptr)
-		m_MapRaw.pLanes = new UtilityHNS::AisanLanesFileReader(msg);
+		m_MapRaw.pLanes = new op_utility_ns::AisanLanesFileReader(msg);
 }
 
 void MotionPrediction::callbackGetVMPoints(const vector_map_msgs::PointArray& msg)
 {
 	std::cout << "Received Points" << endl;
 	if(m_MapRaw.pPoints  == nullptr)
-		m_MapRaw.pPoints = new UtilityHNS::AisanPointsFileReader(msg);
+		m_MapRaw.pPoints = new op_utility_ns::AisanPointsFileReader(msg);
 }
 
 void MotionPrediction::callbackGetVMdtLanes(const vector_map_msgs::DTLaneArray& msg)
 {
 	std::cout << "Received dtLanes" << endl;
 	if(m_MapRaw.pCenterLines == nullptr)
-		m_MapRaw.pCenterLines = new UtilityHNS::AisanCenterLinesFileReader(msg);
+		m_MapRaw.pCenterLines = new op_utility_ns::AisanCenterLinesFileReader(msg);
 }
 
 void MotionPrediction::callbackGetVMIntersections(const vector_map_msgs::CrossRoadArray& msg)
 {
 	std::cout << "Received CrossRoads" << endl;
 	if(m_MapRaw.pIntersections == nullptr)
-		m_MapRaw.pIntersections = new UtilityHNS::AisanIntersectionFileReader(msg);
+		m_MapRaw.pIntersections = new op_utility_ns::AisanIntersectionFileReader(msg);
 }
 
 void MotionPrediction::callbackGetVMAreas(const vector_map_msgs::AreaArray& msg)
 {
 	std::cout << "Received Areas" << endl;
 	if(m_MapRaw.pAreas == nullptr)
-		m_MapRaw.pAreas = new UtilityHNS::AisanAreasFileReader(msg);
+		m_MapRaw.pAreas = new op_utility_ns::AisanAreasFileReader(msg);
 }
 
 void MotionPrediction::callbackGetVMLines(const vector_map_msgs::LineArray& msg)
 {
 	std::cout << "Received Lines" << endl;
 	if(m_MapRaw.pLines == nullptr)
-		m_MapRaw.pLines = new UtilityHNS::AisanLinesFileReader(msg);
+		m_MapRaw.pLines = new op_utility_ns::AisanLinesFileReader(msg);
 }
 
 void MotionPrediction::callbackGetVMStopLines(const vector_map_msgs::StopLineArray& msg)
 {
 	std::cout << "Received StopLines" << endl;
 	if(m_MapRaw.pStopLines == nullptr)
-		m_MapRaw.pStopLines = new UtilityHNS::AisanStopLineFileReader(msg);
+		m_MapRaw.pStopLines = new op_utility_ns::AisanStopLineFileReader(msg);
 }
 
 void MotionPrediction::callbackGetVMSignal(const vector_map_msgs::SignalArray& msg)
 {
 	std::cout << "Received Signals" << endl;
 	if(m_MapRaw.pSignals  == nullptr)
-		m_MapRaw.pSignals = new UtilityHNS::AisanSignalFileReader(msg);
+		m_MapRaw.pSignals = new op_utility_ns::AisanSignalFileReader(msg);
 }
 
 void MotionPrediction::callbackGetVMVectors(const vector_map_msgs::VectorArray& msg)
 {
 	std::cout << "Received Vectors" << endl;
 	if(m_MapRaw.pVectors  == nullptr)
-		m_MapRaw.pVectors = new UtilityHNS::AisanVectorFileReader(msg);
+		m_MapRaw.pVectors = new op_utility_ns::AisanVectorFileReader(msg);
 }
 
 void MotionPrediction::callbackGetVMCurbs(const vector_map_msgs::CurbArray& msg)
 {
 	std::cout << "Received Curbs" << endl;
 	if(m_MapRaw.pCurbs == nullptr)
-		m_MapRaw.pCurbs = new UtilityHNS::AisanCurbFileReader(msg);
+		m_MapRaw.pCurbs = new op_utility_ns::AisanCurbFileReader(msg);
 }
 
 void MotionPrediction::callbackGetVMRoadEdges(const vector_map_msgs::RoadEdgeArray& msg)
 {
 	std::cout << "Received Edges" << endl;
 	if(m_MapRaw.pRoadedges  == nullptr)
-		m_MapRaw.pRoadedges = new UtilityHNS::AisanRoadEdgeFileReader(msg);
+		m_MapRaw.pRoadedges = new op_utility_ns::AisanRoadEdgeFileReader(msg);
 }
 
 void MotionPrediction::callbackGetVMWayAreas(const vector_map_msgs::WayAreaArray& msg)
 {
 	std::cout << "Received Wayareas" << endl;
 	if(m_MapRaw.pWayAreas  == nullptr)
-		m_MapRaw.pWayAreas = new UtilityHNS::AisanWayareaFileReader(msg);
+		m_MapRaw.pWayAreas = new op_utility_ns::AisanWayareaFileReader(msg);
 }
 
 void MotionPrediction::callbackGetVMCrossWalks(const vector_map_msgs::CrossWalkArray& msg)
 {
 	std::cout << "Received CrossWalks" << endl;
 	if(m_MapRaw.pCrossWalks == nullptr)
-		m_MapRaw.pCrossWalks = new UtilityHNS::AisanCrossWalkFileReader(msg);
+		m_MapRaw.pCrossWalks = new op_utility_ns::AisanCrossWalkFileReader(msg);
 }
 
 void MotionPrediction::callbackGetVMNodes(const vector_map_msgs::NodeArray& msg)
 {
 	std::cout << "Received Nodes" << endl;
 	if(m_MapRaw.pNodes == nullptr)
-		m_MapRaw.pNodes = new UtilityHNS::AisanNodesFileReader(msg);
+		m_MapRaw.pNodes = new op_utility_ns::AisanNodesFileReader(msg);
 }
 
 }

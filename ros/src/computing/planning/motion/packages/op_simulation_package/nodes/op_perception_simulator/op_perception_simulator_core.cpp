@@ -38,7 +38,6 @@
 #include <boost/math/distributions/normal.hpp>
 #include "op_ros_helpers/op_RosHelpers.h"
 
-#include "op_utility/UtilityH.h"
 #include "math.h"
 #include "op_planner/MatrixOperations.h"
 
@@ -52,7 +51,7 @@ typedef boost::variate_generator<ENG, NormalDIST> VariatGEN;
 constexpr double SIMU_OBSTACLE_WIDTH = 1.5;
 constexpr double SIMU_OBSTACLE_LENGTH = 1.5;
 constexpr double SIMU_OBSTACLE_HEIGHT = 1.4;
-constexpr double SIMU_OBSTACLE_POINTS_NUM = 50;
+constexpr double SIMU_OBSTACLE_POINTS_NUM = 100;
 constexpr int SIMU_OBSTACLE_ID = 100001;
 
 OpenPlannerSimulatorPerception::OpenPlannerSimulatorPerception()
@@ -155,11 +154,11 @@ void OpenPlannerSimulatorPerception::callbackGetSimuData(const geometry_msgs::Po
 	}
 
 	timespec t;
-	UtilityHNS::UtilityH::GetTickCount(t);
+	op_utility_ns::UtilityH::GetTickCount(t);
 	srand(t.tv_nsec);
-	int nPoints = m_DecParams.nPointsPerObj + (rand()%POINT_CLOUD_ADDTIONAL_ERR_NUM - POINT_CLOUD_ADDTIONAL_ERR_NUM/2);
+	int nPoints = m_DecParams.nPointsPerObj;// + (rand()%POINT_CLOUD_ADDTIONAL_ERR_NUM - POINT_CLOUD_ADDTIONAL_ERR_NUM/2);
 
-	autoware_msgs::CloudCluster c = GenerateSimulatedObstacleCluster(msg.poses.at(2).position.y, msg.poses.at(2).position.x, msg.poses.at(2).position.z, nPoints, msg.poses.at(1));
+	autoware_msgs::CloudCluster c = GenerateSimulatedObstacleCluster(msg.poses.at(2).position.x, msg.poses.at(2).position.y, msg.poses.at(2).position.z, nPoints, msg.poses.at(1));
 	c.id = obj_id;
 	c.score = actual_speed;
 	c.indicator_state = indicator;
@@ -181,7 +180,7 @@ autoware_msgs::CloudCluster OpenPlannerSimulatorPerception::GenerateSimulatedObs
 	autoware_msgs::CloudCluster cluster;
 
 	timespec t;
-	UtilityHNS::UtilityH::GetTickCount(t);
+	op_utility_ns::UtilityH::GetTickCount(t);
 	srand(t.tv_nsec);
 
 	ENG eng(t.tv_nsec);
@@ -196,7 +195,7 @@ autoware_msgs::CloudCluster OpenPlannerSimulatorPerception::GenerateSimulatedObs
 	cluster.avg_point.point.y = centerPose.position.y;
 	cluster.avg_point.point.z = centerPose.position.z;
 
-	double yaw_angle = tf::getYaw(centerPose.orientation);
+	double yaw_angle = tf::getYaw(centerPose.orientation) + M_PI_2;
 	cluster.estimated_angle = yaw_angle;
 
 	cluster.dimensions.x = width;
@@ -209,16 +208,23 @@ autoware_msgs::CloudCluster OpenPlannerSimulatorPerception::GenerateSimulatedObs
 
 	for(int i=1; i < nPoints; i++)
 	{
-		UtilityHNS::UtilityH::GetTickCount(t);
+		op_utility_ns::UtilityH::GetTickCount(t);
 		PlannerHNS::WayPoint center_p;
 		srand(t.tv_nsec);
-
-		center_p.pos.x = ((double)(rand()%100)/100.0 - CONTOUR_DISTANCE_ERROR);
-		center_p.pos.x *= width;
+		//center_p.pos.x = ((double)(rand()%100)/100.0 - CONTOUR_DISTANCE_ERROR)* width;
+		double percent = ((double)(rand()%100)/100.0 - CONTOUR_DISTANCE_ERROR) * 0.2;
+		if(percent > 0)
+		  center_p.pos.x = width/2.0 - fabs(percent);
+		else
+		  center_p.pos.x = -(width/2.0 - fabs(percent));
 
 		srand(t.tv_nsec/i);
-		center_p.pos.y = ((double)(rand()%100)/100.0 - CONTOUR_DISTANCE_ERROR);
-		center_p.pos.y *= length;
+		//center_p.pos.y = ((double)(rand()%100)/100.0 - CONTOUR_DISTANCE_ERROR)* length;
+		percent = ((double)(rand()%100)/100.0 - CONTOUR_DISTANCE_ERROR) * 0.2;
+		if(percent > 0)
+                    center_p.pos.y  = length/2.0 - fabs(percent);
+		else
+                    center_p.pos.y  = -(length/2.0 - fabs(percent));
 
 		srand(t.tv_nsec/i*i);
 		center_p.pos.z = ((double)(rand()%100)/100.0 - CONTOUR_DISTANCE_ERROR)* height;

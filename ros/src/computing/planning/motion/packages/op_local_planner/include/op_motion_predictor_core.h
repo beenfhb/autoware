@@ -58,7 +58,7 @@
 
 #include "op_planner/PlannerCommonDef.h"
 #include "op_planner/BehaviorPrediction.h"
-#include "op_utility/DataRW.h"
+#include "op_utility/data_rw.h"
 
 namespace MotionPredictorNS
 {
@@ -116,8 +116,9 @@ protected:
 
 	double m_DistanceBetweenCurbs;
 	double m_VisualizationTime;
-
 	timespec m_SensingTimer;
+
+	std::string m_ExperimentFolderName;
 
 
 	ros::NodeHandle nh;
@@ -158,7 +159,7 @@ public:
 
 	//Mapping Section
 
-	UtilityHNS::MapRaw m_MapRaw;
+	op_utility_ns::MapRaw m_MapRaw;
 
 	ros::Subscriber sub_lanes;
 	ros::Subscriber sub_points;

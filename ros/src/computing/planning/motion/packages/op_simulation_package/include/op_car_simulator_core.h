@@ -70,7 +70,7 @@
 
 #include "op_simu/SimpleTracker.h"
 #include "op_planner/SimuDecisionMaker.h"
-#include "op_utility/DataRW.h"
+#include "op_utility/data_rw.h"
 
 
 namespace CarSimulatorNS
@@ -151,6 +151,8 @@ protected:
 	PlannerHNS::PlanningParams m_PlanningParams;
 	PlannerHNS::BehaviorState m_CurrBehavior;
 
+	std::string m_ExperimentFolderName;
+
 	ros::NodeHandle nh;
 
 	tf::TransformListener m_Listener;
@@ -208,7 +210,7 @@ public:
 
 	//Mapping Section
 
-	UtilityHNS::MapRaw m_MapRaw;
+	op_utility_ns::MapRaw m_MapRaw;
 
 	ros::Subscriber sub_lanes;
 	ros::Subscriber sub_points;
