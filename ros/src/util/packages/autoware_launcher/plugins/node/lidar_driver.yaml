@@ -1,0 +1,2 @@
+children :
+  - { type: optional, name: lidar,  plugin : driver/lidar }

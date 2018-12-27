@@ -1,15 +1,17 @@
 <launch>
 
-    <arg name="tf_tx"/>
-    <arg name="tf_ty"/>
-    <arg name="tf_tz"/>
-    <arg name="tf_rx"/>
-    <arg name="tf_ry"/>
-    <arg name="tf_rz"/>
-    <arg name="frame_id"       default="base_link"/>
-    <arg name="child_frame_id" default="velodyne"/>
-    <arg name="period_in_ms"   default="10"/>
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_localizer" args="$(arg tf_tx) $(arg tf_ty) $(arg tf_tz) $(arg tf_rz) $(arg tf_ry) $(arg tf_rx) $(arg frame_id) $(arg child_frame_id) $(arg period_in_ms)"/>
+    <arg name="parent_frame"  default="base_link"/>
+    <arg name="child_frame"   default="velodyne"/>
+    <arg name="period_in_ms"  default="10"/>
+    <arg name="tx"/>
+    <arg name="ty"/>
+    <arg name="tz"/>
+    <arg name="rx"/>
+    <arg name="ry"/>
+    <arg name="rz"/>
+
+    <node pkg="tf" type="static_transform_publisher" name="static_transform_publisher"
+        args="$(arg tx) $(arg ty) $(arg tz) $(arg rz) $(arg ry) $(arg rx) $(arg parent_frame) $(arg child_frame) $(arg period_in_ms)" />
 
 　　<!-- ['roslaunch', 'model_publisher', 'vehicle_model.launch'] -->
 　　<!-- ['roslaunch', 'runtime_manager', 'setup_vehicle_info.launch'] -->

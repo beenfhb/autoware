@@ -15,10 +15,10 @@ class AwTreeViewPanel(QtWidgets.QTreeWidget):
         self.__panels = []
 
         self.setColumnCount(2)
-        self.setHeaderLabels(["Node", "Status"])
+        self.setHeaderLabels(["Node", "Run Status"])
         self.header().setStretchLastSection(False)
         self.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-        self.header().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
+        self.header().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
 
         #self.addTopLevelItem(self.construct(launch))
         #self.expandToDepth(0)
@@ -37,6 +37,8 @@ class AwTreeViewPanel(QtWidgets.QTreeWidget):
         else:
             super(AwTreeViewPanel, self).keyPressEvent(event)
 
+    def select_config(self, lpath):
+        self.setCurrentItem(self.__items[lpath])
 
     def register_select_listener(self, panel):
         self.__panels.append(panel)

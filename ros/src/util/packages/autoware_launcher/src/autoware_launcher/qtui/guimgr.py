@@ -3,13 +3,9 @@ from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
 from autoware_launcher.core import console
-from autoware_launcher.core import AwLaunchClientIF
+from autoware_launcher.core import fspath
 
-from . import primitives
-from . import widgets
-from . import procmgr
-
-from .widgets  import AwMainWindow
+from .widgets2 import AwMainWindow
 from .treeview import AwTreeViewPanel
 from .treeview import AwControlPanel
 from .procmgr  import AwProcessPanel
@@ -17,30 +13,26 @@ from .summary  import AwSummaryPanel
 
 
 
-class AwQtGuiClient(AwLaunchClientIF):
+# ToDo: move package
+#     core = client, mirror
+#     qtui = guimgr
+
+class AwQtGuiClient(object):
 
     def __init__(self, sysarg, server):
         self.__sysarg = sysarg
         self.__panels = []
+        self.__guimgr = AwQtGuiManager(self)
         self.__mirror = AwLaunchTreeMirror(self)
 
         self.__server = server
         self.__server.register_client(self)
 
-        self.classes = {}
-        self.classes["node.panel"] = widgets.AwDefaultNodePanel
-        self.classes["node.frame"] = widgets.AwDefaultNodeFrame
-        self.classes["leaf.panel"] = widgets.AwDefaultLeafPanel
-        self.classes["leaf.frame"] = widgets.AwDefaultLeafFrame
+    def guimgr(self):
+        return self.__guimgr
 
-        self.classes["args.text"]     = primitives.AwTextTypeFrame
-        self.classes["args.topic"]    = primitives.AwTextTypeFrame
-        self.classes["args.frame"]    = primitives.AwTextTypeFrame
-        self.classes["args.tf"]       = primitives.AwTransformFrame
-        self.classes["args.file"]     = primitives.AwFileTypeFrame
-        self.classes["args.filelist"] = primitives.AwFileTypeFrame
-
-        self.classes["args.calib"]    = primitives.AwCameraCalibFrame
+    def select_config(self, lpath): # ToDo: consider moving to guimgr
+        self.__treeview.select_config(lpath)
 
     def start2(self):
 
@@ -53,25 +45,27 @@ class AwQtGuiClient(AwLaunchClientIF):
         stylesheet.append("* { font-size: " + str(resolution/100) + "px; }")
         application.setStyleSheet(" ".join(stylesheet))
 
-        self.__treeview = AwTreeViewPanel(self)
-        self.__control  = AwControlPanel(self)
-        self.__summary  = AwSummaryPanel(self)
-        self.__process  = AwProcessPanel(self)
+        self.__treeview = AwTreeViewPanel(self) # ToDo: consider moving to guimgr
+        self.__control  = AwControlPanel(self)  # ToDo: consider moving to guimgr
+        self.__summary  = AwSummaryPanel(self)  # ToDo: consider moving to guimgr
+        self.__process  = AwProcessPanel(self)  # ToDo: consider moving to guimgr
 
         tabwidget = QtWidgets.QTabWidget()
         tabwidget.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
         tabwidget.addTab(self.__summary, "Summary")
         tabwidget.addTab(self.__process, "Process")
 
-        vsplitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
-        vsplitter.addWidget(tabwidget)
-        vsplitter.addWidget(self.__control)
+        #vsplitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        vsplitter = QtWidgets.QWidget()
+        vsplitter.setLayout(QtWidgets.QVBoxLayout())
+        vsplitter.layout().addWidget(self.__treeview)
+        vsplitter.layout().addWidget(self.__control)
 
         hsplitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        hsplitter.addWidget(self.__treeview)
         hsplitter.addWidget(vsplitter)
+        hsplitter.addWidget(tabwidget)
 
-        window = widgets.AwMainWindow(self)
+        window = AwMainWindow(self)
         window.setCentralWidget(hsplitter)
         window.show()
 
@@ -87,7 +81,7 @@ class AwQtGuiClient(AwLaunchClientIF):
         self.__treeview.register_select_listener(self.__process)
         self.__treeview.register_select_listener(self.__control)
 
-        self.__server.make_profile("root/autoware")
+        self.__server.make_profile("node/root")
         return application.exec_()
 
     def config_cleared(self):
@@ -98,7 +92,8 @@ class AwQtGuiClient(AwLaunchClientIF):
             lnode = self.__mirror.create(lpath)
             for panel in self.__panels: panel.config_created(lnode)
 
-        self.__treeview.expandToDepth(0)
+        self.__treeview.expandAll()
+        #self.__treeview.expandToDepth(0)
 
     def config_updated(self, lpath):
         self.__mirror.clear(lpath)
@@ -107,7 +102,6 @@ class AwQtGuiClient(AwLaunchClientIF):
     def status_updated(self, lpath, state):
         print (lpath, state) 
         self.__treeview.status_updated(lpath, state)
-
 
 
 
@@ -135,40 +129,6 @@ class AwQtGuiClient(AwLaunchClientIF):
         window.process.init(self.__server) # ToDo: move to __init__
         return application.exec_()
 
-    def create_widget(self, mirror, parent, guicls = None):
-        return guicls(self, mirror, parent)
-
-    def create_frame(self, mirror, guikey = None, guicls = None):
-        #print "Create Frame: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls)
-        if not guicls:
-            guikey = guikey or mirror.plugin().frame()
-            guicls = self.classes[guikey + ".frame"]
-        return guicls(self, mirror)
-
-    def create_panel(self, mirror, guikey = None, guicls = None):
-        #print "Create Panel: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls)
-        if not guicls:
-            guikey = guikey or mirror.plugin().panel()
-            guicls = self.classes[guikey + ".panel"]
-        return guicls(self, mirror)
-
-    def create_arg_frame(self, parent, view):
-        guicls = self.classes[view["type"]]
-        return guicls(self, parent, view)
-
-    def create_frame_entire_vlayout(self):
-        layout = QtWidgets.QVBoxLayout()
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
-        return layout
-
-    def create_frame_header_hlayout(self):
-        layout = QtWidgets.QHBoxLayout()
-        layout.setSpacing(0)
-        layout.setContentsMargins(5, 2, 2, 2)
-        return layout
-
-
     def save_profile(self, fpath):
         self.__server.save_profile(fpath)
 
@@ -176,7 +136,6 @@ class AwQtGuiClient(AwLaunchClientIF):
         self.__server.load_profile(fpath)
         #if ok
         self.__mirror.clear()
-
 
     def find_node(self, lpath):
         return self.__server.find_node(lpath)
@@ -192,13 +151,63 @@ class AwQtGuiClient(AwLaunchClientIF):
 
 
 
-    #def node_patched
 
 
+import importlib
+import os
 
-class AwAwQtGuiManager(object):
-    pass
+class AwQtGuiManager(object):
 
+    def __init__(self, client):
+        self.__client  = client
+        self.__widgets = {}
+
+        for filepath in os.listdir(fspath.package("src/autoware_launcher/qtui/plugins")):
+            fkey, fext = os.path.splitext(os.path.basename(filepath))
+            if (fkey != "__init__") and (fext == ".py"):
+                console.info("load plugin module: " + fkey)
+                module = importlib.import_module("autoware_launcher.qtui.plugins." + fkey)
+                for wkey, wcls in module.plugin_widgets().items():
+                     self.__widgets[fkey + "." + wkey] = wcls
+
+    def widget(self, view):
+        return self.__widgets[view["type"]]
+
+    def client(self):
+        return self.__client
+
+    def create_widget(self, mirror, parent, guicls = None):
+        return guicls(self, mirror, parent)
+
+    def create_frame(self, mirror, guikey = None, guicls = None):
+        #print "Create Frame: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls)
+        if not guicls:
+            guikey = guikey or mirror.plugin().frame()
+            guicls = self.__widgets[guikey + "_frame"]
+        return guicls(self, mirror)
+
+    def create_panel(self, mirror, guikey = None, guicls = None):
+        #print "Create Panel: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls)
+        if not guicls:
+            guikey = guikey or mirror.plugin().panel()
+            guicls = self.__widgets[guikey + "_panel"]
+        return guicls(self, mirror)
+
+    def create_arg_frame(self, parent, view):
+        guicls = self.__widgets[view["type"]]
+        return guicls(self, parent, view)
+
+    def create_frame_entire_vlayout(self):
+        layout = QtWidgets.QVBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        return layout
+
+    def create_frame_header_hlayout(self):
+        layout = QtWidgets.QHBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(5, 2, 2, 2)
+        return layout
 
 
 
@@ -288,14 +297,6 @@ class AwLaunchNodeMirror(object):
         for child in self.__find().children():
             mirrored_children.append(self.__tree.create(child.nodepath()))
         return mirrored_children
-
-    def bind(self, item):
-        print "bind: {} {}".format(self.__path, str(item))
-        self.__refs.append(item)
-
-    def unbind(self, item):
-        print "unbind: {} {}".format(self.__path, str(item))
-        self.__refs.remove(item)
 
     def updated(self):
         for widget in self.__refs:

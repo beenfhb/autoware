@@ -1,0 +1,10 @@
+args:
+    transform_file    : { type: str }
+    point_cloud_files : { type: str, array: space }
+    vector_map_files  : { type: str, array: space }
+
+view:
+    - { title: Map Name,          type: info.node,                             }
+    - { title: Transform File,    type: args.file,     args: transform_file    }
+    - { title: Point Cloud Files, type: args.filelist, args: point_cloud_files }
+    - { title: Vector Map Files,  type: args.filelist, args: vector_map_files  }

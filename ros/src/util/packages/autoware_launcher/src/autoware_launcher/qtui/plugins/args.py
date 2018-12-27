@@ -1,20 +1,30 @@
-from python_qt_binding import QtCore
-from python_qt_binding import QtWidgets
-
-from .abstruct import AwAbstructWindow
-from .abstruct import AwAbstructPanel
-from .abstruct import AwAbstructFrame
+from python_qt_binding import QtCore, QtWidgets
+from autoware_launcher.core import fspath
+from autoware_launcher.qtui import widgets
 
 
 
-class AwTextTypeFrame(AwAbstructFrame):
+def plugin_widgets():
+    return \
+    {
+        "str"      : AwLineTextEdit,
+        "topic"    : AwLineTextEdit,
+        "frame"    : AwLineTextEdit,
+        "tf"       : AwTransformEdit,
+        "file"     : AwFileSelect,
+        "filelist" : AwFileListSelect
+    }
+
+
+
+class AwLineTextEdit(widgets.AwAbstructFrame):
 
     def __init__(self, guimgr, target, option):
-        super(AwTextTypeFrame, self).__init__(guimgr, None)
+        super(AwLineTextEdit, self).__init__(guimgr, None)
         self.target = target
         self.option = option
 
-        super(AwTextTypeFrame, self).setup_widget()
+        super(AwLineTextEdit, self).setup_widget()
         self.edit = QtWidgets.QLineEdit()
         self.edit.setText(self.target.config.get("args." + self.option["args"]))
         self.edit.editingFinished.connect(self.edited)
@@ -24,63 +34,90 @@ class AwTextTypeFrame(AwAbstructFrame):
     def edited(self):
         self.target.config["args." + self.option["args"]] = self.edit.text()
 
+    @staticmethod
+    def summary(option, config):
+        return "{}: {}".format(option["title"], config["args." + option["args"]])
 
 
-class AwFileTypeFrame(AwAbstructFrame):
+
+class AwFileSelect(widgets.AwAbstructFrame):
 
     def __init__(self, guimgr, target, option):
-        super(AwFileTypeFrame, self).__init__(guimgr, None)
+        super(AwFileSelect, self).__init__(guimgr, None)
         self.target = target
         self.option = option
 
-        super(AwFileTypeFrame, self).setup_widget()
+        super(AwFileSelect, self).setup_widget()
         button = QtWidgets.QPushButton("Browse")
         button.clicked.connect(self.browsed)
         self.add_button(button)
         self.set_title(self.option["title"])
 
-        if self.option.get("multi_select") is not True:
-            self.widget = QtWidgets.QLineEdit()
-            self.widget.setReadOnly(True)
-            self.add_widget(self.widget)
-        else:
-            self.widget = QtWidgets.QTextEdit()
-            self.widget.setReadOnly(True)
-            self.add_widget(self.widget)
+        self.widget = QtWidgets.QLineEdit()
+        self.widget.setReadOnly(True)
+        self.add_widget(self.widget)
         self.widget.setText(self.target.config.get("args." + self.option["args"]))
 
     def browsed(self):
-        import os, re
-        if self.option.get("multi_select") is not True:
-            filename, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Select File", os.path.expanduser("~"))
-            filename = re.sub("^" + os.environ['HOME'], "$(env HOME)", filename)
-        else:
-            filename, filetype = QtWidgets.QFileDialog.getOpenFileNames(self, "Select Files", os.path.expanduser("~"))
-            filename = map(lambda v: re.sub("^" + os.environ['HOME'], "$(env HOME)", v), filename)
+        filepath, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Select File", fspath.userhome())
+        filepath = fspath.envpath(filepath)
+        if filepath:
+            self.target.config["args." + self.option["args"]] = filepath
+            self.widget.setText(filepath)
 
-        if filename:
-            self.target.config["args." + self.option["args"]] = filename
-            if self.option.get("multi_select") is not True:
-                self.widget.setText(filename)
-            else:
-                self.widget.setText("\n".join(filename))
+    @staticmethod
+    def summary(option, config):
+        return "{}: {}".format(option["title"], config["args." + option["args"]])
 
 
 
-class AwTransformFrame(AwAbstructFrame):
+class AwFileListSelect(widgets.AwAbstructFrame):
 
     def __init__(self, guimgr, target, option):
-        super(AwTransformFrame, self).__init__(guimgr, None)
+        super(AwFileListSelect, self).__init__(guimgr, None)
+        self.target = target
+        self.option = option
+
+        super(AwFileListSelect, self).setup_widget()
+        button = QtWidgets.QPushButton("Browse")
+        button.clicked.connect(self.browsed)
+        self.add_button(button)
+        self.set_title(self.option["title"])
+
+        self.widget = QtWidgets.QTextEdit()
+        self.widget.setReadOnly(True)
+        self.add_widget(self.widget)
+
+        filepaths = self.target.config.get("args." + self.option["args"], [])
+        self.widget.setText("\n".join(filepaths))
+
+    def browsed(self):
+        filepaths, filetype = QtWidgets.QFileDialog.getOpenFileNames(self, "Select Files", fspath.userhome())
+        filepaths = map(fspath.envpath, filepaths)
+        if filepaths:
+            self.target.config["args." + self.option["args"]] = filepaths
+            self.widget.setText("\n".join(filepaths))
+
+    @staticmethod
+    def summary(option, config):
+        return "{}: {} files".format(option["title"], len(config["args." + option["args"]]))
+
+
+
+class AwTransformEdit(widgets.AwAbstructFrame):
+
+    def __init__(self, guimgr, target, option):
+        super(AwTransformEdit, self).__init__(guimgr, None)
         self.target = target
         self.option = option
         self.fields = []
 
-        super(AwTransformFrame, self).setup_widget()
+        super(AwTransformEdit, self).setup_widget()
         widget = QtWidgets.QWidget()
         widget.setLayout(QtWidgets.QHBoxLayout())
 
         mapper = QtCore.QSignalMapper(widget)
-        for idx, txt in enumerate({"Tx", "Ty", "Tz", "Rx", "Ry", "Rz"}):
+        for idx, txt in enumerate(["Tx", "Ty", "Tz", "Rx", "Ry", "Rz"]):
             field = QtWidgets.QLineEdit()
             field.setText(self.target.config.get("args." + self.option["args"][idx]))
             field.editingFinished.connect(mapper.map)
@@ -96,9 +133,16 @@ class AwTransformFrame(AwAbstructFrame):
     def edited(self, idx):
         self.target.config["args." + self.option["args"][idx]] = self.fields[idx].text()
 
+    @staticmethod
+    def summary(option, config):
+        result = option["title"] + ": "
+        for idx, txt in enumerate(["Tx", "Ty", "Tz", "Rx", "Ry", "Rz"]):
+            result += txt + "=" + config["args." + option["args"][idx]] + ", "
+        return result
 
 
-class AwCameraCalibFrame(AwFileTypeFrame):
+
+class AwCameraCalibFrame(AwFileSelect):
 
     def __init__(self, guimgr, target, option):
         super(AwCameraCalibFrame, self).__init__(guimgr, target, option)
@@ -169,7 +213,6 @@ class AwCameraCalibFrame(AwFileTypeFrame):
         if filename:
             self.intrinsic_file.setText(filename)
       
-
     def calibrate_intrinsic(self, checked):
         if checked:
             command = "rosrun autoware_camera_lidar_calibrator cameracalibrator.py --square {} --size {}x{} image:={}"

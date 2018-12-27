@@ -71,7 +71,6 @@ class AwPluginNode(object):
 
     def load(self, rootpath):
         filepath = os.path.join(rootpath, self.path())
-        print filepath
 
         # load xml (roslaunch)
         xml_args = []
@@ -96,10 +95,8 @@ class AwPluginNode(object):
         for argkey, argdef in self.__args.items():
             if "type" not in argdef: raise Exception("yaml arg does not have type: "  + filepath)
             if argdef["type"] not in args_type: raise Exception("yaml arg has unknown type: " + filepath)
-        view_type = ["args.str", "args.int", "args.real", "args.tf", "args.topic", "args.frame", "args.file", "args.filelist"]
         for viewdef in self.__views:
             if "type" not in viewdef: raise Exception("yaml arg does not have type: "  + filepath)
-            if viewdef["type"] not in view_type: raise Exception("yaml arg has unknown type: " + viewdef["type"] + " " + filepath)
 
     def args(self):
         return self.__data["args"]
@@ -108,10 +105,10 @@ class AwPluginNode(object):
         return self.__views
 
     def panel(self):
-        return "node" if self.isnode() else "leaf"
+        return "default.node" if self.isnode() else "default.leaf"
 
     def frame(self):
-        return "node" if self.isnode() else "leaf"
+        return "default.node" if self.isnode() else "default.leaf"
 
     def error(self, text):
         console.error("{}: {} ({})".format(self.__class__.__name__, text, self.__nodepath))

@@ -1,3 +1,4 @@
 children :
-  - { type: required, name: concat, plugin : sensing/lidar/concat }
-  - { type: optional, name: lidar,  plugin : sensing/lidar/driver }
+  - { type: required, name: driver, plugin : node/lidar_driver }
+  - { type: required, name: filter, plugin : node/lidar_filter }
+  - { type: required, name: frame,  plugin : node/lidar_frame  }

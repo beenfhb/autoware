@@ -1,0 +1,11 @@
+children :
+  - { type: required, name: map,           plugin : setup/map         }
+  - { type: required, name: vehicle,       plugin : setup/vehicle     }
+  - { type: required, name: sensing,       plugin : node/sensing      }
+  - { type: required, name: localization,  plugin : node/localization }
+  - { type: required, name: detection,     plugin : node/detection    }
+  - { type: required, name: prediction,    plugin : node/prediction   }
+  - { type: required, name: decision,      plugin : node/decision     }
+  - { type: required, name: mission,       plugin : node/mission      }
+  - { type: required, name: motion,        plugin : node/motion       }
+  - { type: required, name: visualization, plugin : tools/rviz        }
