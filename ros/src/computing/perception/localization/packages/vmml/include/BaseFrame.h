@@ -85,6 +85,12 @@ public:
 	const cv::KeyPoint keypoint(kpid k) const
 	{ return fKeypoints.at(k); }
 
+	inline Eigen::Vector2d keypointv(kpid k) const
+	{
+		const cv::KeyPoint& kp = fKeypoints.at(k);
+		return Eigen::Vector2d(kp.pt.x, kp.pt.y);
+	}
+
 	cv::Mat allDescriptors() const
 	{ return fDescriptors; }
 

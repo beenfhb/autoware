@@ -312,26 +312,49 @@ KeyFrame::matchMapPoints (
 	std::map<mpid, kpid> &featurePairs)
 const
 {
-	if (frame.mPose.isValid()==false)
+	if (frame.pose().isValid()==false)
 		return;
 
-	cv::Mat mmask(parentMap->framePoints[id].size(), frame.numOfKeyPoints(), CV_8UC1, 0);
-	cv::Mat ones(frame.numOfKeyPoints(), mmask.type(), 0xff);
-
+	/*
+	 * Let's create matcher's mask first
+	 */
+	cv::Mat mmask(frame.numOfKeyPoints(), parentMap->framePoints[id].size(), CV_8UC1, 0);
+	cv::Mat ones(parentMap->framePoints[id].size(), mmask.type(), 0xff);
 	for (auto mpIdPair: parentMap->framePoints[id]) {
 		mpid pointId = mpIdPair.first;
 		kpid pointIdKf = mpIdPair.second;
-		ones.copyTo(mmask.row(pointIdKf));
+		ones.copyTo(mmask.col(pointIdKf));
 	}
 
+	// Matching process
 	vector<cv::DMatch> matches;
-	matcher->match(this->fDescriptors, frame.fDescriptors, matches, mmask);
+	matcher->match(frame.allDescriptors(), this->fDescriptors, matches, mmask);
 
 	// Projection check
 	uint matchCount=0;
 	for (auto &m: matches) {
-
+		mpid pointIdKf = parentMap->framePointsInv.at(this->id).at(m.trainIdx);
+		Vector2d kpf = frame.project(parentMap->mappoint(pointIdKf)->getPosition());
+		if ((kpf-frame.keypointv(m.queryIdx)).norm() > 4.0) {
+			continue;
+		}
+		featurePairs.insert(make_pair(pointIdKf, m.queryIdx));
 	}
-
-	// XXX: Unfinished
 }
+
+
+void
+KeyFrame::matchExcludeMapPoints (
+	const BaseFrame &frame,
+	cv::Ptr<cv::DescriptorMatcher> matcher,
+	std::map<mpid, kpid> &featurePairs)
+const
+{
+	/*
+	 * Let's create matcher's mask first
+	 */
+	cv::Mat mmask(frame.numOfKeyPoints(), parentMap->framePoints[id].size(), CV_8UC1, 0);
+	cv::Mat ones(parentMap->framePoints[id].size(), mmask.type(), 0xff);
+
+}
+

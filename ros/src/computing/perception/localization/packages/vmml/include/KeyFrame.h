@@ -92,7 +92,20 @@ public:
 		const kpidField &kp1list, const kpidField &kp2list
 	);
 
+	/*
+	 * Match map points visible in this keyframe
+	 */
 	void matchMapPoints (
+		const BaseFrame &frame,
+		cv::Ptr<cv::DescriptorMatcher> matcher,
+		std::map<mpid, kpid> &featurePairs)
+	const;
+
+	/*
+	 * Inverse of the above function: match all keypoints in this keyframe
+	 * (excluding map points)
+	 */
+	void matchExcludeMapPoints (
 		const BaseFrame &frame,
 		cv::Ptr<cv::DescriptorMatcher> matcher,
 		std::map<mpid, kpid> &featurePairs)
