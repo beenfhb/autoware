@@ -312,6 +312,9 @@ KeyFrame::matchMapPoints (
 	std::map<mpid, kpid> &featurePairs)
 const
 {
+	if (frame.mPose.isValid()==false)
+		return;
+
 	cv::Mat mmask(parentMap->framePoints[id].size(), frame.numOfKeyPoints(), CV_8UC1, 0);
 	cv::Mat ones(frame.numOfKeyPoints(), mmask.type(), 0xff);
 
@@ -319,6 +322,15 @@ const
 		mpid pointId = mpIdPair.first;
 		kpid pointIdKf = mpIdPair.second;
 		ones.copyTo(mmask.row(pointIdKf));
+	}
+
+	vector<cv::DMatch> matches;
+	matcher->match(this->fDescriptors, frame.fDescriptors, matches, mmask);
+
+	// Projection check
+	uint matchCount=0;
+	for (auto &m: matches) {
+
 	}
 
 	// XXX: Unfinished
