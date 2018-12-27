@@ -148,11 +148,11 @@ class AwDefaultLeafPanel(AwAbstructPanel):
 
     def __init__(self, guimgr, mirror):
         super(AwDefaultLeafPanel, self).__init__(guimgr, mirror)
-        self.config = mirror.config().copy()
+        self.config = self.mirror.config().copy()
 
     def setup_widget(self):
         super(AwDefaultLeafPanel, self).setup_widget()
-        for view in self.mirror.plugin().view():
+        for view in self.mirror.plugin().views():
             self.add_frame(self.guimgr.create_arg_frame(self, view))
 
         cancel_button = QtWidgets.QPushButton("Cancel")
@@ -163,12 +163,13 @@ class AwDefaultLeafPanel(AwAbstructPanel):
         update_button.clicked.connect(self.update_clicked)
 
     def cancel_clicked(self):
-        self.window().close()
+        self.config = self.mirror.config().copy()
+        self.setup_widget()
+        
 
     def update_clicked(self):
         response = self.mirror.update({"config": self.config})
-        if not response["error"]:
-            self.window().close()
+        print response
 
 
 class AwDefaultLeafFrame(AwAbstructFrame):

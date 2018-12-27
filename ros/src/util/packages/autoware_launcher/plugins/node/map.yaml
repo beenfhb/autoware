@@ -1,4 +1,4 @@
 children :
-  - { type: single, name: transform, plugin : map/transform }
-  - { type: single, name: points,    plugin : map/points    }
-  - { type: single, name: vector,    plugin : map/vector    }
+  - { type: required, name: transform, plugin : map/transform }
+  - { type: required, name: points,    plugin : map/points    }
+  - { type: required, name: vector,    plugin : map/vector    }

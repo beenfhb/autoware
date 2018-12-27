@@ -1,7 +1,5 @@
-args :
-    - { name: file }
+args:
+    file : { type: str }
 
-gui :
-    type : file_select
-    list : false
-    data : args.file
+view:
+    - { title: Config File, type: args.file, args: file }

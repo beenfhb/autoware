@@ -1,4 +1,9 @@
-args :
-    - { name: input_topics }
-    - { name: output_topic }
-    - { name: output_frame }
+args:
+    input_topics : { type: str }
+    output_topic : { type: str }
+    output_frame : { type: str }
+
+view:
+    - { title: Input Topics, type: args.topic, args: input_topics }
+    - { title: Output Topic, type: args.topic, args: output_topic }
+    - { title: Output Frame, type: args.frame, args: output_frame }

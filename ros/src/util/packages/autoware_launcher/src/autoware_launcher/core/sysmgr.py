@@ -69,8 +69,6 @@ class AwLaunchServer(AwLaunchServerIF):
         console.info("find_config: " + lpath)
         return self.__profile.find(lpath)
 
-
-
     def find_node(self, lpath):
         console.info("find_node: " + lpath)
         return self.__profile.find(lpath)
@@ -81,7 +79,7 @@ class AwLaunchServer(AwLaunchServerIF):
     def update_node(self, lpath, ldata):
         response =  self.__profile.find(lpath).update(ldata)
         if not response["error"]:
-            for client in self.__clients: client.node_updated(lpath)
+            for client in self.__clients: client.config_updated(lpath)
         return response
 
     def launch_node(self, lpath, xmode): # ToDo: update ancestors status

@@ -1,4 +1,9 @@
-args :
-    - { name: width  }
-    - { name: height }
-    - { name: fps    }
+args:
+    width  : { type: int }
+    height : { type: int }
+    fps    : { type: int }
+
+view:
+    - { title: Width,  type: args.int, args: width  }
+    - { title: Height, type: args.int, args: height }
+    - { title: FPS,    type: args.int, args: fps    }

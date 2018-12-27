@@ -1,6 +1,6 @@
 import os
+import xml.etree.ElementTree as xmltree
 import yaml
-import glob
 
 from . import console
 from . import fspath
@@ -10,143 +10,142 @@ from . import fspath
 class AwPluginTree(object):
     
     def __init__(self):
+        super(AwPluginTree, self).__init__()
         self.__plugins = {}
-        self.__path = fspath.plugins()
 
-        self.__load_plugins()
-
-    def __load_plugins(self):
-        for dirpath, dirs, files in os.walk(self.__path):
-            relpath = os.path.relpath(dirpath, self.__path)
-            for filename in files:
-                fkey, fext = os.path.splitext(os.path.join(relpath, filename))
-                if fext == ".yaml":
+        filelist = fspath.listfiles(fspath.plugins(), relative=True)
+        nodelist = list()
+        for filepath in filelist:
+            fkey, fext = os.path.splitext(filepath)
+            if fext in [".yaml", ".xml"]:
+                if fkey not in self.__plugins:
                     self.__plugins[fkey] = AwPluginNode(self, fkey)
-                elif fext == ".xml":
-                    if not os.path.isfile(os.path.join(self.__path, fkey + ".yaml")):
-                        console.warning("since yaml is not found, ignoring {}".format(fkey + fext))
-                else:
-                    console.warning("since unknown extension, ignoring {}".format(fkey + fext))
+            else:
+                console.warning("plugin ignored: unknown extension ({})".format(filepath))
 
-    def path(self):
-        return self.__path
+        for plugin in self.__plugins.values():
+            plugin.load(fspath.plugins())
 
-    def find(self, nodepath):
-        return self.__plugins[nodepath]
+    def find(self, path):
+        return self.__plugins[path]
 
-    def scan(self, nodepath):
-        return filter(lambda p: p.startswith(nodepath), self.__plugins.keys())
+    def scan(self, path):
+        return filter(lambda node: node.startswith(path), self.__plugins.keys())
 
     def dump(self):
-        for nodename in sorted(self.__plugins.keys()):
-            self.__plugins[nodename].dump()
+        for name in sorted(self.__plugins.keys()):
+            print "=================================================="
+            self.__plugins[name].dump()
+
 
 
 class AwPluginNode(object):
 
     def __init__(self, tree, path):
-        self.__tree = tree
-        self.__path = path
-        self.__node = True
-        self.__data = None
-        self.__view = None
+        self.__tree  = tree
+        self.__path  = path
+        self.__args  = []
+        self.__rules = []
+        self.__views = []
 
-        #self.gui = {}
-        self.__load_yaml(self.tree().path() + "/" + self.path())
+    def dump(self):
+        print self.__path
+        print self.__args
+        print self.__rules
+        print self.__views
 
     def isnode(self):
-        return self.__node is True
+        return bool(self.__rules)
 
     def isleaf(self):
-        return self.__node is False
+        return not self.isnode()
 
-    def tree(self): # Move to BaseNode
+    def tree(self):
         return self.__tree
 
-    def path(self): # Move to BaseNode
+    def path(self):
         return self.__path
 
-    def __load_yaml(self, fullpath):
+    def rules(self):
+        return self.__rules
 
-        fullpath = fullpath + ".yaml"
-        with open(fullpath) as fp:
-            self.__data = yaml.safe_load(fp)
+    def load(self, rootpath):
+        filepath = os.path.join(rootpath, self.path())
+        print filepath
 
-        if type(self.__data) is not dict:
-            self.error("yaml data is not dictionary")
+        # load xml (roslaunch)
+        xml_args = []
+        if os.path.exists(filepath + ".xml"):
+            xroot = xmltree.parse(filepath + ".xml").getroot()
+            for xnode in xroot:
+                if ("arg" == xnode.tag) and ("value" not in xnode.attrib):
+                    xml_args.append(xnode.attrib)
 
-        if self.__data.get("children") is None:
-            self.__node = False
-            self.__data["children"] = []
-        self.__data.setdefault("args", [])
+        # load yaml
+        if os.path.exists(filepath + ".yaml"):
+            with open(filepath+ ".yaml") as fp:
+                ydata = yaml.safe_load(fp)
 
+            for rdata in ydata.get("children", []):
+                self.__rules.append(AwPluginRule(self, rdata))
+            self.__args  = ydata.get("args", {})
+            self.__views = ydata.get("view", [])
 
-        self.__view = []
-        if self.__data.get("view") is None:
-            for args in self.__data["args"]:
-                name = args["name"]
-                self.__view.append(AwPluginView("args.text", {"title": name, "args": name}))
-        else:
-            for viewdef in self.__data["view"]:
-                guikey = viewdef.pop("type")
-                self.__view.append(AwPluginView(guikey, viewdef))
-
-        print "================================================================"
-        for view in self.__view:
-            print view
-
-        self.gui = self.__data.pop("gui", {})
-        self.gui.setdefault("type", "default_node" if self.__node else "default_leaf")
-
-    def default_config(self):
-        config = {}
-        for argdef in self.__data["args"]:
-            config["args." + argdef["name"]] = ""
-        return config
+        # validation
+        args_type = ["str", "int", "real"]
+        for argkey, argdef in self.__args.items():
+            if "type" not in argdef: raise Exception("yaml arg does not have type: "  + filepath)
+            if argdef["type"] not in args_type: raise Exception("yaml arg has unknown type: " + filepath)
+        view_type = ["args.str", "args.int", "args.real", "args.tf", "args.topic", "args.frame", "args.file", "args.filelist"]
+        for viewdef in self.__views:
+            if "type" not in viewdef: raise Exception("yaml arg does not have type: "  + filepath)
+            if viewdef["type"] not in view_type: raise Exception("yaml arg has unknown type: " + viewdef["type"] + " " + filepath)
 
     def args(self):
         return self.__data["args"]
 
-    def view(self):
-        return self.__view
+    def views(self):
+        return self.__views
 
-    def children(self):
-        return self.__data["children"]
+    def panel(self):
+        return "node" if self.isnode() else "leaf"
+
+    def frame(self):
+        return "node" if self.isnode() else "leaf"
 
     def error(self, text):
         console.error("{}: {} ({})".format(self.__class__.__name__, text, self.__nodepath))
 
-    def dump(self):
-        print self.__nodepath
-        print "  YML: " + str(self.__data)
-        print "  GUI: " + str(self.gui       )
-
     def optional_children(self):
         plugins = {}
-        for cinfo in self.children():
-            if cinfo["type"] == "optional":
-                plugins[cinfo["name"]] = self.__tree.scan(cinfo["plugin"])
+        for rule in self.rules():
+            if rule.type == "optional":
+                plugins[rule.name] = self.__tree.scan(rule.plugin)
         return plugins
+
+    def default_config(self):
+        config = {}
+        for argkey, argdef in self.__args.items():
+            cfgkey = "args." + argkey
+            config[cfgkey] = argdef.get("default", "")
+        return config 
 
     # temporary
     def argstr(self, config):
         lines = []
-        for argdef in self.__data["args"]:
-            name = argdef["name"]
-            lines.append(name + ": " + config["args." + name])
-            #argstr.append(self.mirror.plugin().argstr(argdef, config))
+        for argkey, argdef in self.__args.items():
+            cfgkey = "args." + argkey
+            lines.append(argkey + ": " + config[cfgkey])
         return "\n".join(lines)
 
 
 
-class AwPluginView(object):
+class AwPluginRule(object):
 
-    def __init__(self, guikey, option):
-        self.guikey = guikey
-        self.option = option
-    
-    def __str__(self):
-        return "Type:{} Option:{}".format(self.guikey, self.option)
+    def __init__(self, node, data):
+        self.type = data["type"]
+        self.name = data["name"]
+        self.plugin = data["plugin"]
 
 
 

@@ -47,6 +47,7 @@ class AwFileTypeFrame(AwAbstructFrame):
             self.widget = QtWidgets.QTextEdit()
             self.widget.setReadOnly(True)
             self.add_widget(self.widget)
+        self.widget.setText(self.target.config.get("args." + self.option["args"]))
 
     def browsed(self):
         import os, re

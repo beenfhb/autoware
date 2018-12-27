@@ -21,24 +21,26 @@ class AwQtGuiClient(AwLaunchClientIF):
 
     def __init__(self, sysarg, server):
         self.__sysarg = sysarg
-        self.__server = server
         self.__panels = []
         self.__mirror = AwLaunchTreeMirror(self)
 
+        self.__server = server
         self.__server.register_client(self)
-        #self.__server.make_profile("root/autoware")
-        #self.__server.load_profile("tmp_sensing")
 
         self.classes = {}
-        self.classes["default_node.panel"] = widgets.AwDefaultNodePanel
-        self.classes["default_node.frame"] = widgets.AwDefaultNodeFrame
-        self.classes["default_leaf.panel"] = widgets.AwDefaultLeafPanel
-        self.classes["default_leaf.frame"] = widgets.AwDefaultLeafFrame
+        self.classes["node.panel"] = widgets.AwDefaultNodePanel
+        self.classes["node.frame"] = widgets.AwDefaultNodeFrame
+        self.classes["leaf.panel"] = widgets.AwDefaultLeafPanel
+        self.classes["leaf.frame"] = widgets.AwDefaultLeafFrame
 
-        self.classes["args.text"]  = primitives.AwTextTypeFrame
-        self.classes["args.file"]  = primitives.AwFileTypeFrame
-        self.classes["args.tf"]    = primitives.AwTransformFrame
-        self.classes["args.calib"] = primitives.AwCameraCalibFrame
+        self.classes["args.text"]     = primitives.AwTextTypeFrame
+        self.classes["args.topic"]    = primitives.AwTextTypeFrame
+        self.classes["args.frame"]    = primitives.AwTextTypeFrame
+        self.classes["args.tf"]       = primitives.AwTransformFrame
+        self.classes["args.file"]     = primitives.AwFileTypeFrame
+        self.classes["args.filelist"] = primitives.AwFileTypeFrame
+
+        self.classes["args.calib"]    = primitives.AwCameraCalibFrame
 
     def start2(self):
 
@@ -79,12 +81,13 @@ class AwQtGuiClient(AwLaunchClientIF):
         self.__panels.append(self.__treeview)
         self.__panels.append(self.__summary)
         self.__panels.append(self.__process)
+        #self.__panels.append(self.__control)
 
-        self.__treeview.register_select_listener(self.__control)
         self.__treeview.register_select_listener(self.__summary)
         self.__treeview.register_select_listener(self.__process)
+        self.__treeview.register_select_listener(self.__control)
 
-        self.__server.make_profile("node/sensing")
+        self.__server.make_profile("root/autoware")
         return application.exec_()
 
     def config_cleared(self):
@@ -97,13 +100,13 @@ class AwQtGuiClient(AwLaunchClientIF):
 
         self.__treeview.expandToDepth(0)
 
-    def config_updated(self):
-        pass        
+    def config_updated(self, lpath):
+        self.__mirror.clear(lpath)
+        #for panel in self.__panels: panel.config_updated(lnode)
 
     def status_updated(self, lpath, state):
         print (lpath, state) 
         self.__treeview.status_updated(lpath, state)
-
 
 
 
@@ -138,20 +141,20 @@ class AwQtGuiClient(AwLaunchClientIF):
     def create_frame(self, mirror, guikey = None, guicls = None):
         #print "Create Frame: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls)
         if not guicls:
-            guikey = guikey or mirror.plugin().gui["type"]
+            guikey = guikey or mirror.plugin().frame()
             guicls = self.classes[guikey + ".frame"]
         return guicls(self, mirror)
 
     def create_panel(self, mirror, guikey = None, guicls = None):
         #print "Create Panel: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls)
         if not guicls:
-            guikey = guikey or mirror.plugin().gui["type"]
+            guikey = guikey or mirror.plugin().panel()
             guicls = self.classes[guikey + ".panel"]
         return guicls(self, mirror)
 
     def create_arg_frame(self, parent, view):
-        guicls = self.classes[view.guikey]
-        return guicls(self, parent, view.option)
+        guicls = self.classes[view["type"]]
+        return guicls(self, parent, view)
 
     def create_frame_entire_vlayout(self):
         layout = QtWidgets.QVBoxLayout()
@@ -187,8 +190,6 @@ class AwQtGuiClient(AwLaunchClientIF):
     def update_node(self, lpath, ldata):
         return self.__server.update_node(lpath, ldata)
 
-    def node_updated(self, lpath):
-        self.__mirror.updated(lpath)
 
 
     #def node_patched
@@ -208,8 +209,11 @@ class AwLaunchTreeMirror(object):
         self.cache = {}
         self.client = client
 
-    def clear(self):
-        self.cache.clear()
+    def clear(self, lpath = None):
+        if lpath:
+            self.cache.pop(lpath, None)
+        else:
+            self.cache.clear()
 
     def find(self, path):
         if path not in self.cache:
@@ -225,9 +229,6 @@ class AwLaunchTreeMirror(object):
     def remove(self, path, node):
         #console.warning("remove_node {}".format(path))
         self.nodes.pop(path)
-
-    def updated(self, path):
-        self.nodes[path].updated()
 
     def status_updated(self, lpath, state):
         self.nodes[lpath].status_updated(state)

@@ -1,7 +1,5 @@
-args :
-    - { name: file }
+args:
+    file: { type: str, array: space }
 
-gui :
-    type : file_select
-    list : true
-    data : args.file
+view:
+    - { title: Point Cloud Map Files, type: args.filelist, args: file }
