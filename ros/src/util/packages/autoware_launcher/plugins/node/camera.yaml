@@ -1,2 +1,2 @@
 children :
-  - { type: optional, name: camera, plugin : node/camera_node }
+  - { type: list, name: camera, plugin : node/camera_node }

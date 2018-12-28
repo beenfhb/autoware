@@ -1,3 +1,3 @@
 children :
-  - { type: required, name: driver,    plugin : driver/camera           }
-  - { type: required, name: publisher, plugin : sensing/image/publisher }
+  - { type: unit, name: driver,    plugin : driver/camera           }
+  - { type: unit, name: publisher, plugin : sensing/image/publisher }

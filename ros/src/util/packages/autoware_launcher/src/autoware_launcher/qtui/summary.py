@@ -17,9 +17,9 @@ class AwSummaryPanel(QtWidgets.QStackedWidget):
         for key in self.__panels.keys():
             self.__panels.pop(key).deleteLater()
 
-    def config_created(self, lnode):
-        lpath = lnode.path()
-        panel = self.__client.guimgr().create_panel(lnode)
+    def config_created(self, node):
+        lpath = node.path()
+        panel = self.__client.guimgr().create_widget(node, node.plugin().panel())
         panel.setup_widget()
         self.__panels[lpath] = panel
         self.addWidget(panel)

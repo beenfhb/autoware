@@ -1,11 +1,11 @@
-children :
-  - { type: required, name: map,           plugin : setup/map         }
-  - { type: required, name: vehicle,       plugin : setup/vehicle     }
-  - { type: required, name: sensing,       plugin : node/sensing      }
-  - { type: required, name: localization,  plugin : node/localization }
-  - { type: required, name: detection,     plugin : node/detection    }
-  - { type: required, name: prediction,    plugin : node/prediction   }
-  - { type: required, name: decision,      plugin : node/decision     }
-  - { type: required, name: mission,       plugin : node/mission      }
-  - { type: required, name: motion,        plugin : node/motion       }
-  - { type: required, name: visualization, plugin : tools/rviz        }
+rules :
+    - { name: map,           type: unit, plugin : setup/map         }
+    - { name: vehicle,       type: unit, plugin : setup/vehicle     }
+    - { name: sensing,       type: unit, plugin : node/sensing      }
+    - { name: localization,  type: unit, plugin : node/localization }
+    - { name: detection,     type: unit, plugin : node/detection    }
+    - { name: prediction,    type: unit, plugin : node/prediction   }
+    - { name: decision,      type: unit, plugin : node/decision     }
+    - { name: mission,       type: unit, plugin : node/mission      }
+    - { name: motion,        type: unit, plugin : node/motion       }
+    - { name: visualization, type: unit, plugin : tools/rviz        }

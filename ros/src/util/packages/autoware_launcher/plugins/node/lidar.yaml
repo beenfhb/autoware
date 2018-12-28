@@ -1,4 +1,4 @@
 children :
-  - { type: required, name: driver, plugin : node/lidar_driver }
-  - { type: required, name: filter, plugin : node/lidar_filter }
-  - { type: required, name: frame,  plugin : node/lidar_frame  }
+  - { type: unit, name: driver, plugin : node/lidar_driver }
+  - { type: unit, name: filter, plugin : node/lidar_filter }
+  - { type: unit, name: frame,  plugin : node/lidar_frame  }

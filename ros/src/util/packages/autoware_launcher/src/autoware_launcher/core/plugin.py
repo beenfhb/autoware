@@ -1,3 +1,4 @@
+import collections
 import os
 import xml.etree.ElementTree as xmltree
 import yaml
@@ -44,18 +45,22 @@ class AwPluginNode(object):
     def __init__(self, tree, path):
         self.__tree  = tree
         self.__path  = path
-        self.__args  = []
-        self.__rules = []
-        self.__views = []
+        self.__args  = collections.OrderedDict()
+        self.__rule  = collections.OrderedDict()
+        self.__panel = None
+        self.__frame = None
 
-    def dump(self):
-        print self.__path
-        print self.__args
-        print self.__rules
-        print self.__views
+    def todict(self):
+        data = {}
+        data["type"]  = "Node" if self.isnode() else "Leaf"
+        data["args"]  = self.__args.values()
+        data["rule"]  = self.__rule.values()
+        data["panel"] = self.__panel
+        data["frame"] = self.__frame
+        return data
 
     def isnode(self):
-        return bool(self.__rules)
+        return bool(self.__rule)
 
     def isleaf(self):
         return not self.isnode()
@@ -65,9 +70,6 @@ class AwPluginNode(object):
 
     def path(self):
         return self.__path
-
-    def rules(self):
-        return self.__rules
 
     def load(self, rootpath):
         filepath = os.path.join(rootpath, self.path())
@@ -85,30 +87,33 @@ class AwPluginNode(object):
             with open(filepath+ ".yaml") as fp:
                 ydata = yaml.safe_load(fp)
 
-            for rdata in ydata.get("children", []):
-                self.__rules.append(AwPluginRule(self, rdata))
-            self.__args  = ydata.get("args", {})
-            self.__views = ydata.get("view", [])
+            self.__panel = ydata.get("panel", {"view": "default.panel"})
+            self.__frame = ydata.get("frame", {"view": "default.frame"})
+
+            #self.__info
+            self.__args  = ydata.get("args",  {})
+            for data in ydata.get("rules", []): self.__rule[data["name"]] = data
+
 
         # validation
         args_type = ["str", "int", "real"]
-        for argkey, argdef in self.__args.items():
-            if "type" not in argdef: raise Exception("yaml arg does not have type: "  + filepath)
-            if argdef["type"] not in args_type: raise Exception("yaml arg has unknown type: " + filepath)
-        for viewdef in self.__views:
-            if "type" not in viewdef: raise Exception("yaml arg does not have type: "  + filepath)
-
-    def args(self):
-        return self.__data["args"]
-
-    def views(self):
-        return self.__views
+        rule_type = ["unit", "list"]
+        for name, data in self.__args.items():
+            if data["type"] not in args_type: raise Exception("Plugin Args Type: " + filepath)
+        for name, data in self.__rule.items():
+            if data["type"] not in rule_type: raise TypeError("Plugin Rule Type: " + filepath)
 
     def panel(self):
-        return "default.node" if self.isnode() else "default.leaf"
+        return self.__panel
 
     def frame(self):
-        return "default.node" if self.isnode() else "default.leaf"
+        return self.__frame
+
+    def args(self):
+        return self.__
+
+    def rules(self):
+        return self.__rule.values()
 
     def error(self, text):
         console.error("{}: {} ({})".format(self.__class__.__name__, text, self.__nodepath))
@@ -134,16 +139,6 @@ class AwPluginNode(object):
             cfgkey = "args." + argkey
             lines.append(argkey + ": " + config[cfgkey])
         return "\n".join(lines)
-
-
-
-class AwPluginRule(object):
-
-    def __init__(self, node, data):
-        self.type = data["type"]
-        self.name = data["name"]
-        self.plugin = data["plugin"]
-
 
 
 if __name__ == "__main__":

@@ -176,8 +176,9 @@ class AwQtGuiManager(object):
     def client(self):
         return self.__client
 
-    def create_widget(self, mirror, parent, guicls = None):
-        return guicls(self, mirror, parent)
+    def create_widget(self, node, view, parent = None, widget = None):
+        widget = widget or self.__widgets[view["view"]]
+        return widget(self, node, view)
 
     def create_frame(self, mirror, guikey = None, guicls = None):
         #print "Create Frame: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls)
@@ -253,6 +254,9 @@ class AwLaunchNodeMirror(object):
 
     def __find(self):
         return self.__tree.find(self.__path)
+
+    def tostring(self):
+        return self.__find().tostring()
 
     def status(self):
         node = self.__find()

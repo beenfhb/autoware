@@ -13,7 +13,6 @@ class AwBaseNode(object):
 
     def __init__(self, name):
         self.__nodename = name
-        #self.__nodetype = True
         self.__parent   = None
         self.__children = []
         self.__childmap = {}
@@ -126,22 +125,11 @@ class AwLaunchTree(AwBaseTree):
         load_node(root)
 
     def make(self, ppath, plugins):
-        def make_node(parent, lname, ppath):
-            plugin = plugins.find(ppath)
-            launch = AwLaunchNode(lname)
-            launch.plugin = plugin
-            launch.config = plugin.default_config()
-            parent.addchild(launch)
-
-            for rule in plugin.rules():
-                if rule.type == "required":
-                    make_node(launch, rule.name, rule.plugin)
-                elif rule.type == "optional":
-                    pass
-                else:
-                    console.error(lname + ": " + rule.type)
-
-        make_node(self, "root", ppath)
+        plugin = plugins.find(ppath)
+        launch = AwLaunchNode("root")
+        launch.plugin = plugin
+        launch.config = plugin.default_config()
+        self.addchild(launch)
 
     def create(self, lpath, ppath):
         if not os.path.basename(lpath):
@@ -172,20 +160,12 @@ class AwLaunchNode(AwBaseNode):
         self.config = None
         self.status = self.STOP
 
-    def __str__(self):
-        nodetype = "Node" if self.plugin.isnode() else "Leaf"
-        plugin = None if not self.plugin else self.plugin.path() 
-        config = None if not self.config else self.config.keys()
-        childnames = map(lambda child: child.nodename(), self.children())
-        return "{}:{:<13} Plugin:{} Config:{} Children:{}".format(nodetype, self.nodename(), plugin, config, childnames)
-    
-    def bind_executor(self, executor):
-        if not isinstance(executor, AwLaunchNodeExecutorIF):
-            raise TypeError(executor.__class__.__name__ + " does not inherit to AwLaunchNodeExecutorIF")
-        self.executor = executor
-
-    def unbind_executor(self, executor):
-        self.executor = AwLaunchNodeExecutor()
+    def tostring(self):
+        data = {}
+        data["plugin"]   = self.plugin.todict()
+        data["config"]   = self.config
+        data["children"] = map(lambda child: child.nodename(), self.children())
+        return yaml.safe_dump(data)
 
     # experimental
     def remove_child(self, name):

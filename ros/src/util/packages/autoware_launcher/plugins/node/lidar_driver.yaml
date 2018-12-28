@@ -1,2 +1,2 @@
 children :
-  - { type: optional, name: lidar,  plugin : driver/lidar }
+  - { type: list, name: lidar,  plugin : driver/lidar }

@@ -21,10 +21,11 @@ class AwAbstructWindow(QtWidgets.QMainWindow):
 
 class AwAbstructPanel(QtWidgets.QWidget):
 
-    def __init__(self, guimgr, mirror):
+    def __init__(self, guimgr, node, view):
         super(AwAbstructPanel, self).__init__()
         self.guimgr = guimgr
-        self.mirror = mirror
+        self.node = node
+        self.view = view
 
     def setup_widget(self):
         if self.layout() is None:
@@ -75,10 +76,11 @@ class AwAbstructPanel(QtWidgets.QWidget):
 
 class AwAbstructFrame(QtWidgets.QWidget):
 
-    def __init__(self, guimgr, mirror):
+    def __init__(self, guimgr, node, view):
         super(AwAbstructFrame, self).__init__()
         self.guimgr = guimgr
-        self.mirror = mirror
+        self.node = node
+        self.view = view
 
     def setup_widget(self):
         if self.layout() is None:
