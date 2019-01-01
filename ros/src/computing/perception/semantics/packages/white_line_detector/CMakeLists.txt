@@ -11,7 +11,10 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   cv_bridge
   image_transport
+  dynamic_reconfigure
 )
+
+generate_dynamic_reconfigure_options(cfg/white_line_detector.cfg)
 
 catkin_package(
   INCLUDE_DIRS include
@@ -30,3 +33,8 @@ install(TARGETS white_line_detector_node
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+foreach(dir cfg)
+  install(DIRECTORY ${dir}/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${dir})
+endforeach(dir)
