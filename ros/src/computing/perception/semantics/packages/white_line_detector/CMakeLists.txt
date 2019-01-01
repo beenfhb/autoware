@@ -21,3 +21,12 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
 )
+
+add_executable(white_line_detector_node src/white_line_detector_node.cpp src/white_line_detector.cpp)
+target_link_libraries(white_line_detector_node ${catkin_LIBRARIES})
+add_dependencies(white_line_detector_node ${catkin_EXPORTED_TARGETS})
+
+install(TARGETS white_line_detector_node 
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
