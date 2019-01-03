@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
 )
 
+find_package(dlib REQUIRED)
+
 generate_dynamic_reconfigure_options(cfg/white_line_detector.cfg)
 
 catkin_package(
@@ -25,7 +27,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(white_line_detector_node src/white_line_detector_node.cpp src/white_line_detector.cpp)
+add_executable(white_line_detector_node src/white_line_detector_node.cpp src/white_line_detector.cpp src/ransac_approximator.cpp)
 target_link_libraries(white_line_detector_node ${catkin_LIBRARIES})
 add_dependencies(white_line_detector_node ${catkin_EXPORTED_TARGETS})
 

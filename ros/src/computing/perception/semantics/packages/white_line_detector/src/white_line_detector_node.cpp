@@ -7,6 +7,9 @@
 int main(int argc, char *argv[])
 {
     ros::init(argc, argv, "white_line_detctor_node");
+    ros::NodeHandle nh;
+    ros::NodeHandle pnh("~");
+    WhiteLineDetector detector(nh,pnh);
     ros::spin();
     return 0;
 }

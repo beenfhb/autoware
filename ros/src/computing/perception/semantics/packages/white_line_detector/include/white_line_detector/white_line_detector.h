@@ -18,6 +18,7 @@ private:
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
     image_transport::ImageTransport it_;
+    image_transport::Publisher image_pub_;
     image_transport::Subscriber image_sub_;
     void imageCallback(const sensor_msgs::ImageConstPtr& msg);
 };
