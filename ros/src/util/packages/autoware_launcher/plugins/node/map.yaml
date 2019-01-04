@@ -1,4 +1,0 @@
-children :
-  - { type: unit, name: transform, plugin : map/transform }
-  - { type: unit, name: points,    plugin : map/points    }
-  - { type: unit, name: vector,    plugin : map/vector    }

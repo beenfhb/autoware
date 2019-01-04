@@ -24,6 +24,10 @@ class AwSummaryPanel(QtWidgets.QStackedWidget):
         self.__panels[lpath] = panel
         self.addWidget(panel)
 
+    def config_updated(self, lpath):
+        self.__panels[lpath].setup_widget()
+
+
     #def config_removed(self, lpath):
 
     def config_selected(self, lpath):

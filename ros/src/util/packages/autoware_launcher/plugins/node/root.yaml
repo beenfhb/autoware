@@ -1,11 +1,11 @@
 rules :
-    - { name: map,           type: unit, plugin : setup/map         }
-    - { name: vehicle,       type: unit, plugin : setup/vehicle     }
-    - { name: sensing,       type: unit, plugin : node/sensing      }
-    - { name: localization,  type: unit, plugin : node/localization }
-    - { name: detection,     type: unit, plugin : node/detection    }
-    - { name: prediction,    type: unit, plugin : node/prediction   }
-    - { name: decision,      type: unit, plugin : node/decision     }
-    - { name: mission,       type: unit, plugin : node/mission      }
-    - { name: motion,        type: unit, plugin : node/motion       }
-    - { name: visualization, type: unit, plugin : tools/rviz        }
+    - { type: unit, name: map,           plugin : setup/map         }
+    - { type: unit, name: vehicle,       plugin : setup/vehicle     }
+    - { type: unit, name: sensing,       plugin : node/sensing      }
+    - { type: unit, name: localization,  plugin : node/localization }
+    - { type: unit, name: detection,     plugin : node/detection    }
+    - { type: unit, name: prediction,    plugin : node/prediction   }
+    - { type: unit, name: decision,      plugin : node/decision     }
+    - { type: unit, name: mission,       plugin : node/mission      }
+    - { type: unit, name: motion,        plugin : node/motion       }
+    - { type: unit, name: visualization, plugin : tools/rviz        }

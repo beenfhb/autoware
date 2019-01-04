@@ -110,7 +110,7 @@ class AwPluginNode(object):
         return self.__frame
 
     def args(self):
-        return self.__
+        return self.__args
 
     def rules(self):
         return self.__rule.values()
@@ -121,8 +121,8 @@ class AwPluginNode(object):
     def optional_children(self):
         plugins = {}
         for rule in self.rules():
-            if rule.type == "optional":
-                plugins[rule.name] = self.__tree.scan(rule.plugin)
+            if rule["type"] == "optional":
+                plugins[rule["name"]] = self.__tree.scan(rule["plugin"])
         return plugins
 
     def default_config(self):
@@ -130,7 +130,7 @@ class AwPluginNode(object):
         for argkey, argdef in self.__args.items():
             cfgkey = "args." + argkey
             config[cfgkey] = argdef.get("default", "")
-        return config 
+        return config
 
     # temporary
     def argstr(self, config):

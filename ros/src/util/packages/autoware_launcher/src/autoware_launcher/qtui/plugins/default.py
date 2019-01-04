@@ -8,8 +8,6 @@ def plugin_widgets():
     {
         "panel" : AwDefaultNodePanel,
         "frame" : AwDefaultNodeFrame,
-        "leaf_panel" : AwDefaultLeafPanel,
-        "leaf_frame" : AwDefaultLeafFrame
     }
 
 
@@ -21,27 +19,38 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
 
     def setup_widget(self):
         super(AwDefaultNodePanel, self).setup_widget()
-        self.add_frame(QtWidgets.QLabel(self.node.tostring()))
+        self.debug = QtWidgets.QLabel(self.node.tostring())
+        self.debug.setVisible(False)
+        self.add_frame(self.debug)
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
 
-        # rules without view
+        print self.node.plugin().args()
+
+        for child in self.node.children():
+            frame = child.plugin().frame()
+            self.add_frame(self.guimgr.create_widget(child, frame))
+
         for rule in self.node.plugin().rules():
-            print node.getchild(rule["name"], None)
             if rule["type"] == "unit":
-                self.add_frame(QtWidgets.QPushButton("Create " + rule["name"]))
+                if not self.node.haschild(rule["name"]):
+                    button = AwNodeCreateButton(self.node, rule, "Create " + rule["name"])
+                    self.add_frame(button)
             if rule["type"] == "list":
                 self.add_frame(QtWidgets.QPushButton("Create " + rule["name"]))
-            
-        
-        #optional_plugins = self.node.plugin().optional_children()
-        #if optional_plugins:
-        #    self.add_button(AwPluginSelectButton(self.guimgr, self.node, self))
 
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_D:
+            self.debug.setVisible(not self.debug.isVisible())
+            event.accept()
+        else:
+            super(AwDefaultNodePanel, self).keyPressEvent(event)
+        
 
 
 class AwDefaultNodeFrame(widgets.AwAbstructFrame):
 
-    def __init__(self, guimgr, node):
-        super(AwDefaultNodeFrame, self).__init__(guimgr, node)
+    def __init__(self, guimgr, node, view):
+        super(AwDefaultNodeFrame, self).__init__(guimgr, node, view)
 
         super(AwDefaultNodeFrame, self).setup_widget()
         self.set_title(self.node.name().capitalize() + " : " + self.node.get_config("info.title", "No Title"))
@@ -106,6 +115,19 @@ class AwConfigButton(QtWidgets.QPushButton):
     def __init__(self, client, lpath):
         super(AwConfigButton, self).__init__("Config")
         self.clicked.connect(lambda: client.select_config(lpath))
+
+
+
+class AwNodeCreateButton(QtWidgets.QPushButton):
+
+    def __init__(self, node, rule, text):
+        super(AwNodeCreateButton, self).__init__(text)
+        self.node = node
+        self.rule = rule
+        self.clicked.connect(self.onclicked)
+
+    def onclicked(self):
+        self.node.addchild(self.rule["name"], self.rule["plugin"])
 
 
 

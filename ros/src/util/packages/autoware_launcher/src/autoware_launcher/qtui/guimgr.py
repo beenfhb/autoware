@@ -95,12 +95,24 @@ class AwQtGuiClient(object):
         self.__treeview.expandAll()
         #self.__treeview.expandToDepth(0)
 
+    def config_created(self, lpath):
+        print "config_created: " + lpath
+        lnode = self.__mirror.create(lpath)
+        for panel in self.__panels: panel.config_created(lnode)
+
+        lpath = os.path.dirname(lpath)
+        while lpath:
+            print lpath
+            self.__summary.config_updated(lpath)
+            lpath = os.path.dirname(lpath)
+
     def config_updated(self, lpath):
+        print "config_updated:" + lpath
         self.__mirror.clear(lpath)
-        #for panel in self.__panels: panel.config_updated(lnode)
+        #for panel in self.__panels: panel.config_updated(lpath)
 
     def status_updated(self, lpath, state):
-        print (lpath, state) 
+        print "config_updated:" + lpath + " " + state
         self.__treeview.status_updated(lpath, state)
 
 
@@ -170,14 +182,15 @@ class AwQtGuiManager(object):
                 for wkey, wcls in module.plugin_widgets().items():
                      self.__widgets[fkey + "." + wkey] = wcls
 
-    def widget(self, view):
-        return self.__widgets[view["type"]]
+    #def widget(self, view):
+    #    return self.__widgets[view["view"]]
 
     def client(self):
         return self.__client
 
     def create_widget(self, node, view, parent = None, widget = None):
         widget = widget or self.__widgets[view["view"]]
+        print widget
         return widget(self, node, view)
 
     def create_frame(self, mirror, guikey = None, guicls = None):
@@ -289,6 +302,9 @@ class AwLaunchNodeMirror(object):
 
     def listnode(self, this):
         return map(lambda node: node.nodepath(), self.__find().listnode(this))
+
+    def haschild(self, name):
+        return self.__find().haschild(name)
 
     def getchild(self, name):
         return self.__tree.create(self.__path + "/" + name)
