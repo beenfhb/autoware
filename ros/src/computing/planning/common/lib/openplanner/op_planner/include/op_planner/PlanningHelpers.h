@@ -184,6 +184,8 @@ public:
 
 	static double GetDistanceFromPoseToEnd(const PlannerHNS::WayPoint& pose, const std::vector<WayPoint>& path);
 
+	static int PointInsidePolygon(const std::vector<GPSPoint>& points,const GPSPoint& p);
+
 	static void TestQuadraticSpline(const std::vector<WayPoint>& center_line, std::vector<WayPoint>& path);
 
 	static double frunge ( double x );

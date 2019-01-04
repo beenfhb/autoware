@@ -2829,6 +2829,44 @@ double PlanningHelpers::GetDistanceFromPoseToEnd(const PlannerHNS::WayPoint& pos
 	 return d;
 }
 
+int PlanningHelpers::PointInsidePolygon(const std::vector<GPSPoint>& points,const GPSPoint& p)
+{
+        int counter = 0;
+          int i;
+          double xinters;
+          GPSPoint p1,p2;
+          int N = points.size();
+          if(N <=0 ) return -1;
+
+          p1 = points.at(0);
+          for (i=1;i<=N;i++)
+          {
+            p2 = points.at(i % N);
+
+            if (p.y > MIN(p1.y,p2.y))
+            {
+              if (p.y <= MAX(p1.y,p2.y))
+              {
+                if (p.x <= MAX(p1.x,p2.x))
+                {
+                  if (p1.y != p2.y)
+                  {
+                    xinters = (p.y-p1.y)*(p2.x-p1.x)/(p2.y-p1.y)+p1.x;
+                    if (p1.x == p2.x || p.x <= xinters)
+                      counter++;
+                  }
+                }
+              }
+            }
+            p1 = p2;
+          }
+
+          if (counter % 2 == 0)
+            return 0;
+          else
+            return 1;
+}
+
 double PlanningHelpers::frunge ( double x )
 {
   double fx;

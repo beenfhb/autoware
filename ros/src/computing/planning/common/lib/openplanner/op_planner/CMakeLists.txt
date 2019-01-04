@@ -45,6 +45,7 @@ set(PLANNERH_SRC
 		src/SimuDecisionMaker.cpp
 		src/TrajectoryCosts.cpp
 		src/TrajectoryDynamicCosts.cpp
+		src/TrajectoryEvaluator.cpp
 )
 
 ## Declare a cpp library
