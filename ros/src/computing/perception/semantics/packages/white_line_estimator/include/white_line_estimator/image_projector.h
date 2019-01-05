@@ -3,29 +3,39 @@
 
 //headers in ROS
 #include <std_msgs/Header.h>
+#include <sensor_msgs/Image.h>
+#include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/point_cloud2_iterator.h>
+#include <geometry_msgs/PointStamped.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 //headers in OpenCV
 #include <opencv2/imgproc/imgproc.hpp>
 
-//headers in PCL
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/ModelCoefficients.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/filters/project_inliers.h>
+//headers in Boost
+#include <boost/optional.hpp>
+
+struct ProjectedPoint
+{
+    geometry_msgs::PointStamped point_3d;
+    cv::Point point_2d;
+};
 
 class ImageProjector
 {
 public:
-    ImageProjector();
+    ImageProjector(double min_area,double max_area);
     ~ImageProjector();
+    boost::optional<std::vector<ProjectedPoint> > project(const sensor_msgs::ImageConstPtr& image,const sensor_msgs::PointCloud2ConstPtr& pointcloud,cv::Mat camera_matrix,cv::Mat dist_coeff);
 private:
-    cv::Mat filterColor(cv::Mat image,cv::Mat camera_matrix,cv::Mat dist_coeff,double min_area,double max_area);
+    std::vector<std::vector<cv::Point> > getWhiteLineContours(cv::Mat image, cv::Mat &mask, cv::Mat camera_matrix,cv::Mat dist_coeff);
+    boost::optional<std::vector<ProjectedPoint> > projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,std::string camera_frame);
+    boost::optional<cv::Point> projectPoint3dPointTo2d(geometry_msgs::PointStamped point_3d,cv::Size image_size);
+    tf2_ros::Buffer tf_buffer_;
+    tf2_ros::TransformListener tf_listener_;
+    double min_area_;
+    double max_area_;
 };
 #endif  //IMAGE_PROJECTOR_H_INCLUDED

@@ -13,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   dynamic_reconfigure
   pcl_ros
+  tf2_ros
+  tf2_geometry_msgs
 )
 
 generate_dynamic_reconfigure_options(cfg/white_line_estimator.cfg)

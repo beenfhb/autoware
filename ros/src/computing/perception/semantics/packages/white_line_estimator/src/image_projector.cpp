@@ -1,8 +1,9 @@
 #include <white_line_estimator/image_projector.h>
 
-ImageProjector::ImageProjector()
+ImageProjector::ImageProjector(double min_area,double max_area) : tf_listener_(tf_buffer_)
 {
-
+    min_area_ = min_area;
+    max_area_ = max_area;
 }
 
 ImageProjector::~ImageProjector()
@@ -10,7 +11,64 @@ ImageProjector::~ImageProjector()
 
 }
 
-cv::Mat ImageProjector::filterColor(cv::Mat image,cv::Mat camera_matrix,cv::Mat dist_coeff,double min_area,double max_area)
+boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sensor_msgs::ImageConstPtr& image_msg,
+    const sensor_msgs::PointCloud2ConstPtr& pointcloud_msg,cv::Mat camera_matrix,cv::Mat dist_coeff)
+{
+    cv_bridge::CvImagePtr cv_ptr;
+    try
+    {
+        cv_ptr = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::BGR8);
+    }
+    catch (cv_bridge::Exception& e)
+    {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        return boost::none;
+    }
+    cv::Mat mask;
+    std::vector<std::vector<cv::Point> > contours = getWhiteLineContours(cv_ptr->image,mask,camera_matrix,dist_coeff);
+    boost::optional<std::vector<ProjectedPoint> > projected_points = projectPointCloudToImage(*pointcloud_msg,image_msg->header.frame_id);
+    if(!projected_points)
+    {
+        ROS_ERROR_STREAM("failed to project pointcloud to the image.");
+        return boost::none;
+    }
+}
+
+boost::optional<std::vector<ProjectedPoint> > ImageProjector::projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,std::string camera_frame)
+{
+    std::vector<ProjectedPoint> projected_points;
+    std_msgs::Header header = point_cloud.header;
+    geometry_msgs::TransformStamped transform_stamped;
+    try
+    {
+        transform_stamped = tf_buffer_.lookupTransform(camera_frame, header.frame_id, ros::Time(0));
+    }
+    catch(tf2::TransformException &ex)
+    {
+        ROS_WARN("%s",ex.what());
+        return boost::none;
+    }
+    sensor_msgs::PointCloud2ConstIterator<float> iter_x(point_cloud, "x");
+    sensor_msgs::PointCloud2ConstIterator<float> iter_y(point_cloud, "y");
+    sensor_msgs::PointCloud2ConstIterator<float> iter_z(point_cloud, "z");
+    for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z)
+    {
+        ProjectedPoint p;
+        p.point_3d.header = header;
+        p.point_3d.point.x = *iter_x;
+        p.point_3d.point.y = *iter_y;
+        p.point_3d.point.z = *iter_z;
+        tf2::doTransform(p.point_3d,p.point_3d,transform_stamped);
+    }
+    return projected_points;
+}
+
+boost::optional<cv::Point> projectPoint3dPointTo2d(geometry_msgs::PointStamped point_3d,cv::Size image_size)
+{
+
+}
+
+std::vector<std::vector<cv::Point> > ImageProjector::getWhiteLineContours(cv::Mat image,cv::Mat &mask,cv::Mat camera_matrix,cv::Mat dist_coeff)
 {
     cvtColor(image, image, CV_RGB2HSV);
     std::vector<cv::Mat> hsv_planes;
@@ -26,13 +84,13 @@ cv::Mat ImageProjector::filterColor(cv::Mat image,cv::Mat camera_matrix,cv::Mat 
     for(int i=0; i<contours.size();i++)
     { 
         double area=contourArea(contours.at(i));
-        if(area > min_area && area < max_area)
+        if(area > min_area_ && area < max_area_)
         {
             contours_subset.push_back(contours.at(i));
         }
     }
-    cv::Mat mask = cv::Mat::zeros(image.rows, image.cols, CV_8UC1);
+    mask = cv::Mat::zeros(image.rows, image.cols, CV_8UC1);
     drawContours(mask,contours_subset,-1,cv::Scalar(255),-1);
     cvtColor(mask, mask, CV_GRAY2BGR);
-    return mask;
+    return contours_subset;
 }
