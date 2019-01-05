@@ -1,20 +1,20 @@
 //headers in this package
 #include <white_line_estimator/white_line_estimator.h>
 
-WhiteLineDetector::WhiteLineDetector(ros::NodeHandle nh,ros::NodeHandle pnh) : it_(nh)
+WhiteLineEstimator::WhiteLineEstimator(ros::NodeHandle nh,ros::NodeHandle pnh) : it_(nh)
 {
     nh_ = nh;
     pnh_ = pnh;
     image_pub_ = it_.advertise("/detected_image", 10);
-    image_sub_ = it_.subscribe("/image_raw", 10, &WhiteLineDetector::imageCallback, this);
+    image_sub_ = it_.subscribe("/image_raw", 10, &WhiteLineEstimator::imageCallback, this);
 }
 
-WhiteLineDetector::~WhiteLineDetector()
+WhiteLineEstimator::~WhiteLineEstimator()
 {
 
 }
 
-void WhiteLineDetector::imageCallback(const sensor_msgs::ImageConstPtr& msg)
+void WhiteLineEstimator::imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
     cv_bridge::CvImagePtr cv_ptr;
     cv_bridge::CvImagePtr cv_ptr_pub;

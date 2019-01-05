@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
     ros::init(argc, argv, "white_line_estimator_node");
     ros::NodeHandle nh;
     ros::NodeHandle pnh("~");
-    WhiteLineDetector detector(nh,pnh);
+    WhiteLineEstimator detector(nh,pnh);
     ros::spin();
     return 0;
 }

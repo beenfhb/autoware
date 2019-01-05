@@ -1,5 +1,5 @@
-#ifndef WHITE_LINE_DETECTOR_HINCLUDED
-#define WHITE_LINE_DETECTOR_HINCLUDED
+#ifndef WHITE_LINE_ESTIMATOR_HINCLUDED
+#define WHITE_LINE_ESTIMATOR_HINCLUDED
 
 //headers in ROS
 #include <ros/ros.h>
@@ -8,11 +8,11 @@
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/imgproc/imgproc.hpp>
 
-class WhiteLineDetector
+class WhiteLineEstimator
 {
 public:
-    WhiteLineDetector(ros::NodeHandle nh,ros::NodeHandle pnh);
-    ~WhiteLineDetector();
+    WhiteLineEstimator(ros::NodeHandle nh,ros::NodeHandle pnh);
+    ~WhiteLineEstimator();
 private:
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
@@ -21,4 +21,4 @@ private:
     image_transport::Subscriber image_sub_;
     void imageCallback(const sensor_msgs::ImageConstPtr& msg);
 };
-#endif  //WHITE_LINE_DETECTOR_HINCLUDED
+#endif  //WHITE_LINE_ESTIMATOR_HINCLUDED
