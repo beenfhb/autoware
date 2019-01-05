@@ -7,6 +7,10 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <autoware_msgs/ProjectionMatrix.h>
 
 class WhiteLineEstimator
 {
@@ -20,5 +24,11 @@ private:
     image_transport::Publisher image_pub_;
     image_transport::Subscriber image_sub_;
     void imageCallback(const sensor_msgs::ImageConstPtr& msg);
+    void pointsGroundCallback(const sensor_msgs::PointCloud2ConstPtr& msg);
+    void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg);
+    void projectionMatrixCallback(const autoware_msgs::ProjectionMatrixConstPtr& msg);
+    cv::Mat proj_matrix_;
+    cv::Mat camera_matrix_;
+    cv::Size image_size_;
 };
 #endif  //WHITE_LINE_ESTIMATOR_HINCLUDED

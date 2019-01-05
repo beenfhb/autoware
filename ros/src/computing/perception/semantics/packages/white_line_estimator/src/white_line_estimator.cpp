@@ -5,13 +5,46 @@ WhiteLineEstimator::WhiteLineEstimator(ros::NodeHandle nh,ros::NodeHandle pnh) :
 {
     nh_ = nh;
     pnh_ = pnh;
-    image_pub_ = it_.advertise("/detected_image", 10);
+    image_pub_ = it_.advertise("/filtered_image", 10);
     image_sub_ = it_.subscribe("/image_raw", 10, &WhiteLineEstimator::imageCallback, this);
 }
 
 WhiteLineEstimator::~WhiteLineEstimator()
 {
 
+}
+
+void WhiteLineEstimator::pointsGroundCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
+{
+    return;
+}
+
+void WhiteLineEstimator::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg)
+{
+    image_size_.height = msg->height;
+    image_size_.width = msg->width;
+    camera_matrix_ = cv::Mat(3, 3, CV_64F);
+    for (int row = 0; row < 3; row++)
+    {
+        for (int col = 0; col < 3; col++)
+        {
+            camera_matrix_.at<double>(row, col) = msg->K[row * 3 + col];
+        }
+    }
+    return;
+}
+
+void WhiteLineEstimator::projectionMatrixCallback(const autoware_msgs::ProjectionMatrixConstPtr& msg)
+{
+    proj_matrix_ = cv::Mat(4, 4, CV_64F);
+    for (int row = 0; row < 4; row++)
+    {
+        for (int col = 0; col < 4; col++)
+        {
+            proj_matrix_.at<double>(row, col) = msg->projection_matrix[row * 4 + col];
+        }
+    }
+    return;
 }
 
 void WhiteLineEstimator::imageCallback(const sensor_msgs::ImageConstPtr& msg)
@@ -52,17 +85,7 @@ void WhiteLineEstimator::imageCallback(const sensor_msgs::ImageConstPtr& msg)
         cv::Mat mask = cv::Mat::zeros(image.rows, image.cols, CV_8UC1);
         drawContours(mask,contours_subset,-1,cv::Scalar(255),-1);
         cvtColor(mask, mask, CV_GRAY2BGR);
-        /*
-        for(int i=0; i<contours_subset.size(); i++)
-        {
-            cv::Point2f com;
-            cv::Moments mu = moments(contours_subset[i]);
-            com = cv::Point2f(mu.m10/mu.m00,mu.m01/mu.m00);
-            cv::circle(mask,com,3,cv::Scalar(0,255,0),-1,CV_AA);
-        }
-        */
         cv_ptr_pub->image = mask;
-        //image.copyTo(cv_ptr_pub->image,mask);
     }
     catch (cv::Exception& e)
     {
