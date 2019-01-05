@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
   dynamic_reconfigure
+  pcl_ros
 )
 
 generate_dynamic_reconfigure_options(cfg/white_line_estimator.cfg)
