@@ -27,7 +27,7 @@ include_directories(
 
 add_executable(white_line_estimator_node 
   src/white_line_estimator_node.cpp src/white_line_estimator.cpp 
-  src/ransac_approximator.cpp src/image_reprojector.cpp)
+  src/ransac_approximator.cpp src/image_projector.cpp)
 target_link_libraries(white_line_estimator_node ${catkin_LIBRARIES})
 add_dependencies(white_line_estimator_node ${catkin_EXPORTED_TARGETS})
 
