@@ -29,6 +29,7 @@ private:
     void projectionMatrixCallback(const autoware_msgs::ProjectionMatrixConstPtr& msg);
     cv::Mat proj_matrix_;
     cv::Mat camera_matrix_;
+    cv::Mat dist_coeff_;
     cv::Size image_size_;
 };
 #endif  //WHITE_LINE_ESTIMATOR_HINCLUDED

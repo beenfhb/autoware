@@ -31,6 +31,11 @@ void WhiteLineEstimator::cameraInfoCallback(const sensor_msgs::CameraInfoConstPt
             camera_matrix_.at<double>(row, col) = msg->K[row * 3 + col];
         }
     }
+    dist_coeff_ = cv::Mat(1, 5, CV_64F);
+    for (int col = 0; col < 5; col++)
+    {
+        dist_coeff_.at<double>(col) = msg->D[col];
+    }
     return;
 }
 
