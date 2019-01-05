@@ -25,9 +25,7 @@ class ImageProjector
 public:
     ImageProjector();
     ~ImageProjector();
-    void project(const sensor_msgs::PointCloud2ConstPtr& pointcloud_ptr,
-        const cv::Mat& proj_matrix, const cv::Mat& camera_matrix,
-        const cv::Mat& dist_coeff, const cv::Size& image_size);
 private:
+    cv::Mat filterColor(cv::Mat image,cv::Mat camera_matrix,cv::Mat dist_coeff,double min_area,double max_area);
 };
 #endif  //IMAGE_PROJECTOR_H_INCLUDED
