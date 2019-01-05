@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>white_line_detector</name>
+  <name>white_line_estimator</name>
   <version>0.0.0</version>
-  <description>The white_line_detector package</description>
+  <description>The white_line_estimator package</description>
 
   <maintainer email="masaya.kataoka@tier4.jp">Masaya Kataoka</maintainer>
 
@@ -17,7 +17,6 @@
   <build_depend>cv_bridge</build_depend>
   <build_depend>image_transport</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
-  <build_depend>libdlib-dev</build_depend>
   <build_export_depend>autoware_build_flags</build_export_depend>
   <build_export_depend>autoware_msgs</build_export_depend>
   <build_export_depend>geometry_msgs</build_export_depend>
@@ -26,7 +25,6 @@
   <build_export_depend>cv_bridge</build_export_depend>
   <build_export_depend>image_transport</build_export_depend>
   <build_export_depend>dynamic_reconfigure</build_export_depend>
-  <build_export_depend>libdlib-dev</build_export_depend>
   <exec_depend>autoware_build_flags</exec_depend>
   <exec_depend>autoware_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
@@ -35,8 +33,6 @@
   <exec_depend>cv_bridge</exec_depend>
   <exec_depend>image_transport</exec_depend>
   <exec_depend>dynamic_reconfigure</exec_depend>
-  <exec_depend>libdlib-dev</exec_depend>
-
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
