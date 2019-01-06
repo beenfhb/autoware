@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   tf2_ros
   tf2_geometry_msgs
+  message_filters
 )
 
 generate_dynamic_reconfigure_options(cfg/white_line_estimator.cfg)

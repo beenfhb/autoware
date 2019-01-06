@@ -18,7 +18,8 @@ void ImageProjector::setCameraInfo(sensor_msgs::CameraInfo info)
     return;
 }
 
-boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sensor_msgs::ImageConstPtr& image_msg,const sensor_msgs::PointCloud2ConstPtr& pointcloud_msg)
+boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sensor_msgs::ImageConstPtr& image_msg,const sensor_msgs::PointCloud2ConstPtr& pointcloud_msg,
+    cv::Mat& mask_image)
 {
     if(!camera_info_)
     {
@@ -42,8 +43,8 @@ boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sens
         ROS_ERROR_STREAM("failed to project pointcloud to the image.");
         return boost::none;
     }
-    cv::Mat mask = getGroundMaskImage(projected_points.get(),cv::Size(cv_ptr->image.rows,cv_ptr->image.cols));
-    std::vector<std::vector<cv::Point> > contours = getWhiteLineContours(cv_ptr->image,mask);
+    mask_image = getGroundMaskImage(projected_points.get(),cv::Size(cv_ptr->image.rows,cv_ptr->image.cols));
+    std::vector<std::vector<cv::Point> > contours = getWhiteLineContours(cv_ptr->image,mask_image);
 }
 
 cv::Mat ImageProjector::getGroundMaskImage(std::vector<ProjectedPoint> ground_points_in_image,cv::Size size)
