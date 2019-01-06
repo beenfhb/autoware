@@ -3,5 +3,8 @@
     <node pkg="lgsvl_simulator_bridge" type="launch_sim.bash" name="lgsvl_simulator_launcher">
     </node>
 
+    <node name="image_decompresser" type="republish" pkg="image_transport" output="screen" args="compressed in:=/simulator/camera_node/image raw out:=/image_raw">
+    </node>
+
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
 </launch>

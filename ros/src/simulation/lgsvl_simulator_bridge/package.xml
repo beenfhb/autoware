@@ -30,6 +30,7 @@
   <exec_depend>rospy</exec_depend>
   <exec_depend>roslib</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>image_transport</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
