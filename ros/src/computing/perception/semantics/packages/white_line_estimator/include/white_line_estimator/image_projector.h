@@ -36,9 +36,10 @@ public:
     boost::optional<std::vector<ProjectedPoint> > project(const sensor_msgs::ImageConstPtr& image,const sensor_msgs::PointCloud2ConstPtr& pointcloud);
 private:
     std::vector<std::vector<cv::Point> > getWhiteLineContours(cv::Mat image, cv::Mat &mask);
-    boost::optional<std::vector<ProjectedPoint> > projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,std::string camera_frame,
-        std::vector<std::vector<cv::Point> > contours, cv::Size size);
+    boost::optional<std::vector<ProjectedPoint> > projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,std::string camera_frame,cv::Size size);
     boost::optional<cv::Point> projectPoint3dPointTo2d(geometry_msgs::PointStamped point_3d,cv::Size image_size);
+    std::vector<cv::Point> getGroundCovexHull(std::vector<ProjectedPoint> ground_points_in_image);
+    cv::Mat getGroundMaskImage(std::vector<ProjectedPoint> ground_points_in_image,cv::Size size);
     tf2_ros::Buffer tf_buffer_;
     tf2_ros::TransformListener tf_listener_;
     double min_area_;

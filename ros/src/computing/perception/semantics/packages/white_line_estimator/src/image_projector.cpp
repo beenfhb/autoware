@@ -35,18 +35,37 @@ boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sens
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return boost::none;
     }
-    cv::Mat mask;
-    std::vector<std::vector<cv::Point> > contours = getWhiteLineContours(cv_ptr->image,mask);
-    boost::optional<std::vector<ProjectedPoint> > projected_points = projectPointCloudToImage(*pointcloud_msg,image_msg->header.frame_id,contours,cv::Size(mask.rows,mask.cols));
+    cv::undistort(cv_ptr->image,cv_ptr->image,camera_info_->camera_matrix,camera_info_->dist_coeff);
+    boost::optional<std::vector<ProjectedPoint> > projected_points = projectPointCloudToImage(*pointcloud_msg,image_msg->header.frame_id,cv::Size(cv_ptr->image.rows,cv_ptr->image.cols));
     if(!projected_points)
     {
         ROS_ERROR_STREAM("failed to project pointcloud to the image.");
         return boost::none;
     }
+    cv::Mat mask = getGroundMaskImage(projected_points.get(),cv::Size(cv_ptr->image.rows,cv_ptr->image.cols));
+    std::vector<std::vector<cv::Point> > contours = getWhiteLineContours(cv_ptr->image,mask);
 }
 
-boost::optional<std::vector<ProjectedPoint> > ImageProjector::projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,std::string camera_frame,
-    std::vector<std::vector<cv::Point> > contours, cv::Size size)
+cv::Mat ImageProjector::getGroundMaskImage(std::vector<ProjectedPoint> ground_points_in_image,cv::Size size)
+{
+    cv::Mat mask = cv::Mat::zeros(size, CV_8UC1);;
+    std::vector<cv::Point> contour = getGroundCovexHull(ground_points_in_image);
+    drawContours(mask,contour,-1,cv::Scalar(255),-1);
+    return mask;
+}
+
+std::vector<cv::Point> ImageProjector::getGroundCovexHull(std::vector<ProjectedPoint> ground_points_in_image)
+{
+    std::vector<cv::Point> approx,contour;
+    for(auto point_itr = ground_points_in_image.begin(); point_itr != ground_points_in_image.end(); point_itr++)
+    {
+        contour.push_back(point_itr->point_2d);
+    }
+    cv::convexHull(contour,approx);
+    return approx;
+}
+
+boost::optional<std::vector<ProjectedPoint> > ImageProjector::projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,std::string camera_frame,cv::Size size)
 {
     std::vector<ProjectedPoint> projected_points;
     std_msgs::Header header = point_cloud.header;
@@ -111,7 +130,7 @@ std::vector<std::vector<cv::Point> > ImageProjector::getWhiteLineContours(cv::Ma
     std::vector<cv::Mat> hsv_planes;
     cv::split(image, hsv_planes);
     image = cv::Mat::zeros(image.rows, image.cols, CV_8UC1);
-    cv::undistort(image,image,camera_info_->camera_matrix,camera_info_->dist_coeff);
+    image = image * mask;
     image = hsv_planes[2];
     cv::GaussianBlur(image, image, cv::Size(11, 11), 1.0, 1.0);
     cv::threshold(image, image, 0, 255, CV_THRESH_BINARY|CV_THRESH_OTSU);
