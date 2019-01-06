@@ -22,25 +22,8 @@ void WhiteLineEstimator::pointsGroundCallback(const sensor_msgs::PointCloud2Cons
 
 void WhiteLineEstimator::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg)
 {
-    image_size_.height = msg->height;
-    image_size_.width = msg->width;
     return;
 }
-
-/*
-void WhiteLineEstimator::projectionMatrixCallback(const autoware_msgs::ProjectionMatrixConstPtr& msg)
-{
-    proj_matrix_ = cv::Mat(4, 4, CV_64F);
-    for (int row = 0; row < 4; row++)
-    {
-        for (int col = 0; col < 4; col++)
-        {
-            proj_matrix_.at<double>(row, col) = msg->projection_matrix[row * 4 + col];
-        }
-    }
-    return;
-}
-*/
 
 void WhiteLineEstimator::imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {

@@ -4,6 +4,7 @@ ImageProjector::ImageProjector(double min_area,double max_area) : tf_listener_(t
 {
     min_area_ = min_area;
     max_area_ = max_area;
+    camera_info_ = boost::none;
 }
 
 ImageProjector::~ImageProjector()
@@ -11,9 +12,19 @@ ImageProjector::~ImageProjector()
 
 }
 
-boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sensor_msgs::ImageConstPtr& image_msg,
-    const sensor_msgs::PointCloud2ConstPtr& pointcloud_msg,cv::Mat camera_matrix,cv::Mat dist_coeff)
+void ImageProjector::setCameraInfo(sensor_msgs::CameraInfo info)
 {
+    camera_info_ = CvCameraInfo(info);
+    return;
+}
+
+boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sensor_msgs::ImageConstPtr& image_msg,const sensor_msgs::PointCloud2ConstPtr& pointcloud_msg)
+{
+    if(!camera_info_)
+    {
+        ROS_ERROR_STREAM("cameara info does not recieved.");
+        return boost::none;
+    }
     cv_bridge::CvImagePtr cv_ptr;
     try
     {
@@ -25,7 +36,7 @@ boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sens
         return boost::none;
     }
     cv::Mat mask;
-    std::vector<std::vector<cv::Point> > contours = getWhiteLineContours(cv_ptr->image,mask,camera_matrix,dist_coeff);
+    std::vector<std::vector<cv::Point> > contours = getWhiteLineContours(cv_ptr->image,mask);
     boost::optional<std::vector<ProjectedPoint> > projected_points = projectPointCloudToImage(*pointcloud_msg,image_msg->header.frame_id,contours,cv::Size(mask.rows,mask.cols));
     if(!projected_points)
     {
@@ -73,16 +84,17 @@ boost::optional<std::vector<ProjectedPoint> > ImageProjector::projectPointCloudT
 
 boost::optional<cv::Point> ImageProjector::projectPoint3dPointTo2d(geometry_msgs::PointStamped point_3d,cv::Size image_size)
 {
+    
     return boost::none;
 }
 
-std::vector<std::vector<cv::Point> > ImageProjector::getWhiteLineContours(cv::Mat image,cv::Mat &mask,cv::Mat camera_matrix,cv::Mat dist_coeff)
+std::vector<std::vector<cv::Point> > ImageProjector::getWhiteLineContours(cv::Mat image,cv::Mat &mask)
 {
     cvtColor(image, image, CV_RGB2HSV);
     std::vector<cv::Mat> hsv_planes;
     cv::split(image, hsv_planes);
     image = cv::Mat::zeros(image.rows, image.cols, CV_8UC1);
-    cv::undistort(image,image,camera_matrix,dist_coeff);
+    cv::undistort(image,image,camera_info_->camera_matrix,camera_info_->dist_coeff);
     image = hsv_planes[2];
     cv::GaussianBlur(image, image, cv::Size(11, 11), 1.0, 1.0);
     cv::threshold(image, image, 0, 255, CV_THRESH_BINARY|CV_THRESH_OTSU);
