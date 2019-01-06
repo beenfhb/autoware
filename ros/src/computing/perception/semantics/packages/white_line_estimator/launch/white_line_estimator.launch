@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+	<node name="white_line_estimator" pkg="white_line_estimator" type="white_line_estimator_node" output="screen">
+	</node>
+</launch>

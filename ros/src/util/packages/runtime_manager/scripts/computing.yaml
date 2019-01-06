@@ -584,6 +584,10 @@ subs :
         sync :
           func : self.button_synchronization.GetValue()
 
+    - name : white_line_estimator
+      desc : estimate white lines from points_no_ground and image
+      cmd  : roslaunch white_line_estimator white_line_estimator.launch
+
   - name : Prediction
     desc : Prediction desc sample
     subs :

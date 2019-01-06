@@ -20,10 +20,13 @@ WhiteLineEstimator::~WhiteLineEstimator()
 
 void WhiteLineEstimator::sensorCallback(const sensor_msgs::ImageConstPtr& image,const sensor_msgs::PointCloud2ConstPtr& pointcloud)
 {
+    cv::Mat mask;
+    boost::optional<std::vector<ProjectedPoint> > projected_points = image_projector_ptr_->project(image,pointcloud,mask);
     return;
 }
 
 void WhiteLineEstimator::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg)
 {
+    image_projector_ptr_->setCameraInfo(*msg);
     return;
 }
