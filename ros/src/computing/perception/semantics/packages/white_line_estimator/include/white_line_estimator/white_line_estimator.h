@@ -12,6 +12,12 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <autoware_msgs/ProjectionMatrix.h>
 
+//headers in this Autoware
+#include <white_line_estimator/image_projector.h>
+
+//headers in boost
+#include <boost/shared_ptr.hpp>
+
 class WhiteLineEstimator
 {
 public:
@@ -31,5 +37,6 @@ private:
     cv::Mat camera_matrix_;
     cv::Mat dist_coeff_;
     cv::Size image_size_;
+    boost::shared_ptr<ImageProjector> image_projector_ptr_;
 };
 #endif  //WHITE_LINE_ESTIMATOR_HINCLUDED

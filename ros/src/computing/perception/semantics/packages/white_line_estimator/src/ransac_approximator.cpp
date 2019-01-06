@@ -3,7 +3,7 @@
 
 RansacApproximator::RansacApproximator()
 {
-
+    
 }
 
 RansacApproximator::~RansacApproximator()

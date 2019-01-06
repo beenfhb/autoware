@@ -26,7 +26,7 @@ boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sens
     }
     cv::Mat mask;
     std::vector<std::vector<cv::Point> > contours = getWhiteLineContours(cv_ptr->image,mask,camera_matrix,dist_coeff);
-    boost::optional<std::vector<ProjectedPoint> > projected_points = projectPointCloudToImage(*pointcloud_msg,image_msg->header.frame_id);
+    boost::optional<std::vector<ProjectedPoint> > projected_points = projectPointCloudToImage(*pointcloud_msg,image_msg->header.frame_id,contours,cv::Size(mask.rows,mask.cols));
     if(!projected_points)
     {
         ROS_ERROR_STREAM("failed to project pointcloud to the image.");
@@ -34,7 +34,8 @@ boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sens
     }
 }
 
-boost::optional<std::vector<ProjectedPoint> > ImageProjector::projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,std::string camera_frame)
+boost::optional<std::vector<ProjectedPoint> > ImageProjector::projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,std::string camera_frame,
+    std::vector<std::vector<cv::Point> > contours, cv::Size size)
 {
     std::vector<ProjectedPoint> projected_points;
     std_msgs::Header header = point_cloud.header;
@@ -59,13 +60,20 @@ boost::optional<std::vector<ProjectedPoint> > ImageProjector::projectPointCloudT
         p.point_3d.point.y = *iter_y;
         p.point_3d.point.z = *iter_z;
         tf2::doTransform(p.point_3d,p.point_3d,transform_stamped);
+        boost::optional<cv::Point> point_2d = projectPoint3dPointTo2d(p.point_3d,size);
+        if(!point_2d)
+        {
+            continue;
+        }
+        p.point_2d = point_2d.get();
+        projected_points.push_back(p);
     }
     return projected_points;
 }
 
-boost::optional<cv::Point> projectPoint3dPointTo2d(geometry_msgs::PointStamped point_3d,cv::Size image_size)
+boost::optional<cv::Point> ImageProjector::projectPoint3dPointTo2d(geometry_msgs::PointStamped point_3d,cv::Size image_size)
 {
-
+    return boost::none;
 }
 
 std::vector<std::vector<cv::Point> > ImageProjector::getWhiteLineContours(cv::Mat image,cv::Mat &mask,cv::Mat camera_matrix,cv::Mat dist_coeff)
