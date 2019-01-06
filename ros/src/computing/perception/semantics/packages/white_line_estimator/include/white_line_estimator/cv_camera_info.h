@@ -12,6 +12,8 @@ struct CvProjMatrix
     cv::Mat matrix;
     double Tx;
     double Ty;
+    double fx;
+    double fy;
     double cx;
     double cy;
     CvProjMatrix(sensor_msgs::CameraInfo info)
@@ -28,6 +30,8 @@ struct CvProjMatrix
         Ty = info.P[7];
         cx = info.P[2];
         cy = info.P[6];
+        fx = info.P[0];
+        fy = info.P[5];
     }
 };
 

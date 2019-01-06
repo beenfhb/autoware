@@ -84,8 +84,25 @@ boost::optional<std::vector<ProjectedPoint> > ImageProjector::projectPointCloudT
 
 boost::optional<cv::Point> ImageProjector::projectPoint3dPointTo2d(geometry_msgs::PointStamped point_3d,cv::Size image_size)
 {
-    
-    return boost::none;
+    cv::Point p;
+    try
+    {
+        p.x = (camera_info_->proj_matrix.fx * point_3d.point.x + camera_info_->proj_matrix.Tx)/point_3d.point.z + camera_info_->proj_matrix.cx;
+        p.y = (camera_info_->proj_matrix.fy * point_3d.point.y + camera_info_->proj_matrix.Ty)/point_3d.point.z + camera_info_->proj_matrix.cy;
+        if(p.x < 0 || p.x >= image_size.width)
+        {
+            return boost::none;
+        }
+        if(p.y < 0 || p.y >= image_size.height)
+        {
+            return boost::none;
+        }
+    }
+    catch(...)
+    {
+        return boost::none;
+    }
+    return p;
 }
 
 std::vector<std::vector<cv::Point> > ImageProjector::getWhiteLineContours(cv::Mat image,cv::Mat &mask)
