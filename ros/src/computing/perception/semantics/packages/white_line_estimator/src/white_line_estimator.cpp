@@ -24,22 +24,10 @@ void WhiteLineEstimator::cameraInfoCallback(const sensor_msgs::CameraInfoConstPt
 {
     image_size_.height = msg->height;
     image_size_.width = msg->width;
-    camera_matrix_ = cv::Mat(3, 3, CV_64F);
-    for (int row = 0; row < 3; row++)
-    {
-        for (int col = 0; col < 3; col++)
-        {
-            camera_matrix_.at<double>(row, col) = msg->K[row * 3 + col];
-        }
-    }
-    dist_coeff_ = cv::Mat(1, 5, CV_64F);
-    for (int col = 0; col < 5; col++)
-    {
-        dist_coeff_.at<double>(col) = msg->D[col];
-    }
     return;
 }
 
+/*
 void WhiteLineEstimator::projectionMatrixCallback(const autoware_msgs::ProjectionMatrixConstPtr& msg)
 {
     proj_matrix_ = cv::Mat(4, 4, CV_64F);
@@ -52,6 +40,7 @@ void WhiteLineEstimator::projectionMatrixCallback(const autoware_msgs::Projectio
     }
     return;
 }
+*/
 
 void WhiteLineEstimator::imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {

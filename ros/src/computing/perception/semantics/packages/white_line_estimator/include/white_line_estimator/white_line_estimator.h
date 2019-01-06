@@ -10,7 +10,6 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/CameraInfo.h>
-#include <autoware_msgs/ProjectionMatrix.h>
 
 //headers in this Autoware
 #include <white_line_estimator/image_projector.h>
@@ -32,7 +31,6 @@ private:
     void imageCallback(const sensor_msgs::ImageConstPtr& msg);
     void pointsGroundCallback(const sensor_msgs::PointCloud2ConstPtr& msg);
     void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg);
-    void projectionMatrixCallback(const autoware_msgs::ProjectionMatrixConstPtr& msg);
     cv::Mat proj_matrix_;
     cv::Mat camera_matrix_;
     cv::Mat dist_coeff_;

@@ -6,6 +6,7 @@
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <geometry_msgs/PointStamped.h>
 #include <tf2_ros/transform_listener.h>
@@ -16,6 +17,9 @@
 
 //headers in Boost
 #include <boost/optional.hpp>
+
+//headers in Autoware
+#include <white_line_estimator/cv_camera_info.h>
 
 struct ProjectedPoint
 {
@@ -38,5 +42,6 @@ private:
     tf2_ros::TransformListener tf_listener_;
     double min_area_;
     double max_area_;
+    boost::optional<CvCameraInfo> camera_info_;
 };
 #endif  //IMAGE_PROJECTOR_H_INCLUDED
