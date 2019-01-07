@@ -1,2 +1,2 @@
 args:
-    - { type: file, title: Calibration File, arg: file }
+    - { type: calib, title: Calibration File, arg: file }

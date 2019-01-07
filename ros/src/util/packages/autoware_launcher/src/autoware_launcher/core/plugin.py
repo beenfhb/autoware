@@ -96,7 +96,7 @@ class AwPluginNode(object):
 
         console.warning(filepath)
         # validation
-        args_type = ["str", "int", "real", "tf", "file", "filelist"]
+        args_type = ["str", "int", "real", "tf", "file", "filelist", "calib"]
         rule_type = ["unit", "list"]
         for data in self.__args:
             if data["type"] not in args_type: raise Exception("Plugin Args Type: " + filepath)

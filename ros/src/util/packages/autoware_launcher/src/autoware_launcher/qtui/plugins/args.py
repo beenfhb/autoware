@@ -13,7 +13,8 @@ def plugin_widgets():
         "frame"    : AwLineTextEdit,
         "tf"       : AwTransformEdit,
         "file"     : AwFileSelect,
-        "filelist" : AwFileListSelect
+        "filelist" : AwFileListSelect,
+        "calib"    : AwCameraCalibFrame
     }
 
 
