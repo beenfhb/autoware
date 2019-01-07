@@ -25,6 +25,13 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
         self.add_frame(self.debug)
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
 
+        cancel_button = QtWidgets.QPushButton("Cancel")
+        update_button = QtWidgets.QPushButton("Update")
+        self.add_button(cancel_button)
+        self.add_button(update_button)
+        cancel_button.clicked.connect(self.cancel_clicked)
+        update_button.clicked.connect(self.update_clicked)
+
         for arg in self.node.plugin().args():
             self.add_frame(self.guimgr.create_arg_frame(self, arg))
 
@@ -45,6 +52,13 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
                 else:
                     self.add_frame(AwNodeCreateButton(self.node, rule, "Create " + rule["name"]))
 
+    def cancel_clicked(self):
+        self.config = self.node.config().copy()
+        self.setup_widget()
+        
+    def update_clicked(self):
+        response = self.node.update({"config": self.config})
+        print response
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_D:

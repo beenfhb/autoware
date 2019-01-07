@@ -1,2 +1,2 @@
 args:
-    - { title: Config File, type: file, args: file }
+    - { title: Config File, type: file, arg: file }
