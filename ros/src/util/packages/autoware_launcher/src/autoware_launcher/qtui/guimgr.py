@@ -112,7 +112,7 @@ class AwQtGuiClient(object):
         #for panel in self.__panels: panel.config_updated(lpath)
 
     def status_updated(self, lpath, state):
-        print "config_updated:" + lpath + " " + state
+        print "config_updated:" + lpath + " " + str(state)
         self.__treeview.status_updated(lpath, state)
 
 
@@ -208,7 +208,7 @@ class AwQtGuiManager(object):
         return guicls(self, mirror)
 
     def create_arg_frame(self, parent, view):
-        guicls = self.__widgets[view["type"]]
+        guicls = self.__widgets["args." + view["type"]]
         return guicls(self, parent, view)
 
     def create_frame_entire_vlayout(self):
@@ -286,7 +286,7 @@ class AwLaunchNodeMirror(object):
 
     def name(self):
         return self.__find().nodename()
-
+    
     def plugin(self):
         return self.__find().plugin
 

@@ -1,5 +1,0 @@
-args:
-    file: { type: str }
-
-view:
-    - { title: Transform File, type: args.file, args: file }

@@ -1,2 +1,2 @@
-children :
+rules :
   - { type: list, name: camera, plugin : node/camera_node }

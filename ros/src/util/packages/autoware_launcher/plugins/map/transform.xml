@@ -1,4 +1,0 @@
-<launch>
-    <arg name="file"/>
-    <include file="$(arg file)"/>
-</launch>

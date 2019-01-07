@@ -16,6 +16,7 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
 
     def __init__(self, guimgr, node, view):
         super(AwDefaultNodePanel, self).__init__(guimgr, node, view)
+        self.config = self.node.config().copy()
 
     def setup_widget(self):
         super(AwDefaultNodePanel, self).setup_widget()
@@ -24,7 +25,8 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
         self.add_frame(self.debug)
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
 
-        print self.node.plugin().args()
+        for arg in self.node.plugin().args():
+            self.add_frame(self.guimgr.create_arg_frame(self, arg))
 
         for child in self.node.children():
             frame = child.plugin().frame()
@@ -33,10 +35,16 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
         for rule in self.node.plugin().rules():
             if rule["type"] == "unit":
                 if not self.node.haschild(rule["name"]):
-                    button = AwNodeCreateButton(self.node, rule, "Create " + rule["name"])
-                    self.add_frame(button)
+                    if rule.get("scan"):
+                        self.add_frame(AwPluginSelectButton(self.guimgr, self.node, self))
+                    else:
+                        self.add_frame(AwNodeCreateButton(self.node, rule, "Create " + rule["name"]))
             if rule["type"] == "list":
-                self.add_frame(QtWidgets.QPushButton("Create " + rule["name"]))
+                if rule.get("scan"):
+                    self.add_frame(AwPluginSelectButton(self.guimgr, self.node, self))
+                else:
+                    self.add_frame(AwNodeCreateButton(self.node, rule, "Create " + rule["name"]))
+
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_D:
@@ -136,7 +144,7 @@ class AwPluginSelectButton(QtWidgets.QPushButton):
     def __init__(self, guimgr, node, parent):
         super(AwPluginSelectButton, self).__init__("Create")
         def clicked():
-            widget = guimgr.create_widget(node, parent, guicls = AwPluginSelectWidget)
+            widget = AwPluginSelectWidget(guimgr, node, parent)
             window = QtWidgets.QMainWindow(self)
             window.setCentralWidget(widget)
             window.centralWidget().setup_widget()
@@ -182,9 +190,10 @@ class AwPluginSelectWidget(QtWidgets.QWidget):
         select_button.clicked.connect(self.create_launch_node)
         #self.group.currentRowChanged.connect(lambda index: self.plugins.setCurrentIndex(index))
 
-        for name, plugins in self.node.plugin().optional_children().items():
-            for plugin in plugins:
-                self.nodetype.addItem(plugin)
+        for rule in self.node.plugin().rules():
+            if rule.get("scan"):
+                for name in self.node.plugin()._AwPluginNode__tree.scan(rule["plugin"]):
+                    self.nodetype.addItem(name)
 
     def create_launch_node(self):
         items = self.nodetype.selectedItems()

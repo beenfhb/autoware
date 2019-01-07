@@ -1,5 +1,0 @@
-args:
-    file: { type: str, array: space }
-
-view:
-    - { title: Vector Map Files, type: args.filelist, args: file }

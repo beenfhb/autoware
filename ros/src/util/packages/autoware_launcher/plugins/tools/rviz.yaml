@@ -1,5 +1,2 @@
 args:
-    file : { type: str }
-
-view:
-    - { title: Config File, type: args.file, args: file }
+    - { title: Config File, type: file, args: file }

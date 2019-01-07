@@ -53,7 +53,7 @@ class AwPluginNode(object):
     def todict(self):
         data = {}
         data["type"]  = "Node" if self.isnode() else "Leaf"
-        data["args"]  = self.__args.values()
+        data["args"]  = self.__args
         data["rule"]  = self.__rule.values()
         data["panel"] = self.__panel
         data["frame"] = self.__frame
@@ -94,11 +94,11 @@ class AwPluginNode(object):
             self.__args  = ydata.get("args",  {})
             for data in ydata.get("rules", []): self.__rule[data["name"]] = data
 
-
+        console.warning(filepath)
         # validation
-        args_type = ["str", "int", "real"]
+        args_type = ["str", "int", "real", "tf", "file", "filelist"]
         rule_type = ["unit", "list"]
-        for name, data in self.__args.items():
+        for data in self.__args:
             if data["type"] not in args_type: raise Exception("Plugin Args Type: " + filepath)
         for name, data in self.__rule.items():
             if data["type"] not in rule_type: raise TypeError("Plugin Rule Type: " + filepath)
@@ -127,9 +127,9 @@ class AwPluginNode(object):
 
     def default_config(self):
         config = {}
-        for argkey, argdef in self.__args.items():
-            cfgkey = "args." + argkey
-            config[cfgkey] = argdef.get("default", "")
+        #for argkey, argdef in self.__args:
+        #    cfgkey = "args." + argkey
+        #    config[cfgkey] = argdef.get("default", "")
         return config
 
     # temporary

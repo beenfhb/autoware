@@ -1,4 +1,2 @@
-children :
-  - { type: unit, name: driver, plugin : node/lidar_driver }
-  - { type: unit, name: filter, plugin : node/lidar_filter }
-  - { type: unit, name: frame,  plugin : node/lidar_frame  }
+rules :
+  - { type: list, name: lidar,  plugin : driver/lidar, scan: true }

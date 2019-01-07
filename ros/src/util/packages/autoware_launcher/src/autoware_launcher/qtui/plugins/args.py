@@ -7,6 +7,7 @@ from autoware_launcher.qtui import widgets
 def plugin_widgets():
     return \
     {
+        "int"      : AwLineTextEdit,
         "str"      : AwLineTextEdit,
         "topic"    : AwLineTextEdit,
         "frame"    : AwLineTextEdit,
@@ -20,30 +21,30 @@ def plugin_widgets():
 class AwLineTextEdit(widgets.AwAbstructFrame):
 
     def __init__(self, guimgr, target, option):
-        super(AwLineTextEdit, self).__init__(guimgr, None)
+        super(AwLineTextEdit, self).__init__(guimgr, target, option)
         self.target = target
         self.option = option
 
         super(AwLineTextEdit, self).setup_widget()
         self.edit = QtWidgets.QLineEdit()
-        self.edit.setText(self.target.config.get("args." + self.option["args"]))
+        self.edit.setText(self.target.config.get("args." + self.option["arg"]))
         self.edit.editingFinished.connect(self.edited)
         self.add_widget(self.edit)
         self.set_title(self.option["title"])
 
     def edited(self):
-        self.target.config["args." + self.option["args"]] = self.edit.text()
+        self.target.config["args." + self.option["arg"]] = self.edit.text()
 
     @staticmethod
     def summary(option, config):
-        return "{}: {}".format(option["title"], config["args." + option["args"]])
+        return "{}: {}".format(option["title"], config["args." + option["arg"]])
 
 
 
 class AwFileSelect(widgets.AwAbstructFrame):
 
     def __init__(self, guimgr, target, option):
-        super(AwFileSelect, self).__init__(guimgr, None)
+        super(AwFileSelect, self).__init__(guimgr, target, option)
         self.target = target
         self.option = option
 
@@ -56,13 +57,13 @@ class AwFileSelect(widgets.AwAbstructFrame):
         self.widget = QtWidgets.QLineEdit()
         self.widget.setReadOnly(True)
         self.add_widget(self.widget)
-        self.widget.setText(self.target.config.get("args." + self.option["args"]))
+        self.widget.setText(self.target.config.get("args." + self.option["arg"]))
 
     def browsed(self):
         filepath, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Select File", fspath.userhome())
         filepath = fspath.envpath(filepath)
         if filepath:
-            self.target.config["args." + self.option["args"]] = filepath
+            self.target.config["args." + self.option["arg"]] = filepath
             self.widget.setText(filepath)
 
     @staticmethod
@@ -74,7 +75,7 @@ class AwFileSelect(widgets.AwAbstructFrame):
 class AwFileListSelect(widgets.AwAbstructFrame):
 
     def __init__(self, guimgr, target, option):
-        super(AwFileListSelect, self).__init__(guimgr, None)
+        super(AwFileListSelect, self).__init__(guimgr, target, option)
         self.target = target
         self.option = option
 
@@ -88,14 +89,14 @@ class AwFileListSelect(widgets.AwAbstructFrame):
         self.widget.setReadOnly(True)
         self.add_widget(self.widget)
 
-        filepaths = self.target.config.get("args." + self.option["args"], [])
+        filepaths = self.target.config.get("args." + self.option["arg"], [])
         self.widget.setText("\n".join(filepaths))
 
     def browsed(self):
         filepaths, filetype = QtWidgets.QFileDialog.getOpenFileNames(self, "Select Files", fspath.userhome())
         filepaths = map(fspath.envpath, filepaths)
         if filepaths:
-            self.target.config["args." + self.option["args"]] = filepaths
+            self.target.config["args." + self.option["arg"]] = filepaths
             self.widget.setText("\n".join(filepaths))
 
     @staticmethod
@@ -107,7 +108,7 @@ class AwFileListSelect(widgets.AwAbstructFrame):
 class AwTransformEdit(widgets.AwAbstructFrame):
 
     def __init__(self, guimgr, target, option):
-        super(AwTransformEdit, self).__init__(guimgr, None)
+        super(AwTransformEdit, self).__init__(guimgr, target, option)
         self.target = target
         self.option = option
         self.fields = []
@@ -119,7 +120,7 @@ class AwTransformEdit(widgets.AwAbstructFrame):
         mapper = QtCore.QSignalMapper(widget)
         for idx, txt in enumerate(["Tx", "Ty", "Tz", "Rx", "Ry", "Rz"]):
             field = QtWidgets.QLineEdit()
-            field.setText(self.target.config.get("args." + self.option["args"][idx]))
+            field.setText(self.target.config.get("args." + self.option["arg"][idx]))
             field.editingFinished.connect(mapper.map)
             mapper.setMapping(field, idx)
             widget.layout().addWidget(QtWidgets.QLabel(txt + ":"))
@@ -131,13 +132,13 @@ class AwTransformEdit(widgets.AwAbstructFrame):
         self.set_title(self.option["title"])
 
     def edited(self, idx):
-        self.target.config["args." + self.option["args"][idx]] = self.fields[idx].text()
+        self.target.config["args." + self.option["arg"][idx]] = self.fields[idx].text()
 
     @staticmethod
     def summary(option, config):
         result = option["title"] + ": "
         for idx, txt in enumerate(["Tx", "Ty", "Tz", "Rx", "Ry", "Rz"]):
-            result += txt + "=" + config["args." + option["args"][idx]] + ", "
+            result += txt + "=" + config["args." + option["arg"][idx]] + ", "
         return result
 
 

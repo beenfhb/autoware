@@ -1,5 +1,0 @@
-args:
-    file: { type: str, array: space }
-
-view:
-    - { title: Point Cloud Map Files, type: args.filelist, args: file }

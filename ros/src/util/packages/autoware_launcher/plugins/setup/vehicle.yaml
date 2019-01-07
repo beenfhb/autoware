@@ -1,8 +1,3 @@
 args:
-    vehicle_model : { type: str }
-    vehicle_info  : { type: str }
-
-view:
-    - { title: Vehicle Name,       type: info.node,                     }
-    - { title: Vehicle Model File, type: args.file, args: vehicle_model }
-    - { title: Vehicle Info File,  type: args.file, args: vehicle_info }
+    - { title: Vehicle Model File, type: file, arg: vehicle_model }
+    - { title: Vehicle Info File,  type: file, arg: vehicle_info  }

@@ -1,5 +1,2 @@
 args:
-    file : { type: str }
-
-view:
-    - { title: Calibration File, type: args.file, args: file }
+    - { type: file, title: Calibration File, arg: file }
