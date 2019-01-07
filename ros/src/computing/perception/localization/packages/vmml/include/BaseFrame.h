@@ -10,6 +10,7 @@
 
 
 #include <Eigen/Eigen>
+#include <Eigen/Geometry>
 #include <opencv2/core.hpp>
 #include <opencv2/features2d.hpp>
 
@@ -135,6 +136,11 @@ public:
 	(pcl::PointCloud<pcl::PointXYZ>::ConstPtr lidarScan,
 	const TTransform &lidarToCameraTransform,
 	const CameraPinholeParams &cameraParams);
+
+	static
+	Eigen::Matrix3d
+	homography
+	(const BaseFrame &f1, const BaseFrame &f2);
 
 	g2o::SBACam forG2O () const;
 

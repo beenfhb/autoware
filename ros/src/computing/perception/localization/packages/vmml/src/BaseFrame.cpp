@@ -5,15 +5,19 @@
  *      Author: sujiwo
  */
 
+
+#include <exception>
 #include "BaseFrame.h"
 #include "MapPoint.h"
 
 
 using namespace Eigen;
-
+using namespace std;
 
 typedef Matrix<double,3,4> poseMatrix;
 typedef Matrix4d poseMatrix4;
+
+typedef Eigen::Hyperplane<double, 3> Plane3;
 
 
 BaseFrame::BaseFrame()
@@ -146,6 +150,22 @@ BaseFrame::projectLidarScan
 
 	return projections;
 }
+
+
+Eigen::Matrix3d
+BaseFrame::homography
+(const BaseFrame &f1, const BaseFrame &f2)
+{
+	Eigen::Matrix3d M;
+	if (f1.cameraParam != f2.cameraParam)
+		throw runtime_error("Dissimilar camera parameters are not supported");
+
+	// XXX: Stub
+	Plane3 plane = Plane3::Through(Vector3d(), Vector3d(), Vector3d());
+
+	return M;
+}
+
 
 
 g2o::SBACam
