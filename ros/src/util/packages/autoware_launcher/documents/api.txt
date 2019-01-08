@@ -1,0 +1,4 @@
+create_node(lpath, ppath) => error
+    string lpath
+    string ppath
+    string error / None

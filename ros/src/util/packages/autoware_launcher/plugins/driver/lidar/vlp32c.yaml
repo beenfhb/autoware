@@ -1,6 +1,4 @@
 args:
-    - { type: str, title: Merge Frame, arg: merge_frame }
     - { type: str, title: Local Frame, arg: local_frame }
     - { type: str, title: Device Addr, arg: device_addr }
     - { type: str, title: Device Port, arg: device_port }
-    - { type: tf,  title: Transform,   arg: [tx, ty, tz, rx, ry, rz] }

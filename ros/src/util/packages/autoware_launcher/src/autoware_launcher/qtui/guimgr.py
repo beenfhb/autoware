@@ -95,14 +95,15 @@ class AwQtGuiClient(object):
         self.__treeview.expandAll()
         #self.__treeview.expandToDepth(0)
 
-    def config_created(self, lpath):
+    def node_created(self, lpath):
         print "config_created: " + lpath
         lnode = self.__mirror.create(lpath)
         for panel in self.__panels: panel.config_created(lnode)
 
         lpath = os.path.dirname(lpath)
         while lpath:
-            print lpath
+            print "config_updated: " + lpath
+            self.__mirror.clear(lpath)
             self.__summary.config_updated(lpath)
             lpath = os.path.dirname(lpath)
 
@@ -190,7 +191,6 @@ class AwQtGuiManager(object):
 
     def create_widget(self, node, view, parent = None, widget = None):
         widget = widget or self.__widgets[view["view"]]
-        print widget
         return widget(self, node, view)
 
     def create_frame(self, mirror, guikey = None, guicls = None):

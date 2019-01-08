@@ -1,2 +1,0 @@
-children :
-  - { type: list, name: lidar,  plugin : driver/lidar }

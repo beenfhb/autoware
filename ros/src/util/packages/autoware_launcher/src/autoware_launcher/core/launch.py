@@ -46,7 +46,7 @@ class AwBaseNode(object):
         return self.__children
 
     def getchild(self, name):
-        return self.__childmap[name]
+        return self.__childmap.get(name)
 
     def haschild(self, name):
         return name in self.__childmap
@@ -132,15 +132,14 @@ class AwLaunchTree(AwBaseTree):
         self.addchild(launch)
 
     def create(self, lpath, ppath):
-        if not os.path.basename(lpath):
-            return "name empty"
-        #if exists
-        #    console.warning("name exists")
-        #    return  
-
+        print "Tree Create: " + lpath + ", " + ppath
         parent = self.find(os.path.dirname(lpath))
-        plugin = self.plugins.find(ppath)
+        if not parent:
+            return "parent is not found"
+        if self.find(lpath):
+            return "name exists"
 
+        plugin = self.plugins.find(ppath)
         launch = AwLaunchNode(os.path.basename(lpath))
         launch.plugin = plugin
         launch.config = plugin.default_config()

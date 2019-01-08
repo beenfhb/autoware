@@ -1,2 +1,3 @@
 rules :
-  - { type: list, name: camera, plugin : node/camera_node }
+  - { type: unit, name: driver,    plugin: {scan: driver/camera} }
+  - { type: unit, name: publisher, plugin: sensing/image/publisher }

@@ -2,18 +2,9 @@
 
     <arg name="device_addr"/>
     <arg name="device_port"/>
-    <arg name="merge_frame"/>
     <arg name="local_frame"/>
-    <arg name="tx"/>
-    <arg name="ty"/>
-    <arg name="tz"/>
-    <arg name="rx"/>
-    <arg name="ry"/>
-    <arg name="rz"/>
 
     <group ns="$(arg local_frame)">
-        <node pkg="tf" type="static_transform_publisher" name="static_transform_publisher"
-            args="$(arg tx) $(arg ty) $(arg tz) $(arg rz) $(arg ry) $(arg rx) $(arg merge_frame) $(arg local_frame) 100" />
         <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />
         <node pkg="nodelet" type="nodelet" name="nodelet_driver" args="load velodyne_driver/DriverNodelet nodelet_manager" >
             <param name="device_ip"    value="$(arg device_addr)" />

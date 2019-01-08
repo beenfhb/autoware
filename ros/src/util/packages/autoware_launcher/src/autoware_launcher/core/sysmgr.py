@@ -74,9 +74,10 @@ class AwLaunchServer(AwLaunchServerIF):
         return self.__profile.find(lpath)
 
     def create_node(self, lpath, ppath):
-        result = self.__profile.create(lpath, ppath)
-        for client in self.__clients: client.config_created(lpath)
-        return result
+        error = self.__profile.create(lpath, ppath)
+        if not error:
+            for client in self.__clients: client.node_created(lpath)
+        return error
 
     def update_node(self, lpath, ldata):
         response =  self.__profile.find(lpath).update(ldata)

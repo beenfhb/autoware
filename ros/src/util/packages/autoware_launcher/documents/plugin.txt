@@ -1,0 +1,19 @@
+===== Yaml Format =====
+dict
+	key	value		comment
+	rules	rule list	optional (default=[])
+	args
+
+
+rules:
+	array of rule
+
+rule:
+	unique
+	(dict)
+	type
+	name
+	plugin
+	
+
+
