@@ -17,8 +17,6 @@ using namespace std;
 typedef Matrix<double,3,4> poseMatrix;
 typedef Matrix4d poseMatrix4;
 
-typedef Eigen::Hyperplane<double, 3> Plane3;
-
 
 BaseFrame::BaseFrame()
 {
@@ -36,6 +34,13 @@ BaseFrame::project (const Eigen::Vector3d &pt3) const
 {
 	Vector3d ptx = projectionMatrix() * pt3.homogeneous();
 	return ptx.head(2) / ptx[2];
+}
+
+
+Eigen::Vector3d
+BaseFrame::project3 (const Eigen::Vector3d &pt3) const
+{
+	return projectionMatrix() * pt3.homogeneous();
 }
 
 
@@ -152,22 +157,6 @@ BaseFrame::projectLidarScan
 }
 
 
-Eigen::Matrix3d
-BaseFrame::homography
-(const BaseFrame &f1, const BaseFrame &f2)
-{
-	Eigen::Matrix3d M;
-	if (f1.cameraParam != f2.cameraParam)
-		throw runtime_error("Dissimilar camera parameters are not supported");
-
-	// XXX: Stub
-	Plane3 plane = Plane3::Through(Vector3d(), Vector3d(), Vector3d());
-
-	return M;
-}
-
-
-
 g2o::SBACam
 BaseFrame::forG2O () const
 {
@@ -176,4 +165,18 @@ BaseFrame::forG2O () const
 	mycam.setKcam(cameraParam->fx, cameraParam->fy, cameraParam->cx, cameraParam->cy, 0);
 
 	return mycam;
+}
+
+
+Plane3
+BaseFrame::projectionPlane() const
+{
+	if (cameraParam==nullptr)
+		throw runtime_error("Camera parameter is not defined");
+
+	Vector3d centerPt = mPose * Vector3d(0, 0, cameraParam->f());
+
+	Plane3 P(normal(), centerPt);
+	P.normalize();
+	return P;
 }

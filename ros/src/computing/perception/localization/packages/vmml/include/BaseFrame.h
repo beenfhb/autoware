@@ -22,6 +22,7 @@
 #include "CameraPinholeParams.h"
 #include "utilities.h"
 
+typedef Eigen::Hyperplane<double, 3> Plane3;
 
 class MapPoint;
 
@@ -51,6 +52,9 @@ public:
 	Eigen::Vector2d project (const Eigen::Vector3d &pt3) const;
 
 	Eigen::Vector2d project (const MapPoint &pt3) const;
+
+	// Similar to above, but with third coordinate value as F
+	Eigen::Vector3d project3 (const Eigen::Vector3d &pt3) const;
 
 	// Transform a point in World coordinate to Frame-centric one
 	Eigen::Vector3d transform (const Eigen::Vector3d &pt3) const;
@@ -137,12 +141,9 @@ public:
 	const TTransform &lidarToCameraTransform,
 	const CameraPinholeParams &cameraParams);
 
-	static
-	Eigen::Matrix3d
-	homography
-	(const BaseFrame &f1, const BaseFrame &f2);
-
 	g2o::SBACam forG2O () const;
+
+	Plane3 projectionPlane() const;
 
 protected:
 	cv::Mat image;

@@ -50,6 +50,9 @@ struct CameraPinholeParams
 
 	float getHorizontalFoV () const;
 	float getVerticalFoV () const;
+
+	inline double f() const
+	{ return (fx+fy)/2; }
 };
 
 
