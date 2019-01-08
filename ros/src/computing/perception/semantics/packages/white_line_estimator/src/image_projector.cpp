@@ -27,6 +27,22 @@ void ImageProjector::setProjectionMatrix(autoware_msgs::ProjectionMatrix proj_ma
     return;
 }
 
+std::vector<cv::Point> ImageProjector::getGroundConvexHull(std::vector<ProjectedPoint> ground_points,cv::Mat& ground_image)
+{
+    std::vector<cv::Point> approx;
+    std::vector<cv::Point> contour;
+    //std::vector<std::vector<cv::Point> > contours;
+    for(auto ground_point_itr = ground_points.begin(); ground_point_itr != ground_points.end(); ground_point_itr++)
+    {
+        contour.push_back(ground_point_itr->point_2d);
+    }
+    cv::convexHull(contour, approx);
+    std::vector<std::vector<cv::Point> > ground_contours;
+    ground_contours.push_back(approx);
+    drawContours(ground_image,ground_contours,-1,cv::Scalar(0,255,0),-1);
+    return approx;
+}
+
 boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sensor_msgs::ImageConstPtr& image_msg,const sensor_msgs::PointCloud2ConstPtr& pointcloud_msg,
     cv::Mat& mask_image, cv::Mat& ground_image)
 {
@@ -51,57 +67,12 @@ boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sens
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return boost::none;
     }
-    boost::optional<std::vector<ProjectedPoint> > projected_points = projectPointCloudToImage(*pointcloud_msg,cv_ptr->image.size(),ground_image);
-    return projected_points.get();
+    std::vector<ProjectedPoint> projected_points = projectPointCloudToImage(*pointcloud_msg,cv_ptr->image.size(),ground_image);
+    std::vector<cv::Point> ground_contour = getGroundConvexHull(projected_points,ground_image);
+    return projected_points;
 }
 
-boost::optional<cv::Point> ImageProjector::projectPointToImage(geometry_msgs::Point p,cv::Size size)
-{
-    cv::Mat point(1, 3, CV_64F);
-    cv::Point2d imagepoint;
-    for (int i = 0; i < 3; i++)
-    {
-        point.at<double>(i) = proj_matrix_->invTt.at<double>(i);
-        for (int j = 0; j < 3; j++)
-        {
-            if(j == 0)
-            {
-                point.at<double>(i) += double(p.x) * proj_matrix_->invRt.at<double>(j, i);
-            }
-            if(j == 1)
-            {
-                point.at<double>(i) += double(p.y) * proj_matrix_->invRt.at<double>(j, i);
-            }
-            if(j == 2)
-            {
-                point.at<double>(i) += double(p.z) * proj_matrix_->invRt.at<double>(j, i);
-            }
-        }
-    }
-    double tmpx = point.at<double>(0) / point.at<double>(2);
-    double tmpy = point.at<double>(1) / point.at<double>(2);
-    double r2 = tmpx * tmpx + tmpy * tmpy;
-    double tmpdist = 1 + camera_info_->dist_coeff.at<double>(0) * r2 + camera_info_->dist_coeff.at<double>(1) * r2 * r2 + 
-        camera_info_->dist_coeff.at<double>(4) * r2 * r2 * r2;
-    imagepoint.x =
-        tmpx * tmpdist + 2 * camera_info_->dist_coeff.at<double>(2) * tmpx * tmpy + camera_info_->dist_coeff.at<double>(3) * (r2 + 2 * tmpx * tmpx);
-    imagepoint.y =
-        tmpy * tmpdist + camera_info_->dist_coeff.at<double>(2) * (r2 + 2 * tmpy * tmpy) + 2 * camera_info_->dist_coeff.at<double>(3) * tmpx * tmpy;
-    imagepoint.x = camera_info_->camera_matrix.at<double>(0, 0) * imagepoint.x + camera_info_->camera_matrix.at<double>(0, 2);
-    imagepoint.y = camera_info_->camera_matrix.at<double>(1, 1) * imagepoint.y + camera_info_->camera_matrix.at<double>(1, 2);
-    int px = int(imagepoint.x + 0.5);
-    int py = int(imagepoint.y + 0.5);
-    if (0 <= px && px < size.width && 0 <= py && py < size.height)
-    {
-        cv::Point cv_point;
-        cv_point.x = px;
-        cv_point.y = py;
-        return cv_point;
-    }
-    return boost::none;
-}
-
-boost::optional<std::vector<ProjectedPoint> > ImageProjector::projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,cv::Size size,cv::Mat& ground_image)
+std::vector<ProjectedPoint> ImageProjector::projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,cv::Size size,cv::Mat& ground_image)
 {
     std::vector<ProjectedPoint> projected_points;
     std_msgs::Header header = point_cloud.header;
@@ -155,9 +126,11 @@ boost::optional<std::vector<ProjectedPoint> > ImageProjector::projectPointCloudT
         }
     }
     ground_image = cv::Mat::zeros(size, CV_8UC3);
+    /*
     for(auto point_itr = projected_points.begin(); point_itr != projected_points.end(); point_itr++)
     {
-        circle(ground_image, point_itr->point_2d, 1, cv::Scalar(0,200,0), -1, 4);
+        circle(ground_image, point_itr->point_2d, 1, cv::Scalar(255,0,0), -1, 4);
     }
+    */
     return projected_points;
 }

@@ -39,9 +39,8 @@ public:
     boost::optional<std::vector<ProjectedPoint> > project(const sensor_msgs::ImageConstPtr& image,const sensor_msgs::PointCloud2ConstPtr& pointcloud,
         cv::Mat& mask_image, cv::Mat& ground_image);
 private:
-    boost::optional<cv::Point> projectPointToImage(geometry_msgs::Point point,cv::Size size);
-    boost::optional<std::vector<ProjectedPoint> > projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,cv::Size size,cv::Mat& ground_image);
-    std::vector<cv::Point> getGroundCovexHull();
+    std::vector<ProjectedPoint>projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,cv::Size size,cv::Mat& ground_image);
+    std::vector<cv::Point> getGroundConvexHull(std::vector<ProjectedPoint> ground_points,cv::Mat& ground_image);
     double min_area_;
     double max_area_;
     boost::optional<CvCameraInfo> camera_info_;
