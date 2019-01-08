@@ -298,7 +298,7 @@ void TrajectoryEvalCore::MainLoop()
 //				else
 //					tc = m_TrajectoryCostsCalculator.DoOneStepStatic(m_GeneratedRollOuts, m_GlobalPathSections.at(0), m_CurrentPos,	m_PlanningParams, m_CarInfo,m_VehicleStatus, m_PredictedObjects);
 
-			  tc = m_TrajectoryCostsCalculator.doOneStep(m_GeneratedRollOuts, m_GlobalPathSections.at(0), m_CurrentPos, m_PlanningParams, m_CarInfo,m_VehicleStatus, m_PredictedObjects, !m_bUseMoveingObjectsPrediction);
+			  tc = m_TrajectoryCostsCalculator.doOneStep(m_GeneratedRollOuts, m_GlobalPathSections.at(0), m_CurrentPos, m_PlanningParams, m_CarInfo,m_VehicleStatus, m_PredictedObjects, !m_bUseMoveingObjectsPrediction, m_CurrentBehavior.iTrajectory);
 
 
 				autoware_msgs::lane l;
@@ -329,7 +329,7 @@ void TrajectoryEvalCore::MainLoop()
 			if(m_TrajectoryCostsCalculator.trajectory_costs_.size()>0)
 			{
 				visualization_msgs::MarkerArray all_rollOuts;
-				PlannerHNS::RosHelpers::TrajectoriesToColoredMarkers(m_TrajectoryCostsCalculator.local_roll_outs_, m_TrajectoryCostsCalculator.trajectory_costs_, m_CurrentBehavior.iTrajectory, all_rollOuts);
+				PlannerHNS::RosHelpers::TrajectoriesToColoredMarkers(m_TrajectoryCostsCalculator.local_roll_outs_, m_TrajectoryCostsCalculator.trajectory_costs_, tc.index, all_rollOuts);
 				pub_LocalWeightedTrajectoriesRviz.publish(all_rollOuts);
 
 				PlannerHNS::RosHelpers::ConvertCollisionPointsMarkers(m_TrajectoryCostsCalculator.collision_points_, m_CollisionsActual, m_CollisionsDummy);

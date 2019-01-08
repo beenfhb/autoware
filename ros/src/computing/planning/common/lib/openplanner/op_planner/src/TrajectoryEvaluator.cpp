@@ -10,6 +10,8 @@
 namespace PlannerHNS
 {
 
+  double constexpr g_lateral_skip_value = 20;
+
 TrajectoryEvaluator::TrajectoryEvaluator()
 {
 }
@@ -36,11 +38,7 @@ TrajectoryCost TrajectoryEvaluator::doOneStep(const std::vector<std::vector<WayP
   double critical_long_back_distance = car_info.length / 2.0 + params.verticalSafetyDistance
       - car_info.wheel_base / 2.0;
 
-  int curr_index = -1;
-  if (curr_index >= 0 && curr_index < roll_outs.size())
-    curr_index = prev_curr_index;
-  else
-    curr_index = getCurrentRollOutIndex(total_paths, curr_state, params);
+  int curr_index = getCurrentRollOutIndex(total_paths, curr_state, params);
 
   initializeLocalRollOuts(curr_state, car_info, params, critical_long_back_distance, roll_outs, local_roll_outs_);
 
@@ -62,8 +60,6 @@ TrajectoryCost TrajectoryEvaluator::doOneStep(const std::vector<std::vector<WayP
   normalizeCosts(trajectory_costs_, weights_);
 
   TrajectoryCost best_trajectory = findBestTrajectory(params, trajectory_costs_);
-
-//	cout << "Smallest Index: " << smallestIndex <<", Costs Size: " << trajectory_costs_.size() << ", Rollout Index: " << bestTrajectory.index << ", Closest Distance: " << bestTrajectory.closest_obj_distance << endl;
 //	cout << "------------------------------------------------------------- " << endl;
 
 //  double dt = op_utility_ns::UtilityH::GetTimeDiffNow(_t);
@@ -186,69 +182,92 @@ void TrajectoryEvaluator::collectContoursAndTrajectories(const std::vector<Plann
 void TrajectoryEvaluator::normalizeCosts(std::vector<TrajectoryCost>& trajectory_costs,
                                          const EvaluationWeights& weights)
 {
-  double total_priorities = 0;
-  double total_change = 0;
-  double total_lateral_costs = 0;
-  double total_longitudinal_costs = 0;
-  double transition_costs = 0;
+  double total_priorities_costs = 0;
+ // double total_change = 0;
+  double total_transition_costs = 0;
+  double total_lon_costs = 0;
+  double total_lat_costs = 0;
+  double max_lon_cost = DBL_MIN;
+  double min_lon_cost = DBL_MAX;
+  double max_lat_cost = DBL_MIN;
+  double min_lat_cost = DBL_MAX;
+  double lon_diff = 0;
+  double lat_diff = 0;
+  double epsilon = 0.0001;
 
   for (unsigned int ic = 0; ic < trajectory_costs.size(); ic++)
   {
-    total_priorities += trajectory_costs.at(ic).priority_cost;
-    transition_costs += trajectory_costs.at(ic).transition_cost;
+    //total_change += trajectory_costs.at(ic).lane_change_cost;
+    if(trajectory_costs.at(ic).lateral_cost > max_lat_cost)
+      max_lat_cost = trajectory_costs.at(ic).lateral_cost;
+
+    if(trajectory_costs.at(ic).lateral_cost < min_lat_cost)
+      min_lat_cost = trajectory_costs.at(ic).lateral_cost;
+
+    if(trajectory_costs.at(ic).longitudinal_cost > max_lon_cost)
+      max_lon_cost = trajectory_costs.at(ic).longitudinal_cost;
+
+    if(trajectory_costs.at(ic).longitudinal_cost < min_lon_cost)
+      min_lon_cost = trajectory_costs.at(ic).longitudinal_cost;
   }
 
-  for (unsigned int ic = 0; ic < trajectory_costs.size(); ic++)
-  {
-    total_change += trajectory_costs.at(ic).lane_change_cost;
-    total_lateral_costs += trajectory_costs.at(ic).lateral_cost;
-    total_longitudinal_costs += trajectory_costs.at(ic).longitudinal_cost;
-  }
+  lon_diff = max_lon_cost - min_lon_cost;
+  lat_diff = max_lat_cost - min_lat_cost;
 
-//	cout << "------ Normalizing Step " << endl;
+  for (unsigned int ic = 0; ic < trajectory_costs.size(); ic++)
+    {
+    if (lat_diff > epsilon)
+	trajectory_costs.at(ic).lateral_cost = (trajectory_costs.at(ic).lateral_cost - min_lat_cost) / lat_diff;
+      else
+	trajectory_costs.at(ic).lateral_cost = 0;
+
+      if (lon_diff > epsilon)
+	trajectory_costs.at(ic).longitudinal_cost = (trajectory_costs.at(ic).longitudinal_cost - min_lon_cost) / lon_diff;
+      else
+	trajectory_costs.at(ic).longitudinal_cost = 0;
+    }
+
+  for (unsigned int ic = 0; ic < trajectory_costs.size(); ic++)
+    {
+      total_priorities_costs += trajectory_costs.at(ic).priority_cost;
+      total_transition_costs += trajectory_costs.at(ic).transition_cost;
+      total_lon_costs += trajectory_costs.at(ic).longitudinal_cost;
+      total_lat_costs += trajectory_costs.at(ic).lateral_cost;
+    }
+
   for (unsigned int ic = 0; ic < trajectory_costs.size(); ic++)
   {
-    if (total_priorities != 0)
-      trajectory_costs.at(ic).priority_cost = trajectory_costs.at(ic).priority_cost / total_priorities;
+    if (total_priorities_costs != 0)
+      trajectory_costs.at(ic).priority_cost = trajectory_costs.at(ic).priority_cost / total_priorities_costs;
     else
       trajectory_costs.at(ic).priority_cost = 0;
 
-    if (transition_costs != 0)
-      trajectory_costs.at(ic).transition_cost = trajectory_costs.at(ic).transition_cost / transition_costs;
+    if (total_transition_costs != 0)
+      trajectory_costs.at(ic).transition_cost = trajectory_costs.at(ic).transition_cost / total_transition_costs;
     else
       trajectory_costs.at(ic).transition_cost = 0;
 
-    if (total_change != 0)
-      trajectory_costs.at(ic).lane_change_cost = trajectory_costs.at(ic).lane_change_cost / total_change;
-    else
-      trajectory_costs.at(ic).lane_change_cost = 0;
+      if(total_lat_costs != 0)
+	trajectory_costs.at(ic).lateral_cost = trajectory_costs.at(ic).lateral_cost / total_lat_costs;
+      else
+	trajectory_costs.at(ic).lateral_cost = 0;
 
-    if (total_lateral_costs != 0)
-      trajectory_costs.at(ic).lateral_cost = trajectory_costs.at(ic).lateral_cost / total_lateral_costs;
-    else
-      trajectory_costs.at(ic).lateral_cost = 0;
+      if(total_lon_costs != 0)
+	trajectory_costs.at(ic).longitudinal_cost = trajectory_costs.at(ic).longitudinal_cost / total_lon_costs;
+      else
+	trajectory_costs.at(ic).longitudinal_cost = 0;
 
-    if (total_longitudinal_costs != 0)
-      trajectory_costs.at(ic).longitudinal_cost = trajectory_costs.at(ic).longitudinal_cost / total_longitudinal_costs;
-    else
-      trajectory_costs.at(ic).longitudinal_cost = 0;
+//    if (total_change != 0)
+//      trajectory_costs.at(ic).lane_change_cost = trajectory_costs.at(ic).lane_change_cost / total_change;
+//    else
+//      trajectory_costs.at(ic).lane_change_cost = 0;
+
 
     trajectory_costs.at(ic).cost = (weights.priority_weight_ * trajectory_costs.at(ic).priority_cost
         + weights.transition_weight_ * trajectory_costs.at(ic).transition_cost
         + weights.lateral_weight_ * trajectory_costs.at(ic).lateral_cost
         + weights.longitudinal_weight_ * trajectory_costs.at(ic).longitudinal_cost);
-
-//		cout << "Index: " << ic
-//						<< ", Priority: " << trajectory_costs.at(ic).priority_cost
-//						<< ", Transition: " << trajectory_costs.at(ic).transition_cost
-//						<< ", Lat: " << trajectory_costs.at(ic).lateral_cost
-//						<< ", Long: " << trajectory_costs.at(ic).longitudinal_cost
-//						<< ", Change: " << trajectory_costs.at(ic).lane_change_cost
-//						<< ", Avg: " << trajectory_costs.at(ic).cost
-//						<< endl;
   }
-
-//	cout << "------------------------ " << endl;
 }
 
 void TrajectoryEvaluator::calculateTransitionCosts(std::vector<TrajectoryCost>& trajectory_costs,
@@ -260,12 +279,20 @@ void TrajectoryEvaluator::calculateTransitionCosts(std::vector<TrajectoryCost>& 
   }
 }
 
-int TrajectoryEvaluator::getCurrentRollOutIndex(const std::vector<WayPoint>& path, const WayPoint& curr_state,
+int TrajectoryEvaluator::getCurrentRollOutIndex(const std::vector<WayPoint>& total_path, const WayPoint& curr_state,
                                                 const PlanningParams& params)
 {
   RelativeInfo obj_info;
-  PlanningHelpers::GetRelativeInfo(path, curr_state, obj_info);
-  int curr_index = params.rollOutNumber / 2 + floor(obj_info.perp_distance / params.rollOutDensity);
+  PlanningHelpers::GetRelativeInfo(total_path, curr_state, obj_info);
+  double relative_index = obj_info.perp_distance / params.rollOutDensity;
+
+  if(relative_index > 0)
+    relative_index = floor(relative_index);
+  else
+    relative_index = ceil(relative_index);
+
+  int curr_index = params.rollOutNumber / 2 + relative_index;
+
   if (curr_index < 0)
     curr_index = 0;
   else if (curr_index > params.rollOutNumber)
@@ -360,7 +387,7 @@ TrajectoryCost TrajectoryEvaluator::findBestTrajectory(const PlanningParams& par
   double velo_of_next = 0;
 //      bool bAllFree = true;
 
-std::cout << "Trajectory Costs Log " << " --------------------- " << std::endl;
+  std::cout << "Trajectory Costs Log " << " --------------------- " << std::endl;
   for (unsigned int ic = 0; ic < trajectory_costs.size(); ic++)
   {
     std::cout << trajectory_costs.at(ic).ToString();
@@ -380,7 +407,7 @@ std::cout << "Trajectory Costs Log " << " --------------------- " << std::endl;
 //                      bAllFree = false;
   }
 
-  std::cout << "Smallest (Distance, Index) " <<  smallestDistance << ", " << smallestIndex << "------------------------------------------------------------- " << std::endl;
+  std::cout << "Smallest (Distance, Index) " <<  smallestDistance << ", " << smallestIndex << "-----------------------" << std::endl;
 
 //      if(bAllFree && smallestIndex >=0)
 //              smallestIndex = params.rollOutNumber/2;
@@ -396,7 +423,6 @@ std::cout << "Trajectory Costs Log " << " --------------------- " << std::endl;
   else if (smallestIndex >= 0)
   {
     best_trajectory = trajectory_costs.at(smallestIndex);
-    best_trajectory.closest_obj_distance = smallestDistance;
   }
 
   return best_trajectory;
@@ -415,21 +441,26 @@ void TrajectoryEvaluator::calculateDistanceCosts(const PlanningParams& params, c
 
       double actual_lateral_distance = fabs(info.perp_distance)+0.01; //add small distance so this never become zero
       double actual_longitudinal_distance = info.from_back_distance + roll_outs.at(i).at(info.iBack).cost + 0.01; //add small distance so this never become zero
-      if(actual_lateral_distance < c_lateral_d && !info.bAfter && !info.bBefore) // collision point
-      {
-        collision_points.push_back(info.perp_point);
-        double lateral_cost = 1.0/actual_lateral_distance;
-        double longitudinal_cost = 1.0/actual_longitudinal_distance;
 
-        //if(trajectory_costs.at(i).lateral_cost < lateral_cost)
-          trajectory_costs.at(i).lateral_cost += lateral_cost;
+      if(actual_lateral_distance < g_lateral_skip_value && !info.bAfter && !info.bBefore)
+	{
+	  double longitudinal_cost = 1.0/actual_longitudinal_distance;
+	  trajectory_costs.at(i).longitudinal_cost  += longitudinal_cost;
+	  if(actual_lateral_distance < c_lateral_d) // collision point
+	  {
+	    trajectory_costs.at(i).lateral_cost += 2.0; // use half meter fixed critical distance as contact cost for all collision points in the range
+	    collision_points.push_back(info.perp_point);
+	    if(actual_longitudinal_distance < params.minFollowingDistance)
+	      trajectory_costs.at(i).bBlocked = true;
 
-        //if(trajectory_costs.at(i).longitudinal_cost < longitudinal_cost)
-          trajectory_costs.at(i).longitudinal_cost  += longitudinal_cost;
-
-//        if(trajectory_costs.at(i).closest_obj_distance > actual_longitudinal_distance)
-//          trajectory_costs.at(i).closest_obj_distance = actual_longitudinal_distance;
-      }
+	    if(trajectory_costs.at(i).closest_obj_distance > actual_longitudinal_distance)
+	      trajectory_costs.at(i).closest_obj_distance = actual_longitudinal_distance;
+	  }
+	  else
+	    {
+	      trajectory_costs.at(i).lateral_cost += 1.0/actual_lateral_distance;
+	    }
+	}
     }
   }
 }

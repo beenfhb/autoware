@@ -75,7 +75,7 @@ private:
   void collectContoursAndTrajectories(const std::vector<PlannerHNS::DetectedObject>& obj_list,
                                       std::vector<WayPoint>& contour_points, std::vector<WayPoint>& trajectory_points, const bool& b_static_only = false);
 
-  int getCurrentRollOutIndex(const std::vector<WayPoint>& path, const WayPoint& curr_state,
+  int getCurrentRollOutIndex(const std::vector<WayPoint>& total_path, const WayPoint& curr_state,
                              const PlanningParams& params);
 
   void initializeCosts(const std::vector<std::vector<WayPoint> >& roll_outs, const PlanningParams& params,
