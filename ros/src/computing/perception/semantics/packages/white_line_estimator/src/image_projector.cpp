@@ -27,11 +27,10 @@ void ImageProjector::setProjectionMatrix(autoware_msgs::ProjectionMatrix proj_ma
     return;
 }
 
-std::vector<cv::Point> ImageProjector::getGroundConvexHull(std::vector<ProjectedPoint> ground_points,cv::Mat& ground_image)
+cv::Mat ImageProjector::getGroundConvexHull(std::vector<ProjectedPoint> ground_points,cv::Size size)
 {
     std::vector<cv::Point> approx;
     std::vector<cv::Point> contour;
-    //std::vector<std::vector<cv::Point> > contours;
     for(auto ground_point_itr = ground_points.begin(); ground_point_itr != ground_points.end(); ground_point_itr++)
     {
         contour.push_back(ground_point_itr->point_2d);
@@ -39,8 +38,9 @@ std::vector<cv::Point> ImageProjector::getGroundConvexHull(std::vector<Projected
     cv::convexHull(contour, approx);
     std::vector<std::vector<cv::Point> > ground_contours;
     ground_contours.push_back(approx);
-    drawContours(ground_image,ground_contours,-1,cv::Scalar(0,255,0),-1);
-    return approx;
+    cv::Mat ground_mask = cv::Mat::zeros(size, CV_8UC1);
+    drawContours(ground_mask,ground_contours,-1,cv::Scalar(255),-1);
+    return ground_mask;
 }
 
 boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sensor_msgs::ImageConstPtr& image_msg,const sensor_msgs::PointCloud2ConstPtr& pointcloud_msg,
@@ -67,12 +67,24 @@ boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sens
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return boost::none;
     }
-    std::vector<ProjectedPoint> projected_points = projectPointCloudToImage(*pointcloud_msg,cv_ptr->image.size(),ground_image);
-    std::vector<cv::Point> ground_contour = getGroundConvexHull(projected_points,ground_image);
-    return projected_points;
+    try
+    {
+        std::vector<ProjectedPoint> projected_points = projectPointCloudToImage(*pointcloud_msg,cv_ptr->image.size());
+        mask_image = getGroundConvexHull(projected_points,cv_ptr->image.size());
+        //bitwise_and(cv_ptr->image, mask_image, ground_image);
+        //ground_image = cv_ptr->image * mask_image;
+        cv_ptr->image.copyTo(ground_image,mask_image);
+        return projected_points;
+    }
+    catch(...)
+    {
+        ROS_ERROR_STREAM("failed to project point cloud");
+        return boost::none;
+    }
+    return boost::none;
 }
 
-std::vector<ProjectedPoint> ImageProjector::projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,cv::Size size,cv::Mat& ground_image)
+std::vector<ProjectedPoint> ImageProjector::projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,cv::Size size)
 {
     std::vector<ProjectedPoint> projected_points;
     std_msgs::Header header = point_cloud.header;
@@ -125,12 +137,5 @@ std::vector<ProjectedPoint> ImageProjector::projectPointCloudToImage(sensor_msgs
             }
         }
     }
-    ground_image = cv::Mat::zeros(size, CV_8UC3);
-    /*
-    for(auto point_itr = projected_points.begin(); point_itr != projected_points.end(); point_itr++)
-    {
-        circle(ground_image, point_itr->point_2d, 1, cv::Scalar(255,0,0), -1, 4);
-    }
-    */
     return projected_points;
 }
