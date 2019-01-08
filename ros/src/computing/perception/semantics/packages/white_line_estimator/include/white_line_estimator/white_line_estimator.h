@@ -34,6 +34,7 @@ private:
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
     ros::Subscriber camera_info_sub_;
+    ros::Subscriber projection_matrix_sub_;
     image_transport::ImageTransport it_;
     image_transport::Publisher image_pub_;
     void projectionMatrixCallback(const autoware_msgs::ProjectionMatrixConstPtr& msg);

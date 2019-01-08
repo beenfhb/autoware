@@ -12,6 +12,7 @@ WhiteLineEstimator::WhiteLineEstimator(ros::NodeHandle nh,ros::NodeHandle pnh) :
     sync_ptr_ = boost::make_shared<message_filters::Synchronizer<SyncPolicy> >(SyncPolicy(10), *image_sub_ptr_, *pointcloud_sub_ptr_);
     sync_ptr_->registerCallback(boost::bind(&WhiteLineEstimator::sensorCallback,this,_1,_2));
     camera_info_sub_ = nh_.subscribe("camera_info",1,&WhiteLineEstimator::cameraInfoCallback,this);
+    projection_matrix_sub_ = nh_.subscribe("projection_matrix",1,&WhiteLineEstimator::projectionMatrixCallback,this);
 }
 
 WhiteLineEstimator::~WhiteLineEstimator()
@@ -45,7 +46,8 @@ void WhiteLineEstimator::cameraInfoCallback(const sensor_msgs::CameraInfoConstPt
     return;
 }
 
-void projectionMatrixCallback(const autoware_msgs::ProjectionMatrixConstPtr& msg)
+void WhiteLineEstimator::projectionMatrixCallback(const autoware_msgs::ProjectionMatrixConstPtr& msg)
 {
+    image_projector_ptr_->setProjectionMatrix(*msg);
     return;
 }
