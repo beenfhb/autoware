@@ -20,6 +20,9 @@
 //headers in boost
 #include <boost/shared_ptr.hpp>
 
+//headers in Autoware
+#include <autoware_msgs/ProjectionMatrix.h>
+
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> SyncPolicy;
 
 class WhiteLineEstimator
@@ -30,8 +33,10 @@ public:
 private:
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
+    ros::Subscriber camera_info_sub_;
     image_transport::ImageTransport it_;
     image_transport::Publisher image_pub_;
+    void projectionMatrixCallback(const autoware_msgs::ProjectionMatrixConstPtr& msg);
     void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg);
     void sensorCallback(const sensor_msgs::ImageConstPtr& image,const sensor_msgs::PointCloud2ConstPtr& pointcloud);
     cv::Mat proj_matrix_;

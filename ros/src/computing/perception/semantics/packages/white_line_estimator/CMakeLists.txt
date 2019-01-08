@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   dynamic_reconfigure
   pcl_ros
+  tf
   tf2_ros
   tf2_geometry_msgs
   message_filters
