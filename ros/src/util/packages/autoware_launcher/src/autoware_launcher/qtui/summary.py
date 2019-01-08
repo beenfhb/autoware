@@ -13,7 +13,7 @@ class AwSummaryPanel(QtWidgets.QStackedWidget):
         self.__client = client
         self.__panels = {}
 
-    def config_cleared(self):
+    def profile_cleared(self):
         for key in self.__panels.keys():
             self.__panels.pop(key).deleteLater()
 

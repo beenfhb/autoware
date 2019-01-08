@@ -217,10 +217,6 @@ class AwLaunchNode(AwBaseNode):
     def get_config(self, key, value):
         return self.config.get(key, value)
 
-    def set_config(self, key, value):
-        self.config[key] = value
-        self.send_config_updated()
-
     def generate_launch(self): # ToDo: list args from plugin
         lines = []
         lines.append('<launch>')

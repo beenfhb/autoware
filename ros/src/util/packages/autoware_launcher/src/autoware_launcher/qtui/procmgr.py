@@ -19,7 +19,7 @@ class AwProcessPanel(QtWidgets.QStackedWidget):
         self.__dummy = QtWidgets.QLabel("This is node")
         self.addWidget(self.__dummy)
 
-    def config_cleared(self):
+    def profile_cleared(self):
         for key in self.__items.keys():
             self.__items.pop(key).deleteLater()
 

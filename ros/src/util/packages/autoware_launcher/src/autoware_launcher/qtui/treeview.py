@@ -48,7 +48,7 @@ class AwTreeViewPanel(QtWidgets.QTreeWidget):
 
     #def config_updated(self, lnode):
 
-    def config_cleared(self):
+    def profile_cleared(self):
         if self.__items:
             self.config_removed("root")
 

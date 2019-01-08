@@ -16,6 +16,9 @@ def plugins():
 def profile(profile = ""):
     return os.path.join(package(), "profiles", profile)
 
+def parentpath(path):
+    return os.path.dirname(path)
+
 def makedirs(path, mode=0777, exist_ok=False): # workaround in python2
     if not (exist_ok and os.path.exists(path)): os.makedirs(path, mode)
 

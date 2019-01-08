@@ -1,11 +1,14 @@
+from python_qt_binding import QtWidgets
 from python_qt_binding import QtNetwork
+
+
 
 class AwTcpServer(QtNetwork.QTcpServer):
 
     def __init__(self, tree, port = 33136):
 
         super(AwTcpServer, self).__init__()
-        self.tree = tree
+        self.server = tree
         self.port = port
         self.connections = []
         
@@ -43,3 +46,8 @@ class AwTcpServer(QtNetwork.QTcpServer):
         if socket in self.connections:
             socket.close()
             self.connections.remove(socket)
+
+
+
+class AwTcpServerPanel(QtWidgets.QtWidget):
+    pass

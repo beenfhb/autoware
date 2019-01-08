@@ -3,6 +3,9 @@ from python_qt_binding import QtWidgets
 
 
 
+#ToDo: add AwMainWindow
+#ToDo: add AwPopupWindow
+
 class AwAbstructWindow(QtWidgets.QMainWindow):
 
     def __init__(self, parent):

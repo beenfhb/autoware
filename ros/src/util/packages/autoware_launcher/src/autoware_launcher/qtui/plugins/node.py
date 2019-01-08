@@ -35,13 +35,24 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
         for arg in self.node.plugin().args():
             self.add_frame(self.guimgr.create_arg_frame(self, arg))
 
-        for child in self.node.children():
+        childnodes = {child.name(): child for child in self.node.children()}
+        for rule in self.node.plugin().rules():
+            if rule["type"] == "unit":
+                if self.node.haschild(rule["name"]):
+                    child = self.node.getchild(rule["name"])
+                    frame = child.plugin().frame()
+                    self.add_frame(self.guimgr.create_widget(child, frame))
+                    childnodes.pop(rule["name"])
+                else:
+                    self.add_frame(AwNodeCreateButton(self.node, rule, "Create " + rule["name"]))
+                    
+        for child in childnodes.values():
             frame = child.plugin().frame()
             self.add_frame(self.guimgr.create_widget(child, frame))
-
         for rule in self.node.plugin().rules():
-            if (rule["type"] == "list") or (not self.node.haschild(rule["name"])):
-                self.add_frame(AwNodeCreateButton(self.node, rule, "Create " + rule["name"]))
+            if rule["type"] == "list":
+                self.add_frame(AwNodeCreateButton(self.node, rule, "Add " + rule["name"]))
+
 
     def cancel_clicked(self):
         self.config = self.node.config().copy()
