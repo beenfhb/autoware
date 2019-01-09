@@ -28,12 +28,39 @@ int convertESPG2Ref(int epsg)
     }
     return 0;
 }
+
+bool getIntersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double &intersect_x, double &intersect_y )
+{
+    //let p1(x1, y1), p2(x2, y2), p3(x3, y3), p4(x4,y4)
+    //intersect of line segment p1 to p2 and p3 to p4 satisfies
+    // p1 + r(p2 - p1) = p3 + s(p4 - p3)
+    // 0 <= r <= 1
+    // 0 <= s <= 1
+    double denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+
+    if(denominator == 0) {
+        //line is parallel
+        return false;
+    }
+
+    double r = ( (y4 - y3) * (x3 - x1) - (x4 - x3) * (y3 - y1) ) / denominator;
+    double s = ( (y2 - y1) * (x3 - x1) - (x2 - x1) * (y3 - y1) ) / denominator;
+
+    if( r >= 0 && r <= 1 && s >= 0 && s <= 1) {
+        intersect_x = x1 + r * (x2 - x1);
+        intersect_y = y1 + r * (y2 - y1);
+        return true;
+    }else{
+        return false;
+    }
+}
+
 double convertDecimalToDDMMSS(const double decimal)
 {
     int degree, minutes,seconds;
     degree = floor(decimal);
-    minutes = floor( (decimal - degree )*60);
-    seconds = floor( (decimal - degree - minutes*1.0/60) * 3600);
+    minutes = floor( (decimal - degree ) * 60);
+    seconds = floor( (decimal - degree - minutes * 1.0 / 60) * 3600);
     return degree + minutes * 0.01 + seconds * 0.0001;
 }
 void insertMarkerArray(visualization_msgs::MarkerArray& a1, const visualization_msgs::MarkerArray& a2)
@@ -67,7 +94,7 @@ visualization_msgs::MarkerArray createAreaMarkerArray(const VectorMap& vmap, Col
 {
     visualization_msgs::MarkerArray marker_array;
     int id = 0;
-    for (const auto& area : vmap.findByFilter([] (const vector_map_msgs::Area& a){return true; }))
+    for (const auto& area : vmap.findByFilter([] (const vector_map_msgs::Area & a){return true; }))
     {
         marker_array.markers.push_back(createAreaMarker("area", id++, color, vmap, area));
     }
@@ -78,7 +105,7 @@ visualization_msgs::MarkerArray createLaneMarkerArray(const VectorMap& vmap, Col
 {
     visualization_msgs::MarkerArray marker_array;
     int id = 1;
-    for (const auto& lane : vmap.findByFilter([] (const vector_map_msgs::Lane& l){return true; }))
+    for (const auto& lane : vmap.findByFilter([] (const vector_map_msgs::Lane & l){return true; }))
     {
         vector_map_msgs::Node node1 = vmap.findByKey(vector_map::Key<vector_map_msgs::Node>(lane.bnid));
         vector_map_msgs::Node node2 = vmap.findByKey(vector_map::Key<vector_map_msgs::Node>(lane.fnid));
@@ -100,7 +127,7 @@ visualization_msgs::MarkerArray createStopLineMarkerArray(const VectorMap& vmap,
 {
     visualization_msgs::MarkerArray marker_array;
     int id = 0;
-    for (const auto& stop_line : vmap.findByFilter([] (const vector_map_msgs::StopLine& stop_line){return true; }))
+    for (const auto& stop_line : vmap.findByFilter([] (const vector_map_msgs::StopLine & stop_line){return true; }))
     {
 
         if (stop_line.lid == 0)
@@ -132,7 +159,7 @@ visualization_msgs::MarkerArray createCrossWalkMarkerArray(const VectorMap& vmap
 {
     visualization_msgs::MarkerArray marker_array;
     int id = 0;
-    for (const auto& cross_walk : vmap.findByFilter([] (const vector_map_msgs::CrossWalk& cross_walk){return true; }))
+    for (const auto& cross_walk : vmap.findByFilter([] (const vector_map_msgs::CrossWalk & cross_walk){return true; }))
     {
         if (cross_walk.aid == 0)
         {
@@ -161,7 +188,7 @@ visualization_msgs::MarkerArray createSignalMarkerArray(const VectorMap& vmap, C
 {
     visualization_msgs::MarkerArray marker_array;
     int id = 0;
-    for (const auto& signal : vmap.findByFilter([] (const vector_map_msgs::Signal& signal){return true; }))
+    for (const auto& signal : vmap.findByFilter([] (const vector_map_msgs::Signal & signal){return true; }))
     {
         if (signal.vid == 0)
         {
@@ -239,7 +266,7 @@ visualization_msgs::MarkerArray createCrossRoadMarkerArray(const VectorMap& vmap
 {
     visualization_msgs::MarkerArray marker_array;
     int id = 0;
-    for (const auto& cross_road : vmap.findByFilter([] (const vector_map_msgs::CrossRoad& cross_road){return true; }))
+    for (const auto& cross_road : vmap.findByFilter([] (const vector_map_msgs::CrossRoad & cross_road){return true; }))
     {
         if (cross_road.aid == 0)
         {
@@ -263,10 +290,35 @@ visualization_msgs::MarkerArray createCrossRoadMarkerArray(const VectorMap& vmap
     return marker_array;
 }
 
-void createAreas(std::vector<autoware_map_msgs::Area> awm_areas, std::vector<vector_map_msgs::Area> &vmap_areas, std::vector<vector_map_msgs::Line> &vmap_lines)
+void convertPoint(vector_map_msgs::Point &vmap_point, autoware_map_msgs::Point awm_point)
+{
+    if(isJapaneseCoordinate(awm_point.epsg))
+    {
+        vmap_point.ref = convertESPG2Ref(awm_point.epsg);
+        vmap_point.bx = awm_point.x;
+        vmap_point.ly = awm_point.y;
+    }
+    else{
+        vmap_point.ref = 0;
+        vmap_point.bx = awm_point.y;
+        vmap_point.ly = awm_point.x;
+    }
+
+    vmap_point.pid = awm_point.point_id;
+    vmap_point.b = convertDecimalToDDMMSS( awm_point.lat );
+    vmap_point.l = convertDecimalToDDMMSS( awm_point.lng );
+    vmap_point.h = awm_point.z;
+
+    //cannot convert mcodes from autoware_map_format
+    vmap_point.mcode1 = 0;
+    vmap_point.mcode2 = 0;
+    vmap_point.mcode3 = 0;
+}
+
+void createAreas(autoware_map::AutowareMap awm, std::vector<vector_map_msgs::Area> &vmap_areas, std::vector<vector_map_msgs::Line> &vmap_lines)
 {
     int line_id = vmap_lines.size() + 1;
-    for ( auto awm_area : awm_areas)
+    for ( auto awm_area : awm.findByFilter( [&](autoware_map_msgs::Area a){return true; }))
     {
         vector_map_msgs::Area vmap_area;
         vmap_area.aid = awm_area.area_id;
@@ -275,6 +327,7 @@ void createAreas(std::vector<autoware_map_msgs::Area> awm_areas, std::vector<vec
         //create lines that represent area
         auto end_itr = awm_area.point_ids.end();
         auto begin_itr = awm_area.point_ids.begin();
+        //assumes that point id of corresponding points in AutowareMap and VectorMap are the same. (please check createPoints function)
         for (auto point_itr = begin_itr; point_itr != end_itr; point_itr++)
         {
             vector_map_msgs::Line line;
@@ -307,75 +360,224 @@ void createAreas(std::vector<autoware_map_msgs::Area> awm_areas, std::vector<vec
     }
 }
 
-void createCrossRoads(std::vector<autoware_map_msgs::LaneAttrRelation> awm_lane_attr_relations, std::vector<vector_map_msgs::CrossRoad> &vmap_cross_roads)
+void createCrossRoads(autoware_map::AutowareMap awm, std::vector<vector_map_msgs::CrossRoad> &vmap_cross_roads)
 {
     unsigned int id = 1;
-    for ( auto awm_relation : awm_lane_attr_relations)
+    for ( auto awm_relation : awm.findByFilter( [&](autoware_map_msgs::LaneAttrRelation lar){return lar.attribute_type == autoware_map::LaneAttrRelation::INTERSECTION; }) )
     {
-        if( awm_relation.attribute_type == autoware_map::LaneAttrRelation::INTERSECTION )
+        //check whether same cross_road is already created
+        if(std::find_if(vmap_cross_roads.begin(), vmap_cross_roads.end(), [&](vector_map_msgs::CrossRoad cr){return cr.aid == awm_relation.area_id; }) != vmap_cross_roads.end())
         {
-            if(std::find_if(vmap_cross_roads.begin(), vmap_cross_roads.end(), [&](vector_map_msgs::CrossRoad cr){return cr.aid == awm_relation.area_id; }) != vmap_cross_roads.end())
+            continue;
+        }
+        vector_map_msgs::CrossRoad cross_road;
+        cross_road.id = id++;
+        cross_road.aid = awm_relation.area_id;
+        cross_road.linkid = 0;
+        vmap_cross_roads.push_back(cross_road);
+    }
+}
+
+void getMinMax(autoware_map_msgs::Point &min, autoware_map_msgs::Point &max, const std::vector<autoware_map_msgs::Point>points){
+    min = max = points.front();
+    for (auto pt : points)
+    {
+        min.x = min.x < pt.x ? min.x : pt.x;
+        min.y = min.y < pt.y ? min.y : pt.y;
+        min.z = min.z < pt.z ? min.z : pt.z;
+        max.x = max.x > pt.x ? max.x : pt.x;
+        max.y = max.y > pt.y ? max.y : pt.y;
+        max.z = max.z > pt.z ? max.z : pt.z;
+    }
+}
+bool isWithinArea(double x, double y, const std::vector<autoware_map_msgs::Point> vertices){
+
+    autoware_map::Point min, max, outside_point;
+    getMinMax(min, max, vertices);
+    outside_point = min;
+    outside_point.x -= 0.0001;
+    outside_point.y -= 0.001;
+
+    autoware_map_msgs::Point v1, v2,intersect;
+    int count = 0;
+    for (unsigned int idx = 0; idx < vertices.size(); idx++)
+    {
+        v1 = vertices.at(idx);
+        if(idx + 1 < vertices.size())
+        {
+            v2 = vertices.at(idx + 1);
+        }
+        else
+        {
+            v2 = vertices.front();
+        }
+
+        if(getIntersect(outside_point.x, outside_point.y, x, y,
+                        v1.x, v1.y, v2.x, v2.y,
+                        intersect.x, intersect.y))
+        {
+            if(intersect.x == x && intersect.y == y)
             {
                 continue;
             }
-            vector_map_msgs::CrossRoad cross_road;
-            cross_road.id = id++;
-            cross_road.aid = awm_relation.area_id;
-            cross_road.linkid = 0;
-            vmap_cross_roads.push_back(cross_road);
+            count++;
+        }
+    }
+    if( count % 2 == 1)
+        return true;
+    else
+        return false;
+}
+int createSquareArea(double x, double y, double z, double length,
+                     std::vector<vector_map_msgs::Area> &vmap_areas, std::vector<vector_map_msgs::Line> &vmap_lines,
+                     std::vector<vector_map_msgs::Point> &vmap_points)
+{
+    vector_map_msgs::Point v1, v2, v3, v4;
+    int point_id = vmap_points.size() + 1;
+    v1.pid = point_id++;
+    v1.bx = x - length / 2;
+    v1.ly = y - length / 2;
+    v1.h = z;
+
+    v2.pid = point_id++;
+    v2.bx = x - length / 2;
+    v2.ly = y + length / 2;
+    v2.h = z;
+
+    v3.pid = point_id++;
+    v3.bx = x + length / 2;
+    v3.ly = y + length / 2;
+    v3.h = z;
+
+    v4.pid = point_id++;
+    v4.bx = x + length / 2;
+    v4.ly = y - length / 2;
+    v4.h = z;
+
+    vmap_points.push_back(v1);
+    vmap_points.push_back(v2);
+    vmap_points.push_back(v3);
+    vmap_points.push_back(v4);
+
+    vector_map_msgs::Line line;
+    int lid, start_lid;
+    lid =start_lid= vmap_lines.size() + 1;
+    line.lid = lid;
+    line.bpid = v1.pid;
+    line.fpid = v2.pid;
+    line.blid = 0;
+    line.flid = lid + 1;
+    vmap_lines.push_back(line);
+    lid++;
+    line.lid = lid;
+    line.bpid = v2.pid;
+    line.fpid = v3.pid;
+    line.blid = lid - 1;
+    line.flid = lid + 1;
+    vmap_lines.push_back(line);
+    lid++;
+    line.lid = lid;
+    line.bpid = v3.pid;
+    line.fpid = v4.pid;
+    line.blid = lid - 1;
+    line.flid = lid + 1;
+    vmap_lines.push_back(line);
+    lid++;
+    line.lid = lid;
+    line.bpid = v4.pid;
+    line.fpid = v1.pid;
+    line.blid = lid - 1;
+    line.flid = 0;
+    vmap_lines.push_back(line);
+
+    vector_map_msgs::Area area;
+    area.aid = vmap_areas.size() + 1;
+    area.slid = start_lid;
+    area.elid = lid;
+    vmap_areas.push_back(area);
+
+    return area.aid;
+}
+
+void createCrossWalks(autoware_map::AutowareMap awm, std::vector<vector_map_msgs::CrossWalk> &vmap_cross_walks,
+                      std::vector<vector_map_msgs::Area> &vmap_areas, std::vector<vector_map_msgs::Line> &vmap_lines,
+                      std::vector<vector_map_msgs::Point> &vmap_points)
+{
+    unsigned int id = 1;
+    for( auto awm_relation : awm.findByFilter([&](const autoware_map_msgs::LaneAttrRelation lar){ return lar.attribute_type == autoware_map::LaneAttrRelation::CROSS_WALK; }) )
+    {
+        //skip if area is already added
+        if(std::find_if(vmap_cross_walks.begin(), vmap_cross_walks.end(), [&](vector_map_msgs::CrossWalk cw){return cw.aid == awm_relation.area_id; }) != vmap_cross_walks.end())
+        {
+            continue;
+        }
+
+        int parent_id = id++;
+        vector_map_msgs::CrossWalk cross_walk;
+        cross_walk.id = parent_id;
+        cross_walk.aid = awm_relation.area_id;
+        cross_walk.type = 0;
+        cross_walk.linkid = 0;
+        vmap_cross_walks.push_back(cross_walk);
+
+
+        cross_walk.id = id++;
+        cross_walk.aid = awm_relation.area_id;
+        cross_walk.type = 1;
+        cross_walk.bdid = parent_id;
+        cross_walk.linkid = 0;
+        vmap_cross_walks.push_back(cross_walk);
+
+        //create regions for detection area
+        autoware_map_msgs::Area awm_area = awm.findById<autoware_map_msgs::Area>(awm_relation.area_id);
+        std::vector<autoware_map_msgs::Point> vertices;
+        for ( int vertex : awm_area.point_ids)
+        {
+            vertices.push_back(awm.findById<autoware_map_msgs::Point>(vertex));
+        }
+
+        autoware_map_msgs::Point min,max;
+        getMinMax(min,max,vertices);
+
+        double resolution = 1.0;
+        for (double x = min.x - resolution; x < max.x + resolution; x += resolution / 2)
+        {
+            for (double y = min.y - resolution; y < max.y + resolution; y += resolution / 2)
+            {
+                if( isWithinArea(x,y,vertices) )
+                {
+                    int area_id;
+                    if(isJapaneseCoordinate(vertices.front().epsg))
+                    {
+                        area_id = createSquareArea(x,y,min.z,resolution, vmap_areas, vmap_lines, vmap_points);
+                    }
+                    else
+                    {
+                        area_id = createSquareArea(y,x,min.z,resolution, vmap_areas, vmap_lines, vmap_points);
+                    }
+
+                    cross_walk.id = id++;
+                    cross_walk.aid = area_id;
+                    cross_walk.type = 1;
+                    cross_walk.bdid = parent_id;
+                    cross_walk.linkid = 0;
+                    vmap_cross_walks.push_back(cross_walk);
+                }
+            }
         }
     }
 }
 
-void createCrossWalks(std::vector<autoware_map_msgs::LaneAttrRelation> awm_lane_attr_relations, std::vector<vector_map_msgs::CrossWalk> &vmap_cross_walks)
-{
-    unsigned int id = 1;
-    for ( auto awm_relation : awm_lane_attr_relations)
-    {
-        if( awm_relation.attribute_type == autoware_map::LaneAttrRelation::CROSS_WALK )
-        {
-            if(std::find_if(vmap_cross_walks.begin(), vmap_cross_walks.end(), [&](vector_map_msgs::CrossWalk cw){return cw.aid == awm_relation.area_id; }) != vmap_cross_walks.end())
-            {
-                continue;
-            }
-            vector_map_msgs::CrossWalk cross_walk;
-            cross_walk.id = id++;
-            cross_walk.aid = awm_relation.area_id;
-            cross_walk.linkid = 0;
-            vmap_cross_walks.push_back(cross_walk);
-        }
-    }
-}
-
-void createPoints(std::vector<autoware_map_msgs::Point> awm_points, std::vector<vector_map_msgs::Point> &vmap_points)
+void createPoints(autoware_map::AutowareMap awm, std::vector<vector_map_msgs::Point> &vmap_points)
 {
     bool epsg_fail_flag = false;
-    for ( auto awm_pt : awm_points)
+    for ( auto awm_pt : awm.findByFilter( [&](autoware_map_msgs::Point pt){return true; }) )
     {
+        if(isJapaneseCoordinate(awm_pt.epsg)) {
+            epsg_fail_flag =true;
+        }
         vector_map_msgs::Point vmap_point;
-        if(isJapaneseCoordinate(awm_pt.epsg))
-        {
-            vmap_point.ref = convertESPG2Ref(awm_pt.epsg);
-            vmap_point.bx = awm_pt.x;
-            vmap_point.ly = awm_pt.y;
-        }
-        else{
-            //has to convert from mgrs -> Janaese plane rectangular CS
-            epsg_fail_flag = true;
-            vmap_point.ref = 0;
-            vmap_point.bx = awm_pt.y;
-            vmap_point.ly = awm_pt.x;
-        }
-
-        vmap_point.pid = awm_pt.point_id;
-        vmap_point.b =  convertDecimalToDDMMSS( awm_pt.lat );
-        vmap_point.l =  convertDecimalToDDMMSS( awm_pt.lng );
-        vmap_point.h = awm_pt.z;
-
-        //cannot convert mcodes from autoware_map_format
-        vmap_point.mcode1 = 0;
-        vmap_point.mcode2 = 0;
-        vmap_point.mcode3 = 0;
+        convertPoint(vmap_point, awm_pt);
         vmap_points.push_back(vmap_point);
     }
     if(epsg_fail_flag)
@@ -385,9 +587,9 @@ void createPoints(std::vector<autoware_map_msgs::Point> awm_points, std::vector<
 }
 
 
-void createNodes(std::vector<autoware_map_msgs::Waypoint> awm_waypoints, std::vector<vector_map_msgs::Node> &vmap_nodes)
+void createNodes(autoware_map::AutowareMap awm, std::vector<vector_map_msgs::Node> &vmap_nodes)
 {
-    for ( auto awm_wp : awm_waypoints)
+    for ( auto awm_wp : awm.findByFilter([&](autoware_map_msgs::Waypoint){return true; } ))
     {
         vector_map_msgs::Node vmap_node;
         vmap_node.nid = awm_wp.waypoint_id;
@@ -501,29 +703,29 @@ int getJunctionType(const std::vector<autoware_map_msgs::WaypointRelation> awm_w
     return vector_map_msgs::Lane::NORMAL;
 }
 
-void createDTLanes(const std::vector<autoware_map_msgs::WaypointRelation> awm_waypoint_relations,
-                   const autoware_map::AutowareMap awm,
+void createDTLanes(const autoware_map::AutowareMap awm,
                    std::vector<vector_map_msgs::DTLane> &vmap_dtlanes,
                    std::vector<vector_map_msgs::Lane> &vmap_lanes)
 {
     unsigned int id = 1;
-    for ( auto awm_waypoint_relation : awm_waypoint_relations)
+    std::vector<autoware_map_msgs::WaypointRelation> awm_waypoint_relations = awm.findByFilter( [&](autoware_map_msgs::WaypointRelation wr){return true; });
+    for ( auto awm_waypoint_relation : awm_waypoint_relations )
     {
         vector_map_msgs::DTLane vmap_dtlane;
         vmap_dtlane.did = id;
         vmap_dtlane.dist = awm_waypoint_relation.distance;
         vmap_dtlane.pid = awm_waypoint_relation.waypoint_id;
 
-        autoware_map_msgs::Waypoint awm_waypoint = awm.findByKey( autoware_map::Key<autoware_map_msgs::Waypoint>(awm_waypoint_relation.waypoint_id));
-        autoware_map_msgs::Waypoint awm_next_waypoint = awm.findByKey( autoware_map::Key<autoware_map_msgs::Waypoint>(awm_waypoint_relation.next_waypoint_id));
+        autoware_map_msgs::Waypoint awm_waypoint = awm.findById<autoware_map_msgs::Waypoint>(awm_waypoint_relation.waypoint_id);
+        autoware_map_msgs::Waypoint awm_next_waypoint = awm.findById<autoware_map_msgs::Waypoint>(awm_waypoint_relation.next_waypoint_id);
 
         vmap_dtlane.dir = convertDecimalToDDMMSS(awm_waypoint_relation.yaw);
         vmap_dtlane.apara = 0;
         vmap_dtlane.r = 90000000000;
 
         autoware_map_msgs::Point pt1, pt2;
-        pt1 = awm.findByKey(autoware_map::Key<autoware_map_msgs::Point>(awm_waypoint.point_id));
-        pt2 = awm.findByKey(autoware_map::Key<autoware_map_msgs::Point>(awm_next_waypoint.point_id));
+        pt1 = awm.findById<autoware_map_msgs::Point>(awm_waypoint.point_id);
+        pt2 = awm.findById<autoware_map_msgs::Point>(awm_next_waypoint.point_id);
         double horizontal_dist = hypot(pt2.x - pt1.x, pt2.y - pt1.y);
         double vertical_dist = pt2.z - pt1.z;
 
@@ -581,10 +783,10 @@ void createDTLanes(const std::vector<autoware_map_msgs::WaypointRelation> awm_wa
 
         int awm_lane_id = 0;
         auto waypoint_lane_relation = awm.findByFilter([&](autoware_map_msgs::WaypointLaneRelation wlr){return wlr.waypoint_id == awm_waypoint.waypoint_id; });
-        auto awm_lane = awm.findByKey( autoware_map::Key<autoware_map_msgs::Lane>(waypoint_lane_relation.front().lane_id) );
+        auto awm_lane = awm.findById<autoware_map_msgs::Lane>(waypoint_lane_relation.front().lane_id );
         vmap_lane.lcnt = awm_lane.num_of_lanes;
         vmap_lane.lanetype = awm_waypoint_relation.blinker;
-        vmap_lane.limitvel = awm.findByKey(autoware_map::Key<autoware_map_msgs::Lane> (awm_lane_id)).speed_limit;
+        vmap_lane.limitvel = awm.findById<autoware_map_msgs::Lane>(awm_lane_id).speed_limit;
         vmap_lane.refvel = awm_waypoint.velocity;
         vmap_lane.lanecfgfg = (vmap_lane.lcnt > 1) ? 1 : 0;
         vmap_lane.lno = awm_lane.lane_number;
@@ -595,26 +797,27 @@ void createDTLanes(const std::vector<autoware_map_msgs::WaypointRelation> awm_wa
     }
 }
 
-void createWayAreas(std::vector<autoware_map_msgs::Wayarea> awm_wayareas, std::vector<vector_map_msgs::WayArea> &vmap_way_areas)
+void createWayAreas(const autoware_map::AutowareMap awm, std::vector<vector_map_msgs::WayArea> &vmap_way_areas)
 {
-    for ( auto awm_area : awm_wayareas)
+    for ( auto awm_area : awm.findByFilter( [&](autoware_map_msgs::Wayarea wa){return true; }))
     {
         vector_map_msgs::WayArea way_area;
         way_area.waid = awm_area.wayarea_id;
         way_area.aid = awm_area.area_id;
         vmap_way_areas.push_back(way_area);
-
     }
 }
 
-void createSignals(     std::vector<autoware_map_msgs::SignalLight> awm_signal_lights,
-                        std::vector<autoware_map_msgs::LaneSignalLightRelation> awm_lane_signal_relations,
-                        std::vector<vector_map_msgs::Signal> &vmap_signals,
-                        std::vector<vector_map_msgs::Vector> &vmap_vectors,
-                        std::vector<vector_map_msgs::Pole> &vmap_dummy_poles,
-                        const std::vector<autoware_map_msgs::WaypointRelation> awm_waypoint_relations,
-                        const autoware_map::AutowareMap awm)
+void createSignals( const autoware_map::AutowareMap awm,
+                    std::vector<vector_map_msgs::Signal> &vmap_signals,
+                    std::vector<vector_map_msgs::Vector> &vmap_vectors,
+                    std::vector<vector_map_msgs::Pole> &vmap_dummy_poles
+                    )
 {
+
+    std::vector<autoware_map_msgs::SignalLight> awm_signal_lights = awm.findByFilter( [&](autoware_map_msgs::SignalLight sl){return true; });
+    std::vector<autoware_map_msgs::WaypointRelation> awm_waypoint_relations = awm.findByFilter( [&](autoware_map_msgs::WaypointRelation wr){return true; });
+    std::vector<autoware_map_msgs::LaneSignalLightRelation> awm_lane_signal_relations = awm.findByFilter( [&](autoware_map_msgs::LaneSignalLightRelation lslr){return true; });
 
     unsigned int vector_id = 1;
     for ( auto awm_signal_light : awm_signal_lights)
@@ -654,7 +857,7 @@ void createSignals(     std::vector<autoware_map_msgs::SignalLight> awm_signal_l
         autoware_map_msgs::Lane awm_lane;
         if (lane_signal_itr != awm_lane_signal_relations.end())
         {
-            awm_lane = awm.findByKey(autoware_map::Key<autoware_map_msgs::Lane>(lane_signal_itr->lane_id));
+            awm_lane = awm.findById<autoware_map_msgs::Lane>(lane_signal_itr->lane_id);
         }
 
         int linkid = 0;
@@ -700,163 +903,121 @@ vector_map_msgs::RoadSign createDummyRoadSign(int id)
     return road_sign;
 }
 
-bool getIntersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double &intersect_x, double &intersect_y )
-{
-    //let p1(x1, y1), p2(x2, y2), p3(x3, y3), p4(x4,y4)
-    //intersect of line segment p1 to p2 and p3 to p4 satisfies
-    // p1 + r(p2 - p1) = p3 + s(p4 - p3)
-    // 0 <= r <= 1
-    // 0 <= s <= 1
-    double denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
 
-    if(denominator == 0) {
-        //line is parallel
-        return false;
-    }
-
-    double r = ( (y4 - y3) * (x3 - x1) - (x4 - x3) * (y3 - y1) ) / denominator;
-    double s = ( (y2 - y1) * (x3 - x1) - (x2 - x1) * (y3 - y1) ) / denominator;
-
-    if( r >= 0 && r <= 1 && s >= 0 && s <= 1) {
-        intersect_x = x1 + r * (x2 - x1);
-        intersect_y = y1 + r * (y2 - y1);
-        return true;
-    }else{
-        return false;
-    }
-}
-
-
-void createStopLines( const std::vector<autoware_map_msgs::Waypoint> awm_waypoints,
-                      const std::vector<autoware_map_msgs::Point> awm_points,
-                      const std::vector<autoware_map_msgs::WaypointRelation> awm_waypoint_relations,
+void createStopLines( const autoware_map::AutowareMap awm,
                       std::vector<vector_map_msgs::Line> &vmap_lines,
                       std::vector<vector_map_msgs::Point> &vmap_points,
                       std::vector<vector_map_msgs::StopLine> &vmap_stop_lines,
-                      std::vector<vector_map_msgs::RoadSign> &vmap_road_signs,
-                      autoware_map::AutowareMap awm
+                      std::vector<vector_map_msgs::RoadSign> &vmap_road_signs
                       )
 {
+    const std::vector<autoware_map_msgs::WaypointRelation> awm_waypoint_relations = awm.findByFilter([&](autoware_map_msgs::WaypointRelation ){return true; });
+
     int line_id = vmap_lines.size() + 1;
     int point_id = vmap_points.size() + 1;
     int stop_line_id = vmap_stop_lines.size() + 1;
 
-    for(auto wp : awm_waypoints)
+    for(auto wp : awm.findByFilter([] (const autoware_map_msgs::Waypoint wp){return wp.stop_line == 1; }))
     {
-        if(wp.stop_line == 1)
+        autoware_map_msgs::Point awm_pt = awm.findById<autoware_map_msgs::Point>(wp.point_id);
+
+        auto next_waypoint_relation = std::find_if(awm_waypoint_relations.begin(),
+                                                   awm_waypoint_relations.end(),
+                                                   [&](autoware_map_msgs::WaypointRelation wr){return wr.waypoint_id == wp.waypoint_id; });
+
+        autoware_map_msgs::Waypoint next_wp = awm.findById<autoware_map_msgs::Waypoint>(next_waypoint_relation->next_waypoint_id);
+        autoware_map_msgs::Point awm_next_pt = awm.findById<autoware_map_msgs::Point>(next_wp.point_id);
+
+        double yaw = atan2(awm_next_pt.y - awm_pt.y, awm_next_pt.x - awm_pt.x);
+        double angle_left, angle_right;
+        if(isJapaneseCoordinate(awm_pt.epsg)) {
+            angle_left = addAngles(yaw, -M_PI / 2);
+            angle_right = addAngles(yaw, M_PI / 2);
+        }else
         {
-            auto awm_pt = std::find_if(awm_points.begin(),
-                                       awm_points.end(),
-                                       [wp](autoware_map_msgs::Point pt){return pt.point_id == wp.point_id; });
-            auto next_waypoint_relation = std::find_if(awm_waypoint_relations.begin(),
-                                                       awm_waypoint_relations.end(),
-                                                       [&](autoware_map_msgs::WaypointRelation wr){return wr.waypoint_id == wp.waypoint_id; });
-            auto next_wp = std::find_if(awm_waypoints.begin(),
-                                        awm_waypoints.end(),
-                                        [&](autoware_map_msgs::Waypoint wp){return wp.waypoint_id == next_waypoint_relation->next_waypoint_id; });
-            auto awm_next_pt = std::find_if(awm_points.begin(),
-                                            awm_points.end(),
-                                            [&](autoware_map_msgs::Point pt){return pt.point_id == next_wp->point_id; });
-            double yaw = atan2(awm_next_pt->y - awm_pt->y, awm_next_pt->x - awm_pt->x);
-            double angle_left, angle_right;
-            if(isJapaneseCoordinate(awm_pt->epsg)) {
-                angle_left = addAngles(yaw, -M_PI/2);
-                angle_right = addAngles(yaw, M_PI/2);
-            }else
-            {
-                angle_left = addAngles(yaw, M_PI/2);
-                angle_right = addAngles(yaw, -M_PI/2);
-            }
-            // std::cout << awm_pt->x << " " << awm_pt->y << " " << awm_pt->epsg << std::endl;
-            double r = wp.width / 2;
-
-
-            //stop line cannot be right on waypoint with current rebuild_decision_maker
-            double epsilon_x = cos(yaw) * 0.001;
-            double epsilon_y = sin(yaw) * 0.001;
-
-            vector_map_msgs::Point start_point, end_point;
-            start_point.pid = point_id++;
-
-            //stop line must intersect with waypoints left side of the line, lengthen left side
-            start_point.bx = awm_pt->x + ( r * 0.9 ) * cos(angle_left) + epsilon_x;
-            start_point.ly = awm_pt->y + (r * 0.9)  * sin(angle_left) + epsilon_y;
-            start_point.h = awm_pt->z;
-
-            end_point.pid = point_id++;
-            end_point.bx = awm_pt->x + r * cos(angle_right) + epsilon_x;
-            end_point.ly = awm_pt->y + r * sin(angle_right) + epsilon_y;
-            end_point.h = awm_pt->z;
-
-            // make sure that stop line does not intersect with other lanes.
-            for(auto awm_wp_relation : awm_waypoint_relations )
-            {
-                if(awm_wp_relation.waypoint_id == wp.waypoint_id || awm_wp_relation.next_waypoint_id == wp.waypoint_id) {
-                    continue;
-                }
-                autoware_map_msgs::Waypoint wp1 = awm.findByKey(autoware_map::Key<autoware_map_msgs::Waypoint>(awm_wp_relation.waypoint_id));
-                autoware_map_msgs::Waypoint wp2 = awm.findByKey(autoware_map::Key<autoware_map_msgs::Waypoint>(awm_wp_relation.next_waypoint_id));
-                autoware_map_msgs::Point p1 = awm.findByKey(autoware_map::Key<autoware_map_msgs::Point>(wp1.point_id));
-                autoware_map_msgs::Point p2 = awm.findByKey(autoware_map::Key<autoware_map_msgs::Point>(wp2.point_id));
-
-                double intersect_x, intersect_y;
-                //intersects with
-                if ( getIntersect(p1.x, p1.y, p2.x, p2.y,
-                                  start_point.bx, start_point.ly, end_point.bx, end_point.ly,
-                                  intersect_x, intersect_y))
-                {
-                    double distance = std::hypot( awm_pt->x - intersect_x, awm_pt->y - intersect_y );
-                    r = distance * 0.9;   //shorten length of stop line so that it does not cross any other lanes
-
-                    start_point.bx = awm_pt->x + (r * 0.9) * cos(angle_left) + epsilon_x;
-                    start_point.ly = awm_pt->y + (r * 0.9) * sin(angle_left) + epsilon_y;
-                    start_point.h = awm_pt->z;
-                    end_point.bx = awm_pt->x + r * cos(angle_right) + epsilon_x;
-                    end_point.ly = awm_pt->y + r * sin(angle_right) + epsilon_y;
-                    end_point.h = awm_pt->z;
-                }
-            }
-
-            //swap x and y if the coordinate is not in japanese rectangular coordinate system
-            if(!isJapaneseCoordinate(awm_pt->epsg))
-            {
-                double tmp = start_point.bx;
-                start_point.bx = start_point.ly;
-                start_point.ly = tmp;
-                tmp = end_point.bx;
-                end_point.bx = end_point.ly;
-                end_point.ly = tmp;
-            }
-
-            vmap_points.push_back(start_point);
-            vmap_points.push_back(end_point);
-
-            vector_map_msgs::Line vmap_line;
-            vmap_line.lid = line_id++;
-            vmap_line.bpid = start_point.pid;
-            vmap_line.fpid = end_point.pid;
-            vmap_line.blid = vmap_line.flid = 0;
-            vmap_lines.push_back(vmap_line);
-
-            std::vector<autoware_map_msgs::WaypointSignalRelation> wsr_vector = awm.findByFilter([&](const autoware_map_msgs::WaypointSignalRelation wsr){ return wsr.waypoint_id == wp.waypoint_id; });
-            // std::cout << wp.waypoint_id << " " << stop_line_id << std::endl;
-            //only create road sign if stopline is not related to signal
-            vector_map_msgs::StopLine vmap_stop_line;
-            vmap_stop_line.id = stop_line_id++;
-            vmap_stop_line.lid = vmap_line.lid;
-            vmap_stop_line.tlid = 0;
-            if( wsr_vector.empty()) {
-                int road_sign_id = vmap_road_signs.size() + 1;
-                vmap_road_signs.push_back(createDummyRoadSign(road_sign_id));
-                vmap_stop_line.signid = road_sign_id;
-            }
-
-            auto relation = std::find_if(awm_waypoint_relations.begin(),
-                                         awm_waypoint_relations.end(),
-                                         [&](autoware_map_msgs::WaypointRelation r){return r.next_waypoint_id == wp.waypoint_id; });
-            vmap_stop_line.linkid = std::distance(awm_waypoint_relations.begin(), relation) + 1;
-            vmap_stop_lines.push_back(vmap_stop_line);
+            angle_left = addAngles(yaw, M_PI / 2);
+            angle_right = addAngles(yaw, -M_PI / 2);
         }
+
+        vector_map_msgs::Point start_point, end_point;
+        start_point.pid = point_id++;
+
+        double r = wp.width / 2;
+        //stop line cannot be right on waypoint with current rebuild_decision_maker
+        double epsilon_x = cos(yaw) * 0.001;
+        double epsilon_y = sin(yaw) * 0.001;
+
+        //stop line must intersect with waypoints left side of the line, lengthen left side
+        start_point.bx = awm_pt.x + ( r * 0.9 ) * cos(angle_left) + epsilon_x;
+        start_point.ly = awm_pt.y + (r * 0.9) * sin(angle_left) + epsilon_y;
+        start_point.h = awm_pt.z;
+
+        end_point.pid = point_id++;
+        end_point.bx = awm_pt.x + r * cos(angle_right) + epsilon_x;
+        end_point.ly = awm_pt.y + r * sin(angle_right) + epsilon_y;
+        end_point.h = awm_pt.z;
+
+        // make sure that stop line does not intersect with other lanes.
+        for(auto awm_wp_relation : awm_waypoint_relations )
+        {
+            if(awm_wp_relation.waypoint_id == wp.waypoint_id || awm_wp_relation.next_waypoint_id == wp.waypoint_id) {
+                continue;
+            }
+            autoware_map_msgs::Waypoint wp1 = awm.findById<autoware_map_msgs::Waypoint>(awm_wp_relation.waypoint_id);
+            autoware_map_msgs::Waypoint wp2 = awm.findById<autoware_map_msgs::Waypoint>(awm_wp_relation.next_waypoint_id);
+            autoware_map_msgs::Point p1 = awm.findById<autoware_map_msgs::Point>(wp1.point_id);
+            autoware_map_msgs::Point p2 = awm.findById<autoware_map_msgs::Point>(wp2.point_id);
+
+            double intersect_x, intersect_y;
+            if ( getIntersect(p1.x, p1.y, p2.x, p2.y,
+                              start_point.bx, start_point.ly, end_point.bx, end_point.ly,
+                              intersect_x, intersect_y))
+            {
+                double distance = std::hypot( awm_pt.x - intersect_x, awm_pt.y - intersect_y );
+                r = distance * 0.9;   //shorten length of stop line so that it does not cross any other lanes
+
+                start_point.bx = awm_pt.x + (r * 0.9) * cos(angle_left) + epsilon_x;
+                start_point.ly = awm_pt.y + (r * 0.9) * sin(angle_left) + epsilon_y;
+                end_point.bx = awm_pt.x + r * cos(angle_right) + epsilon_x;
+                end_point.ly = awm_pt.y + r * sin(angle_right) + epsilon_y;
+            }
+        }
+
+        //swap x and y if the coordinate is not in japanese rectangular coordinate system
+        if(!isJapaneseCoordinate(awm_pt.epsg))
+        {
+            double tmp = start_point.bx;
+            start_point.bx = start_point.ly;
+            start_point.ly = tmp;
+            tmp = end_point.bx;
+            end_point.bx = end_point.ly;
+            end_point.ly = tmp;
+        }
+
+        vmap_points.push_back(start_point);
+        vmap_points.push_back(end_point);
+
+        vector_map_msgs::Line vmap_line;
+        vmap_line.lid = line_id++;
+        vmap_line.bpid = start_point.pid;
+        vmap_line.fpid = end_point.pid;
+        vmap_line.blid = vmap_line.flid = 0;
+        vmap_lines.push_back(vmap_line);
+
+        // only create road sign if stopline is not related to signal
+        std::vector<autoware_map_msgs::WaypointSignalRelation> wsr_vector = awm.findByFilter([&](const autoware_map_msgs::WaypointSignalRelation wsr){ return wsr.waypoint_id == wp.waypoint_id; });
+        vector_map_msgs::StopLine vmap_stop_line;
+        vmap_stop_line.id = stop_line_id++;
+        vmap_stop_line.lid = vmap_line.lid;
+        vmap_stop_line.tlid = 0;
+        if( wsr_vector.empty()) {
+            int road_sign_id = vmap_road_signs.size() + 1;
+            vmap_road_signs.push_back(createDummyRoadSign(road_sign_id));
+            vmap_stop_line.signid = road_sign_id;
+        }
+
+        vmap_stop_line.linkid = std::distance(awm_waypoint_relations.begin(), next_waypoint_relation);
+        vmap_stop_lines.push_back(vmap_stop_line);
     }
 }
 
@@ -867,7 +1028,7 @@ int main(int argc, char **argv)
 
     autoware_map::AutowareMap awm;
 
-    autoware_map::category_t awm_required_category =  autoware_map::Category::AREA |
+    autoware_map::category_t awm_required_category = autoware_map::Category::AREA |
                                                      autoware_map::Category::POINT |
                                                      autoware_map::Category::LANE |
                                                      autoware_map::Category::LANE_ATTR_RELATION |
@@ -888,15 +1049,6 @@ int main(int argc, char **argv)
         ROS_WARN("Did not subscribe all required category! The converted vector map might lack some data!");
     }
 
-    std::vector<autoware_map_msgs::Area> awm_areas = awm.findByFilter([] (const autoware_map_msgs::Area){return true; });
-    std::vector<autoware_map_msgs::Point> awm_points = awm.findByFilter([] (const autoware_map_msgs::Point){return true; });
-    std::vector<autoware_map_msgs::LaneAttrRelation> awm_lane_attr_relations = awm.findByFilter([] (const autoware_map_msgs::LaneAttrRelation){return true; });
-    std::vector<autoware_map_msgs::LaneSignalLightRelation> awm_lane_signal_relations = awm.findByFilter([] (const autoware_map_msgs::LaneSignalLightRelation){return true; });
-    std::vector<autoware_map_msgs::SignalLight> awm_signal_lights = awm.findByFilter([] (const autoware_map_msgs::SignalLight){return true; });
-    std::vector<autoware_map_msgs::Wayarea> awm_wayareas = awm.findByFilter([] (const autoware_map_msgs::Wayarea){return true; });
-    std::vector<autoware_map_msgs::Waypoint> awm_waypoints = awm.findByFilter([] (const autoware_map_msgs::Waypoint){return true; });
-    std::vector<autoware_map_msgs::WaypointRelation> awm_waypoint_relations = awm.findByFilter([] (const autoware_map_msgs::WaypointRelation){return true; });
-
     std::vector<vector_map_msgs::Point> vmap_points;
     std::vector<vector_map_msgs::Node> vmap_nodes;
     std::vector<vector_map_msgs::Area> vmap_areas;
@@ -912,15 +1064,15 @@ int main(int argc, char **argv)
     std::vector<vector_map_msgs::StopLine> vmap_stop_lines;
     std::vector<vector_map_msgs::RoadSign> vmap_road_signs;
 
-    createPoints(awm_points, vmap_points);
-    createNodes(awm_waypoints, vmap_nodes);
-    createAreas(awm_areas, vmap_areas, vmap_lines);
-    createCrossRoads(awm_lane_attr_relations, vmap_cross_roads);
-    createDTLanes(awm_waypoint_relations, awm, vmap_dtlanes,vmap_lanes);
-    createCrossWalks(awm_lane_attr_relations, vmap_cross_walks);
-    createWayAreas(awm_wayareas, vmap_way_areas);
-    createSignals(  awm_signal_lights, awm_lane_signal_relations, vmap_signals, vmap_vectors,vmap_dummy_poles, awm_waypoint_relations, awm);
-    createStopLines( awm_waypoints, awm_points, awm_waypoint_relations, vmap_lines, vmap_points, vmap_stop_lines, vmap_road_signs, awm);
+    createPoints(awm, vmap_points);
+    createNodes(awm, vmap_nodes);
+    createAreas(awm, vmap_areas, vmap_lines);
+    createCrossRoads(awm, vmap_cross_roads);
+    createDTLanes( awm, vmap_dtlanes,vmap_lanes);
+    createCrossWalks(awm, vmap_cross_walks, vmap_areas, vmap_lines, vmap_points);
+    createWayAreas(awm, vmap_way_areas);
+    createSignals(  awm, vmap_signals, vmap_vectors,vmap_dummy_poles);
+    createStopLines( awm, vmap_lines, vmap_points, vmap_stop_lines, vmap_road_signs);
     // createDummyRoadSign(vmap_road_signs);
 
     ros::Publisher point_pub = nh.advertise<vector_map_msgs::PointArray>("vector_map_info/point", 1, true);
