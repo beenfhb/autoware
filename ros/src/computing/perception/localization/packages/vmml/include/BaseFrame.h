@@ -145,6 +145,11 @@ public:
 
 	Plane3 projectionPlane() const;
 
+	// Fundamental matrix from F1 to F2
+	static
+	Eigen::Matrix3d
+	FundamentalMatrix(const BaseFrame &F1, const BaseFrame &F2);
+
 protected:
 	cv::Mat image;
 

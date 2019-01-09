@@ -77,6 +77,18 @@ Matrix<double,3,4> CameraPinholeParams::toMatrix() const
 }
 
 
+Eigen::Matrix3d
+CameraPinholeParams::toMatrix3() const
+{
+	Matrix3d K = Matrix3d::Identity();
+	K(0,0) = fx;
+    K(1,1) = fy;
+    K(0,2) = cx;
+    K(1,2) = cy;
+	return K;
+}
+
+
 cv::Mat
 CameraPinholeParams::toCvMat() const
 {

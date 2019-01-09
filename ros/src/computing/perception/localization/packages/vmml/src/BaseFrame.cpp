@@ -180,3 +180,27 @@ BaseFrame::projectionPlane() const
 	P.normalize();
 	return P;
 }
+
+
+Eigen::Matrix3d
+BaseFrame::FundamentalMatrix(const BaseFrame &F1, const BaseFrame &F2)
+{
+	if (F1.cameraParam==nullptr or F2.cameraParam==nullptr)
+		throw runtime_error("Camera parameters are not defined");
+
+	TTransform T12 = F1.mPose.inverse() * F2.mPose;
+	Matrix3d R = T12.rotation();
+	Vector3d t = T12.translation();
+
+	auto A = F1.cameraParam->toMatrix3() * R.transpose() * t;
+	Matrix3d C = Matrix3d::Zero();
+	C(0,1) = -A[2];
+	C(0,2) = A[1];
+	C(1,0) = A[2];
+	C(1,2) = -A[0];
+	C(2,0) = -A[1];
+	C(2,1) = A[0];
+
+	return F2.cameraParam->toMatrix3().inverse().transpose() * R * F1.cameraParam->toMatrix3().transpose() * C;
+}
+

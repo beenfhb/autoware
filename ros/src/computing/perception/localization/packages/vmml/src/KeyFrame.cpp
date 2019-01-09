@@ -358,3 +358,17 @@ const
 
 }
 
+
+void
+KeyFrame::matchForInitialization(
+		const KeyFrame &kf1,
+		const KeyFrame &kf2,
+		std::vector<FeaturePair> &featurePairs)
+{
+	// XXX: Unfinished
+
+	// Compute epipole in second keyframe
+
+	// Collect keypoints nearby this line
+
+}

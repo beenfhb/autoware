@@ -32,6 +32,8 @@ struct CameraPinholeParams
 
 	Eigen::Matrix<double,3,4> toMatrix() const;
 
+	Eigen::Matrix3d toMatrix3() const;
+
 	cv::Mat toCvMat() const;
 
 	CameraPinholeParams():
