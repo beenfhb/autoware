@@ -1,3 +1,3 @@
 rules :
-  - { type: unit, name: lidars,  plugin : node/lidars  }
-  - { type: unit, name: cameras, plugin : node/cameras }
+  - { type: unit, name: lidars,  plugin : node/points/lidars  }
+  - { type: unit, name: cameras, plugin : node/images/cameras }

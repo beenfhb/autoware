@@ -1,3 +1,0 @@
-rules :
-  - { type: unit, name: driver, plugin: {scan: driver/lidar} }
-  - { type: unit, name: frame,  plugin: sensing/points/frame }

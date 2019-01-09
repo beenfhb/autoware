@@ -90,7 +90,7 @@ class AwQtGuiClient(object):
         self.__treeview.register_select_listener(self.__process)
         self.__treeview.register_select_listener(self.__control)
 
-        self.__server.make_profile("node/root")
+        self.__server.make_profile("root/default")
         return application.exec_()
 
 

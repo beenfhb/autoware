@@ -1,0 +1,2 @@
+rules :
+  - { type: list, name: camera, plugin: node/images/camera }

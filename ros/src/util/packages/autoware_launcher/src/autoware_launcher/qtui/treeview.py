@@ -94,10 +94,10 @@ class AwTreeViewItem(QtWidgets.QTreeWidgetItem):
         self.setText(1, "stop")
 
     def status_updated(self, state):
+        self.setText(1, "unknown")
         if state == 0: self.setText(1, "stop")
         if state == 1: self.setText(1, "running")
         if state == 2: self.setText(1, "terminating")
-
 
 
 class AwControlPanel(QtWidgets.QWidget):

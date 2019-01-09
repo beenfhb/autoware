@@ -1,0 +1,11 @@
+rules :
+    - { type: unit, name: map,           plugin : leaf/setup/map     }
+    - { type: unit, name: vehicle,       plugin : leaf/setup/vehicle }
+    - { type: unit, name: sensing,       plugin : node/sensing       }
+    - { type: unit, name: localization,  plugin : node/localization  }
+    - { type: unit, name: detection,     plugin : node/detection     }
+    - { type: unit, name: prediction,    plugin : node/prediction    }
+    - { type: unit, name: decision,      plugin : node/decision      }
+    - { type: unit, name: mission,       plugin : node/mission       }
+    - { type: unit, name: motion,        plugin : node/motion        }
+    - { type: unit, name: visualization, plugin : leaf/tools/rviz    }

@@ -1,0 +1,2 @@
+rules :
+- { type: list, name: lidar, plugin: node/points/lidar }

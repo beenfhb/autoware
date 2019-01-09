@@ -1,10 +1,9 @@
-import hashlib
-import os
-from autoware_launcher.core import fspath
-
 from python_qt_binding import QtCore
 from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
+
+from ..core import console
+from ..core import fspath
 
 
 
@@ -37,8 +36,7 @@ class AwProcessPanel(QtWidgets.QStackedWidget):
         self.setCurrentWidget(item)
 
     def roslaunch(self, lpath, xtext):
-        xhash = hashlib.md5(lpath).hexdigest()
-        xpath = fspath.package() + "/runner/" + xhash + ".xml"
+        xpath = fspath.package() + "/runner/" + lpath.replace("/", "-") + ".xml"
         with open(xpath, mode="w") as fp:
             fp.write(xtext)
         print "roslaunch {}".format(xpath)
