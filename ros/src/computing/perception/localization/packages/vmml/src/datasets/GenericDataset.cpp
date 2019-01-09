@@ -95,3 +95,10 @@ GenericDataset::size(const ptime &start, const ptime &stop) const
 	auto n2 = getLowerBound(stop);
 	return n2 - n1;
 }
+
+
+BaseFrame::Ptr GenericDataset::getAsFrame(dataItemId i) const
+{
+	auto diCurrent = this->get(i);
+	return BaseFrame::create(diCurrent->getImage(), diCurrent->getPose(), this->getCameraParameter());
+}

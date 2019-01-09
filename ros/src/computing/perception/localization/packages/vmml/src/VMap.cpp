@@ -374,7 +374,7 @@ VMap::load(const string &filepath)
 		KeyFrame *kf = &(kfArray[i]);
 		keyframeInvIdx.insert(pair<kfid,KeyFrame*>(kf->getId(), kf));
 		kf->parentMap = this;
-		kf->cameraParam = &(cameraList[kf->cameraId]);
+		kf->cameraParam = cameraList[kf->cameraId];
 	}
 
 	mappointInvIdx.clear();

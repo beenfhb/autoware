@@ -65,7 +65,7 @@ KeyFrame::KeyFrame(
 
 {
 	setPose(p, o);
-	cameraParam = const_cast<CameraPinholeParams*>(cameraIntr);
+	cameraParam = *cameraIntr;
 
 	if(cameraIntr->width < 0 or cameraIntr->height < 0)
 		throw runtime_error("Camera parameter has not been initialized properly (<0)");

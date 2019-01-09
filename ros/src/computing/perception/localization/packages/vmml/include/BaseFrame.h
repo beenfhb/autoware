@@ -9,6 +9,8 @@
 #define _BASEFRAME_H_
 
 
+#include <memory>
+
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
 #include <opencv2/core.hpp>
@@ -30,8 +32,15 @@ class MapPoint;
 class BaseFrame
 {
 public:
+
+	typedef std::shared_ptr<BaseFrame> Ptr;
+	typedef std::shared_ptr<BaseFrame const> ConstPtr;
+
 	BaseFrame();
 	virtual ~BaseFrame();
+
+	static
+	Ptr create(cv::Mat img, const Pose &p, const CameraPinholeParams &cam);
 
 	const Pose& pose() const
 	{ return mPose; }
@@ -60,10 +69,10 @@ public:
 	Eigen::Vector3d transform (const Eigen::Vector3d &pt3) const;
 
 	void setCameraParam(const CameraPinholeParams *c)
-	{ cameraParam = const_cast<CameraPinholeParams*>(c); }
+	{ cameraParam = *c; }
 
 	CameraPinholeParams getCameraParameters() const
-	{ return *cameraParam; }
+	{ return cameraParam; }
 
 	/*
 	 * This matrix transforms points in World Coordinate to Frame-centric coordinate
@@ -159,7 +168,7 @@ protected:
 	 */
 	Pose mPose = Pose::Identity();
 
-	CameraPinholeParams *cameraParam = nullptr;
+	CameraPinholeParams cameraParam;
 
 	/*
 	 * =================

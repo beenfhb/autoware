@@ -25,7 +25,7 @@ Frame::Frame(
 
 	BaseFrame()
 {
-	cameraParam = const_cast<CameraPinholeParams*>(camera);
+	cameraParam = (*camera);
 	image = imgSrc;
 	computeFeatures(parent->getFeatureDetector(), parent->getMask());
 }

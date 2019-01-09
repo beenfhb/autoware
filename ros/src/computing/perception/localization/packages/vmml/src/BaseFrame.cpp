@@ -81,8 +81,7 @@ BaseFrame::createExternalParamMatrix4(const Pose &ps)
 Eigen::Matrix<double,3,4>
 BaseFrame::projectionMatrix () const
 {
-	assert (cameraParam != nullptr);
-	return cameraParam->toMatrix() * externalParamMatrix4();
+	return cameraParam.toMatrix() * externalParamMatrix4();
 }
 
 
@@ -162,7 +161,7 @@ BaseFrame::forG2O () const
 {
 	// XXX: Verify this
 	g2o::SBACam mycam(orientation(), position());
-	mycam.setKcam(cameraParam->fx, cameraParam->fy, cameraParam->cx, cameraParam->cy, 0);
+	mycam.setKcam(cameraParam.fx, cameraParam.fy, cameraParam.cx, cameraParam.cy, 0);
 
 	return mycam;
 }
@@ -171,10 +170,10 @@ BaseFrame::forG2O () const
 Plane3
 BaseFrame::projectionPlane() const
 {
-	if (cameraParam==nullptr)
+	if (cameraParam.fx==0)
 		throw runtime_error("Camera parameter is not defined");
 
-	Vector3d centerPt = mPose * Vector3d(0, 0, cameraParam->f());
+	Vector3d centerPt = mPose * Vector3d(0, 0, cameraParam.f());
 
 	Plane3 P(normal(), centerPt);
 	P.normalize();
@@ -185,14 +184,15 @@ BaseFrame::projectionPlane() const
 Eigen::Matrix3d
 BaseFrame::FundamentalMatrix(const BaseFrame &F1, const BaseFrame &F2)
 {
-	if (F1.cameraParam==nullptr or F2.cameraParam==nullptr)
+	if (F1.cameraParam.fx==0 or F2.cameraParam.fx==0)
 		throw runtime_error("Camera parameters are not defined");
 
 	TTransform T12 = F1.mPose.inverse() * F2.mPose;
 	Matrix3d R = T12.rotation();
 	Vector3d t = T12.translation();
+	t = -R * t;
 
-	auto A = F1.cameraParam->toMatrix3() * R.transpose() * t;
+	Vector3d A = F1.cameraParam.toMatrix3() * R.transpose() * t;
 	Matrix3d C = Matrix3d::Zero();
 	C(0,1) = -A[2];
 	C(0,2) = A[1];
@@ -201,6 +201,15 @@ BaseFrame::FundamentalMatrix(const BaseFrame &F1, const BaseFrame &F2)
 	C(2,0) = -A[1];
 	C(2,1) = A[0];
 
-	return F2.cameraParam->toMatrix3().inverse().transpose() * R * F1.cameraParam->toMatrix3().transpose() * C;
+	return F2.cameraParam.toMatrix3().inverse().transpose() * R * F1.cameraParam.toMatrix3().transpose() * C;
 }
 
+
+BaseFrame::Ptr BaseFrame::create(cv::Mat img, const Pose &p, const CameraPinholeParams &cam)
+{
+	BaseFrame::Ptr bframe(new BaseFrame);
+	bframe->image = img;
+	bframe->mPose = p;
+	bframe->cameraParam = cam;
+	return bframe;
+}
