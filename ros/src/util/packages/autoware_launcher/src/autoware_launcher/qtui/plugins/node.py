@@ -32,8 +32,12 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
         cancel_button.clicked.connect(self.cancel_clicked)
         update_button.clicked.connect(self.update_clicked)
 
-        for arg in self.node.plugin().args():
-            self.add_frame(self.guimgr.create_arg_frame(self, arg))
+
+        for data in self.node.plugin().info():
+            self.add_frame(self.guimgr.create_info_frame(self, data))
+
+        for data in self.node.plugin().args():
+            self.add_frame(self.guimgr.create_arg_frame(self, data))
 
         childnodes = {child.name(): child for child in self.node.children()}
         for rule in self.node.plugin().rules():

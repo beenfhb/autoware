@@ -45,14 +45,16 @@ class AwPluginNode(object):
     def __init__(self, tree, path):
         self.__tree  = tree
         self.__path  = path
-        self.__args  = collections.OrderedDict()
-        self.__rule  = collections.OrderedDict()
+        self.__info  = None
+        self.__args  = None
+        self.__rule  = None
         self.__panel = None
         self.__frame = None
 
     def todict(self):
         data = {}
         data["type"]  = "Node" if self.isnode() else "Leaf"
+        data["info"]  = self.__info
         data["args"]  = self.__args
         data["rule"]  = self.__rule.values()
         data["panel"] = self.__panel
@@ -74,17 +76,20 @@ class AwPluginNode(object):
     def path(self):
         return self.__path
 
-    def panel(self):
-        return self.__panel
-
-    def frame(self):
-        return self.__frame
+    def info(self):
+        return self.__info
 
     def args(self):
         return self.__args
 
     def rules(self):
         return self.__rule.values()
+
+    def panel(self):
+        return self.__panel
+
+    def frame(self):
+        return self.__frame
 
     def optional_children(self):
         plugins = {}
@@ -127,8 +132,9 @@ class AwPluginNode(object):
             self.__panel = ydata.get("panel", {"view": "node.panel"})
             self.__frame = ydata.get("frame", {"view": "node.frame"})
 
-            #self.__info
-            self.__args  = ydata.get("args",  {})
+            self.__info = ydata.get("info", [])
+            self.__args = ydata.get("args", [])
+            self.__rule = collections.OrderedDict()
 
             for data in ydata.get("rules", []):
                 plist = data["plugin"]

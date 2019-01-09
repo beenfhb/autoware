@@ -3,3 +3,5 @@ args:
     - { type: filelist, arg: point_cloud_files, title: Point Cloud Files, format: space }
     - { type: filelist, arg: vector_map_files,  title: Vector Map Files,  format: space }
 
+info:
+    - { type: node }

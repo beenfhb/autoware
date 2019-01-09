@@ -51,9 +51,13 @@ class AwQtGuiManager(object):
             guicls = self.__widgets[guikey + "_panel"]
         return guicls(self, mirror)
 
-    def create_arg_frame(self, parent, view):
-        guicls = self.__widgets["args." + view["type"]]
-        return guicls(self, parent, view)
+    def create_arg_frame(self, parent, opts):
+        guicls = self.__widgets["args." + opts["type"]]
+        return guicls(self, parent, opts)
+
+    def create_info_frame(self, parent, opts):
+        guicls = self.__widgets["info." + opts["type"]]
+        return guicls(self, parent, opts)
 
     def create_frame_entire_vlayout(self):
         layout = QtWidgets.QVBoxLayout()

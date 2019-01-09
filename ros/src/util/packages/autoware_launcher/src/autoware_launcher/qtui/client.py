@@ -6,12 +6,14 @@ from ..core  import fspath
 from .guimgr import AwQtGuiManager
 from .mirror import AwLaunchTreeMirror
 
-from .widgets2 import AwMainWindow
+from .widgets  import AwMainWindow
 from .treeview import AwTreeViewPanel
 from .treeview import AwControlPanel
 from .procmgr  import AwProcessPanel
 from .summary  import AwSummaryPanel
 from .network  import AwTcpServerPanel
+from .starter  import AwStarterPanel
+
 
 
 class AwQtGuiClient(object):
@@ -49,6 +51,7 @@ class AwQtGuiClient(object):
         self.__summary  = AwSummaryPanel(self)  # ToDo: consider moving to guimgr
         self.__process  = AwProcessPanel(self)  # ToDo: consider moving to guimgr
         self.__network  = AwTcpServerPanel()
+        self.__starter  = AwStarterPanel(self)
 
         tabwidget = QtWidgets.QTabWidget()
         tabwidget.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
@@ -69,6 +72,7 @@ class AwQtGuiClient(object):
 
         mainwidget = QtWidgets.QTabWidget()
         mainwidget.addTab(hsplitter,      "Details")
+        mainwidget.addTab(self.__starter, "Starter")
         mainwidget.addTab(self.__network, "Network")
 
         window = AwMainWindow(self)
@@ -119,9 +123,11 @@ class AwQtGuiClient(object):
             lpath = fspath.parentpath(lpath)
 
     def node_updated(self, lpath):
-        print "node_updated:" + lpath
-        self.__mirror.clear(lpath)
-        #for panel in self.__panels: panel.node_updated(lpath)
+        while lpath:
+            print "node_updated: " + lpath
+            self.__mirror.clear(lpath)
+            self.__summary.node_updated(lpath)
+            lpath = fspath.parentpath(lpath)
 
     def status_updated(self, lpath, state):
         print "status_updated:" + lpath + " " + str(state)

@@ -1,8 +1,8 @@
 from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 
-from autoware_launcher.core import console
-from autoware_launcher.core import fspath
+from ..core import console
+from ..core import fspath
 
 from .widgets import AwAbstructWindow
 from .widgets import AwAbstructPanel
@@ -10,78 +10,23 @@ from .widgets import AwAbstructFrame
 
 
 
-class AwMainWindow(AwAbstructWindow):
+class AwStarterPanel(AwAbstructPanel):
 
     def __init__(self, client):
-
-        super(AwMainWindow, self).__init__(None)
-        self.client = client
-
-        self.load_geomerty()
-        self.setWindowTitle("Autoware Launcher")
-
-        self.__init_menu()
-
-    def closeEvent(self, event):
-
-        self.save_geometry()
-        super(AwMainWindow, self).closeEvent(event)
-
-    def __init_menu(self):
-
-        load_action = QtWidgets.QAction("Load Profile", self)
-        load_action.setShortcut("Ctrl+L")
-        load_action.triggered.connect(self.load_profile)
-
-        save_action = QtWidgets.QAction("Save Profile", self)
-        save_action.setShortcut("Ctrl+S")
-        save_action.triggered.connect(self.save_profile)
-
-        save_as_action = QtWidgets.QAction("Save Profile As", self)
-        save_as_action.setShortcut("Ctrl+A")
-        save_as_action.triggered.connect(self.save_profile_as)
-
-        mainmenu = self.menuBar()
-        filemenu = mainmenu.addMenu("File")
-        filemenu.addAction(load_action)
-        filemenu.addAction(save_action)
-        filemenu.addAction(save_as_action)
-
-    def load_profile(self):
-        import os
-        filename, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Load Profile", fspath.profile(), "Launch Profile (*.launch)")
-        filename, filetype = os.path.splitext(filename)
-        if filename:
-            self.client.load_profile(filename)
-
-    def save_profile(self):
-        pass
-
-    def save_profile_as(self):
-        import os
-        filename, filetype = QtWidgets.QFileDialog.getSaveFileName(self, "Save Profile As", fspath.profile(), "Launch Profile (*.launch)")
-        filename, filetype = os.path.splitext(filename)
-        if filename:
-            if filetype != ".launch":
-                filename = filename + filetype
-            self.client.save_profile(filename)
-
-
-
-class AwQuickStartPanel(AwAbstructPanel):
-
-    def __init__(self, guimgr, target, option):
-        super(AwQuickStartPanel, self).__init__(guimgr, mirror)
+        super(AwStarterPanel, self).__init__(None, None, None)
         self.setup_widget()
 
     def setup_widget(self):
-        super(AwQuickStartPanel, self).setup_widget()
-        self.add_frame(AwProfileFrame(self.guimgr, self.mirror))
-        for child in self.mirror.children():
-            if child.name() in ["map", "vehicle", "sensing", "rviz"]:
-                self.add_frame(self.guimgr.create_frame(child, guicls = AwLaunchFrame))
-        self.add_button(AwConfigButton(self.guimgr, self.mirror))
+        super(AwStarterPanel, self).setup_widget()
+        #self.add_frame(AwProfileFrame(self.guimgr, self.mirror))
+        #for child in self.mirror.children():
+        #    if child.name() in ["map", "vehicle", "sensing", "rviz"]:
+        #        self.add_frame(self.guimgr.create_frame(child, guicls = AwLaunchFrame))
+        #self.add_button(AwConfigButton(self.guimgr, self.mirror))
         #self.add_button(AwLaunchButton(self.guimgr, self.mirror.getchild("rviz"), ("Start", "Stop")))
+
+
+
 
 class AwProfileFrame(AwAbstructFrame):
 
