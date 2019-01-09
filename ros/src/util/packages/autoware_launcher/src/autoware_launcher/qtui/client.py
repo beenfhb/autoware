@@ -11,7 +11,7 @@ from .treeview import AwTreeViewPanel
 from .treeview import AwControlPanel
 from .procmgr  import AwProcessPanel
 from .summary  import AwSummaryPanel
-
+from .network  import AwTcpServerPanel
 
 
 class AwQtGuiClient(object):
@@ -31,6 +31,8 @@ class AwQtGuiClient(object):
     def select_config(self, lpath): # ToDo: consider moving to guimgr
         self.__treeview.select_config(lpath)
 
+
+
     def start2(self):
 
         application = QtWidgets.QApplication(self.__sysarg)
@@ -46,6 +48,7 @@ class AwQtGuiClient(object):
         self.__control  = AwControlPanel(self)  # ToDo: consider moving to guimgr
         self.__summary  = AwSummaryPanel(self)  # ToDo: consider moving to guimgr
         self.__process  = AwProcessPanel(self)  # ToDo: consider moving to guimgr
+        self.__network  = AwTcpServerPanel()
 
         tabwidget = QtWidgets.QTabWidget()
         tabwidget.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
@@ -64,12 +67,19 @@ class AwQtGuiClient(object):
         hsplitter.addWidget(vsplitter)
         hsplitter.addWidget(tabwidget)
 
+        mainwidget = QtWidgets.QTabWidget()
+        mainwidget.addTab(hsplitter,      "Details")
+        mainwidget.addTab(self.__network, "Network")
+
         window = AwMainWindow(self)
-        window.setCentralWidget(hsplitter)
+        window.setCentralWidget(mainwidget)
         window.show()
 
         self.__server.register_runner(self.__process)
         self.__process.register_server(self.__server)
+
+        self.__server.register_client(self.__network)
+        self.__network.register_server(self.__server)
 
         self.__panels.append(self.__treeview)
         self.__panels.append(self.__summary)
@@ -83,6 +93,8 @@ class AwQtGuiClient(object):
         self.__server.make_profile("node/root")
         return application.exec_()
 
+
+
     def profile_updated(self):
         self.__mirror.clear()
         for panel in self.__panels: panel.profile_cleared()
@@ -95,32 +107,25 @@ class AwQtGuiClient(object):
         #self.__treeview.expandToDepth(0)
 
     def node_created(self, lpath):
-        print "config_created: " + lpath
+        print "node_created: " + lpath
         lnode = self.__mirror.create(lpath)
         for panel in self.__panels: panel.config_created(lnode)
 
         lpath = fspath.parentpath(lpath)
         while lpath:
-            print "config_updated: " + lpath
+            print "node_updated: " + lpath
             self.__mirror.clear(lpath)
-            self.__summary.config_updated(lpath)
+            self.__summary.node_updated(lpath)
             lpath = fspath.parentpath(lpath)
 
-    def config_updated(self, lpath):
-        print "config_updated:" + lpath
+    def node_updated(self, lpath):
+        print "node_updated:" + lpath
         self.__mirror.clear(lpath)
-        #for panel in self.__panels: panel.config_updated(lpath)
+        #for panel in self.__panels: panel.node_updated(lpath)
 
     def status_updated(self, lpath, state):
         print "status_updated:" + lpath + " " + str(state)
         self.__treeview.status_updated(lpath, state)
-
-
-
-
-
-
-
 
 
 
@@ -129,8 +134,6 @@ class AwQtGuiClient(object):
 
     def load_profile(self, fpath):
         self.__server.load_profile(fpath)
-        #if ok
-        self.__mirror.clear()
 
     def find_node(self, lpath):
         return self.__server.find_node(lpath)

@@ -1,6 +1,3 @@
-import os
-import yaml
-
 from .       import console
 from .       import fspath
 from .plugin import AwPluginTree
@@ -26,11 +23,11 @@ class AwLaunchServerIF(object):
     #def runner_stderred
 
 class AwLaunchClientIF(object):
-    pass
-    #def profile_updated
-    #def node_updated (config/status)
-    #def node_created
-    #def node_removed
+    def profile_updated(self):               console.error("Not implemented: profile_updated in " + self.__class__.__name__)
+    def node_updated   (self, lpath):        console.error("Not implemented: node_updated in " + self.__class__.__name__)
+    def node_created   (self, lpath):        console.error("Not implemented: node_created in " + self.__class__.__name__) 
+    def node_removed   (self, lpath):        console.error("Not implemented: node_removed in " + self.__class__.__name__)
+    def status_updated (self, lpath, state): console.error("Not implemented: status_updated in " + self.__class__.__name__)
 
 
 class AwLaunchServer(AwLaunchServerIF):
@@ -71,6 +68,12 @@ class AwLaunchServer(AwLaunchServerIF):
         console.info("find_node: " + lpath)
         return self.__profile.find(lpath)
 
+    def update_node(self, lpath, ldata):
+        error = self.__profile.find(lpath).update(ldata)
+        if not error:
+            for client in self.__clients: client.node_updated(lpath)
+        return error
+
     def create_node(self, lpath, ppath):
         error = self.__profile.create(lpath, ppath)
         if not error:
@@ -79,12 +82,6 @@ class AwLaunchServer(AwLaunchServerIF):
 
     def remove_node(self, lpath):
         pass
-
-    def update_node(self, lpath, ldata):
-        response =  self.__profile.find(lpath).update(ldata)
-        if not response["error"]:
-            for client in self.__clients: client.config_updated(lpath)
-        return response
 
     def launch_node(self, lpath, xmode): # ToDo: update ancestors status
         console.info("launch_node: " + lpath + " " + str(xmode))
@@ -111,12 +108,3 @@ class AwLaunchServer(AwLaunchServerIF):
     def runner_finished(self, lpath): # ToDo: update ancestors status
         self.__profile.find(lpath).status = AwLaunchNode.STOP
         for client in self.__clients: client.status_updated(lpath, AwLaunchNode.STOP)
-
-    #def request_json(self, json_string):
-    #    request = json.loads(json_string)
-    #    if request.get("command") == "launch":
-    #        node = self.find(request["path"])
-    #        if node:
-    #            node.request_exec()
-    #            return '{"response":"ok"}'
-    #    return None

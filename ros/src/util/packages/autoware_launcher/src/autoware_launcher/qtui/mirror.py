@@ -96,11 +96,7 @@ class AwLaunchNodeMirror(object):
 
     def updated(self):
         for widget in self.__refs:
-            if hasattr(widget, "config_updated"): widget.config_updated()
-
-    def status_updated(self, state):
-        for widget in self.__refs:
-            if hasattr(widget, "status_updated"): widget.status_updated(state)
+            if hasattr(widget, "node_updated"): widget.node_updated()
 
     def get_config(self, key, value):
         return self.__find().config.get(key, value)

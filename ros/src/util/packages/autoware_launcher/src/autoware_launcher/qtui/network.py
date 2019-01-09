@@ -1,28 +1,33 @@
 from python_qt_binding import QtWidgets
 from python_qt_binding import QtNetwork
 
+from ..core import AwLaunchClientIF
 
+class AwTcpServerPanel(QtWidgets.QTextEdit, AwLaunchClientIF):
 
-class AwTcpServer(QtNetwork.QTcpServer):
+    def __init__(self):
 
-    def __init__(self, tree, port = 33136):
-
-        super(AwTcpServer, self).__init__()
-        self.server = tree
-        self.port = port
+        super(AwTcpServerPanel, self).__init__()
+        self.server = None
+        self.tcpsvr = QtNetwork.QTcpServer(self)
         self.connections = []
+        self.setReadOnly(True)
         
-        if self.listen(QtNetwork.QHostAddress.Any, port):
-            print "server start"
-            self.newConnection.connect(self.on_new_connection)
+        if self.tcpsvr.listen(QtNetwork.QHostAddress.Any, 33136):
+            self.append("Server started")
+            self.tcpsvr.newConnection.connect(self.on_new_connection)
         else:
-            print "server start error"
+            self.append("Server start error")
+
+    def register_server(self, server):
+        self.server = server
 
     def on_new_connection(self):
 
-        socket = self.nextPendingConnection()
+        socket = self.tcpsvr.nextPendingConnection()
         socket.string_buffer = ""
         self.connections.append(socket)
+        self.append("New connection {} {}".format(socket.localAddress().toString(), socket.localPort()))
 
         socket.error.connect(self.on_client_error)
         #socket.disconnected.connect
@@ -35,19 +40,18 @@ class AwTcpServer(QtNetwork.QTcpServer):
         strings[0] = socket.string_buffer + strings[0]
         socket.string_buffer = strings.pop()
         for string in strings:
-            response = self.tree.request_json(string)
-            if response:
-                socket.write(response)
+            self.process_request(string)
 
     def on_client_error(self):
 
         socket = self.sender()
-        print socket.errorString()
+        self.panel.write("Error " + socket.errorString())
         if socket in self.connections:
             socket.close()
             self.connections.remove(socket)
 
-
-
-class AwTcpServerPanel(QtWidgets.QtWidget):
-    pass
+    def process_request(self, request):
+        self.append("Request " + request)
+        #response = self.server.request_json(string)
+        #if response:
+        #    socket.write(response)

@@ -46,7 +46,7 @@ class AwTreeViewPanel(QtWidgets.QTreeWidget):
     def status_updated(self, lpath, state):
         self.__items[lpath].status_updated(state)
 
-    #def config_updated(self, lnode):
+    #def node_updated(self, lnode):
 
     def profile_cleared(self):
         if self.__items:

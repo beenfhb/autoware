@@ -178,7 +178,7 @@ class AwLaunchNode(AwBaseNode):
 
     def update(self, ldata):
         self.config = ldata["config"]
-        return {"error": None}
+        return None
 
     def launch(self, xmode):
         if xmode:

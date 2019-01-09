@@ -68,14 +68,14 @@ class AwMainWindow(AwAbstructWindow):
 
 
 
-class AwStandardLaunchPanel(AwAbstructPanel):
+class AwQuickStartPanel(AwAbstructPanel):
 
-    def __init__(self, guimgr, mirror):
-        super(AwStandardLaunchPanel, self).__init__(guimgr, mirror)
+    def __init__(self, guimgr, target, option):
+        super(AwQuickStartPanel, self).__init__(guimgr, mirror)
         self.setup_widget()
 
     def setup_widget(self):
-        super(AwStandardLaunchPanel, self).setup_widget()
+        super(AwQuickStartPanel, self).setup_widget()
         self.add_frame(AwProfileFrame(self.guimgr, self.mirror))
         for child in self.mirror.children():
             if child.name() in ["map", "vehicle", "sensing", "rviz"]:
@@ -177,7 +177,7 @@ class AwDefaultNodePanelOld(AwAbstructPanel):
         for child in self.mirror.children():
             self.add_frame(child)
 
-        #self.config_updated()
+        #self.node_updated()
         self.mirror.bind(self)
         self.destroyed.connect(lambda: self.mirror.unbind(self))
 
