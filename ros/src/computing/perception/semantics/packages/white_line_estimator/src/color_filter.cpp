@@ -22,3 +22,15 @@ cv::Mat ColorFilter::filterWhiteLine(cv::Mat image,cv::Mat ground_mask)
     bitwise_and(white_line_mask,ground_mask,ret);
     return ret;
 }
+
+void ColorFilter::updateParameters(double min_white_line_area,double max_white_line_area)
+{
+    min_white_line_area_ = min_white_line_area;
+    max_white_line_area_ = max_white_line_area;
+    return;
+}
+
+void ColorFilter::filterWhiteLineContours(cv::Mat& image)
+{
+    return;
+}
