@@ -14,14 +14,13 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
-//headers in this Autoware
-#include <white_line_estimator/image_projector.h>
-
 //headers in boost
 #include <boost/shared_ptr.hpp>
 
 //headers in Autoware
 #include <autoware_msgs/ProjectionMatrix.h>
+#include <white_line_estimator/image_projector.h>
+#include <white_line_estimator/color_filter.h>
 
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> SyncPolicy;
 
@@ -48,5 +47,6 @@ private:
     boost::shared_ptr<message_filters::Subscriber<sensor_msgs::Image> > image_sub_ptr_;
     boost::shared_ptr<message_filters::Subscriber<sensor_msgs::PointCloud2> > pointcloud_sub_ptr_;
     boost::shared_ptr<message_filters::Synchronizer<SyncPolicy> > sync_ptr_;
+    ColorFilter filter_;
 };
 #endif  //WHITE_LINE_ESTIMATOR_HINCLUDED

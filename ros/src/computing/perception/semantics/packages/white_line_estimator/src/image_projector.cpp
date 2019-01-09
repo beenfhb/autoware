@@ -43,7 +43,7 @@ cv::Mat ImageProjector::getGroundConvexHull(std::vector<ProjectedPoint> ground_p
     return ground_mask;
 }
 
-boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sensor_msgs::ImageConstPtr& image_msg,const sensor_msgs::PointCloud2ConstPtr& pointcloud_msg,
+boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(cv::Mat image,const sensor_msgs::PointCloud2ConstPtr& pointcloud_msg,
     cv::Mat& mask_image, cv::Mat& ground_image)
 {
     std::lock_guard<std::mutex> lock(mtx_);
@@ -57,23 +57,11 @@ boost::optional<std::vector<ProjectedPoint> > ImageProjector::project(const sens
         ROS_ERROR_STREAM("projection matrix does not recieved.");
         return boost::none;
     }
-    cv_bridge::CvImagePtr cv_ptr;
     try
     {
-        cv_ptr = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::BGR8);
-    }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("cv_bridge exception: %s", e.what());
-        return boost::none;
-    }
-    try
-    {
-        std::vector<ProjectedPoint> projected_points = projectPointCloudToImage(*pointcloud_msg,cv_ptr->image.size());
-        mask_image = getGroundConvexHull(projected_points,cv_ptr->image.size());
-        //bitwise_and(cv_ptr->image, mask_image, ground_image);
-        //ground_image = cv_ptr->image * mask_image;
-        cv_ptr->image.copyTo(ground_image,mask_image);
+        std::vector<ProjectedPoint> projected_points = projectPointCloudToImage(*pointcloud_msg,image.size());
+        mask_image = getGroundConvexHull(projected_points,image.size());
+        image.copyTo(ground_image,mask_image);
         return projected_points;
     }
     catch(...)

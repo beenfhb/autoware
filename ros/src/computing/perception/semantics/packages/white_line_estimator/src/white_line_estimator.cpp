@@ -22,14 +22,30 @@ WhiteLineEstimator::~WhiteLineEstimator()
 
 void WhiteLineEstimator::sensorCallback(const sensor_msgs::ImageConstPtr& image,const sensor_msgs::PointCloud2ConstPtr& pointcloud)
 {
-    cv::Mat mask;
+    cv::Mat ground_mask;
     cv::Mat ground_image;
-    boost::optional<std::vector<ProjectedPoint> > projected_points = image_projector_ptr_->project(image,pointcloud,mask,ground_image);
+    cv::Mat src_image;
     cv_bridge::CvImagePtr cv_ptr;
     try
     {
-        cv_ptr = cv_bridge::toCvCopy(image, sensor_msgs::image_encodings::RGB8);
-        cv_ptr->image = ground_image;
+        cv_ptr = cv_bridge::toCvCopy(image, sensor_msgs::image_encodings::BGR8);
+        src_image = cv_ptr->image;
+    }
+    catch (cv_bridge::Exception& e)
+    {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        return;
+    }
+    boost::optional<std::vector<ProjectedPoint> > projected_points = image_projector_ptr_->project(src_image,pointcloud,ground_mask,ground_image);
+    if(!projected_points)
+    {
+        return;
+    }
+    cv::Mat filterd_image = filter_.filterWhiteLine(src_image,ground_mask);
+    try
+    {
+        cv_ptr = cv_bridge::toCvCopy(image, sensor_msgs::image_encodings::MONO8);
+        cv_ptr->image = filterd_image;
         image_pub_.publish(cv_ptr->toImageMsg());
     }
     catch (cv_bridge::Exception& e)
