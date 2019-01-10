@@ -32,6 +32,7 @@
 #define __AUTOWARE2VECTORMAP_CONVERTER_H__
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/UInt64.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <autoware_map/autoware_map.h>
 #include <autoware_map/util.h>
@@ -73,7 +74,7 @@ private:
     ros::Publisher marker_array_pub_;
     ros::Subscriber awmap_stat_sub_;
 
-    void statusCallback(const std_msgs::Bool::ConstPtr &awmap_stat);
+    void statusCallback(const std_msgs::UInt64::ConstPtr &available_category);
     void publishVectorMap();
 
 };

@@ -2,6 +2,7 @@
 using vector_map::VectorMap;
 using autoware_map::AutowareMap;
 
+
 Converter::Converter()
 {
     vmap_pubs_["point"]= nh.advertise<vector_map_msgs::PointArray>("vector_map_info/point", 1, true);
@@ -30,66 +31,66 @@ Converter::~Converter()
 {
 }
 
-void Converter::statusCallback(const std_msgs::Bool::ConstPtr &awmap_stat)
+void Converter::statusCallback(const std_msgs::UInt64::ConstPtr &available_category)
 {
-    if(awmap_stat->data == true) {
-        autoware_map::category_t awmap_required_category = autoware_map::Category::AREA |
-                                                         autoware_map::Category::POINT |
-                                                         autoware_map::Category::LANE |
-                                                         autoware_map::Category::LANE_ATTR_RELATION |
-                                                         autoware_map::Category::LANE_SIGNAL_LIGHT_RELATION |
-                                                         autoware_map::Category::SIGNAL_LIGHT |
-                                                         autoware_map::Category::WAYAREA |
-                                                         autoware_map::Category::WAYPOINT |
-                                                         autoware_map::Category::WAYPOINT_RELATION |
-                                                         autoware_map::Category::WAYPOINT_LANE_RELATION |
-                                                         autoware_map::Category::WAYPOINT_SIGNAL_RELATION;
+    autoware_map::category_t awmap_required_category = autoware_map::Category::AREA |
+                                                     autoware_map::Category::POINT |
+                                                     autoware_map::Category::LANE |
+                                                     autoware_map::Category::LANE_ATTR_RELATION |
+                                                     autoware_map::Category::LANE_SIGNAL_LIGHT_RELATION |
+                                                     autoware_map::Category::SIGNAL_LIGHT |
+                                                     autoware_map::Category::WAYAREA |
+                                                     autoware_map::Category::WAYPOINT |
+                                                     autoware_map::Category::WAYPOINT_RELATION |
+                                                     autoware_map::Category::WAYPOINT_LANE_RELATION |
+                                                     autoware_map::Category::WAYPOINT_SIGNAL_RELATION;
 
-        //get autoware_map
-        awmap_.subscribe(nh, awmap_required_category, ros::Duration(5));
-        if(awmap_.hasSubscribed(awmap_required_category) == false)
-        {
-            ROS_WARN("Did not subscribe all required category! The converted vector map might lack some data!");
-        }
-
-        ROS_INFO_STREAM("start conversion!");
-        std_msgs::Bool vmap_stat;
-        vmap_stat.data = false;
-        vmap_stat_pub_.publish(vmap_stat);
-        //do conversions
-        createPoints(awmap_, vmap_points_);
-        createNodes(awmap_, vmap_nodes_);
-        createAreas(awmap_, vmap_areas_, vmap_lines_);
-        createCrossRoads(awmap_, vmap_cross_roads_);
-        createDTLanes( awmap_, vmap_dtlanes_,vmap_lanes_);
-        createCrossWalks(awmap_, vmap_cross_walks_, vmap_areas_, vmap_lines_, vmap_points_);
-        createWayAreas(awmap_, vmap_way_areas_);
-        createSignals(awmap_, vmap_signals_, vmap_vectors_,vmap_dummy_poles_);
-        createStopLines(awmap_, vmap_lines_, vmap_points_, vmap_stop_lines_, vmap_road_signs_);
-
-        //output converted map
-        publishVectorMap();
-        vmap_stat.data = true;
-        vmap_stat_pub_.publish(vmap_stat);
-        ROS_INFO_STREAM("Published converted vector map!");
-
-        //release memory
-        awmap_.clear();
-        vmap_points_.clear();
-        vmap_nodes_.clear();
-        vmap_areas_.clear();
-        vmap_lines_.clear();
-        vmap_dtlanes_.clear();
-        vmap_lanes_.clear();
-        vmap_cross_roads_.clear();
-        vmap_cross_walks_.clear();
-        vmap_way_areas_.clear();
-        vmap_signals_.clear();
-        vmap_vectors_.clear();
-        vmap_dummy_poles_.clear();
-        vmap_stop_lines_.clear();
-        vmap_road_signs_.clear();
+    //get autoware_map
+    awmap_.subscribe(nh, available_category->data, ros::Duration(5));
+    if(awmap_.hasSubscribed(awmap_required_category) == false)
+    {
+        autoware_map::Category missing_category = static_cast<autoware_map::Category>(awmap_required_category - (awmap_required_category & awmap_.hasSubscribed()));
+        ROS_WARN_STREAM("missing category : "<< missing_category << std::endl <<
+        "Did not subscribe all required category! Converted vector map might lack some data!");
     }
+
+    ROS_INFO_STREAM("start conversion!");
+    std_msgs::Bool vmap_stat;
+    vmap_stat.data = false;
+    vmap_stat_pub_.publish(vmap_stat);
+    //do conversions
+    createPoints(awmap_, vmap_points_);
+    createNodes(awmap_, vmap_nodes_);
+    createAreas(awmap_, vmap_areas_, vmap_lines_);
+    createCrossRoads(awmap_, vmap_cross_roads_);
+    createDTLanes( awmap_, vmap_dtlanes_,vmap_lanes_);
+    createCrossWalks(awmap_, vmap_cross_walks_, vmap_areas_, vmap_lines_, vmap_points_);
+    createWayAreas(awmap_, vmap_way_areas_);
+    createSignals(awmap_, vmap_signals_, vmap_vectors_,vmap_dummy_poles_);
+    createStopLines(awmap_, vmap_lines_, vmap_points_, vmap_stop_lines_, vmap_road_signs_);
+
+    //output converted map
+    publishVectorMap();
+    vmap_stat.data = true;
+    vmap_stat_pub_.publish(vmap_stat);
+    ROS_INFO_STREAM("Published converted vector map!");
+
+    //release memory
+    awmap_.clear();
+    vmap_points_.clear();
+    vmap_nodes_.clear();
+    vmap_areas_.clear();
+    vmap_lines_.clear();
+    vmap_dtlanes_.clear();
+    vmap_lanes_.clear();
+    vmap_cross_roads_.clear();
+    vmap_cross_walks_.clear();
+    vmap_way_areas_.clear();
+    vmap_signals_.clear();
+    vmap_vectors_.clear();
+    vmap_dummy_poles_.clear();
+    vmap_stop_lines_.clear();
+    vmap_road_signs_.clear();
 }
 
 void Converter::publishVectorMap()
@@ -204,6 +205,18 @@ void convertPoint(vector_map_msgs::Point &vmap_point,const autoware_map_msgs::Po
 
 void createAreas(const AutowareMap &awmap, std::vector<vector_map_msgs::Area> &vmap_areas, std::vector<vector_map_msgs::Line> &vmap_lines)
 {
+    //return if enough information is not subscribed
+    autoware_map::category_t required_category = autoware_map::Category::POINT |
+                                               autoware_map::Category::AREA;
+    if(!awmap.hasSubscribed(required_category) )
+    {
+        autoware_map::Category missing_category = static_cast<autoware_map::Category>(required_category - (required_category & awmap.hasSubscribed()));
+        ROS_WARN_STREAM("missing category : "
+                        << missing_category << std::endl
+                        << "skipping conversion for area");
+        return;
+    }
+
     int line_id = vmap_lines.size() + 1;
     for ( auto awmap_area : awmap.findByFilter( [&](autoware_map_msgs::Area a){return true; }))
     {
@@ -249,6 +262,19 @@ void createAreas(const AutowareMap &awmap, std::vector<vector_map_msgs::Area> &v
 
 void createCrossRoads(const AutowareMap &awmap, std::vector<vector_map_msgs::CrossRoad> &vmap_cross_roads)
 {
+    //return if enough information is not subscribed
+    autoware_map::category_t required_category = autoware_map::Category::POINT |
+                                                 autoware_map::Category::AREA |
+                                                 autoware_map::Category::LANE_ATTR_RELATION;
+    if(!awmap.hasSubscribed(required_category) )
+    {
+        autoware_map::Category missing_category = static_cast<autoware_map::Category>(required_category - (required_category & awmap.hasSubscribed()));
+        ROS_WARN_STREAM("missing category : "
+                        << missing_category << std::endl
+                        << "skipping conversion for cross_roads");
+        return;
+    }
+
     unsigned int id = 1;
     for ( auto awmap_relation : awmap.findByFilter( [&](autoware_map_msgs::LaneAttrRelation lar){return lar.attribute_type == autoware_map::LaneAttrRelation::INTERSECTION; }) )
     {
@@ -406,24 +432,45 @@ void createCrossWalks(const AutowareMap &awmap, std::vector<vector_map_msgs::Cro
 
 void createPoints(const AutowareMap &awmap, std::vector<vector_map_msgs::Point> &vmap_points)
 {
+    //return if enough information is not subscribed
+    autoware_map::Category required_category = autoware_map::Category::POINT;
+    if(!awmap.hasSubscribed(required_category) )
+    {
+        autoware_map::Category missing_category = static_cast<autoware_map::Category>(required_category - (required_category & awmap.hasSubscribed()));
+        ROS_WARN_STREAM("missing category : "
+                        << missing_category << std::endl
+                        << "skipping conversion for points");
+        return;
+    }
+
+
     bool epsg_fail_flag = false;
     for ( auto awmap_pt : awmap.findByFilter( [&](autoware_map_msgs::Point pt){return true; }) )
     {
-        if(isJapaneseCoordinate(awmap_pt.epsg)) {
+        if(isJapaneseCoordinate(awmap_pt.epsg) && !epsg_fail_flag) {
             epsg_fail_flag =true;
+            ROS_WARN_STREAM("no corresponding Japanese Plane Rectangular CS Number for specified epsg value" );
         }
         vector_map_msgs::Point vmap_point;
         convertPoint(vmap_point, awmap_pt);
         vmap_points.push_back(vmap_point);
     }
-    if(epsg_fail_flag)
-    {
-        ROS_WARN_STREAM("no corresponding Japanese Plane Rectangular CS Number for specified epsg value");
-    }
 }
 
 void createNodes(const AutowareMap &awmap, std::vector<vector_map_msgs::Node> &vmap_nodes)
 {
+    //return if enough information is not subscribed
+    autoware_map::category_t required_category = autoware_map::Category::POINT |
+                                               autoware_map::Category::WAYPOINT;
+    if(!awmap.hasSubscribed(required_category) )
+    {
+        autoware_map::Category missing_category = static_cast<autoware_map::Category>(required_category - (required_category & awmap.hasSubscribed()));
+        ROS_WARN_STREAM("missing category : "
+                        << missing_category << std::endl
+                        << "skipping conversion for nodes");
+        return;
+    }
+
     for ( auto awmap_wp : awmap.findByFilter([&](autoware_map_msgs::Waypoint){return true; } ))
     {
         vector_map_msgs::Node vmap_node;
@@ -542,6 +589,18 @@ void createDTLanes(const AutowareMap &awmap,
                    std::vector<vector_map_msgs::DTLane> &vmap_dtlanes,
                    std::vector<vector_map_msgs::Lane> &vmap_lanes)
 {
+    //return if enough information is not subscribed
+    autoware_map::category_t required_category = autoware_map::Category::POINT |
+                                                 autoware_map::Category::WAYPOINT_RELATION;
+    if(!awmap.hasSubscribed(required_category) )
+    {
+        autoware_map::Category missing_category = static_cast<autoware_map::Category>(required_category - (required_category & awmap.hasSubscribed()));
+        ROS_WARN_STREAM("missing category : "
+                        << missing_category << std::endl
+                        << "skipping conversion for dtlanes");
+        return;
+    }
+
     unsigned int id = 1;
     std::vector<autoware_map_msgs::WaypointRelation> awmap_waypoint_relations = awmap.findByFilter( [&](autoware_map_msgs::WaypointRelation wr){return true; });
     for ( auto awmap_waypoint_relation : awmap_waypoint_relations )
@@ -634,6 +693,19 @@ void createDTLanes(const AutowareMap &awmap,
 
 void createWayAreas(const AutowareMap &awmap, std::vector<vector_map_msgs::WayArea> &vmap_way_areas)
 {
+    //return if enough information is not subscribed
+    autoware_map::category_t required_category = autoware_map::Category::POINT |
+                                                 autoware_map::Category::AREA |
+                                                 autoware_map::Category::WAYAREA;
+    if(!awmap.hasSubscribed(required_category) )
+    {
+        autoware_map::Category missing_category = static_cast<autoware_map::Category>(required_category - (required_category & awmap.hasSubscribed()));
+        ROS_WARN_STREAM("missing category : "
+                        << missing_category << std::endl
+                        << "skipping conversion for wayareas");
+        return;
+    }
+
     for ( auto awmap_area : awmap.findByFilter( [&](autoware_map_msgs::Wayarea wa){return true; }))
     {
         vector_map_msgs::WayArea way_area;
@@ -646,9 +718,22 @@ void createWayAreas(const AutowareMap &awmap, std::vector<vector_map_msgs::WayAr
 void createSignals( const AutowareMap &awmap,
                     std::vector<vector_map_msgs::Signal> &vmap_signals,
                     std::vector<vector_map_msgs::Vector> &vmap_vectors,
-                    std::vector<vector_map_msgs::Pole> &vmap_dummy_poles
-                    )
+                    std::vector<vector_map_msgs::Pole> &vmap_dummy_poles)
 {
+    //return if enough information is not subscribed
+    autoware_map::category_t required_category = autoware_map::Category::POINT |
+                                                 autoware_map::Category::SIGNAL_LIGHT |
+                                                 autoware_map::Category::SIGNAL |
+                                                 autoware_map::Category::WAYPOINT_SIGNAL_RELATION |
+                                                 autoware_map::Category::LANE_SIGNAL_LIGHT_RELATION;
+    if(!awmap.hasSubscribed(required_category) )
+    {
+        autoware_map::Category missing_category = static_cast<autoware_map::Category>(required_category - (required_category & awmap.hasSubscribed()));
+        ROS_WARN_STREAM("missing category : "
+                        << missing_category << std::endl
+                        << "skipping conversion for signals");
+        return;
+    }
 
     std::vector<autoware_map_msgs::SignalLight> awmap_signal_lights = awmap.findByFilter( [&](autoware_map_msgs::SignalLight sl){return true; });
     std::vector<autoware_map_msgs::WaypointRelation> awmap_waypoint_relations = awmap.findByFilter( [&](autoware_map_msgs::WaypointRelation wr){return true; });
@@ -738,6 +823,18 @@ void createStopLines( const AutowareMap &awmap,
                       std::vector<vector_map_msgs::StopLine> &vmap_stop_lines,
                       std::vector<vector_map_msgs::RoadSign> &vmap_road_signs )
 {
+    autoware_map::category_t required_category = autoware_map::Category::POINT |
+                                                 autoware_map::Category::WAYPOINT |
+                                                 autoware_map::Category::WAYPOINT_RELATION;
+    if(!awmap.hasSubscribed(required_category) )
+    {
+        autoware_map::Category missing_category = static_cast<autoware_map::Category>(required_category - (required_category & awmap.hasSubscribed()));
+        ROS_WARN_STREAM("missing category : "
+                        << missing_category << std::endl
+                        << "skipping conversion for stoplines");
+        return;
+    }
+
     const std::vector<autoware_map_msgs::WaypointRelation> awmap_waypoint_relations = awmap.findByFilter([&](autoware_map_msgs::WaypointRelation ){return true; });
 
     int line_id = vmap_lines.size() + 1;

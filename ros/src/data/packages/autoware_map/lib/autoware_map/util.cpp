@@ -6,43 +6,43 @@ using autoware_map::Key;
 
 autoware_map_msgs::Point getPointFromWaypointId(int waypoint_id, autoware_map::AutowareMap autoware_map)
 {
-  autoware_map_msgs::Waypoint waypoint = autoware_map.findByKey(Key<autoware_map_msgs::Waypoint>(waypoint_id));
-  return autoware_map.findByKey(Key<autoware_map_msgs::Point>(waypoint.point_id));
+    autoware_map_msgs::Waypoint waypoint = autoware_map.findByKey(Key<autoware_map_msgs::Waypoint>(waypoint_id));
+    return autoware_map.findByKey(Key<autoware_map_msgs::Point>(waypoint.point_id));
 }
 
 bool isJapaneseCoordinate(int epsg)
 {
     //EPSG CODE 2443~2461 for JGD2000
     //EPSG CODE 6669~6687 for JGD2011
-  return (epsg >= 2443 && epsg <= 2461) || (epsg >= 6669 && epsg <= 6687);
+    return (epsg >= 2443 && epsg <= 2461) || (epsg >= 6669 && epsg <= 6687);
 }
 
 geometry_msgs::Quaternion convertAngleToGeomQuaternion(const double horizontal_angle, const double vertical_angle)
 {
 
-  double pitch = degreeToRadian(vertical_angle - 90); // convert vertical angle to pitch
-  double yaw = degreeToRadian(-horizontal_angle + 90); // convert horizontal angle to yaw
-  return tf::createQuaternionMsgFromRollPitchYaw(0, pitch, yaw);
+    double pitch = degreeToRadian(vertical_angle - 90); // convert vertical angle to pitch
+    double yaw = degreeToRadian(-horizontal_angle + 90); // convert horizontal angle to yaw
+    return tf::createQuaternionMsgFromRollPitchYaw(0, pitch, yaw);
 }
 
 geometry_msgs::Point convertPointToGeomPoint(const autoware_map_msgs::Point& autoware_point)
 {
-  // NOTE:
-  // We swap x and y axis if
-  // Japan Plane Rectangular Coordinate System is used.
-  geometry_msgs::Point geom_point;
-  if(isJapaneseCoordinate(autoware_point.epsg))
-  {
-    geom_point.x = autoware_point.y;
-    geom_point.y = autoware_point.x;
-    geom_point.z = autoware_point.z;
-  }else
-  {
-    geom_point.x = autoware_point.x;
-    geom_point.y = autoware_point.y;
-    geom_point.z = autoware_point.z;
-  }
-  return geom_point;
+    // NOTE:
+    // We swap x and y axis if
+    // Japan Plane Rectangular Coordinate System is used.
+    geometry_msgs::Point geom_point;
+    if(isJapaneseCoordinate(autoware_point.epsg))
+    {
+        geom_point.x = autoware_point.y;
+        geom_point.y = autoware_point.x;
+        geom_point.z = autoware_point.z;
+    }else
+    {
+        geom_point.x = autoware_point.x;
+        geom_point.y = autoware_point.y;
+        geom_point.z = autoware_point.z;
+    }
+    return geom_point;
 }
 
 
@@ -115,7 +115,7 @@ std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Area& obj)
     for ( auto id = obj.point_ids.begin(); id != obj.point_ids.end(); id++)
     {
         os << *id;
-        if( id+1 != obj.point_ids.end() )
+        if( id + 1 != obj.point_ids.end() )
             os << ":";
     }
     return os;
@@ -186,6 +186,88 @@ std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::WaypointSign
     << obj.signal_id;
     return os;
 }
+
+
+std::ostream& operator<<(std::ostream& os, const autoware_map::Category& cat)
+{
+    if(cat == autoware_map::Category::NONE)
+    {
+        os << "NONE ";
+        return os;
+    }
+    if( cat == autoware_map::Category::ALL)
+    {
+        os << "ALL ";
+        return os;
+    }
+    if( cat & autoware_map::Category::LANE)
+    {
+        os << "LANE ";
+    }
+    if( cat & autoware_map::Category::LANE_ATTR_RELATION)
+    {
+        os << "LANE_ATTR_RELATION ";
+    }
+    if( cat & autoware_map::Category::LANE_RELATION)
+    {
+        os << "LANE_RELATION ";
+    }
+    if( cat & autoware_map::Category::LANE_SIGNAL_LIGHT_RELATION)
+    {
+        os << "LANE_SIGNAL_LIGHT_RELATION ";
+    }
+    if( cat & autoware_map::Category::LANE_CHANGE_RELATION)
+    {
+        os << "LANE_CHANGE_RELATION ";
+    }
+    if( cat & autoware_map::Category::OPPOSITE_LANE_RELATION)
+    {
+        os << "OPPOSITE_LANE_RELATION ";
+    }
+    if( cat & autoware_map::Category::POINT)
+    {
+        os << "POINT ";
+    }
+    if( cat & autoware_map::Category::AREA)
+    {
+        os << "AREA ";
+    }
+    if( cat & autoware_map::Category::ROUTE)
+    {
+        os << "ROUTE ";
+    }
+    if( cat & autoware_map::Category::SIGNAL)
+    {
+        os << "SIGNAL ";
+    }
+    if( cat & autoware_map::Category::SIGNAL_LIGHT)
+    {
+        os << "SIGNAL_LIGHT ";
+    }
+    if( cat & autoware_map::Category::WAYAREA)
+    {
+        os << "WAYAREA ";
+    }
+    if( cat & autoware_map::Category::WAYPOINT)
+    {
+        os << "WAYPOINT ";
+    }
+    if( cat & autoware_map::Category::WAYPOINT_LANE_RELATION)
+    {
+        os << "WAYPOINT_LANE_RELATION ";
+    }
+    if( cat & autoware_map::Category::WAYPOINT_RELATION)
+    {
+        os << "WAYPOINT_RELATION ";
+    }
+    if( cat & autoware_map::Category::WAYPOINT_SIGNAL_RELATION)
+    {
+        os << "WAYPOINT_SIGNAL_RELATION ";
+    }
+
+    return os;
+}
+
 
 std::istream& operator>>(std::istream& is, autoware_map_msgs::Lane& obj)
 {

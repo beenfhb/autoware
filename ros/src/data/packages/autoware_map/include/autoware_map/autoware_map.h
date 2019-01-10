@@ -89,7 +89,7 @@ using autoware_map_msgs::WaypointLaneRelationArray;
 using autoware_map_msgs::WaypointSignalRelation;
 using autoware_map_msgs::WaypointSignalRelationArray;
 
-using category_t = unsigned long long;
+using category_t = uint64_t;
 // using vector_map::Filter;
 // using vector_map::Callback;
 

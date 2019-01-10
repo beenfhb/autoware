@@ -29,7 +29,7 @@
  */
 
 #include <ros/console.h>
-#include <std_msgs/Bool.h>
+#include <std_msgs/UInt64.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <autoware_map/autoware_map.h>
 #include <autoware_map/util.h>
@@ -108,11 +108,7 @@ int main(int argc, char **argv)
     ros::Publisher waypoint_relation_pub = nh.advertise<autoware_map_msgs::WaypointRelationArray>("autoware_map_info/waypoint_relation", 1, true);
     ros::Publisher waypoint_signal_relation_pub = nh.advertise<autoware_map_msgs::WaypointSignalRelationArray>("autoware_map_info/waypoint_signal_relation", 1, true);
     ros::Publisher marker_array_pub = nh.advertise<visualization_msgs::MarkerArray>("autoware_map", 1, true);
-    ros::Publisher stat_pub = nh.advertise<std_msgs::Bool>("awmap_stat", 1, true);
-
-    std_msgs::Bool stat;
-    stat.data = false;
-    stat_pub.publish(stat);
+    ros::Publisher stat_pub = nh.advertise<std_msgs::UInt64>("awmap_stat", 1, true);
 
     std::vector<std::string> file_paths;
     for (int i = 1; i < argc; ++i)
@@ -274,7 +270,8 @@ int main(int argc, char **argv)
             ROS_ERROR_STREAM("unknown csv file: " << file_path);
     }
 
-    stat.data = true;
+    std_msgs::UInt64 stat;
+    stat.data = category;
     stat_pub.publish(stat);
 
     autoware_map::AutowareMap autoware_map;

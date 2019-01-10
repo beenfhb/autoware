@@ -31,6 +31,8 @@ std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Waypoint& ob
 std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::WaypointLaneRelation& obj);
 std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::WaypointRelation& obj);
 std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::WaypointSignalRelation& obj);
+std::ostream& operator<<(std::ostream& os, const autoware_map::Category& cat);
+
 //
 std::istream& operator>>(std::istream& os, autoware_map_msgs::Lane& obj);
 std::istream& operator>>(std::istream& os, autoware_map_msgs::LaneAttrRelation& obj);
