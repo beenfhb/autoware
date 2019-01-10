@@ -16,6 +16,8 @@ float32 resolution
 float32 step_size
 float32 trans_epsilon
 int32 max_iterations
+float32 fermi_kT
+float32 fermi_mu
 #float32 leaf_size
 #float32 angle_error
 #float32 shift_x

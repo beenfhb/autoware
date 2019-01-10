@@ -71,8 +71,18 @@ include_directories(include ${catkin_INCLUDE_DIRS}
 
 SET(CMAKE_CXX_FLAGS "-O2 -g -Wall ${CMAKE_CXX_FLAGS}")
 
+add_library(matching_score SHARED
+        nodes/ndt_matching/matching_score/data_types.cpp
+        nodes/ndt_matching/matching_score/matching_score.cpp
+        nodes/ndt_matching/matching_score/matching_score_histogram.cpp
+        )
+add_dependencies(matching_score
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(matching_score ${catkin_LIBRARIES})
+
 add_executable(ndt_matching nodes/ndt_matching/ndt_matching.cpp)
-target_link_libraries(ndt_matching ${catkin_LIBRARIES})
+target_link_libraries(ndt_matching matching_score ${catkin_LIBRARIES})
 add_dependencies(ndt_matching ${catkin_EXPORTED_TARGETS})
 
 add_executable(ndt_mapping nodes/ndt_mapping/ndt_mapping.cpp)

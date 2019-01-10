@@ -13,6 +13,12 @@
   <arg name="use_local_transform" default="false" />
   <arg name="sync" default="false" />
   <arg name="output_log_data" default="false" />
+  <arg name="cutoff_lower_limit_z" default="0.3" />
+  <arg name="cutoff_upper_limit_z" default="2.5" />
+  <arg name="cutoff_lower_limit_range" default="3.0" />
+  <arg name="cutoff_upper_limit_range" default="30.0" />
+  <arg name="fermi_kT" default="0.01" />
+  <arg name="fermi_mu" default="0.05" />
 
   <node pkg="lidar_localizer" type="ndt_matching" name="ndt_matching" output="log">
     <param name="method_type" value="$(arg method_type)" />
@@ -26,6 +32,12 @@
     <param name="get_height" value="$(arg get_height)" />
     <param name="use_local_transform" value="$(arg use_local_transform)" />
     <param name="output_log_data" value="$(arg output_log_data)" />
+    <param name="cutoff_lower_limit_z" value="$(arg cutoff_lower_limit_z)" />
+    <param name="cutoff_upper_limit_z" value="$(arg cutoff_upper_limit_z)" />
+    <param name="cutoff_lower_limit_range" value="$(arg cutoff_lower_limit_range)" />
+    <param name="cutoff_upper_limit_range" value="$(arg cutoff_upper_limit_range)" />
+    <param name="fermi_kT" value="$(arg fermi_kT)" />
+    <param name="fermi_mu" value="$(arg fermi_mu)" />
     <remap from="/points_raw" to="/sync_drivers/points_raw" if="$(arg sync)" />
   </node>
 

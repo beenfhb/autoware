@@ -69,6 +69,9 @@
 
 #include <autoware_msgs/NDTStat.h>
 
+#include "matching_score/matching_score.h"
+#include "matching_score/matching_score_histogram.h"
+
 #define PREDICT_POSE_THRESHOLD 0.5
 
 #define Wa 0.4
@@ -154,12 +157,20 @@ static geometry_msgs::PoseStamped localizer_pose_msg;
 static ros::Publisher estimate_twist_pub;
 static geometry_msgs::TwistStamped estimate_twist_msg;
 
+
+static ros::Publisher matching_score_pub;
+static ros::Publisher matching_score_histogram_pub;
+
+static ros::Publisher matching_points_pub;
+static ros::Publisher unmatching_points_pub;
+
 static ros::Duration scan_duration;
 
 static double exe_time = 0.0;
 static bool has_converged;
 static int iteration = 0;
 static double fitness_score = 0.0;
+static double matching_score = 0.0;
 static double trans_probability = 0.0;
 
 static double diff = 0.0;
@@ -183,6 +194,11 @@ static double current_accel_z = 0.0;
 // static double current_accel_yaw = 0.0;
 
 static double angular_velocity = 0.0;
+
+static double _cutoff_lower_limit_z = 0.3;
+static double _cutoff_upper_limit_z = 2.5;
+static double _cutoff_lower_limit_range = 3.0;
+static double _cutoff_upper_limit_range = 30.0;
 
 static int use_predict_pose = 0;
 
@@ -231,6 +247,8 @@ static tf::StampedTransform local_transform;
 static unsigned int points_map_num = 0;
 
 pthread_mutex_t mutex;
+
+static MatchingScore<pcl::PointXYZ> matching_score_;
 
 static void param_callback(const autoware_config_msgs::ConfigNDT::ConstPtr& input)
 {
@@ -319,6 +337,9 @@ static void param_callback(const autoware_config_msgs::ConfigNDT::ConstPtr& inpu
       omp_ndt.setMaximumIterations(ndt_res);
 #endif
   }
+
+  matching_score_.setFermikT(input->fermi_kT);
+  matching_score_.setFermiMu(input->fermi_mu);
 
   if (_use_gnss == 0 && init_pos_set == 0)
   {
@@ -501,6 +522,8 @@ static void map_callback(const sensor_msgs::PointCloud2::ConstPtr& input)
       pthread_mutex_unlock(&mutex);
     }
 #endif
+
+    matching_score_.setInputTarget(map_ptr);
     map_loaded = 1;
   }
 }
@@ -1373,6 +1396,69 @@ static void points_callback(const sensor_msgs::PointCloud2::ConstPtr& input)
                            Wc * ((2.0 - trans_probability) / 2.0) * 100.0;
     ndt_reliability_pub.publish(ndt_reliability);
 
+    pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_scan_baselinkTF_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::transformPointCloud(*filtered_scan_ptr, *filtered_scan_baselinkTF_ptr, tf_btol);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_scan_baselinkTF_cutoff_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+    for(const auto point : filtered_scan_baselinkTF_ptr->points)
+    {
+        const double range = std::sqrt(point.x*point.x + point.y*point.y + point.z*point.z);
+        if ((point.z > _cutoff_upper_limit_z || point.z < _cutoff_lower_limit_z)
+          &&(range > _cutoff_lower_limit_range && range < _cutoff_upper_limit_range))
+        {
+            filtered_scan_baselinkTF_cutoff_ptr->push_back(point);
+        }
+    }
+    pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_scan_mapTF_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::transformPointCloud(*filtered_scan_baselinkTF_cutoff_ptr, *filtered_scan_mapTF_ptr, t * tf_btol.inverse());
+
+    const auto calc_matching_score_start = std::chrono::system_clock::now();
+    matching_score = matching_score_.calcMatchingScore(filtered_scan_mapTF_ptr);
+    const auto calc_matching_score_end = std::chrono::system_clock::now();
+    const auto calc_matching_score_time = std::chrono::duration_cast<std::chrono::microseconds>(calc_matching_score_end - calc_matching_score_start).count() / 1000.0;
+    std_msgs::Float32 matching_score_msg;
+    matching_score_msg.data = matching_score;
+    matching_score_pub.publish(matching_score_msg);
+
+    if(matching_score_histogram_pub.getNumSubscribers() > 0)
+    {
+        MatchingScoreHistogram matching_score_histogram;
+        const auto point_with_distance_array = matching_score_.getPointWithDistanceArray();
+        auto matching_score_histogram_msg = matching_score_histogram.createHistogramWithRangeMsg(point_with_distance_array);
+        matching_score_histogram_msg.header.stamp = current_scan_time;
+        matching_score_histogram_pub.publish(matching_score_histogram_msg);
+    }
+    if(matching_points_pub.getNumSubscribers() > 0 || unmatching_points_pub.getNumSubscribers() > 0)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr matching_points_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr unmatching_points_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+
+        const auto point_with_distance_array = matching_score_.getPointWithDistanceArray();
+        for(const auto& point_with_distance : point_with_distance_array)
+        {
+            //more than score 50%
+            if(point_with_distance.distance < matching_score_.getFermiMu())
+            {
+                matching_points_ptr->points.push_back(point_with_distance.point);
+            }
+            else
+            {
+                unmatching_points_ptr->points.push_back(point_with_distance.point);
+            }
+        }
+
+        sensor_msgs::PointCloud2 matching_points_msg;
+        pcl::toROSMsg(*matching_points_ptr, matching_points_msg);
+        matching_points_msg.header.frame_id = "/map";
+        matching_points_msg.header.stamp = current_scan_time;
+        matching_points_pub.publish(matching_points_msg);
+
+        sensor_msgs::PointCloud2 unmatching_points_msg;
+        pcl::toROSMsg(*unmatching_points_ptr, unmatching_points_msg);
+        unmatching_points_msg.header.frame_id = "/map";
+        unmatching_points_msg.header.stamp = current_scan_time;
+        unmatching_points_pub.publish(unmatching_points_msg);
+    }
+
     // Write log
     if(_output_log_data)
     {
@@ -1405,6 +1491,7 @@ static void points_callback(const sensor_msgs::PointCloud2::ConstPtr& input)
     std::cout << "Number of Filtered Scan Points: " << scan_points_num << " points." << std::endl;
     std::cout << "NDT has converged: " << has_converged << std::endl;
     std::cout << "Fitness Score: " << fitness_score << std::endl;
+    std::cout << "Matching Score: " << matching_score << std::endl;
     std::cout << "Transformation Probability: " << trans_probability << std::endl;
     std::cout << "Execution Time: " << exe_time << " ms." << std::endl;
     std::cout << "Number of Iterations: " << iteration << std::endl;
@@ -1416,6 +1503,7 @@ static void points_callback(const sensor_msgs::PointCloud2::ConstPtr& input)
     std::cout << t << std::endl;
     std::cout << "Align time: " << align_time << std::endl;
     std::cout << "Get fitness score time: " << getFitnessScore_time << std::endl;
+    std::cout <<  "Matching score time: " << calc_matching_score_time << std::endl;
     std::cout << "-----------------------------------------------------------------" << std::endl;
 
     offset_imu_x = 0.0;
@@ -1512,6 +1600,19 @@ int main(int argc, char** argv)
   private_nh.getParam("use_odom", _use_odom);
   private_nh.getParam("imu_upside_down", _imu_upside_down);
   private_nh.getParam("imu_topic", _imu_topic);
+
+  private_nh.getParam("cutoff_lower_limit_z", _cutoff_lower_limit_z);
+  private_nh.getParam("cutoff_upper_limit_z", _cutoff_upper_limit_z);
+  private_nh.getParam("cutoff_lower_limit_range", _cutoff_lower_limit_range);
+  private_nh.getParam("cutoff_upper_limit_range", _cutoff_upper_limit_range);
+
+  double fermi_kT = matching_score_.getFermikT();
+  private_nh.getParam("fermi_kT", fermi_kT);
+  matching_score_.setFermikT(fermi_kT);
+
+  double fermi_mu = matching_score_.getFermiMu();
+  private_nh.getParam("fermi_mu", fermi_mu);
+  matching_score_.setFermiMu(fermi_mu);
 
   if (nh.getParam("localizer", _localizer) == false)
   {
@@ -1614,6 +1715,10 @@ int main(int argc, char** argv)
   time_ndt_matching_pub = nh.advertise<std_msgs::Float32>("/time_ndt_matching", 10);
   ndt_stat_pub = nh.advertise<autoware_msgs::NDTStat>("/ndt_stat", 10);
   ndt_reliability_pub = nh.advertise<std_msgs::Float32>("/ndt_reliability", 10);
+  matching_score_pub = nh.advertise<std_msgs::Float32>("/matching_score", 10);
+  matching_score_histogram_pub = nh.advertise<jsk_recognition_msgs::HistogramWithRange>("/nearest_points_histogram", 10);
+  matching_points_pub = nh.advertise<sensor_msgs::PointCloud2>("/matching_points", 10);
+  unmatching_points_pub = nh.advertise<sensor_msgs::PointCloud2>("/unmatching_points", 10);
 
   // Subscribers
   ros::Subscriber param_sub = nh.subscribe("config/ndt", 10, param_callback);
