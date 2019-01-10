@@ -13,7 +13,7 @@ from .treeview   import AwControlPanel
 from .procmgr    import AwProcessPanel
 from .summary    import AwSummaryPanel
 from .network    import AwTcpServerPanel
-from .starter    import AwStarterPanel
+from .quickstart import AwQuickStartPanel
 from .simulation import AwSimulationWidget
 
 
@@ -52,7 +52,7 @@ class AwQtGuiClient(object):
         self.__summary    = AwSummaryPanel(self)  # ToDo: consider moving to guimgr
         self.__process    = AwProcessPanel(self)  # ToDo: consider moving to guimgr
         self.__network    = AwTcpServerPanel()
-        self.__starter    = AwStarterPanel(self)
+        self.__quickstart = AwQuickStartPanel(self.__guimgr)
         self.__simulation = AwSimulationWidget(self.__guimgr)
 
         tabwidget = QtWidgets.QTabWidget()
@@ -73,9 +73,9 @@ class AwQtGuiClient(object):
         hsplitter.addWidget(tabwidget)
 
         mainwidget = QtWidgets.QTabWidget()
-        mainwidget.addTab(hsplitter,      "Profile Edit")
-        mainwidget.addTab(self.__starter, "Quick Start")
-        mainwidget.addTab(self.__network, "Server Debug")
+        mainwidget.addTab(hsplitter,         "Profile Edit")
+        mainwidget.addTab(self.__quickstart, "Quick Start")
+        mainwidget.addTab(self.__network,    "Server Debug")
 
         mainsplitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
         mainsplitter.addWidget(self.__simulation)
@@ -101,7 +101,7 @@ class AwQtGuiClient(object):
         self.__panels.append(self.__treeview)
         self.__panels.append(self.__summary)
         self.__panels.append(self.__process)
-        #self.__panels.append(self.__control)
+        self.__panels.append(self.__quickstart)
 
         self.__treeview.register_select_listener(self.__summary)
         self.__treeview.register_select_listener(self.__process)
@@ -114,11 +114,11 @@ class AwQtGuiClient(object):
 
     def profile_updated(self):
         self.__mirror.clear()
-        for panel in self.__panels: panel.profile_cleared()
+        for panel in self.__panels: panel.profile_ui_cleared()
 
         for lpath in self.__server.list_node():
             lnode = self.__mirror.create(lpath)
-            for panel in self.__panels: panel.config_created(lnode)
+            for panel in self.__panels: panel.node_ui_created(lnode)
 
         self.__treeview.expandAll()
         #self.__treeview.expandToDepth(0)
@@ -126,25 +126,28 @@ class AwQtGuiClient(object):
     def node_created(self, lpath):
         print "node_created: " + lpath
         lnode = self.__mirror.create(lpath)
-        for panel in self.__panels: panel.config_created(lnode)
+        for panel in self.__panels: panel.node_ui_created(lnode)
 
         lpath = fspath.parentpath(lpath)
         while lpath:
             print "node_updated: " + lpath
             self.__mirror.clear(lpath)
-            self.__summary.node_updated(lpath)
+            lnode = self.__mirror.create(lpath)
+            for panel in self.__panels: panel.node_ui_updated(lnode)
             lpath = fspath.parentpath(lpath)
 
     def node_updated(self, lpath):
         while lpath:
             print "node_updated: " + lpath
             self.__mirror.clear(lpath)
-            self.__summary.node_updated(lpath)
+            lnode = self.__mirror.create(lpath)
+            for panel in self.__panels: panel.node_ui_updated(lnode)
             lpath = fspath.parentpath(lpath)
 
     def status_updated(self, lpath, state):
         print "status_updated:" + lpath + " " + str(state)
-        self.__treeview.status_updated(lpath, state)
+        self.__treeview.status_ui_updated(lpath, state)
+        self.__quickstart.status_ui_updated(lpath, state)
 
 
 
@@ -157,7 +160,7 @@ class AwQtGuiClient(object):
     def find_node(self, lpath):
         return self.__server.find_node(lpath)
 
-    def launch_config(self, lpath, xmode):
+    def launch_node(self, lpath, xmode):
         return self.__server.launch_node(lpath, xmode)
 
     def create_node(self, lpath, ppath):

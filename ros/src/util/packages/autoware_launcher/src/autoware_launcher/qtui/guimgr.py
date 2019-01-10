@@ -69,22 +69,26 @@ class AwQtGuiManager(object):
         layout.setContentsMargins(5, 2, 2, 2)
         return layout
 
+    def panel_add_widget(self, panel, widget):
 
-    def setup_panel_layout(self, widget):
+        index = panel.layout().count() - 2
+        panel.layout().insertWidget(index, widget)
 
-        if self.layout() is None:
-            self._setup_panel_layout(widget)
+    def panel_setup(self, widget):
+
+        if widget.layout() is None:
+            self.__panel_setup(widget)
         else:
-            self._reset_panel_layout(widget)
+            self.__panel_reset(widget)
 
-    def _setup_panel_layout(self, widget):
+    def __panel_setup(self, widget):
 
         footer_layout = QtWidgets.QHBoxLayout()
         footer_layout.setContentsMargins(2, 2, 2, 2)
         footer_layout.setSpacing(2)
         footer_layout.addStretch()
         widget.footer = QtWidgets.QWidget()
-        widget.footer.setLayout(layout)
+        widget.footer.setLayout(footer_layout)
 
         widget_layout = QtWidgets.QVBoxLayout()
         widget_layout.setContentsMargins(16, 16, 16, 16)
@@ -93,14 +97,57 @@ class AwQtGuiManager(object):
         widget_layout.addWidget(widget.footer)
         widget.setLayout(widget_layout)
 
-    def _reset_panel_layout(self, widget):
+    def __panel_reset(self, widget):
 
-        footer_layout = self.footer.layout()
+        footer_layout = widget.footer.layout()
         while 1 < footer_layout.count():
             footer_layout.takeAt(footer_layout.count() - 1).widget().deleteLater()
 
-        widget_layout = self.layout()
+        widget_layout = widget.layout()
         while 2 < widget_layout.count():
             widget_layout.takeAt(0).widget().deleteLater()
 
-    #ToDo: create_popup_window
+    def frame_add_widget(self, frame, widget):
+        widget.setObjectName("FrameWidget")
+        frame.layout().addWidget(widget)
+
+    def frame_add_button(self, frame, button):
+        frame.header.layout().addWidget(button)
+
+    def frame_add_text_widget(self, frame, text):
+        layout = self.create_frame_header_hlayout()
+        layout.addWidget(QtWidgets.QLabel(text))
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        self.frame_add_widget(frame, widget)
+
+    def frame_setup(self, widget):
+
+        if widget.layout() is None:
+            self.__frame_setup(widget)
+        else:
+            self.__frame_reset(widget)
+
+    def __frame_setup(self, widget):
+
+        widget.title = QtWidgets.QLabel("No Title")
+        widget.title.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+        layout = self.create_frame_header_hlayout()
+        layout.addWidget(widget.title)
+        widget.header = QtWidgets.QWidget()
+        widget.header.setObjectName("FrameHeader")
+        widget.header.setLayout(layout)
+
+        layout = self.create_frame_entire_vlayout()
+        layout.addWidget(widget.header)
+        widget.setLayout(layout)
+
+    def __frame_reset(self, widget):
+
+        layout = widget.header.layout()
+        while 1 < layout.count():
+            layout.takeAt(layout.count() - 1).widget().deleteLater()
+
+        layout = widget.layout()
+        while 1 < layout.count():
+            layout.takeAt(layout.count() - 1).widget().deleteLater()

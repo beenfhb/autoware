@@ -18,11 +18,14 @@ class AwProcessPanel(QtWidgets.QStackedWidget):
         self.__dummy = QtWidgets.QLabel("This is node")
         self.addWidget(self.__dummy)
 
-    def profile_cleared(self):
+    def profile_ui_cleared(self):
         for key in self.__items.keys():
             self.__items.pop(key).deleteLater()
 
-    def config_created(self, lnode):
+    def node_ui_updated(self, lnode):
+        pass
+
+    def node_ui_created(self, lnode):
         lpath = lnode.path()
         if lnode.plugin().isleaf():
             item = AwProcessItem(lpath)

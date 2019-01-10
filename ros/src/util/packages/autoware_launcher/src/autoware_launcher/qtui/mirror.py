@@ -94,9 +94,8 @@ class AwLaunchNodeMirror(object):
     def childnames(self):
         return map(lambda node: node.nodename(), self.__find().children())
 
-    def updated(self):
-        for widget in self.__refs:
-            if hasattr(widget, "node_updated"): widget.node_updated()
+    def childnodes(self):
+        return [self.__tree.create(child.nodepath()) for child in self.__find().children()]
 
     def get_config(self, key, value = None):
         return self.__find().config.get(key, value)

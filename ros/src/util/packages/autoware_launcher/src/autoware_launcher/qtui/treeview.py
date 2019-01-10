@@ -30,11 +30,11 @@ class AwTreeViewPanel(QtWidgets.QTreeWidget):
             super(AwTreeViewPanel, self).keyPressEvent(event)
         elif event.key() == QtCore.Qt.Key_R:
             lpath = self.currentItem().lpath
-            self.__client.launch_config(lpath, True)
+            self.__client.launch_node(lpath, True)
             event.accept()
         elif event.key() == QtCore.Qt.Key_T:
             lpath = self.currentItem().lpath
-            self.__client.launch_config(lpath, False)
+            self.__client.launch_node(lpath, False)
             event.accept()
         else:
             event.ignore()
@@ -45,16 +45,17 @@ class AwTreeViewPanel(QtWidgets.QTreeWidget):
     def register_select_listener(self, panel):
         self.__panels.append(panel)
 
-    def status_updated(self, lpath, state):
+    def status_ui_updated(self, lpath, state):
         self.__items[lpath].status_updated(state)
 
-    #def node_updated(self, lnode):
-
-    def profile_cleared(self):
+    def profile_ui_cleared(self):
         if self.__items:
             self.config_removed("root")
 
-    def config_created(self, lnode):
+    def node_ui_updated(self, lnode):
+        pass
+
+    def node_ui_created(self, lnode):
         lpath = lnode.path()
         ppath, lname = os.path.split(lpath)
         if ppath:
@@ -128,10 +129,10 @@ class AwControlPanel(QtWidgets.QWidget):
         self.layout().addLayout(layout)
 
     def exec_config(self):
-        self.__client.launch_config(self.__lpath.text(), True)
+        self.__client.launch_node(self.__lpath.text(), True)
 
     def term_config(self):
-        self.__client.launch_config(self.__lpath.text(), False)
+        self.__client.launch_node(self.__lpath.text(), False)
 
     def config_selected(self, lpath):
         self.__lpath.setText(lpath)
