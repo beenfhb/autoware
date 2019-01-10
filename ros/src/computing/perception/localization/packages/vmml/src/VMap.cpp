@@ -493,14 +493,32 @@ kpidField::countPositive() const
 cv::Ptr<cv::FeatureDetector>
 VMap::createFeatureDetector(FeatureDetectorT fd)
 {
+	cv::Ptr<cv::FeatureDetector> rt;
+
 	switch (fd) {
-	case FeatureDetectorT::ORB:
-		return cv::ORB::create(MAX_ORB_POINTS_IN_FRAME);
+	case FeatureDetectorT::ORB: {
+		cv::Ptr<cv::ORB> ORBf = cv::ORB::create(MAX_ORB_POINTS_IN_FRAME);
+		rt = ORBf;
+
+		// Fill scale factors
+		int level = ORBf->getNLevels();
+		mScaleFactors.resize(level);
+		mLevelSigma2.resize(level);
+		mScaleFactors[0] = 1.0;
+		mLevelSigma2[0] = 1.0;
+		for (int i=0; i<level; ++i) {
+			// XXX: Incomplete
+		}
+
+	}
 		break;
-	case FeatureDetectorT::AKAZE:
-		return cv::AKAZE::create();
+	case FeatureDetectorT::AKAZE: {
+		rt = cv::AKAZE::create();
+	}
 		break;
 	}
+
+	return rt;
 }
 
 

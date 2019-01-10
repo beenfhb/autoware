@@ -365,6 +365,25 @@ KeyFrame::matchForInitialization(
 		const KeyFrame &kf2,
 		std::vector<FeaturePair> &featurePairs)
 {
+	auto F12 = BaseFrame::FundamentalMatrix(kf1, kf2);
+
+	for (kpid i1=0; i1<kf1.fKeypoints.size(); i1++) {
+
+		// Epipolar line in KF2 for this keypoint
+		Vector3d kp1 (kf2.fKeypoints[i1].pt.x, kf2.fKeypoints[i1].pt.y, 1.0);
+
+		Line2 epl2;
+		epl2.coeffs() = F12 * kp1;
+		epl2.normalize();
+
+		vector<kpid> kp2list;
+		for(kpid i2=0; i2<kf2.fKeypoints.size(); i2++) {
+			Vector2d kp2(kf2.fKeypoints[i2].pt.x, kf2.fKeypoints[i2].pt.y);
+			auto d = epl2.absDistance(kp2);
+		}
+
+	}
+
 	// XXX: Unfinished
 
 	// Compute epipole in second keyframe

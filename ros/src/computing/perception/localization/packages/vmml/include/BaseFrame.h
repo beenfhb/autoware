@@ -24,7 +24,10 @@
 #include "CameraPinholeParams.h"
 #include "utilities.h"
 
+
 typedef Eigen::Hyperplane<double, 3> Plane3;
+typedef Eigen::Hyperplane<double, 2> Line2;
+
 
 class MapPoint;
 

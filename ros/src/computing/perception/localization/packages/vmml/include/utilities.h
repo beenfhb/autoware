@@ -16,6 +16,7 @@
 #include <limits>
 #include <algorithm>
 #include <Eigen/Eigen>
+#include <Eigen/Geometry>
 
 #include <boost/filesystem.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -155,6 +156,14 @@ maximumMapElement(const map<k,v> &maptg)
 	);
 	return *p;
 }
+
+
+// Plane and Line manipulation
+typedef Eigen::Hyperplane<double, 3> Plane3;
+typedef Eigen::Hyperplane<double, 2> Line2;
+
+// Lines in 3D are represented as parametrized lines
+typedef Eigen::ParametrizedLine<double, 3> Line3;
 
 
 /*

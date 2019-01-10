@@ -267,6 +267,9 @@ protected:
 
 	void updateCovisibilityGraph(const kfid k);
 
+	static std::vector<float> mScaleFactors;
+	static std::vector<float> mLevelSigma2;
+
 };
 
 #endif /* VMAP_H_ */
