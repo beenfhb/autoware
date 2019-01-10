@@ -14,7 +14,6 @@ void insertMarkerArray(MarkerArray& a1, const MarkerArray& a2)
     a1.markers.insert(a1.markers.end(), a2.markers.begin(), a2.markers.end());
 }
 
-
 Marker createLinkedLineMarker(const std::string& ns, int id, Color color, const VectorMap& vmap,
                                                   const vector_map_msgs::Line& line)
 {

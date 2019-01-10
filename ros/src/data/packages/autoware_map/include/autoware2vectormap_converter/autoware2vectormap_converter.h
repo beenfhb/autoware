@@ -40,6 +40,73 @@
 #include <sys/stat.h>
 #include <unordered_map>
 
+
+class Converter
+{
+
+public:
+    Converter();
+    ~Converter();
+private:
+    ros::NodeHandle nh;
+
+    autoware_map::AutowareMap awmap_;
+
+    std::vector<vector_map_msgs::Point> vmap_points_;
+    std::vector<vector_map_msgs::Node> vmap_nodes_;
+    std::vector<vector_map_msgs::Area> vmap_areas_;
+    std::vector<vector_map_msgs::Line> vmap_lines_;
+    std::vector<vector_map_msgs::DTLane> vmap_dtlanes_;
+    std::vector<vector_map_msgs::Lane> vmap_lanes_;
+    std::vector<vector_map_msgs::CrossRoad> vmap_cross_roads_;
+    std::vector<vector_map_msgs::CrossWalk> vmap_cross_walks_;
+    std::vector<vector_map_msgs::WayArea> vmap_way_areas_;
+    std::vector<vector_map_msgs::Signal> vmap_signals_;
+    std::vector<vector_map_msgs::Vector> vmap_vectors_;
+    std::vector<vector_map_msgs::Pole> vmap_dummy_poles_;
+    std::vector<vector_map_msgs::StopLine> vmap_stop_lines_;
+    std::vector<vector_map_msgs::RoadSign> vmap_road_signs_;
+
+    //Publishers & Subscribers
+    std::map<std::string,ros::Publisher> vmap_pubs_;
+    ros::Publisher vmap_stat_pub_;
+    ros::Publisher marker_array_pub_;
+    ros::Subscriber awmap_stat_sub_;
+
+    void statusCallback(const std_msgs::Bool::ConstPtr &awmap_stat);
+    void publishVectorMap();
+
+};
+
+//conversion functions these don't have to be a member function of Converter class since it does not touch member variables
+void convertPoint(vector_map_msgs::Point &vmap_point, const autoware_map_msgs::Point awmap_point);
+void createPoints(const autoware_map::AutowareMap &awmap, std::vector<vector_map_msgs::Point> &vmap_points);
+void createNodes(const autoware_map::AutowareMap &awmap, std::vector<vector_map_msgs::Node> &vmap_nodes);
+void createAreas(const autoware_map::AutowareMap &awmap, std::vector<vector_map_msgs::Area> &vmap_areas, std::vector<vector_map_msgs::Line> &vmap_lines);
+void createCrossRoads(const autoware_map::AutowareMap &awmap, std::vector<vector_map_msgs::CrossRoad> &vmap_cross_roads);
+int createSquareArea(double x, double y, double z, double length,
+                     std::vector<vector_map_msgs::Area> &vmap_areas, std::vector<vector_map_msgs::Line> &vmap_lines,
+                     std::vector<vector_map_msgs::Point> &vmap_points);
+void createCrossWalks(const autoware_map::AutowareMap &awmap, std::vector<vector_map_msgs::CrossWalk> &vmap_cross_walks,
+                      std::vector<vector_map_msgs::Area> &vmap_areas, std::vector<vector_map_msgs::Line> &vmap_lines,
+                      std::vector<vector_map_msgs::Point> &vmap_points);
+int getJunctionType(const std::vector<autoware_map_msgs::WaypointRelation> awmap_waypoint_relations, std::vector<int> branching_idx, std::vector<int> merging_idx);
+void createDTLanes(const autoware_map::AutowareMap &awmap, std::vector<vector_map_msgs::DTLane> &vmap_dtlanes, std::vector<vector_map_msgs::Lane> &vmap_lanes);
+void createWayAreas(const autoware_map::AutowareMap &awmap, std::vector<vector_map_msgs::WayArea> &vmap_way_areas);
+void createSignals( const autoware_map::AutowareMap &awmap,
+                    std::vector<vector_map_msgs::Signal> &vmap_signals,
+                    std::vector<vector_map_msgs::Vector> &vmap_vectors,
+                    std::vector<vector_map_msgs::Pole> &vmap_dummy_poles);
+void createStopLines( const autoware_map::AutowareMap &awmap,
+                      std::vector<vector_map_msgs::Line> &vmap_lines,
+                      std::vector<vector_map_msgs::Point> &vmap_points,
+                      std::vector<vector_map_msgs::StopLine> &vmap_stop_lines,
+                      std::vector<vector_map_msgs::RoadSign> &vmap_road_signs);
+vector_map_msgs::RoadSign createDummyRoadSign(int id);
+
+std::vector<int> findBranchingIdx(const std::vector<autoware_map_msgs::WaypointRelation> relation, int root_index);
+std::vector<int> findMergingIdx(const std::vector<autoware_map_msgs::WaypointRelation> relation, int merged_index);
+
 //utils
 int convertESPGToRef(int epsg);
 double addAngles(double angle1, double angle2);

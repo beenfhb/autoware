@@ -32,6 +32,7 @@ target_link_libraries( autoware_map ${catkin_LIBRARIES} )
 
 add_executable( autoware2vectormap_converter
                 nodes/autoware2vectormap_converter/autoware2vectormap_converter.cpp
+                nodes/autoware2vectormap_converter/converter_core.cpp
                 nodes/autoware2vectormap_converter/vmap_visualization.cpp
                 nodes/autoware2vectormap_converter/converter_util.cpp)
 

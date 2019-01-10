@@ -108,7 +108,7 @@ int main(int argc, char **argv)
     ros::Publisher waypoint_relation_pub = nh.advertise<autoware_map_msgs::WaypointRelationArray>("autoware_map_info/waypoint_relation", 1, true);
     ros::Publisher waypoint_signal_relation_pub = nh.advertise<autoware_map_msgs::WaypointSignalRelationArray>("autoware_map_info/waypoint_signal_relation", 1, true);
     ros::Publisher marker_array_pub = nh.advertise<visualization_msgs::MarkerArray>("autoware_map", 1, true);
-    ros::Publisher stat_pub = nh.advertise<std_msgs::Bool>("awm_stat", 1, true);
+    ros::Publisher stat_pub = nh.advertise<std_msgs::Bool>("awmap_stat", 1, true);
 
     std_msgs::Bool stat;
     stat.data = false;
