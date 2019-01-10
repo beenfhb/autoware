@@ -30,7 +30,11 @@ add_library( autoware_map lib/autoware_map/autoware_map.cpp lib/autoware_map/uti
 add_dependencies( autoware_map ${catkin_EXPORTED_TARGETS} )
 target_link_libraries( autoware_map ${catkin_LIBRARIES} )
 
-add_executable( autoware2vectormap_converter nodes/autoware2vectormap_converter/autoware2vectormap_converter.cpp)
+add_executable( autoware2vectormap_converter
+                nodes/autoware2vectormap_converter/autoware2vectormap_converter.cpp
+                nodes/autoware2vectormap_converter/vmap_visualization.cpp
+                nodes/autoware2vectormap_converter/converter_util.cpp)
+
 add_dependencies( autoware2vectormap_converter ${catkin_EXPORTED_TARGETS})
 target_link_libraries( autoware2vectormap_converter ${catkin_LIBRARIES} autoware_map)
 

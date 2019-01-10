@@ -1,5 +1,6 @@
 # Ver 1.0
 
+#Attribute types
 uint32 PLANE = 1
 uint32 INTERSECTION = 2
 uint32 CROSS_WALK = 3

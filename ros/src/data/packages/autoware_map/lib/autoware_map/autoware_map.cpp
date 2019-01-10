@@ -466,7 +466,7 @@ void AutowareMap::subscribe(ros::NodeHandle& nh, category_t category, const size
 template<typename T> // for the member template
 T AutowareMap::findById(const int id) const
 {
-  return findByKey(Key<T>(id));
+    return findByKey(Key<T>(id));
 }
 template Lane AutowareMap::findById<Lane>(int) const;
 template LaneAttrRelation AutowareMap::findById<LaneAttrRelation>(int) const;
@@ -615,5 +615,24 @@ std::vector<WaypointSignalRelation> AutowareMap::findByFilter(const Filter<Waypo
     return waypoint_signal_relation_.findByFilter(filter);
 }
 
+void AutowareMap::clear()
+{
+    lane_.clear();
+    lane_attr_relation_.clear();
+    lane_relation_.clear();
+    lane_signal_light_relation_.clear();
+    lane_change_relation_.clear();
+    opposite_lane_relation_.clear();
+    point_.clear();
+    area_.clear();
+    route_.clear();
+    signal_.clear();
+    signal_light_.clear();
+    wayarea_.clear();
+    waypoint_.clear();
+    waypoint_lane_relation_.clear();
+    waypoint_relation_.clear();
+    waypoint_signal_relation_.clear();
+}
 
 } //namespace autoware_map

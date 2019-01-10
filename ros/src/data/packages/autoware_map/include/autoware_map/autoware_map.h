@@ -220,6 +220,11 @@ public:
   {
     return map_.empty();
   }
+
+  void clear()
+  {
+      map_.clear();
+  }
 };
 
 class AutowareMap
@@ -286,8 +291,6 @@ public:
     std::vector<WaypointRelation> findByFilter(const Filter<WaypointRelation>& filter) const;
     std::vector<WaypointSignalRelation> findByFilter(const Filter<WaypointSignalRelation>& filter) const;
 
-
-
     bool hasSubscribed(category_t category) const;
     category_t hasSubscribed() const;
 
@@ -307,6 +310,8 @@ public:
     void registerCallback(const Callback<WaypointLaneRelation>& cb);
     void registerCallback(const Callback<WaypointRelation>& cb);
     void registerCallback(const Callback<WaypointSignalRelation>& cb);
+
+    void clear();
 };
 } //namespace
 

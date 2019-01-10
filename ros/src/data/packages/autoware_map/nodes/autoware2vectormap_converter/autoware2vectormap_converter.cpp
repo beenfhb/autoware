@@ -1,309 +1,20 @@
-// #include <ros/console.h>
-#include <ros/ros.h>
-#include <std_msgs/Bool.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <autoware_map/autoware_map.h>
-#include <autoware_map/util.h>
-#include <vector_map/vector_map.h>
-#include <sys/stat.h>
+#include <autoware2vectormap_converter/autoware2vectormap_converter.h>
 
-#include <unordered_map>
-
-using vector_map::isValidMarker;
-using vector_map::createVectorMarker;
-using vector_map::createAreaMarker;
-using vector_map::Color;
 using vector_map::VectorMap;
-
-int convertESPG2Ref(int epsg)
-{
-
-    if(epsg >= 2443 && epsg <= 2461)
-    {
-        return epsg - 2442;
-    }
-    if(epsg >= 6669 && epsg <= 6687)
-    {
-        return epsg - 6668;
-    }
-    return 0;
-}
-
-bool getIntersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double &intersect_x, double &intersect_y )
-{
-    //let p1(x1, y1), p2(x2, y2), p3(x3, y3), p4(x4,y4)
-    //intersect of line segment p1 to p2 and p3 to p4 satisfies
-    // p1 + r(p2 - p1) = p3 + s(p4 - p3)
-    // 0 <= r <= 1
-    // 0 <= s <= 1
-    double denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-
-    if(denominator == 0) {
-        //line is parallel
-        return false;
-    }
-
-    double r = ( (y4 - y3) * (x3 - x1) - (x4 - x3) * (y3 - y1) ) / denominator;
-    double s = ( (y2 - y1) * (x3 - x1) - (x2 - x1) * (y3 - y1) ) / denominator;
-
-    if( r >= 0 && r <= 1 && s >= 0 && s <= 1) {
-        intersect_x = x1 + r * (x2 - x1);
-        intersect_y = y1 + r * (y2 - y1);
-        return true;
-    }else{
-        return false;
-    }
-}
-
-double convertDecimalToDDMMSS(const double decimal)
-{
-    int degree, minutes,seconds;
-    degree = floor(decimal);
-    minutes = floor( (decimal - degree ) * 60);
-    seconds = floor( (decimal - degree - minutes * 1.0 / 60) * 3600);
-    return degree + minutes * 0.01 + seconds * 0.0001;
-}
-void insertMarkerArray(visualization_msgs::MarkerArray& a1, const visualization_msgs::MarkerArray& a2)
-{
-    a1.markers.insert(a1.markers.end(), a2.markers.begin(), a2.markers.end());
-}
-
-template <class T, class U>
-U createObjectArray(const std::vector<T> data)
-{
-    U obj_array;
-    // NOTE: Autoware want to use map messages with or without /use_sim_time.
-    // Therefore we don't set obj_array.header.stamp.
-    // obj_array.header.stamp = ros::Time::now();
-    obj_array.header.frame_id = "map";
-    obj_array.data = data;
-    return obj_array;
-}
-
-
-visualization_msgs::Marker createLinkedLineMarker(const std::string& ns, int id, Color color, const VectorMap& vmap,
-                                                  const vector_map_msgs::Line& line)
-{
-    vector_map_msgs::Area area;
-    area.aid = 1; // must set valid aid
-    area.slid = line.lid;
-    return createAreaMarker(ns, id, color, vmap, area);
-}
-
-visualization_msgs::MarkerArray createAreaMarkerArray(const VectorMap& vmap, Color color)
-{
-    visualization_msgs::MarkerArray marker_array;
-    int id = 0;
-    for (const auto& area : vmap.findByFilter([] (const vector_map_msgs::Area & a){return true; }))
-    {
-        marker_array.markers.push_back(createAreaMarker("area", id++, color, vmap, area));
-    }
-    return marker_array;
-}
-
-visualization_msgs::MarkerArray createLaneMarkerArray(const VectorMap& vmap, Color color)
-{
-    visualization_msgs::MarkerArray marker_array;
-    int id = 1;
-    for (const auto& lane : vmap.findByFilter([] (const vector_map_msgs::Lane & l){return true; }))
-    {
-        vector_map_msgs::Node node1 = vmap.findByKey(vector_map::Key<vector_map_msgs::Node>(lane.bnid));
-        vector_map_msgs::Node node2 = vmap.findByKey(vector_map::Key<vector_map_msgs::Node>(lane.fnid));
-        vector_map_msgs::Line line;
-        line.lid = id;
-        line.bpid = node1.pid;
-        line.fpid = node2.pid;
-        line.blid = 0;
-        line.flid = 0;
-
-        visualization_msgs::Marker marker = createLineMarker("lane", id++, color, vmap, line);
-        if (isValidMarker(marker))
-            marker_array.markers.push_back(marker);
-    }
-    return marker_array;
-}
-
-visualization_msgs::MarkerArray createStopLineMarkerArray(const VectorMap& vmap, Color color)
-{
-    visualization_msgs::MarkerArray marker_array;
-    int id = 0;
-    for (const auto& stop_line : vmap.findByFilter([] (const vector_map_msgs::StopLine & stop_line){return true; }))
-    {
-
-        if (stop_line.lid == 0)
-        {
-            ROS_ERROR_STREAM("[createStopLineMarkerArray] invalid stop_line: " << stop_line);
-            continue;
-        }
-
-        vector_map_msgs::Line line = vmap.findByKey(vector_map::Key<vector_map_msgs::Line>(stop_line.lid));
-        if (line.lid == 0)
-        {
-            ROS_ERROR_STREAM("[createStopLineMarkerArray] invalid line: " << line);
-            continue;
-        }
-
-        if (line.blid == 0) // if beginning line
-        {
-            visualization_msgs::Marker marker = createLinkedLineMarker("stop_line", id++, color, vmap, line);
-            if (isValidMarker(marker))
-                marker_array.markers.push_back(marker);
-            else
-                ROS_ERROR_STREAM("[createStopLineMarkerArray] failed createLinkedLineMarker: " << line);
-        }
-    }
-    return marker_array;
-}
-
-visualization_msgs::MarkerArray createCrossWalkMarkerArray(const VectorMap& vmap, Color color)
-{
-    visualization_msgs::MarkerArray marker_array;
-    int id = 0;
-    for (const auto& cross_walk : vmap.findByFilter([] (const vector_map_msgs::CrossWalk & cross_walk){return true; }))
-    {
-        if (cross_walk.aid == 0)
-        {
-            ROS_ERROR_STREAM("[createCrossWalkMarkerArray] invalid cross_walk: " << cross_walk);
-            continue;
-        }
-
-        vector_map_msgs::Area area = vmap.findByKey(vector_map::Key<vector_map_msgs::Area>(cross_walk.aid));
-        if (area.aid == 0)
-        {
-            ROS_ERROR_STREAM("[createCrossWalkMarkerArray] invalid area: " << area);
-            continue;
-        }
-
-        visualization_msgs::Marker marker = createAreaMarker("cross_walk", id++, color, vmap, area);
-        if (isValidMarker(marker))
-            marker_array.markers.push_back(marker);
-        else
-            ROS_ERROR_STREAM("[createCrossWalkMarkerArray] failed createAreaMarker: " << area);
-    }
-    return marker_array;
-}
-
-visualization_msgs::MarkerArray createSignalMarkerArray(const VectorMap& vmap, Color red_color, Color blue_color,
-                                                        Color yellow_color, Color other_color, Color pole_color)
-{
-    visualization_msgs::MarkerArray marker_array;
-    int id = 0;
-    for (const auto& signal : vmap.findByFilter([] (const vector_map_msgs::Signal & signal){return true; }))
-    {
-        if (signal.vid == 0)
-        {
-            ROS_ERROR_STREAM("[createSignalMarkerArray] invalid signal: " << signal);
-            continue;
-        }
-
-        vector_map_msgs::Vector vector = vmap.findByKey(vector_map::Key<vector_map_msgs::Vector>(signal.vid));
-        if (vector.vid == 0)
-        {
-            ROS_ERROR_STREAM("[createSignalMarkerArray] invalid vector: " << vector);
-            continue;
-        }
-
-        vector_map_msgs::Pole pole;
-        if (signal.plid != 0)
-        {
-            pole = vmap.findByKey(vector_map::Key<vector_map_msgs::Pole>(signal.plid));
-            if (pole.plid == 0)
-            {
-                ROS_ERROR_STREAM("[createSignalMarkerArray] invalid pole: " << pole);
-                continue;
-            }
-        }
-
-        visualization_msgs::Marker vector_marker;
-        switch (signal.type)
-        {
-            case vector_map_msgs::Signal::RED:
-            case vector_map_msgs::Signal::PEDESTRIAN_RED:
-                vector_marker = createVectorMarker("signal", id++, red_color, vmap, vector);
-                break;
-            case vector_map_msgs::Signal::BLUE:
-            case vector_map_msgs::Signal::PEDESTRIAN_BLUE:
-                vector_marker = createVectorMarker("signal", id++, blue_color, vmap, vector);
-                break;
-            case vector_map_msgs::Signal::YELLOW:
-                vector_marker = createVectorMarker("signal", id++, yellow_color, vmap, vector);
-                break;
-            case vector_map_msgs::Signal::RED_LEFT:
-                vector_marker = createVectorMarker("signal", id++, Color::LIGHT_RED, vmap, vector);
-                break;
-            case vector_map_msgs::Signal::BLUE_LEFT:
-                vector_marker = createVectorMarker("signal", id++, Color::LIGHT_GREEN, vmap, vector);
-                break;
-            case vector_map_msgs::Signal::YELLOW_LEFT:
-                vector_marker = createVectorMarker("signal", id++, Color::LIGHT_YELLOW, vmap, vector);
-                break;
-            case vector_map_msgs::Signal::OTHER:
-                vector_marker = createVectorMarker("signal", id++, other_color, vmap, vector);
-                break;
-            default:
-                ROS_WARN_STREAM("[createSignalMarkerArray] unknown signal.type: " << signal.type << " Creating Marker as OTHER.");
-                vector_marker = createVectorMarker("signal", id++, Color::GRAY, vmap, vector);
-                break;
-        }
-        if (isValidMarker(vector_marker))
-            marker_array.markers.push_back(vector_marker);
-        else
-            ROS_ERROR_STREAM("[createSignalMarkerArray] failed createVectorMarker: " << vector);
-
-        // if (signal.plid != 0)
-        // {
-        //   visualization_msgs::Marker pole_marker = createPoleMarker("signal", id++, pole_color, vmap, pole);
-        //   if (isValidMarker(pole_marker))
-        //     marker_array.markers.push_back(pole_marker);
-        //   else
-        //     ROS_ERROR_STREAM("[createSignalMarkerArray] failed createPoleMarker: " << pole);
-        // }
-    }
-    return marker_array;
-}
-
-visualization_msgs::MarkerArray createCrossRoadMarkerArray(const VectorMap& vmap, Color color)
-{
-    visualization_msgs::MarkerArray marker_array;
-    int id = 0;
-    for (const auto& cross_road : vmap.findByFilter([] (const vector_map_msgs::CrossRoad & cross_road){return true; }))
-    {
-        if (cross_road.aid == 0)
-        {
-            ROS_ERROR_STREAM("[createCrossRoadMarkerArray] invalid cross_road: " << cross_road);
-            continue;
-        }
-
-        vector_map_msgs::Area area = vmap.findByKey(vector_map::Key<vector_map_msgs::Area>(cross_road.aid));
-        if (area.aid == 0)
-        {
-            ROS_ERROR_STREAM("[createCrossRoadMarkerArray] invalid area: " << area);
-            continue;
-        }
-
-        visualization_msgs::Marker marker = createAreaMarker("cross_road", id++, color, vmap, area);
-        if (isValidMarker(marker))
-            marker_array.markers.push_back(marker);
-        else
-            ROS_ERROR_STREAM("[createCrossRoadMarkerArray] failed createAreaMarker: " << area);
-    }
-    return marker_array;
-}
+using autoware_map::AutowareMap;
 
 void convertPoint(vector_map_msgs::Point &vmap_point, autoware_map_msgs::Point awm_point)
 {
     if(isJapaneseCoordinate(awm_point.epsg))
     {
-        vmap_point.ref = convertESPG2Ref(awm_point.epsg);
         vmap_point.bx = awm_point.x;
         vmap_point.ly = awm_point.y;
     }
     else{
-        vmap_point.ref = 0;
         vmap_point.bx = awm_point.y;
         vmap_point.ly = awm_point.x;
     }
-
+    vmap_point.ref = convertESPGToRef(awm_point.epsg);
     vmap_point.pid = awm_point.point_id;
     vmap_point.b = convertDecimalToDDMMSS( awm_point.lat );
     vmap_point.l = convertDecimalToDDMMSS( awm_point.lng );
@@ -315,7 +26,7 @@ void convertPoint(vector_map_msgs::Point &vmap_point, autoware_map_msgs::Point a
     vmap_point.mcode3 = 0;
 }
 
-void createAreas(autoware_map::AutowareMap awm, std::vector<vector_map_msgs::Area> &vmap_areas, std::vector<vector_map_msgs::Line> &vmap_lines)
+void createAreas(AutowareMap awm, std::vector<vector_map_msgs::Area> &vmap_areas, std::vector<vector_map_msgs::Line> &vmap_lines)
 {
     int line_id = vmap_lines.size() + 1;
     for ( auto awm_area : awm.findByFilter( [&](autoware_map_msgs::Area a){return true; }))
@@ -360,7 +71,7 @@ void createAreas(autoware_map::AutowareMap awm, std::vector<vector_map_msgs::Are
     }
 }
 
-void createCrossRoads(autoware_map::AutowareMap awm, std::vector<vector_map_msgs::CrossRoad> &vmap_cross_roads)
+void createCrossRoads(AutowareMap awm, std::vector<vector_map_msgs::CrossRoad> &vmap_cross_roads)
 {
     unsigned int id = 1;
     for ( auto awm_relation : awm.findByFilter( [&](autoware_map_msgs::LaneAttrRelation lar){return lar.attribute_type == autoware_map::LaneAttrRelation::INTERSECTION; }) )
@@ -378,56 +89,6 @@ void createCrossRoads(autoware_map::AutowareMap awm, std::vector<vector_map_msgs
     }
 }
 
-void getMinMax(autoware_map_msgs::Point &min, autoware_map_msgs::Point &max, const std::vector<autoware_map_msgs::Point>points){
-    min = max = points.front();
-    for (auto pt : points)
-    {
-        min.x = min.x < pt.x ? min.x : pt.x;
-        min.y = min.y < pt.y ? min.y : pt.y;
-        min.z = min.z < pt.z ? min.z : pt.z;
-        max.x = max.x > pt.x ? max.x : pt.x;
-        max.y = max.y > pt.y ? max.y : pt.y;
-        max.z = max.z > pt.z ? max.z : pt.z;
-    }
-}
-bool isWithinArea(double x, double y, const std::vector<autoware_map_msgs::Point> vertices){
-
-    autoware_map::Point min, max, outside_point;
-    getMinMax(min, max, vertices);
-    outside_point = min;
-    outside_point.x -= 0.0001;
-    outside_point.y -= 0.001;
-
-    autoware_map_msgs::Point v1, v2,intersect;
-    int count = 0;
-    for (unsigned int idx = 0; idx < vertices.size(); idx++)
-    {
-        v1 = vertices.at(idx);
-        if(idx + 1 < vertices.size())
-        {
-            v2 = vertices.at(idx + 1);
-        }
-        else
-        {
-            v2 = vertices.front();
-        }
-
-        if(getIntersect(outside_point.x, outside_point.y, x, y,
-                        v1.x, v1.y, v2.x, v2.y,
-                        intersect.x, intersect.y))
-        {
-            if(intersect.x == x && intersect.y == y)
-            {
-                continue;
-            }
-            count++;
-        }
-    }
-    if( count % 2 == 1)
-        return true;
-    else
-        return false;
-}
 int createSquareArea(double x, double y, double z, double length,
                      std::vector<vector_map_msgs::Area> &vmap_areas, std::vector<vector_map_msgs::Line> &vmap_lines,
                      std::vector<vector_map_msgs::Point> &vmap_points)
@@ -499,7 +160,7 @@ int createSquareArea(double x, double y, double z, double length,
     return area.aid;
 }
 
-void createCrossWalks(autoware_map::AutowareMap awm, std::vector<vector_map_msgs::CrossWalk> &vmap_cross_walks,
+void createCrossWalks(AutowareMap awm, std::vector<vector_map_msgs::CrossWalk> &vmap_cross_walks,
                       std::vector<vector_map_msgs::Area> &vmap_areas, std::vector<vector_map_msgs::Line> &vmap_lines,
                       std::vector<vector_map_msgs::Point> &vmap_points)
 {
@@ -568,7 +229,7 @@ void createCrossWalks(autoware_map::AutowareMap awm, std::vector<vector_map_msgs
     }
 }
 
-void createPoints(autoware_map::AutowareMap awm, std::vector<vector_map_msgs::Point> &vmap_points)
+void createPoints(AutowareMap awm, std::vector<vector_map_msgs::Point> &vmap_points)
 {
     bool epsg_fail_flag = false;
     for ( auto awm_pt : awm.findByFilter( [&](autoware_map_msgs::Point pt){return true; }) )
@@ -586,8 +247,7 @@ void createPoints(autoware_map::AutowareMap awm, std::vector<vector_map_msgs::Po
     }
 }
 
-
-void createNodes(autoware_map::AutowareMap awm, std::vector<vector_map_msgs::Node> &vmap_nodes)
+void createNodes(AutowareMap awm, std::vector<vector_map_msgs::Node> &vmap_nodes)
 {
     for ( auto awm_wp : awm.findByFilter([&](autoware_map_msgs::Waypoint){return true; } ))
     {
@@ -703,7 +363,7 @@ int getJunctionType(const std::vector<autoware_map_msgs::WaypointRelation> awm_w
     return vector_map_msgs::Lane::NORMAL;
 }
 
-void createDTLanes(const autoware_map::AutowareMap awm,
+void createDTLanes(const AutowareMap awm,
                    std::vector<vector_map_msgs::DTLane> &vmap_dtlanes,
                    std::vector<vector_map_msgs::Lane> &vmap_lanes)
 {
@@ -797,7 +457,7 @@ void createDTLanes(const autoware_map::AutowareMap awm,
     }
 }
 
-void createWayAreas(const autoware_map::AutowareMap awm, std::vector<vector_map_msgs::WayArea> &vmap_way_areas)
+void createWayAreas(const AutowareMap awm, std::vector<vector_map_msgs::WayArea> &vmap_way_areas)
 {
     for ( auto awm_area : awm.findByFilter( [&](autoware_map_msgs::Wayarea wa){return true; }))
     {
@@ -808,7 +468,7 @@ void createWayAreas(const autoware_map::AutowareMap awm, std::vector<vector_map_
     }
 }
 
-void createSignals( const autoware_map::AutowareMap awm,
+void createSignals( const AutowareMap awm,
                     std::vector<vector_map_msgs::Signal> &vmap_signals,
                     std::vector<vector_map_msgs::Vector> &vmap_vectors,
                     std::vector<vector_map_msgs::Pole> &vmap_dummy_poles
@@ -885,13 +545,6 @@ void createSignals( const autoware_map::AutowareMap awm,
     }
 }
 
-double addAngles(double angle1, double angle2)
-{
-    double sum = angle1 + angle2;
-    while( sum > M_PI ) sum -= 2 * M_PI;
-    while( sum < M_PI ) sum += 2 * M_PI;
-    return sum;
-}
 vector_map_msgs::RoadSign createDummyRoadSign(int id)
 {
     vector_map_msgs::RoadSign road_sign;
@@ -904,7 +557,7 @@ vector_map_msgs::RoadSign createDummyRoadSign(int id)
 }
 
 
-void createStopLines( const autoware_map::AutowareMap awm,
+void createStopLines( const AutowareMap awm,
                       std::vector<vector_map_msgs::Line> &vmap_lines,
                       std::vector<vector_map_msgs::Point> &vmap_points,
                       std::vector<vector_map_msgs::StopLine> &vmap_stop_lines,
@@ -1026,7 +679,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "awm_vmap_converter");
     ros::NodeHandle nh;
 
-    autoware_map::AutowareMap awm;
+    AutowareMap awm;
 
     autoware_map::category_t awm_required_category = autoware_map::Category::AREA |
                                                      autoware_map::Category::POINT |
