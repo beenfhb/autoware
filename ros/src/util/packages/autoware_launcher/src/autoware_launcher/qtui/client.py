@@ -6,14 +6,15 @@ from ..core  import fspath
 from .guimgr import AwQtGuiManager
 from .mirror import AwLaunchTreeMirror
 
-from .widgets  import AwMainWindow
-from .treeview import AwTreeViewPanel
-from .treeview import AwControlPanel
-from .procmgr  import AwProcessPanel
-from .summary  import AwSummaryPanel
-from .network  import AwTcpServerPanel
-from .starter  import AwStarterPanel
-
+# For Gui Manager
+from .window     import AwMainWindow
+from .treeview   import AwTreeViewPanel
+from .treeview   import AwControlPanel
+from .procmgr    import AwProcessPanel
+from .summary    import AwSummaryPanel
+from .network    import AwTcpServerPanel
+from .starter    import AwStarterPanel
+from .simulation import AwSimulationWidget
 
 
 class AwQtGuiClient(object):
@@ -46,12 +47,13 @@ class AwQtGuiClient(object):
         stylesheet.append("* { font-size: " + str(resolution/100) + "px; }")
         application.setStyleSheet(" ".join(stylesheet))
 
-        self.__treeview = AwTreeViewPanel(self) # ToDo: consider moving to guimgr
-        self.__control  = AwControlPanel(self)  # ToDo: consider moving to guimgr
-        self.__summary  = AwSummaryPanel(self)  # ToDo: consider moving to guimgr
-        self.__process  = AwProcessPanel(self)  # ToDo: consider moving to guimgr
-        self.__network  = AwTcpServerPanel()
-        self.__starter  = AwStarterPanel(self)
+        self.__treeview   = AwTreeViewPanel(self) # ToDo: consider moving to guimgr
+        self.__control    = AwControlPanel(self)  # ToDo: consider moving to guimgr
+        self.__summary    = AwSummaryPanel(self)  # ToDo: consider moving to guimgr
+        self.__process    = AwProcessPanel(self)  # ToDo: consider moving to guimgr
+        self.__network    = AwTcpServerPanel()
+        self.__starter    = AwStarterPanel(self)
+        self.__simulation = AwSimulationWidget(self.__guimgr)
 
         tabwidget = QtWidgets.QTabWidget()
         tabwidget.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
@@ -75,8 +77,16 @@ class AwQtGuiClient(object):
         mainwidget.addTab(self.__starter, "Starter")
         mainwidget.addTab(self.__network, "Network")
 
+        mainsplitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        mainsplitter.addWidget(self.__simulation)
+        mainsplitter.addWidget(mainwidget)
+
+        #dock = QtWidgets.QDockWidget()
+        #dock.setWidget( )
+        #window.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
+
         window = AwMainWindow(self)
-        window.setCentralWidget(mainwidget)
+        window.setCentralWidget(mainsplitter)
         window.show()
 
         self.__server.register_runner(self.__process)

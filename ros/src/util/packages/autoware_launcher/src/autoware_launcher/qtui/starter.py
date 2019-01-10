@@ -4,7 +4,6 @@ from python_qt_binding import QtWidgets
 from ..core import console
 from ..core import fspath
 
-from .widgets import AwAbstructWindow
 from .widgets import AwAbstructPanel
 from .widgets import AwAbstructFrame
 
@@ -54,14 +53,6 @@ class AwLaunchFrame(AwAbstructFrame):
 
 
 
-
-
-class AwDefaultWindow(AwAbstructWindow):
-
-    def __init__(self, parent):
-
-        super(AwDefaultWindow, self).__init__(parent)
-        self.load_geomerty()
 
 
 class AwLaunchButton(QtWidgets.QPushButton):

@@ -106,3 +106,13 @@ class AwLaunchNodeMirror(object):
 
     def send_term_completed(self):
         print "send_term_completed:" + self.__path
+
+
+
+#class AwLaunchNodeMirror2(object):
+#
+#    def __init__(self, writer):
+#        self.writer = writer
+#    
+#    def __getattr__(self, name):
+#        return getattr(self.writer, name)

@@ -11,8 +11,6 @@ from ..core import fspath
 #     core = client, mirror
 #     qtui = guimgr
 
-
-
 class AwQtGuiManager(object):
 
     def __init__(self, client):
@@ -27,11 +25,11 @@ class AwQtGuiManager(object):
                 for wkey, wcls in module.plugin_widgets().items():
                      self.__widgets[fkey + "." + wkey] = wcls
 
-    #def widget(self, view):
-    #    return self.__widgets[view["view"]]
-
     def client(self):
         return self.__client
+
+    #def widget(self, view):
+    #    return self.__widgets[view["view"]]
 
     def create_widget(self, node, view, parent = None, widget = None):
         widget = widget or self.__widgets[view["view"]]
@@ -70,3 +68,39 @@ class AwQtGuiManager(object):
         layout.setSpacing(0)
         layout.setContentsMargins(5, 2, 2, 2)
         return layout
+
+
+    def setup_panel_layout(self, widget):
+
+        if self.layout() is None:
+            self._setup_panel_layout(widget)
+        else:
+            self._reset_panel_layout(widget)
+
+    def _setup_panel_layout(self, widget):
+
+        footer_layout = QtWidgets.QHBoxLayout()
+        footer_layout.setContentsMargins(2, 2, 2, 2)
+        footer_layout.setSpacing(2)
+        footer_layout.addStretch()
+        widget.footer = QtWidgets.QWidget()
+        widget.footer.setLayout(layout)
+
+        widget_layout = QtWidgets.QVBoxLayout()
+        widget_layout.setContentsMargins(16, 16, 16, 16)
+        widget_layout.setSpacing(16)
+        widget_layout.addStretch()
+        widget_layout.addWidget(widget.footer)
+        widget.setLayout(widget_layout)
+
+    def _reset_panel_layout(self, widget):
+
+        footer_layout = self.footer.layout()
+        while 1 < footer_layout.count():
+            footer_layout.takeAt(footer_layout.count() - 1).widget().deleteLater()
+
+        widget_layout = self.layout()
+        while 2 < widget_layout.count():
+            widget_layout.takeAt(0).widget().deleteLater()
+
+    #ToDo: create_popup_window

@@ -23,7 +23,7 @@ class AwNodeInfoEdit(widgets.AwAbstructFrame):
         self.edit.setText(self.target.config.get("info.title"))
         self.edit.editingFinished.connect(self.edited)
         self.add_widget(self.edit)
-        self.set_title("Node Info")
+        self.set_title("Node Title")
 
     def edited(self):
         self.target.config["info.title"] = self.edit.text()
