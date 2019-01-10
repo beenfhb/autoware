@@ -28,12 +28,12 @@ class AwQtGuiManager(object):
     def client(self):
         return self.__client
 
-    #def widget(self, view):
-    #    return self.__widgets[view["view"]]
+    def widget(self, opts):
+        return self.__widgets[opts["view"]]
 
-    def create_widget(self, node, view, parent = None, widget = None):
-        widget = widget or self.__widgets[view["view"]]
-        return widget(self, node, view)
+    def create_widget(self, node, opts, parent = None, widget = None):
+        widget = widget or self.widget(opts)
+        return widget(self, node, opts)
 
     def create_frame(self, mirror, guikey = None, guicls = None):
         #print "Create Frame: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls)

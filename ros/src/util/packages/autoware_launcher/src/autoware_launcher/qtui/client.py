@@ -73,9 +73,9 @@ class AwQtGuiClient(object):
         hsplitter.addWidget(tabwidget)
 
         mainwidget = QtWidgets.QTabWidget()
-        mainwidget.addTab(hsplitter,      "Details")
-        mainwidget.addTab(self.__starter, "Starter")
-        mainwidget.addTab(self.__network, "Network")
+        mainwidget.addTab(hsplitter,      "Profile Edit")
+        mainwidget.addTab(self.__starter, "Quick Start")
+        mainwidget.addTab(self.__network, "Server Debug")
 
         mainsplitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
         mainsplitter.addWidget(self.__simulation)
@@ -88,6 +88,9 @@ class AwQtGuiClient(object):
         window = AwMainWindow(self)
         window.setCentralWidget(mainsplitter)
         window.show()
+
+        self.__simulation.hide()
+        window.addViewMenu("Simulation", self.__simulation.setVisible)
 
         self.__server.register_runner(self.__process)
         self.__process.register_server(self.__server)

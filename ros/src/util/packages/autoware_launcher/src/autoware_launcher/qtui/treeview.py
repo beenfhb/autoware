@@ -26,7 +26,9 @@ class AwTreeViewPanel(QtWidgets.QTreeWidget):
         self.currentItemChanged.connect(self.item_selectd)
 
     def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_E:
+        if event.key() in [QtCore.Qt.Key_Up, QtCore.Qt.Key_Down, QtCore.Qt.Key_Left, QtCore.Qt.Key_Right]:
+            super(AwTreeViewPanel, self).keyPressEvent(event)
+        elif event.key() == QtCore.Qt.Key_R:
             lpath = self.currentItem().lpath
             self.__client.launch_config(lpath, True)
             event.accept()
@@ -35,7 +37,7 @@ class AwTreeViewPanel(QtWidgets.QTreeWidget):
             self.__client.launch_config(lpath, False)
             event.accept()
         else:
-            super(AwTreeViewPanel, self).keyPressEvent(event)
+            event.ignore()
 
     def select_config(self, lpath):
         self.setCurrentItem(self.__items[lpath])

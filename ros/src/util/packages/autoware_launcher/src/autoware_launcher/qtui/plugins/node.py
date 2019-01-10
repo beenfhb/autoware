@@ -25,19 +25,11 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
         self.add_frame(self.debug)
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
 
-        cancel_button = QtWidgets.QPushButton("Cancel")
-        update_button = QtWidgets.QPushButton("Update")
-        self.add_button(cancel_button)
-        self.add_button(update_button)
-        cancel_button.clicked.connect(self.cancel_clicked)
-        update_button.clicked.connect(self.update_clicked)
-
-
         for data in self.node.plugin().info():
-            self.add_frame(self.guimgr.create_info_frame(self, data))
+            self.add_frame(self.guimgr.create_widget(self.node, data))
 
         for data in self.node.plugin().args():
-            self.add_frame(self.guimgr.create_arg_frame(self, data))
+            self.add_frame(self.guimgr.create_widget(self.node, data))
 
         childnodes = {child.name(): child for child in self.node.children()}
         for rule in self.node.plugin().rules():
@@ -57,15 +49,7 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
             if rule["type"] == "list":
                 self.add_frame(AwNodeCreateButton(self.node, rule, "Add " + rule["name"]))
 
-
-    def cancel_clicked(self):
-        self.config = self.node.config().copy()
-        self.setup_widget()
-        
-    def update_clicked(self):
-        response = self.node.update({"config": self.config})
-        print response
-
+    # Debug
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_D:
             self.debug.setVisible(not self.debug.isVisible())
@@ -82,9 +66,17 @@ class AwDefaultNodeFrame(widgets.AwAbstructFrame):
 
         super(AwDefaultNodeFrame, self).setup_widget()
         self.set_title(self.node.name().capitalize() + " : " + self.node.get_config("info.title", "No Title"))
-        self.add_text_widget(self.node.get_config("info.description", "No Description"))
         self.add_button(AwConfigButton(self.guimgr.client(), self.node.path()))
 
+        config = node.config()
+        description = []
+        for data in self.node.plugin().info():
+            description.append(self.guimgr.widget(data).tostring(self.node, data))
+        for data in self.node.plugin().args():
+            description.append(self.guimgr.widget(data).tostring(self.node, data))
+        description = "\n".join(description) if description else "No Description"
+
+        self.add_text_widget(description)
 
 
 class AwConfigButton(QtWidgets.QPushButton):

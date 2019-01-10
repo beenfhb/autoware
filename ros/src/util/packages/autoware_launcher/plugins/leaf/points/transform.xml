@@ -11,7 +11,7 @@
 
     <group ns="$(arg local_frame)">
         <node pkg="tf2_ros" type="static_transform_publisher" name="static_transform_publisher"
-            args="$(arg tx) $(arg ty) $(arg tz) $(arg rz) $(arg ry) $(arg rx) $(arg parent_frame) $(arg local_frame) 100" />
+            args="$(arg tx) $(arg ty) $(arg tz) $(arg rz) $(arg ry) $(arg rx) $(arg parent_frame) $(arg local_frame)" />
     </group>
 
 </launch>

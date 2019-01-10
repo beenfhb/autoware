@@ -21,97 +21,100 @@ def plugin_widgets():
 
 class AwLineTextEdit(widgets.AwAbstructFrame):
 
-    def __init__(self, guimgr, target, option):
-        super(AwLineTextEdit, self).__init__(guimgr, target, option)
-        self.target = target
-        self.option = option
+    def __init__(self, guimgr, node, opts):
+        super(AwLineTextEdit, self).__init__(guimgr, node, opts)
+        self.node = node
+        self.opts = opts
 
         super(AwLineTextEdit, self).setup_widget()
         self.edit = QtWidgets.QLineEdit()
-        self.edit.setText(self.target.config.get("args." + self.option["arg"]))
+        self.edit.setText(self.node.get_config("args." + self.opts["arg"]))
         self.edit.editingFinished.connect(self.edited)
         self.add_widget(self.edit)
-        self.set_title(self.option["title"])
+        self.set_title(self.opts["title"])
 
     def edited(self):
-        self.target.config["args." + self.option["arg"]] = self.edit.text()
+        cfgkey = "args." + self.opts["arg"]
+        self.node.update({"config": {cfgkey: self.edit.text()}})
 
     @staticmethod
-    def summary(option, config):
-        return "{}: {}".format(option["title"], config["args." + option["arg"]])
+    def tostring(node, opts):
+        return "{}: {}".format(opts["title"], node.get_config("args." + opts["arg"]))
 
 
 
 class AwFileSelect(widgets.AwAbstructFrame):
 
-    def __init__(self, guimgr, target, option):
-        super(AwFileSelect, self).__init__(guimgr, target, option)
-        self.target = target
-        self.option = option
+    def __init__(self, guimgr, node, opts):
+        super(AwFileSelect, self).__init__(guimgr, node, opts)
+        self.node = node
+        self.opts = opts
 
         super(AwFileSelect, self).setup_widget()
         button = QtWidgets.QPushButton("Browse")
         button.clicked.connect(self.browsed)
         self.add_button(button)
-        self.set_title(self.option["title"])
+        self.set_title(self.opts["title"])
 
         self.widget = QtWidgets.QLineEdit()
         self.widget.setReadOnly(True)
         self.add_widget(self.widget)
-        self.widget.setText(self.target.config.get("args." + self.option["arg"]))
+        self.widget.setText(self.node.get_config("args." + self.opts["arg"]))
 
     def browsed(self):
         filepath, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Select File", fspath.userhome())
         filepath = fspath.envpath(filepath)
         if filepath:
-            self.target.config["args." + self.option["arg"]] = filepath
+            cfgkey = "args." + self.opts["arg"]
+            self.node.update({"config": {cfgkey: filepath}})
             self.widget.setText(filepath)
 
     @staticmethod
-    def summary(option, config):
-        return "{}: {}".format(option["title"], config["args." + option["args"]])
+    def tostring(node, opts):
+        return "{}: {}".format(opts["title"], node.get_config("args." + opts["arg"]))
 
 
 
 class AwFileListSelect(widgets.AwAbstructFrame):
 
-    def __init__(self, guimgr, target, option):
-        super(AwFileListSelect, self).__init__(guimgr, target, option)
-        self.target = target
-        self.option = option
+    def __init__(self, guimgr, node, opts):
+        super(AwFileListSelect, self).__init__(guimgr, node, opts)
+        self.node = node
+        self.opts = opts
 
         super(AwFileListSelect, self).setup_widget()
         button = QtWidgets.QPushButton("Browse")
         button.clicked.connect(self.browsed)
         self.add_button(button)
-        self.set_title(self.option["title"])
+        self.set_title(self.opts["title"])
 
         self.widget = QtWidgets.QTextEdit()
         self.widget.setReadOnly(True)
         self.add_widget(self.widget)
 
-        filepaths = self.target.config.get("args." + self.option["arg"], [])
+        filepaths = self.node.get_config("args." + self.opts["arg"], [])
         self.widget.setText("\n".join(filepaths))
 
     def browsed(self):
         filepaths, filetype = QtWidgets.QFileDialog.getOpenFileNames(self, "Select Files", fspath.userhome())
         filepaths = map(fspath.envpath, filepaths)
         if filepaths:
-            self.target.config["args." + self.option["arg"]] = filepaths
+            cfgkey = "args." + self.opts["arg"]
+            self.node.update({"config": {cfgkey: filepaths}})
             self.widget.setText("\n".join(filepaths))
 
     @staticmethod
-    def summary(option, config):
-        return "{}: {} files".format(option["title"], len(config["args." + option["args"]]))
+    def tostring(node, opts):
+        return "{}: {} files".format(opts["title"], len(node.get_config("args." + opts["arg"])))
 
 
 
 class AwTransformEdit(widgets.AwAbstructFrame):
 
-    def __init__(self, guimgr, target, option):
-        super(AwTransformEdit, self).__init__(guimgr, target, option)
-        self.target = target
-        self.option = option
+    def __init__(self, guimgr, node, opts):
+        super(AwTransformEdit, self).__init__(guimgr, node, opts)
+        self.node = node
+        self.opts = opts
         self.fields = []
 
         super(AwTransformEdit, self).setup_widget()
@@ -121,7 +124,7 @@ class AwTransformEdit(widgets.AwAbstructFrame):
         mapper = QtCore.QSignalMapper(widget)
         for idx, txt in enumerate(["Tx", "Ty", "Tz", "Rx", "Ry", "Rz"]):
             field = QtWidgets.QLineEdit()
-            field.setText(self.target.config.get("args." + self.option["arg"][idx]))
+            field.setText(self.node.get_config("args." + self.opts["arg"][idx]))
             field.editingFinished.connect(mapper.map)
             mapper.setMapping(field, idx)
             widget.layout().addWidget(QtWidgets.QLabel(txt + ":"))
@@ -130,24 +133,25 @@ class AwTransformEdit(widgets.AwAbstructFrame):
 
         mapper.mapped.connect(self.edited)
         self.add_widget(widget)
-        self.set_title(self.option["title"])
+        self.set_title(self.opts["title"])
 
     def edited(self, idx):
-        self.target.config["args." + self.option["arg"][idx]] = self.fields[idx].text()
+        cfgkey = "args." + self.opts["arg"][idx]
+        self.node.update({"config": {cfgkey: self.fields[idx].text()}})
 
     @staticmethod
-    def summary(option, config):
-        result = option["title"] + ": "
+    def tostring(node, opts):
+        result = opts["title"] + ": "
         for idx, txt in enumerate(["Tx", "Ty", "Tz", "Rx", "Ry", "Rz"]):
-            result += txt + "=" + config["args." + option["arg"][idx]] + ", "
+            result += txt + "=" + node.get_config("args." + opts["arg"][idx]) + ", "
         return result
 
 
 
 class AwCameraCalibFrame(AwFileSelect):
 
-    def __init__(self, guimgr, target, option):
-        super(AwCameraCalibFrame, self).__init__(guimgr, target, option)
+    def __init__(self, guimgr, node, opts):
+        super(AwCameraCalibFrame, self).__init__(guimgr, node, opts)
 
         calib = QtWidgets.QPushButton("Calib")
         calib.setCheckable(True)

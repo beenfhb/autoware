@@ -41,6 +41,9 @@ class AwMainWindow(AwAbstructWindow):
 
     def __init_menu(self):
 
+        self.filemenu = self.menuBar().addMenu("File")
+        self.viewmenu = self.menuBar().addMenu("View")
+
         load_action = QtWidgets.QAction("Load Profile", self)
         load_action.setShortcut("Ctrl+L")
         load_action.triggered.connect(self.load_profile)
@@ -53,11 +56,10 @@ class AwMainWindow(AwAbstructWindow):
         save_as_action.setShortcut("Ctrl+A")
         save_as_action.triggered.connect(self.save_profile_as)
 
-        mainmenu = self.menuBar()
-        filemenu = mainmenu.addMenu("File")
-        filemenu.addAction(load_action)
-        filemenu.addAction(save_action)
-        filemenu.addAction(save_as_action)
+        self.filemenu.addAction(load_action)
+        self.filemenu.addAction(save_action)
+        self.filemenu.addAction(save_as_action)
+
 
     def load_profile(self):
         import os
@@ -77,3 +79,9 @@ class AwMainWindow(AwAbstructWindow):
             if filetype != ".launch":
                 filename = filename + filetype
             self.client.save_profile(filename)
+
+    def addViewMenu(self, text, func):
+        action = QtWidgets.QAction(text, self)
+        action.setCheckable(True)
+        action.toggled.connect(func)
+        self.viewmenu.addAction(action)

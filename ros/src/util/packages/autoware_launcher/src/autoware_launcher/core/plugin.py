@@ -100,9 +100,18 @@ class AwPluginNode(object):
 
     def default_config(self):
         config = {}
-        #for argkey, argdef in self.__args:
-        #    cfgkey = "args." + argkey
-        #    config[cfgkey] = argdef.get("default", "")
+        for data in self.__args:
+            if data["type"] in ["str", "file", "calib"]:
+                config["args."+data["arg"]] = ""
+            if data["type"] in ["int"]:
+                config["args."+data["arg"]] = "0"
+            if data["type"] in ["real"]:
+                config["args."+data["arg"]] = "0.0"
+            if data["type"] in ["filelist"]:
+                config["args."+data["arg"]] = []
+            if data["type"] in ["tf"]:
+                for argname in data["arg"]:
+                    config["args."+argname] = "0.0"
         return config
 
     # temporary
@@ -153,7 +162,7 @@ class AwPluginNode(object):
                         console.warning("unknown plugin rule: {} in {}".format(pdata, self.path()))
                 self.__rule[data["name"]] = data
 
-        # validation
+        # Validation
         args_type = ["str", "int", "real", "tf", "file", "filelist", "calib"]
         rule_type = ["unit", "list"]
         for data in self.__args:
@@ -161,6 +170,11 @@ class AwPluginNode(object):
         for name, data in self.__rule.items():
             if data["type"] not in rule_type: raise TypeError("Plugin Rule Type: " + filepath)
 
+        # Auto complete
+        for data in self.__info:
+            data.setdefault("view", "info." + data["type"])
+        for data in self.__args:
+            data.setdefault("view", "args." + data["type"])
 
 
 

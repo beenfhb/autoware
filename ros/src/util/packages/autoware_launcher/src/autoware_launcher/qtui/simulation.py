@@ -63,12 +63,12 @@ class AwSimulationWidget(QtWidgets.QWidget):
     def simulation_mode_enabled(self):
         self.rosbag_mode_proc.start("rosparam set /use_sim_time true")
         self.rosbag_stopped()
-        
+
     def simulation_mode_disabled(self):
         self.rosbag_mode_proc.start("rosparam set /use_sim_time false")
         self.rosbag_stopped()
         self.rosbag_play.setEnabled(False)
-    
+
     def rosbag_info_requested(self):
         self.rosbag_info_proc.start("rosbag info " + self.rosbag_file.path.text())
 

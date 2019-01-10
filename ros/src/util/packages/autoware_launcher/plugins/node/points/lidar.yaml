@@ -1,6 +1,6 @@
 rules:
-  - { type: unit, name: driver, plugin: {scan: leaf/driver/lidar} }
-  - { type: unit, name: frame,  plugin: leaf/points/frame }
+  - { type: unit, name: driver,    plugin: {scan: leaf/driver/lidar} }
+  - { type: unit, name: transform, plugin: leaf/points/transform }
 
 info:
   - { type: node }
