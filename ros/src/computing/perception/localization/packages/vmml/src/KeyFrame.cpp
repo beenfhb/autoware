@@ -376,6 +376,8 @@ KeyFrame::matchForInitialization(
 		epl2.coeffs() = F12 * kp1;
 		epl2.normalize();
 
+		// XXX: Skip if this line is not intersecting with image rectangle
+
 		vector<kpid> kp2list;
 		for(kpid i2=0; i2<kf2.fKeypoints.size(); i2++) {
 			Vector2d kp2(kf2.fKeypoints[i2].pt.x, kf2.fKeypoints[i2].pt.y);

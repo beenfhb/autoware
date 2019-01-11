@@ -25,6 +25,10 @@ using namespace Eigen;
 using namespace std;
 
 
+vector<double> VMap::mScaleFactors = vector<double>();
+vector<double> VMap::mLevelSigma2 = vector<double>();
+
+
 VMap::VMap() :
 	VMap(cv::Mat(), FeatureDetectorT::ORB, DescriptorMatcherT::BruteForce)
 {}
@@ -506,16 +510,17 @@ VMap::createFeatureDetector(FeatureDetectorT fd)
 		mLevelSigma2.resize(level);
 		mScaleFactors[0] = 1.0;
 		mLevelSigma2[0] = 1.0;
-		for (int i=0; i<level; ++i) {
-			// XXX: Incomplete
+		for (int i=1; i<level; ++i) {
+			mScaleFactors[i] = mScaleFactors[i-1] * ORBf->getScaleFactor();
+			mLevelSigma2[i] = mScaleFactors[i] * mScaleFactors[i];
 		}
 
-	}
-		break;
+	} break;
+
 	case FeatureDetectorT::AKAZE: {
 		rt = cv::AKAZE::create();
-	}
-		break;
+	} break;
+
 	}
 
 	return rt;
