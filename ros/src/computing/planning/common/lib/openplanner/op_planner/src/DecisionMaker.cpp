@@ -78,19 +78,19 @@ void DecisionMaker::Init(const ControllerParams& ctrlParams, const PlannerHNS::P
 void DecisionMaker::InitBehaviorStates()
 {
 
-	m_pStopState 				= new StopStateII(&m_params, 0, 0);
-	m_pMissionCompleteState 	= new MissionAccomplishedStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), 0);
-	m_pGoalState				= new GoalStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pMissionCompleteState);
-	m_pGoToGoalState 			= new ForwardStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoalState);
-	m_pInitState 				= new InitStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
+	m_pStopState = new StopStateII(&m_params, 0, 0);
+	m_pMissionCompleteState = new MissionAccomplishedStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), 0);
+	m_pGoalState = new GoalStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pMissionCompleteState);
+	m_pGoToGoalState = new ForwardStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoalState);
+	m_pInitState = new InitStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
 
-	m_pFollowState				= new FollowStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
-	m_pAvoidObstacleState		= new SwerveStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
-	m_pStopSignWaitState		= new StopSignWaitStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
-	m_pStopSignStopState		= new StopSignStopStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pStopSignWaitState);
+	m_pFollowState = new FollowStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
+	m_pAvoidObstacleState = new SwerveStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
+	m_pStopSignWaitState = new StopSignWaitStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
+	m_pStopSignStopState = new StopSignStopStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pStopSignWaitState);
 
-	m_pTrafficLightWaitState	= new TrafficLightWaitStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
-	m_pTrafficLightStopState	= new TrafficLightStopStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
+	m_pTrafficLightWaitState = new TrafficLightWaitStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
+	m_pTrafficLightStopState = new TrafficLightStopStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
 
 	m_pStopState->InsertNextState(m_pGoToGoalState);
 	m_pStopState->InsertNextState(m_pGoalState);
@@ -183,8 +183,8 @@ void DecisionMaker::InitBehaviorStates()
  		pValues->iCurrSafeTrajectory = pValues->iCentralTrajectory;
 
 	pValues->bFullyBlock = bestTrajectory.bBlocked;
-	if(pValues->distanceToNext <= m_params.maxDistanceToAvoid)
-		pValues->bFullyBlock = true;
+//	if(pValues->distanceToNext <= m_params.maxDistanceToAvoid)
+//		pValues->bFullyBlock = true;
 
  	if(bestTrajectory.lane_index >=0)
  		pValues->iCurrSafeLane = bestTrajectory.lane_index;
@@ -416,15 +416,16 @@ void DecisionMaker::InitBehaviorStates()
 
 		desiredVelocity = deceleration_critical * dt + CurrStatus.speed;
 
-		if(m_pCurrentBehaviorState->GetCalcParams()->iCurrSafeTrajectory != m_pCurrentBehaviorState->GetCalcParams()->iCentralTrajectory)
-		{
-			desiredVelocity  = desiredVelocity * 0.75;
-		}
+//		if(m_pCurrentBehaviorState->GetCalcParams()->iCurrSafeTrajectory != m_pCurrentBehaviorState->GetCalcParams()->iCentralTrajectory)
+//		{
+//			desiredVelocity  = desiredVelocity * 0.75;
+//		}
 
 		if(beh.followVelocity > CurrStatus.speed)
 			desiredVelocity = CurrStatus.speed;
 
 		//std::cout << "Following V: " << CurrStatus.speed << ", Desired V: " << beh.followVelocity << ", A: " << deceleration_critical << ", d_to_stop: " << distance_to_stop << ", sudden_stop_d" << sudden_stop_distance << std::endl;
+		//std::cout << "Desired Vel: " << desiredVelocity << std::endl;
 
 	}
 	else if(beh.state == FORWARD_STATE || beh.state == OBSTACLE_AVOIDANCE_STATE )

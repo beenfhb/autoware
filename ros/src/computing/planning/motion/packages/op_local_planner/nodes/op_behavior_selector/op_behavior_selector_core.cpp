@@ -183,7 +183,7 @@ void BehaviorGen::UpdatePlanningParams(ros::NodeHandle& _nh)
 
 	_nh.getParam("/op_common_params/mapFileName" , m_MapPath);
 	_nh.getParam("/op_common_params/experimentName" , m_ExperimentFolderName);
-	_nh.getParam("/op_behavior_selector/evidence_tust_number", m_PlanningParams.nReliableCount);
+	_nh.getParam("/op_behavior_selector/evidence_trust_number", m_PlanningParams.nReliableCount);
 
 	if(m_ExperimentFolderName.size() > 0)
 	{

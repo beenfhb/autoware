@@ -11,6 +11,7 @@ namespace PlannerHNS
 {
 
   double constexpr g_lateral_skip_value = 20;
+  bool constexpr g_enable_debug = false;
 
 TrajectoryEvaluator::TrajectoryEvaluator()
 {
@@ -49,7 +50,8 @@ TrajectoryCost TrajectoryEvaluator::doOneStep(const std::vector<std::vector<WayP
 
   calculateTransitionCosts(trajectory_costs_, curr_index, params);
 
-  collectContoursAndTrajectories(obj_list, all_contour_points_, all_trajectories_points_, b_static_only);
+
+  collectContoursAndTrajectories(obj_list, safety_border_, all_contour_points_, all_trajectories_points_, b_static_only);
 
   collision_points_.clear();
   calculateDistanceCosts(params, critical_lateral_distance, local_roll_outs_, all_contour_points_, all_trajectories_points_, trajectory_costs_, collision_points_);
@@ -57,13 +59,13 @@ TrajectoryCost TrajectoryEvaluator::doOneStep(const std::vector<std::vector<WayP
 //  collision_points_.insert(collision_points_.begin(), all_contour_points_.begin(), all_contour_points_.end());
 //  collision_points_.insert(collision_points_.begin(), all_trajectories_points_.begin(), all_trajectories_points_.end());
 
-  normalizeCosts(trajectory_costs_, weights_);
+  normalizeCosts(trajectory_costs_);
 
   TrajectoryCost best_trajectory = findBestTrajectory(params, trajectory_costs_);
 //	cout << "------------------------------------------------------------- " << endl;
 
 //  double dt = op_utility_ns::UtilityH::GetTimeDiffNow(_t);
-//  std::cout << "Contour points: " << all_contour_points_.size() << ", Trajectory Points: "
+//  std::cout << "Collision Points: " << collision_points_.size() <<  ", Contour points: " << all_contour_points_.size() << ", Trajectory Points: "
 //        << all_trajectories_points_.size() << ", dt: " << dt <<  std::endl;
   return best_trajectory;
 }
@@ -99,6 +101,7 @@ void TrajectoryEvaluator::initializeLocalRollOuts(const WayPoint& curr_state, co
 }
 
 void TrajectoryEvaluator::collectContoursAndTrajectories(const std::vector<PlannerHNS::DetectedObject>& obj_list,
+                                                         PolygonShape& ego_car_border,
                                                          std::vector<WayPoint>& contour_points,
                                                          std::vector<WayPoint>& trajectory_points,
                                                          const bool& b_static_only)
@@ -152,8 +155,9 @@ void TrajectoryEvaluator::collectContoursAndTrajectories(const std::vector<Plann
           }
         }
 
-        if(b_blocking)
+        if(b_blocking == true || PlanningHelpers::PointInsidePolygon(ego_car_border.points, p.pos) == 1)
         {
+         // std::cout << "Skip Point: (" << i_trj << ", " << i_p << ") " << ", Objects : " << obj_list.size() <<std::endl;
           break;
         }
 
@@ -179,8 +183,7 @@ void TrajectoryEvaluator::collectContoursAndTrajectories(const std::vector<Plann
   }
 }
 
-void TrajectoryEvaluator::normalizeCosts(std::vector<TrajectoryCost>& trajectory_costs,
-                                         const EvaluationWeights& weights)
+void TrajectoryEvaluator::normalizeCosts(std::vector<TrajectoryCost>& trajectory_costs)
 {
   double total_priorities_costs = 0;
  // double total_change = 0;
@@ -263,10 +266,10 @@ void TrajectoryEvaluator::normalizeCosts(std::vector<TrajectoryCost>& trajectory
 //      trajectory_costs.at(ic).lane_change_cost = 0;
 
 
-    trajectory_costs.at(ic).cost = (weights.priority_weight_ * trajectory_costs.at(ic).priority_cost
-        + weights.transition_weight_ * trajectory_costs.at(ic).transition_cost
-        + weights.lateral_weight_ * trajectory_costs.at(ic).lateral_cost
-        + weights.longitudinal_weight_ * trajectory_costs.at(ic).longitudinal_cost);
+    trajectory_costs.at(ic).cost = (eval_params_.priority_weight_ * trajectory_costs.at(ic).priority_cost
+        + eval_params_.transition_weight_ * trajectory_costs.at(ic).transition_cost
+        + eval_params_.lateral_weight_ * trajectory_costs.at(ic).lateral_cost
+        + eval_params_.longitudinal_weight_ * trajectory_costs.at(ic).longitudinal_cost);
   }
 }
 
@@ -373,57 +376,54 @@ void TrajectoryEvaluator::initializeSafetyPolygon(const WayPoint& curr_state, co
 }
 
 TrajectoryCost TrajectoryEvaluator::findBestTrajectory(const PlanningParams& params,
-                                                       std::vector<TrajectoryCost>& trajectory_costs)
+                                                       std::vector<TrajectoryCost> trajectory_costs)
 {
   TrajectoryCost best_trajectory;
   best_trajectory.bBlocked = true;
   best_trajectory.closest_obj_distance = params.horizonDistance;
   best_trajectory.closest_obj_velocity = 0;
-  best_trajectory.index = -1;
+  best_trajectory.index = params.rollOutNumber / 2;
+  best_trajectory.lane_index = 0;
 
-  int smallestIndex = -1;
-  double smallestCost = DBL_MAX;
-  double smallestDistance = DBL_MAX;
-  double velo_of_next = 0;
-//      bool bAllFree = true;
+  std::sort(trajectory_costs.begin(), trajectory_costs.end(), sortCosts);
 
-  std::cout << "Trajectory Costs Log " << " --------------------- " << std::endl;
+  if(g_enable_debug)
+  {
+    std::cout << "Trajectory Costs Log " << " --------------------- " << std::endl;
+
+    for (unsigned int ic = 0; ic < trajectory_costs.size(); ic++)
+    {
+        std::cout << trajectory_costs.at(ic).ToString();
+    }
+
+    std::cout << "--------------------------------------------------" << std::endl;
+  }
+
+  for (unsigned int ic = 0; ic < trajectory_costs.size(); ic++)
+    {
+      if (trajectory_costs.at(ic).closest_obj_distance < best_trajectory.closest_obj_distance)
+        {
+          best_trajectory.closest_obj_distance = trajectory_costs.at(ic).closest_obj_distance;
+          best_trajectory.closest_obj_velocity = trajectory_costs.at(ic).closest_obj_velocity;
+        }
+    }
+
+  //Find Best not blocked rollout
   for (unsigned int ic = 0; ic < trajectory_costs.size(); ic++)
   {
-    std::cout << trajectory_costs.at(ic).ToString();
-    if (!trajectory_costs.at(ic).bBlocked && trajectory_costs.at(ic).cost < smallestCost)
+    if(!trajectory_costs.at(ic).bBlocked)
     {
-      smallestCost = trajectory_costs.at(ic).cost;
-      smallestIndex = ic;
+      if(g_enable_debug)
+        std::cout << trajectory_costs.at(ic).ToString();
+
+      trajectory_costs.at(ic).closest_obj_distance = best_trajectory.closest_obj_distance;
+      //std::cout << "Closest Distance : " <<  trajectory_costs.at(ic).closest_obj_distance << std::endl;
+      return trajectory_costs.at(ic);
     }
-
-    if (trajectory_costs.at(ic).closest_obj_distance < smallestDistance)
-    {
-      smallestDistance = trajectory_costs.at(ic).closest_obj_distance;
-      velo_of_next = trajectory_costs.at(ic).closest_obj_velocity;
-    }
-
-//              if(trajectory_costs.at(ic).bBlocked)
-//                      bAllFree = false;
   }
 
-  std::cout << "Smallest (Distance, Index) " <<  smallestDistance << ", " << smallestIndex << "-----------------------" << std::endl;
-
-//      if(bAllFree && smallestIndex >=0)
-//              smallestIndex = params.rollOutNumber/2;
-
-  if (smallestIndex == -1)
-  {
-    best_trajectory.bBlocked = true;
-    best_trajectory.lane_index = 0;
-    best_trajectory.index = params.rollOutNumber / 2;
-    best_trajectory.closest_obj_distance = smallestDistance;
-    best_trajectory.closest_obj_velocity = velo_of_next;
-  }
-  else if (smallestIndex >= 0)
-  {
-    best_trajectory = trajectory_costs.at(smallestIndex);
-  }
+  if(g_enable_debug)
+    std::cout << best_trajectory.ToString();
 
   return best_trajectory;
 }
@@ -437,15 +437,16 @@ void TrajectoryEvaluator::calculateDistanceCosts(const PlanningParams& params, c
     {
       RelativeInfo info;
       int prev_index = 0;
-      PlanningHelpers::GetRelativeInfoLimited(roll_outs.at(i), contour_points.at(j), info, prev_index);
+      PlanningHelpers::GetRelativeInfoLimited(roll_outs.at(center_index), contour_points.at(j), info, prev_index);
+      info.perp_distance = fabs( info.perp_distance - trajectory_costs.at(i).distance_from_center);
 
-      double actual_lateral_distance = fabs(info.perp_distance)+0.01; //add small distance so this never become zero
-      double actual_longitudinal_distance = info.from_back_distance + roll_outs.at(i).at(info.iBack).cost + 0.01; //add small distance so this never become zero
+      double actual_lateral_distance = fabs(info.perp_distance) - 0.05; //add small distance so this never become zero
+      double actual_longitudinal_distance = info.from_back_distance + roll_outs.at(i).at(info.iBack).cost - 0.05; //add small distance so this never become zero
 
       if(actual_lateral_distance < g_lateral_skip_value && !info.bAfter && !info.bBefore)
 	{
-	  double longitudinal_cost = 1.0/actual_longitudinal_distance;
-	  trajectory_costs.at(i).longitudinal_cost  += longitudinal_cost;
+	  trajectory_costs.at(i).longitudinal_cost  += 1.0/actual_longitudinal_distance;
+
 	  if(actual_lateral_distance < c_lateral_d) // collision point
 	  {
 	    trajectory_costs.at(i).lateral_cost += 2.0; // use half meter fixed critical distance as contact cost for all collision points in the range
@@ -454,7 +455,9 @@ void TrajectoryEvaluator::calculateDistanceCosts(const PlanningParams& params, c
 	      trajectory_costs.at(i).bBlocked = true;
 
 	    if(trajectory_costs.at(i).closest_obj_distance > actual_longitudinal_distance)
+	    {
 	      trajectory_costs.at(i).closest_obj_distance = actual_longitudinal_distance;
+	    }
 	  }
 	  else
 	    {
@@ -462,6 +465,43 @@ void TrajectoryEvaluator::calculateDistanceCosts(const PlanningParams& params, c
 	    }
 	}
     }
+
+//    for(unsigned int j = 0; j < trajectory_points.size(); j++)
+//    {
+//      RelativeInfo info;
+//      int prev_index = 0;
+//      PlanningHelpers::GetRelativeInfoLimited(roll_outs.at(i), trajectory_points.at(j), info, prev_index);
+//
+//      double actual_lateral_distance = fabs(info.perp_distance) - 0.05; //add small distance so this never become zero
+//      double actual_longitudinal_distance = info.from_back_distance + roll_outs.at(i).at(info.iBack).cost - 0.05; //add small distance so this never become zero
+//      double t_diff = fabs(info.perp_point.timeCost - trajectory_points.at(j).timeCost);
+//      double a_diff = info.angle_diff;
+//      double traj_prob = info.perp_point.collisionCost;
+//
+//      if(actual_longitudinal_distance > params.pathDensity && actual_lateral_distance < g_lateral_skip_value && !info.bAfter && !info.bBefore && t_diff < eval_params_.collision_time_)
+//      {
+//        trajectory_costs.at(i).longitudinal_cost  += 1.0/actual_longitudinal_distance;
+//
+//        std::cout << info.bAfter << ", " << info.bBefore << ", " << actual_lateral_distance << ", " << actual_longitudinal_distance <<", " << t_diff <<", " << a_diff <<" ," << traj_prob <<std::endl;
+//
+//        if(actual_lateral_distance < c_lateral_d) // collision point
+//        {
+//          trajectory_costs.at(i).lateral_cost += 2.0; // use half meter fixed critical distance as contact cost for all collision points in the range
+//          collision_points.push_back(info.perp_point);
+//          if(actual_longitudinal_distance < params.minFollowingDistance)
+//            trajectory_costs.at(i).bBlocked = true;
+//
+//          if(trajectory_costs.at(i).closest_obj_distance > actual_longitudinal_distance)
+//          {
+//            trajectory_costs.at(i).closest_obj_distance = actual_longitudinal_distance;
+//          }
+//        }
+//        else
+//          {
+//            trajectory_costs.at(i).lateral_cost += 1.0/actual_lateral_distance;
+//          }
+//      }
+//    }
   }
 }
 

@@ -12,7 +12,7 @@
 namespace PlannerHNS
 {
 
-class EvaluationWeights
+class EvaluationParams
 {
 
 public:
@@ -21,24 +21,27 @@ public:
   double longitudinal_weight_;
   double lateral_weight_;
   double lane_change_weight_;
+  double collision_time_;
 
-  EvaluationWeights()
+  EvaluationParams()
   {
     priority_weight_ = 0.25;
     transition_weight_ = 0.25;
     longitudinal_weight_ = 0.25;
     lateral_weight_ = 0.25;
     lane_change_weight_ = 0;
+    collision_time_ = 3;
   }
 
-  EvaluationWeights(double periority_w, double transition_w, double logitudinal_w, double lateral_w,
-                    double lane_change_w)
+  EvaluationParams(double periority_w, double transition_w, double logitudinal_w, double lateral_w,
+                    double lane_change_w, double collision_t)
   {
     priority_weight_ = periority_w;
     transition_weight_ = transition_w;
     longitudinal_weight_ = logitudinal_w;
     lateral_weight_ = lateral_w;
     lane_change_weight_ = lane_change_w;
+    collision_time_ = collision_t;
   }
 };
 
@@ -64,15 +67,15 @@ public:
   std::vector<TrajectoryCost> trajectory_costs_;
 
 private:
-  EvaluationWeights weights_;
+  EvaluationParams eval_params_;
 
 private:
-  void normalizeCosts(std::vector<TrajectoryCost>& trajectory_costs, const EvaluationWeights& weights);
+  void normalizeCosts(std::vector<TrajectoryCost>& trajectory_costs);
 
   void calculateTransitionCosts(std::vector<TrajectoryCost>& trajectory_costs, const int& curr_index,
                                 const PlanningParams& params);
 
-  void collectContoursAndTrajectories(const std::vector<PlannerHNS::DetectedObject>& obj_list,
+  void collectContoursAndTrajectories(const std::vector<PlannerHNS::DetectedObject>& obj_list, PolygonShape& ego_car_border,
                                       std::vector<WayPoint>& contour_points, std::vector<WayPoint>& trajectory_points, const bool& b_static_only = false);
 
   int getCurrentRollOutIndex(const std::vector<WayPoint>& total_path, const WayPoint& curr_state,
@@ -89,7 +92,12 @@ private:
 
   void calculateDistanceCosts(const PlanningParams& params, const double& c_lateral_d, const std::vector<std::vector<WayPoint> >& roll_outs, const std::vector<WayPoint>& contour_points, const std::vector<WayPoint>& trajectory_points, std::vector<TrajectoryCost>& trajectory_costs, std::vector<WayPoint>& collision_points);
 
-  TrajectoryCost findBestTrajectory(const PlanningParams& params, std::vector<TrajectoryCost>& trajectory_costs);
+  TrajectoryCost findBestTrajectory(const PlanningParams& params, std::vector<TrajectoryCost> trajectory_costs);
+
+  static bool sortCosts(const TrajectoryCost& c1, const TrajectoryCost& c2)
+  {
+    return c1.cost < c2.cost;
+  }
 
 };
 
