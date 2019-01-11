@@ -25,7 +25,7 @@ class AwTcpServerPanel(QtWidgets.QTextEdit, AwLaunchClientIF):
     def on_new_connection(self):
 
         socket = self.tcpsvr.nextPendingConnection()
-        socket.string_buffer = ""
+        socket.buff = ""
         self.connections.append(socket)
         self.append("New connection {} {}".format(socket.localAddress().toString(), socket.localPort()))
 
@@ -36,22 +36,21 @@ class AwTcpServerPanel(QtWidgets.QTextEdit, AwLaunchClientIF):
     def on_client_read_ready(self):
 
         socket = self.sender()
-        strings = str(socket.readAll()).split("\0")
-        strings[0] = socket.string_buffer + strings[0]
-        socket.string_buffer = strings.pop()
-        for string in strings:
-            self.process_request(string)
+        requests = str(socket.readAll()).split("\0")
+        requests[0] = socket.buff + requests[0]
+        socket.buff = requests.pop()
+        for request in requests:
+            self.request_json(request)
 
     def on_client_error(self):
 
         socket = self.sender()
-        self.panel.write("Error " + socket.errorString())
+        self.append("Error " + socket.errorString())
         if socket in self.connections:
             socket.close()
             self.connections.remove(socket)
 
-    def process_request(self, request):
+    def request_json(self, request):
         self.append("Request " + request)
-        #response = self.server.request_json(string)
-        #if response:
-        #    socket.write(response)
+        response = self.server.request_json(request)
+        self.append("Response " + response)

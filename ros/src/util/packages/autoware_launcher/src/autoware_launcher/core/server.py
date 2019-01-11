@@ -4,6 +4,8 @@ from .plugin import AwPluginTree
 from .launch import AwLaunchTree
 from .launch import AwLaunchNode
 
+import yaml
+
 
 
 class AwLaunchServerIF(object):
@@ -108,3 +110,19 @@ class AwLaunchServer(AwLaunchServerIF):
     def runner_finished(self, lpath): # ToDo: update ancestors status
         self.__profile.find(lpath).status = AwLaunchNode.STOP
         for client in self.__clients: client.status_updated(lpath, AwLaunchNode.STOP)
+
+    def request_json(self, request):
+        try:
+            request = yaml.safe_load(request)
+        except:
+            return yaml.safe_dump({"error": "failed to load json"})
+
+        print request
+        if request["command"] == "launch":
+            self.launch_node(request["path"], True)
+            return yaml.safe_dump({"error": None})
+        if request["command"] == "terminate":
+            self.launch_node(request["path"], False)
+            return yaml.safe_dump({"error": None})
+
+        return yaml.safe_dump({"error": "command ignored"})

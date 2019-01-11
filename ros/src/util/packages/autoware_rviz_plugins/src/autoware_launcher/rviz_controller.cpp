@@ -2,10 +2,8 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QGridLayout>
-#include <QPushButton>
 
 #include <iostream>
-#include <vector>
 using namespace std;
 
 namespace {
@@ -13,6 +11,7 @@ namespace {
 QPushButton* create_push_button(QString title)
 {
     auto button = new QPushButton(title);
+    button->setEnabled(false);
     button->setCheckable(true);
     button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     return button;
@@ -26,15 +25,17 @@ RvizController::RvizController(QWidget* parent) : rviz::Panel(parent)
 {
     QRect screen = QApplication::desktop()->screenGeometry();
     int font_size = min(screen.width(), screen.height()) / 100;
-    this->setStyleSheet(QString("font-size: %1px;").arg(font_size));
-    
+    setStyleSheet(QString("font-size: %1px;").arg(font_size));
+
     auto layout = new QGridLayout();
     setLayout(layout);
 
-    vector<const char*> titles = {"localization", "detection", "prediction", "decision", "mission", "motion"};
-    for(size_t i = 0; i < titles.size(); ++i)
+    std::string rootpath = "root/";
+    std::vector<const char*> nodenames = {"localization", "detection", "prediction", "decision", "mission", "motion"};
+    for(size_t i = 0; i < nodenames.size(); ++i)
     {
-        auto button = create_push_button(titles[i]);
+        auto button = create_push_button(nodenames[i]);
+        buttons[rootpath + nodenames[i]] = button;
         layout->addWidget(button, i/3, i%3);
         connect(button, &QPushButton::toggled, this, &RvizController::launch_button_toggled);
     }
@@ -50,7 +51,7 @@ RvizController::RvizController(QWidget* parent) : rviz::Panel(parent)
 void RvizController::launch_button_toggled(bool checked)
 {
     auto button = static_cast<QPushButton*>(sender());
-    QString json = R"({"command":"%1", "path":["root","%2"]})";
+    QString json = R"({"command":"%1", "path":"root/%2"})";
     json = json.arg(checked ? "launch" : "terminate").arg(button->text());
     cout << json.toStdString() << endl;
     socket->write(json.toUtf8().append('\0'));
@@ -59,11 +60,19 @@ void RvizController::launch_button_toggled(bool checked)
 void RvizController::server_connected()
 {
     cout << "connected" << endl;
+    for(const auto& pair : buttons)
+    {
+        pair.second->setEnabled(true);
+    }
 }
 
 void RvizController::server_disconnected()
 {
     cout << "disconnected" << endl;
+    for(const auto& pair : buttons)
+    {
+        pair.second->setEnabled(false);
+    }
 }
 
 void RvizController::server_error()

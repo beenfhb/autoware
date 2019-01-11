@@ -1,8 +1,10 @@
 #ifndef AUTOWARE_LAUNCHER_RVIZ_CONTROLLER_HPP
 #define AUTOWARE_LAUNCHER_RVIZ_CONTROLLER_HPP
 
+#include <unordered_map>
 #include <rviz/panel.h>
 #include <QWidget>
+#include <QPushButton>
 #include <QTcpSocket>
 
 namespace autoware_rviz_plugins {
@@ -27,6 +29,7 @@ class RvizController : public rviz::Panel
     private:
 
         QTcpSocket* socket;
+        std::unordered_map<std::string, QPushButton*> buttons;
 };
 
 }
