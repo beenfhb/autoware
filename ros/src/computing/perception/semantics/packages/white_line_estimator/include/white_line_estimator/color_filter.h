@@ -14,7 +14,7 @@ public:
 private:
     double max_white_line_area_;
     double min_white_line_area_;
-    void filterWhiteLineContours(cv::Mat& image);
+    cv::Mat filterWhiteLineContours(cv::Mat image);
 };
 
 #endif  //COLOR_FILTER_H_INCLUDED

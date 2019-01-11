@@ -38,7 +38,7 @@ public:
     void setProjectionMatrix(autoware_msgs::ProjectionMatrix proj_matrix);
     boost::optional<std::vector<ProjectedPoint> > project(cv::Mat image,const sensor_msgs::PointCloud2ConstPtr& pointcloud,cv::Mat& mask_image, cv::Mat& ground_image);
 private:
-    std::vector<ProjectedPoint>projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,cv::Size size);
+    std::vector<ProjectedPoint> projectPointCloudToImage(sensor_msgs::PointCloud2 point_cloud,cv::Size size);
     cv::Mat getGroundConvexHull(std::vector<ProjectedPoint> ground_points,cv::Size size);
     double min_area_;
     double max_area_;
