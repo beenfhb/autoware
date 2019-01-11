@@ -17,29 +17,20 @@
 #include "datasets/MeidaiBagDataset.h"
 
 using namespace std;
+using namespace Eigen;
 namespace bfs = boost::filesystem;
-
-
-CameraPinholeParams meidaiCamera1Params(
-	1150.96938467,	// fx
-	1150.96938467,	// fy
-	988.511326762,	// cx
-	692.803953253,	// cy
-	1920,			// width
-	1440			// height
-);
 
 
 int main (int argc, char *argv[])
 {
-	auto meidaiDs = MeidaiBagDataset::load("/media/sujiwo/ssd/motoyama.bag");
-	meidaiDs->addCameraParameter(meidaiCamera1Params);
+	Line2 AB = Line2::Through(Vector2d(-3,0), Vector2d(0,2));
 
-	auto frame0 = meidaiDs->getAsFrame(0),
-		frame1 = meidaiDs->getAsFrame(25);
+	Line2 L1 = Line2::Through(Vector2d(0,0), Vector2d(4,0));
+	Line2 L2 = Line2::Through(Vector2d(0,3), Vector2d(4,3));
 
-	auto F01 = BaseFrame::FundamentalMatrix(*frame0, *frame1);
-	cout << F01 << endl;
+	Vector2d ints1 = AB.intersection(L1);
+
+	cout << ints1 << endl;
 
 	return 0;
 }

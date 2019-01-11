@@ -365,31 +365,54 @@ KeyFrame::matchForInitialization(
 		const KeyFrame &kf2,
 		std::vector<FeaturePair> &featurePairs)
 {
-	auto F12 = BaseFrame::FundamentalMatrix(kf1, kf2);
+	featurePairs.clear();
+	Matrix3d F12 = BaseFrame::FundamentalMatrix(kf1, kf2);
+
+	Line2 L1 = Line2::Through(Vector2d(0,0), Vector2d(kf2.cameraParam.width,0));
+	Line2 L2 = Line2::Through(Vector2d(0,0), Vector2d(0,kf2.cameraParam.height));
 
 	for (kpid i1=0; i1<kf1.fKeypoints.size(); i1++) {
 
+		bool foundMatch1 = false;
+
 		// Epipolar line in KF2 for this keypoint
-		Vector3d kp1 (kf2.fKeypoints[i1].pt.x, kf2.fKeypoints[i1].pt.y, 1.0);
+		Vector3d kp1 (kf1.fKeypoints[i1].pt.x, kf1.fKeypoints[i1].pt.y, 1.0);
 
 		Line2 epl2;
 		epl2.coeffs() = F12 * kp1;
-		epl2.normalize();
 
-		// XXX: Skip if this line is not intersecting with image rectangle
+		// Skip if this line is not intersecting with image rectangle
+		Vector2d
+			intersect1 = epl2.intersection(L1),
+			intersect2 = epl2.intersection(L2);
 
-		vector<kpid> kp2list;
+		if (intersect1.x() < 0 and intersect2.y() > kf2.cameraParam.height)
+			continue;
+		if (intersect1.x() > kf2.cameraParam.width and intersect2.y() < 0)
+			continue;
+		if (intersect1.x() > kf2.cameraParam.width and intersect2.y() > kf2.cameraParam.height)
+			continue;
+		if (intersect1.x() < 0 and intersect2.y() < 0)
+			continue;
+
+		kpid targetKp2;
+
 		for(kpid i2=0; i2<kf2.fKeypoints.size(); i2++) {
 			Vector2d kp2(kf2.fKeypoints[i2].pt.x, kf2.fKeypoints[i2].pt.y);
 			auto d = epl2.absDistance(kp2);
+
+			if (d > 3.84*VMap::mScaleFactors[kf2.fKeypoints[i2].octave])
+				continue;
+
+			// XXX: Unfinished
+			// Employ brute force match using list of compatible points?
+
 		}
 
+		if (foundMatch1) {
+//			FeaturePair mPair = {i1, kf1.fKeypoints[i1], targetKp2, kf2.fKeypoints[targetKp2]};
+			foundMatch1 = false;
+		}
 	}
-
-	// XXX: Unfinished
-
-	// Compute epipole in second keyframe
-
-	// Collect keypoints nearby this line
 
 }
