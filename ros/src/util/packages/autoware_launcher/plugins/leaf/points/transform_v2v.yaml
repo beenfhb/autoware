@@ -1,4 +1,4 @@
 args:
-    - { type: str, title: Parent Frame, arg: parent_frame }
+    - { type: str, title: Parent Frame, arg: {name: parent_frame, default: "velodyne"} }
     - { type: str, title: Local Frame,  arg: local_frame }
     - { type: tf,  title: Transform,    arg: [tx, ty, tz, rx, ry, rz] }

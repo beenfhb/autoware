@@ -14,7 +14,9 @@ from .procmgr    import AwProcessPanel
 from .summary    import AwSummaryPanel
 from .network    import AwTcpServerPanel
 from .quickstart import AwQuickStartPanel
-from .simulation import AwSimulationWidget
+from .simulation import AwRosbagSimulatorWidget
+from .simulation import AwLgsvlSimulatorWidget
+
 
 
 class AwQtGuiClient(object):
@@ -53,7 +55,8 @@ class AwQtGuiClient(object):
         self.__process    = AwProcessPanel(self)  # ToDo: consider moving to guimgr
         self.__network    = AwTcpServerPanel()
         self.__quickstart = AwQuickStartPanel(self.__guimgr)
-        self.__simulation = AwSimulationWidget(self.__guimgr)
+        self.__sim_rosbag = AwRosbagSimulatorWidget(self.__guimgr)
+        self.__sim_lgsvl  = AwLgsvlSimulatorWidget (self.__guimgr)
 
         tabwidget = QtWidgets.QTabWidget()
         tabwidget.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
@@ -77,9 +80,13 @@ class AwQtGuiClient(object):
         mainwidget.addTab(self.__quickstart, "Quick Start")
         mainwidget.addTab(self.__network,    "Server Debug")
 
+        simulations = QtWidgets.QTabWidget()
+        simulations.addTab(self.__sim_rosbag, "Rosbag Play")
+        simulations.addTab(self.__sim_lgsvl,  "LGSVL Simulator")
+
         mainsplitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
-        mainsplitter.addWidget(self.__simulation)
         mainsplitter.addWidget(mainwidget)
+        mainsplitter.addWidget(simulations)
 
         #dock = QtWidgets.QDockWidget()
         #dock.setWidget( )
@@ -89,8 +96,8 @@ class AwQtGuiClient(object):
         window.setCentralWidget(mainsplitter)
         window.show()
 
-        self.__simulation.hide()
-        window.addViewMenu("Simulation", self.__simulation.setVisible)
+        simulations.hide()
+        window.addViewMenu("Simulation", simulations.setVisible)
 
         self.__server.register_runner(self.__process)
         self.__process.register_server(self.__server)

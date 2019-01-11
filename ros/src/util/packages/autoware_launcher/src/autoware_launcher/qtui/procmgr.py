@@ -62,6 +62,7 @@ class AwProcessItem(QtWidgets.QPlainTextEdit):
         super(AwProcessItem, self).__init__()
         self.lpath = lpath
         
+        #ToDo: setMaximumBlockCount
         self.setReadOnly(True)
         self.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
 

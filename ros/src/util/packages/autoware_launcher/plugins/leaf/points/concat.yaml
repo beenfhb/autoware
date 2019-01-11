@@ -1,4 +1,4 @@
 args:
-    - { title: Input Topics, type: str, arg: input_topics }
-    - { title: Output Topic, type: str, arg: output_topic }
-    - { title: Output Frame, type: str, arg: output_frame }
+    - { title: Input Topics, type: strlist, arg: input_topics }
+    - { title: Output Topic, type: str,     arg: {name: output_topic, default: /points_raw} }
+    - { title: Output Frame, type: str,     arg: {name: output_frame, default: velodyne} }

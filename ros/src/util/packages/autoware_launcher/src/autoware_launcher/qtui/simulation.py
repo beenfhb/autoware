@@ -1,15 +1,16 @@
 from python_qt_binding import QtCore
+from python_qt_binding import QtNetwork
+from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
-
 from ..core import console
 from ..core import fspath
 
 from .widgets import AwFileSelect
 
-class AwSimulationWidget(QtWidgets.QWidget):
+class AwRosbagSimulatorWidget(QtWidgets.QWidget):
 
     def __init__(self, guimgr):
-        super(AwSimulationWidget, self).__init__()
+        super(AwRosbagSimulatorWidget, self).__init__()
         self.rosbag_mode_proc = QtCore.QProcess(self)
         self.rosbag_info_proc = QtCore.QProcess(self)
         self.rosbag_play_proc = QtCore.QProcess(self)
@@ -41,17 +42,18 @@ class AwSimulationWidget(QtWidgets.QWidget):
 
         self.setStyleSheet("QCheckBox::indicator { width: 28px; height: 28px; }")
         self.rosbag_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+        self.rosbag_text.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
         
         layout = QtWidgets.QGridLayout()
         layout.addWidget(self.rosbag_enable,      0, 0)
-        layout.addWidget(self.rosbag_label ,      0, 1)
+        layout.addWidget(self.rosbag_label,       0, 1)
         layout.addWidget(self.rosbag_play,        0, 2)
         layout.addWidget(self.rosbag_stop,        0, 3)
         layout.addWidget(self.rosbag_pause,       0, 4)
-        layout.addWidget(self.rosbag_file.path,   1, 0, 1, 3)
-        layout.addWidget(self.rosbag_file.button, 1, 3)
-        layout.addWidget(self.rosbag_info,        1, 4)
-        layout.addWidget(self.rosbag_state,       2, 0, 1, 5)
+        layout.addWidget(self.rosbag_state,       1, 0, 1, 5)
+        layout.addWidget(self.rosbag_file.path,   2, 0, 1, 3)
+        layout.addWidget(self.rosbag_file.button, 2, 3)
+        layout.addWidget(self.rosbag_info,        2, 4)
         layout.addWidget(self.rosbag_text,        3, 0, 1, 5)
         self.setLayout(layout)
         self.simulation_mode_disabled()
@@ -104,3 +106,87 @@ class AwSimulationWidget(QtWidgets.QWidget):
         stdout = str(self.rosbag_play_proc.readAllStandardOutput()).split("\r")
         if 2 <= len(stdout):
             self.rosbag_state.setText(stdout[-2])
+
+
+
+class AwLgsvlSimulatorWidget(QtWidgets.QWidget):
+
+    def __init__(self, guimgr):
+        super(AwLgsvlSimulatorWidget, self).__init__()
+        self.bridge_process = QtCore.QProcess(self)
+        #self.bridge_console = AwProcessViewer(self.bridge_process)
+        self.bridge_button  = QtWidgets.QPushButton("Launch Bridge Server")
+        self.bridge_button.setCheckable(True)
+        self.bridge_button.toggled.connect(self.launch_bridge)
+
+        self.local_net_addr = QtWidgets.QLineEdit()
+        self.local_net_part = QtWidgets.QLineEdit()
+        for host in QtNetwork.QNetworkInterface.allAddresses():
+            if not host.isLoopback():
+                if host.protocol() == QtNetwork.QAbstractSocket.IPv4Protocol:
+                    self.local_net_addr.setText(host.toString())
+        self.local_net_part.setText("9090")
+
+        layout = QtWidgets.QGridLayout()
+        layout.addWidget(QtWidgets.QLabel("Address"), 0, 0)
+        layout.addWidget(QtWidgets.QLabel("Port"),    1, 0)
+        layout.addWidget(self.local_net_addr, 0, 1)
+        layout.addWidget(self.local_net_part, 1, 1)
+        layout.addWidget(self.bridge_button,  2, 0, 1, 2)
+        layout.setRowStretch(3, 1)
+        #layout.addWidget(self.bridge_console, 3, 0, 1, 2)
+        self.setLayout(layout)
+
+    def launch_bridge(self, checked):
+        if checked:
+            self.bridge_process.start("roslaunch rosbridge_server rosbridge_websocket.launch")
+        else:
+            self.bridge_process.terminate()
+
+
+
+class AwProcessViewer(QtWidgets.QPlainTextEdit):
+
+    def __init__(self, process):
+        super(AwProcessViewer, self).__init__()
+        
+        self.setReadOnly(True)
+        self.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
+        #self.setMaximumBlockCount(100)
+        self.moveCursor(QtGui.QTextCursor.End)
+
+        self.process = process
+        self.process.finished.connect(self.process_finished)
+        self.process.readyReadStandardOutput.connect(self.process_stdouted)
+        self.process.readyReadStandardError.connect(self.process_stderred)
+
+        import re
+        self.bash_regex = re.compile("(\x1b\[.*?m|\x1b\]2;|\x07)")
+
+    def byte2text(self, byte):
+        #text = self.bash_regex.sub("", byte.data().decode('utf-8'))
+        text = QtCore.QTextStream(byte).readAll()
+        text = self.bash_regex.sub("", text)
+        #text = str(text).encode("string-escape").replace("\\n", "\n")
+        return text
+
+    def process_finished(self):
+        pass
+
+    def process_stdouted(self):
+        text = self.byte2text(self.process.readAllStandardOutput())
+        self.insertPlainText(text)
+        self.moveCursor(QtGui.QTextCursor.End)
+
+    def process_stderred(self):
+        text = self.byte2text(self.process.readAllStandardError())
+        self.insertPlainText(text)
+        self.moveCursor(QtGui.QTextCursor.End)
+
+    # Debug
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_C:
+            self.clear()
+            event.accept()
+        else:
+            super(AwProcessViewer, self).keyPressEvent(event)

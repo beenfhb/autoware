@@ -1,0 +1,3 @@
+rules:
+  - { type: unit, name: driver,    plugin: {scan: leaf/driver/lidar} }
+  - { type: unit, name: transform, plugin: leaf/points/transform_v2b }

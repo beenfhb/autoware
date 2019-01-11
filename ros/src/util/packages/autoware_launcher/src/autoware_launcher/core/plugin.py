@@ -100,18 +100,10 @@ class AwPluginNode(object):
 
     def default_config(self):
         config = {}
-        for data in self.__args:
-            if data["type"] in ["str", "file", "calib"]:
-                config["args."+data["arg"]] = ""
-            if data["type"] in ["int"]:
-                config["args."+data["arg"]] = "0"
-            if data["type"] in ["real"]:
-                config["args."+data["arg"]] = "0.0"
-            if data["type"] in ["filelist"]:
-                config["args."+data["arg"]] = []
-            if data["type"] in ["tf"]:
-                for argname in data["arg"]:
-                    config["args."+argname] = "0.0"
+        for args in self.__args:
+            args = args["arg"]
+            for arg in args if type(args) == list else [args]:
+                config["args."+arg["name"]] = arg["default"]
         return config
 
     # temporary
@@ -163,19 +155,30 @@ class AwPluginNode(object):
                 self.__rule[data["name"]] = data
 
         # Validation
-        args_type = ["str", "int", "real", "tf", "file", "filelist", "calib"]
+        args_type = ["str", "strlist", "int", "real", "tf", "file", "filelist", "calib"]
         rule_type = ["unit", "list"]
         for data in self.__args:
             if data["type"] not in args_type: raise Exception("Plugin Args Type: " + filepath)
         for name, data in self.__rule.items():
             if data["type"] not in rule_type: raise TypeError("Plugin Rule Type: " + filepath)
 
+        # Auto complete function
+        args_default = {"str":"", "strlist":[],  "calib":"", "file":"", "filelist":[], "int":"0", "real":"0.0", "tf":"0.0"}
+        def complete_args(argdata, argtype):
+            if type(argdata) == str:
+                argdata = {"name": argdata}
+            argdata.setdefault("default", args_default[argtype])
+            return argdata
+
         # Auto complete
         for data in self.__info:
             data.setdefault("view", "info." + data["type"])
         for data in self.__args:
             data.setdefault("view", "args." + data["type"])
-
+            if type(data["arg"]) == list:
+                data["arg"] = [complete_args(arg, data["type"]) for arg in data["arg"]]
+            else:
+                data["arg"] = complete_args(data["arg"], data["type"])
 
 
 if __name__ == "__main__":

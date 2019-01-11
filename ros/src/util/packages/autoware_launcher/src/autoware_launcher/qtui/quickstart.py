@@ -26,14 +26,11 @@ class AwQuickStartPanel(QtWidgets.QWidget):
         if lnode.path() == "root": self.setup_widget(lnode)
 
     def status_ui_updated(self, lpath, state):
-        frame = self.frames[lpath]
-        print self.frames
-        print frame
+        frame = self.frames.get(lpath)
         if frame:
-            if state:
-                frame.exec_requested()
-            else:
-                frame.term_completed()
+            if state == 0x00: frame.term_completed()
+            if state == 0x01: frame.exec_requested()
+            if state == 0x02: frame.term_requested()
 
     def setup_widget(self, node):
         self.guimgr.panel_setup(self)

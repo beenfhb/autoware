@@ -96,10 +96,22 @@ class AwNodeCreateButton(QtWidgets.QPushButton):
         self.rule = rule
         self.clicked.connect(self.onclicked)
 
+    def newindex(self, name):
+
+        index = 0
+        while self.node.haschild(name + str(index)):
+            index = index + 1
+        return name + str(index)
+
     def onclicked(self):
 
-        if (self.rule["type"] == "unit") and (len(self.rule["plugin"]) == 1):
-            self.node.addchild(self.rule["name"], self.rule["plugin"][0])
+        if len(self.rule["plugin"]) == 1:
+            if self.rule["type"] == "unit":
+                name = self.rule["name"]
+                self.node.addchild(name, self.rule["plugin"][0])
+            else:
+                name = self.newindex(self.rule["name"])
+                self.node.addchild(name, self.rule["plugin"][0])
         else:
             self.open_window()
 
@@ -141,7 +153,7 @@ class AwNodeCreateButton(QtWidgets.QPushButton):
         cancel_button.clicked.connect(window.close)
         select_button.clicked.connect(self.onselected)
 
-        lname_edit = QtWidgets.QLineEdit()
+        lname_edit = QtWidgets.QLineEdit() # ToDo: remove (set automatically)
         if self.rule["type"] == "unit":
             lname_edit.setText(self.rule["name"])
             lname_edit.setReadOnly(True) 
@@ -158,8 +170,6 @@ class AwNodeCreateButton(QtWidgets.QPushButton):
         pname_edit = QtWidgets.QListWidget()
         for name in self.rule["plugin"]:
             pname_edit.addItem(name)
-        if len(self.rule["plugin"]) == 1:
-            pname_edit.setCurrentRow(0)
         widget.layout().addWidget(QtWidgets.QLabel("Node Type"))
         widget.layout().addWidget(pname_edit)
 
