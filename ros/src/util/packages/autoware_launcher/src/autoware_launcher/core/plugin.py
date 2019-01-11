@@ -43,22 +43,24 @@ class AwPluginTree(object):
 class AwPluginNode(object):
 
     def __init__(self, tree, path):
-        self.__tree  = tree
-        self.__path  = path
-        self.__info  = None
-        self.__args  = None
-        self.__rule  = None
-        self.__panel = None
-        self.__frame = None
+        self.__tree   = tree
+        self.__path   = path
+        self.__info   = None
+        self.__args   = None
+        self.__rule   = None
+        self.__launch = None
+        self.__panel  = None
+        self.__frame  = None
 
     def todict(self):
         data = {}
-        data["type"]  = "Node" if self.isnode() else "Leaf"
-        data["info"]  = self.__info
-        data["args"]  = self.__args
-        data["rule"]  = self.__rule.values()
-        data["panel"] = self.__panel
-        data["frame"] = self.__frame
+        data["type"]   = "Node" if self.isnode() else "Leaf"
+        data["info"]   = self.__info
+        data["args"]   = self.__args
+        data["rule"]   = self.__rule.values()
+        data["launch"] = self.__launch
+        data["panel"]  = self.__panel
+        data["frame"]  = self.__frame
         return data
 
     def error(self, text):
@@ -84,6 +86,9 @@ class AwPluginNode(object):
 
     def rules(self):
         return self.__rule.values()
+
+    def launch(self):
+        return self.__launch
 
     def panel(self):
         return self.__panel
@@ -130,8 +135,10 @@ class AwPluginNode(object):
             with open(filepath+ ".yaml") as fp:
                 ydata = yaml.safe_load(fp)
 
-            self.__panel = ydata.get("panel", {"view": "node.panel"})
-            self.__frame = ydata.get("frame", {"view": "node.frame"})
+            xmlpath = "$(find autoware_launcher)/plugins/{}.xml".format(self.path())
+            self.__launch = ydata.get("launch", xmlpath)
+            self.__panel  = ydata.get("panel", {"view": "node.panel"})
+            self.__frame  = ydata.get("frame", {"view": "node.frame"})
 
             self.__info = ydata.get("info", [])
             self.__args = ydata.get("args", [])

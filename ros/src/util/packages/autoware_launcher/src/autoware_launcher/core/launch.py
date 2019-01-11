@@ -220,12 +220,13 @@ class AwLaunchNode(AwBaseNode):
     def generate_launch(self): # ToDo: list args from plugin
         lines = []
         lines.append('<launch>')
-        lines.append('  <include file="' + os.path.join("$(find autoware_launcher)", "plugins", self.plugin.path() + ".xml") + '">')
+        lines.append('  <include file="' + self.plugin.launch() + '">')
         for arg_name, arg_data in self.config.items():
             if arg_name.startswith("args."):
-                if type(arg_data) is list:
-                    arg_data = " ".join(arg_data)
-                lines.append('    <arg name="' + arg_name[5:] + '" value="' + str(arg_data) + '"/>')
+                if arg_data:
+                    if type(arg_data) is list:
+                        arg_data = " ".join(arg_data)
+                    lines.append('    <arg name="' + arg_name[5:] + '" value="' + str(arg_data) + '"/>')
         lines.append('  </include>')
         lines.append('</launch>')
         return "\n".join(lines)

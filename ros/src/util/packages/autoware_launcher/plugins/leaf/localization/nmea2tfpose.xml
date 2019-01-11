@@ -1,3 +1,0 @@
-<launch>
-    <include file="$(find gnss_localizer)/launch/nmea2tfpose.launch"/>
-</launch>

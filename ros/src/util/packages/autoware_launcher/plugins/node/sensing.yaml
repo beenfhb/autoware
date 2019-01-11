@@ -1,3 +1,4 @@
 rules :
   - { type: unit, name: points,  plugin : [node/points/single, node/points/multi] }
   - { type: unit, name: cameras, plugin : node/images/cameras }
+  - { type: unit, name: gnss,    plugin : leaf/gnss/nmea2tfpose }

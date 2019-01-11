@@ -7,5 +7,4 @@ from autoware_launcher.qtui import AwQtGuiClient
 
 server = AwLaunchServer(sys.argv)
 client = AwQtGuiClient(sys.argv, server)
-
-sys.exit(client.start())
+sys.exit(client.start2())

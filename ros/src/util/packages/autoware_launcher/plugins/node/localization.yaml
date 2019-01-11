@@ -1,1 +1,3 @@
-children : []
+rules :
+- { type: unit, name: downsampler, plugin: leaf/localization/downsampler  }
+- { type: unit, name: localizer,   plugin: leaf/localization/ndt_matching }
