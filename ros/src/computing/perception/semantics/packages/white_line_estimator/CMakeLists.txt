@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   tf
   message_filters
+  visualization_msgs
 )
 
 find_package(OpenCV REQUIRED)

@@ -7,6 +7,7 @@ WhiteLineEstimator::WhiteLineEstimator(ros::NodeHandle nh,ros::NodeHandle pnh) :
     pnh_ = pnh;
     pointcloud_projector_ptr_ = boost::make_shared<PointCloudProjector>(500,15000);
     image_points_projector_ptr_ = boost::make_shared<ImagePointsProjector>();
+    marker_pub_ = pnh_.advertise<visualization_msgs::MarkerArray>("marker",1);
     image_pub_ = it_.advertise("/ground_image", 10);
     image_sub_ptr_ = boost::make_shared<message_filters::Subscriber<sensor_msgs::Image> >(nh_, "image_raw", 1);
     pointcloud_sub_ptr_ = boost::make_shared<message_filters::Subscriber<sensor_msgs::PointCloud2> >(nh_, "points_ground", 1);
@@ -46,6 +47,13 @@ void WhiteLineEstimator::sensorCallback(const sensor_msgs::ImageConstPtr& image,
     }
     cv::Mat filterd_image;
     std::vector<std::vector<cv::Point> > contours = filter_.filterWhiteLine(src_image,ground_mask,filterd_image);
+    boost::optional<std::vector<std::vector<geometry_msgs::Point> > > projected_white_line_contours;
+    projected_white_line_contours = image_points_projector_ptr_->project(contours);
+    if(!projected_white_line_contours)
+    {
+        ROS_ERROR("failed to project white line contours to the world points.");
+        return;
+    }
     try
     {
         cv_ptr = cv_bridge::toCvCopy(image, sensor_msgs::image_encodings::MONO8);
