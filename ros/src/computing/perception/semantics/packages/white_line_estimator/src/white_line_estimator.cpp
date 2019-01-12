@@ -24,6 +24,12 @@ WhiteLineEstimator::~WhiteLineEstimator()
 
 }
 
+visualization_msgs::MarkerArray WhiteLineEstimator::generateMarkers(std::vector<std::vector<geometry_msgs::Point> > points,std::string frame)
+{
+    visualization_msgs::MarkerArray markers;
+    return markers;
+}
+
 void WhiteLineEstimator::sensorCallback(const sensor_msgs::ImageConstPtr& image,const sensor_msgs::PointCloud2ConstPtr& pointcloud)
 {
     cv::Mat ground_mask;

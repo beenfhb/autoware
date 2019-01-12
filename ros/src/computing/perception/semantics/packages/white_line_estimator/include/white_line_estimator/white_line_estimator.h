@@ -57,5 +57,6 @@ private:
     dynamic_reconfigure::Server<white_line_estimator::white_line_estimatorConfig> server_;
     void configureCallback(white_line_estimator::white_line_estimatorConfig &config, uint32_t level);
     dynamic_reconfigure::Server<white_line_estimator::white_line_estimatorConfig>::CallbackType callback_func_type_;
+    visualization_msgs::MarkerArray generateMarkers(std::vector<std::vector<geometry_msgs::Point> > points,std::string frame);
 };
 #endif  //WHITE_LINE_ESTIMATOR_HINCLUDED
