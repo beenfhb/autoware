@@ -17,16 +17,16 @@ struct CvProjMatrix
 {
     cv::Mat invRt;
     cv::Mat invTt;
-    Eigen::MatrixXd eigen_proj_mat;
+    Eigen::MatrixXd eigen_proj_matrix;
     CvProjMatrix(autoware_msgs::ProjectionMatrix proj_matrix)
     {
         cv::Mat cv_proj_mat = cv::Mat(4, 4, CV_64F);
-        eigen_proj_mat = Eigen::MatrixXd(4,4);
+        eigen_proj_matrix = Eigen::MatrixXd(4,4);
         for (int row = 0; row < 4; row++)
         {
             for (int col = 0; col < 4; col++)
             {
-                eigen_proj_mat(row,col) = proj_matrix.projection_matrix[row * 4 + col];
+                eigen_proj_matrix(row,col) = proj_matrix.projection_matrix[row * 4 + col];
                 cv_proj_mat.at<double>(row, col) = proj_matrix.projection_matrix[row * 4 + col];
             }
         }

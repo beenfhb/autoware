@@ -17,15 +17,18 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Point.h>
 
+//headers in Eigen
+#include <Eigen/LU>
+
 class ImagePointsProjector
 {
 public:
     ImagePointsProjector();
     ~ImagePointsProjector();
     boost::optional<std::vector<geometry_msgs::Point> > project(std::vector<cv::Point> image_points);
-private:
     void setCameraInfo(sensor_msgs::CameraInfo info);
     void setProjectionMatrix(autoware_msgs::ProjectionMatrix proj_matrix);
+private:
     boost::optional<CvCameraInfo> camera_info_;
     boost::optional<CvProjMatrix> proj_matrix_;
     std::mutex mtx_;

@@ -6,6 +6,7 @@ WhiteLineEstimator::WhiteLineEstimator(ros::NodeHandle nh,ros::NodeHandle pnh) :
     nh_ = nh;
     pnh_ = pnh;
     pointcloud_projector_ptr_ = boost::make_shared<PointCloudProjector>(500,15000);
+    image_points_projector_ptr_ = boost::make_shared<ImagePointsProjector>();
     image_pub_ = it_.advertise("/ground_image", 10);
     image_sub_ptr_ = boost::make_shared<message_filters::Subscriber<sensor_msgs::Image> >(nh_, "image_raw", 1);
     pointcloud_sub_ptr_ = boost::make_shared<message_filters::Subscriber<sensor_msgs::PointCloud2> >(nh_, "points_ground", 1);
@@ -43,7 +44,8 @@ void WhiteLineEstimator::sensorCallback(const sensor_msgs::ImageConstPtr& image,
     {
         return;
     }
-    cv::Mat filterd_image = filter_.filterWhiteLine(src_image,ground_mask);
+    cv::Mat filterd_image;
+    filter_.filterWhiteLine(src_image,ground_mask,filterd_image);
     try
     {
         cv_ptr = cv_bridge::toCvCopy(image, sensor_msgs::image_encodings::MONO8);
@@ -61,12 +63,14 @@ void WhiteLineEstimator::sensorCallback(const sensor_msgs::ImageConstPtr& image,
 void WhiteLineEstimator::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg)
 {
     pointcloud_projector_ptr_->setCameraInfo(*msg);
+    image_points_projector_ptr_->setCameraInfo(*msg);
     return;
 }
 
 void WhiteLineEstimator::projectionMatrixCallback(const autoware_msgs::ProjectionMatrixConstPtr& msg)
 {
     pointcloud_projector_ptr_->setProjectionMatrix(*msg);
+    image_points_projector_ptr_->setProjectionMatrix(*msg);
     return;
 }
 

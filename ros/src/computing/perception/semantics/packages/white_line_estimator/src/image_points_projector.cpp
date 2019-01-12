@@ -24,6 +24,22 @@ boost::optional<std::vector<geometry_msgs::Point> > ImagePointsProjector::projec
         return boost::none;
     }
     std::vector<geometry_msgs::Point> projected_points;
+    Eigen::MatrixXd p_mat = camera_info_->eigen_camera_matrix * proj_matrix_->eigen_proj_matrix;
+    Eigen::MatrixXd p_mat_inv = p_mat.inverse();
+    for(auto image_point_itr = image_points.begin(); image_point_itr != image_points.end(); image_point_itr++)
+    {
+        Eigen::MatrixXd image_point_mat = Eigen::MatrixXd(3,1);
+        image_point_mat(0,0) = image_point_itr->x;
+        image_point_mat(1,0) = image_point_itr->y;
+        image_point_mat(2,0) = 1;
+        geometry_msgs::Point world_point;
+        Eigen::MatrixXd world_point_mat = Eigen::MatrixXd(4,1);;
+        world_point_mat = p_mat_inv * image_point_mat;
+        world_point.x = world_point_mat(0,0);
+        world_point.y = world_point_mat(1,0);
+        world_point.z = world_point_mat(2,0);
+        projected_points.push_back(world_point);
+    }
     return projected_points;
 }
 
