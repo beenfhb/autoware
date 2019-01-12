@@ -117,12 +117,6 @@ public:
 			std::vector<FeaturePair> &featurePairs,
 			cv::Ptr<cv::DescriptorMatcher> matcher);
 
-	static void
-	matchForInitialization(
-		const KeyFrame &kf1,
-		const KeyFrame &kf2,
-		std::vector<FeaturePair> &featurePairs);
-
 	static void triangulate (
 		const KeyFrame *kf1, const KeyFrame *kf2,
 		std::vector<kfid> &mapPointList,
@@ -168,6 +162,8 @@ protected:
     friend void boost::serialization::serialize (Archive & ar, KeyFrame &keyframe, const unsigned int version);
 
 	friend class VMap;
+
+	friend class Matcher;
 
 	kfid id;
 

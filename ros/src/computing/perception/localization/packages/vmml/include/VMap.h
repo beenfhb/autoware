@@ -214,6 +214,8 @@ protected:
 
 	friend class KeyFrame;
 
+	friend class Matcher;
+
 	cv::Mat vocabulary;
 
 //	std::vector<KeyFrame*> keyframeList;

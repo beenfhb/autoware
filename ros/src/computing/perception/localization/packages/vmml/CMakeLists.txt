@@ -102,6 +102,7 @@ add_library(
 		src/Viewer.cpp
 		src/ImageDatabase.cpp
 		src/BaseFrame.cpp
+		src/Matcher.cpp
 		src/Frame.cpp
 		src/Localizer.cpp
 		src/triangulation.cpp
