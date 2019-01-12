@@ -25,7 +25,7 @@ class ImagePointsProjector
 public:
     ImagePointsProjector();
     ~ImagePointsProjector();
-    boost::optional<std::vector<geometry_msgs::Point> > project(std::vector<cv::Point> image_points);
+    boost::optional<std::vector<std::vector<geometry_msgs::Point> > > project(std::vector<std::vector<cv::Point> > image_points);
     void setCameraInfo(sensor_msgs::CameraInfo info);
     void setProjectionMatrix(autoware_msgs::ProjectionMatrix proj_matrix);
 private:

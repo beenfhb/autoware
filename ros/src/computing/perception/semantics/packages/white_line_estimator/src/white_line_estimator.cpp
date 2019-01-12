@@ -45,7 +45,7 @@ void WhiteLineEstimator::sensorCallback(const sensor_msgs::ImageConstPtr& image,
         return;
     }
     cv::Mat filterd_image;
-    filter_.filterWhiteLine(src_image,ground_mask,filterd_image);
+    std::vector<std::vector<cv::Point> > contours = filter_.filterWhiteLine(src_image,ground_mask,filterd_image);
     try
     {
         cv_ptr = cv_bridge::toCvCopy(image, sensor_msgs::image_encodings::MONO8);

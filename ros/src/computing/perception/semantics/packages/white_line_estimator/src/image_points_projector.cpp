@@ -10,7 +10,7 @@ ImagePointsProjector::~ImagePointsProjector()
     
 }
 
-boost::optional<std::vector<geometry_msgs::Point> > ImagePointsProjector::project(std::vector<cv::Point> image_points)
+boost::optional<std::vector<std::vector<geometry_msgs::Point> > > ImagePointsProjector::project(std::vector<std::vector<cv::Point> > image_points)
 {
     std::lock_guard<std::mutex> lock(mtx_);
     if(!camera_info_)
@@ -23,24 +23,29 @@ boost::optional<std::vector<geometry_msgs::Point> > ImagePointsProjector::projec
         ROS_ERROR_STREAM("projection matrix does not recieved.");
         return boost::none;
     }
-    std::vector<geometry_msgs::Point> projected_points;
+    std::vector<std::vector<geometry_msgs::Point> > projected_points_array;
     Eigen::MatrixXd p_mat = camera_info_->eigen_camera_matrix * proj_matrix_->eigen_proj_matrix;
     Eigen::MatrixXd p_mat_inv = p_mat.inverse();
-    for(auto image_point_itr = image_points.begin(); image_point_itr != image_points.end(); image_point_itr++)
+    for(auto image_points_itr = image_points.begin(); image_points_itr != image_points.end(); image_points_itr++)
     {
-        Eigen::MatrixXd image_point_mat = Eigen::MatrixXd(3,1);
-        image_point_mat(0,0) = image_point_itr->x;
-        image_point_mat(1,0) = image_point_itr->y;
-        image_point_mat(2,0) = 1;
-        geometry_msgs::Point world_point;
-        Eigen::MatrixXd world_point_mat = Eigen::MatrixXd(4,1);;
-        world_point_mat = p_mat_inv * image_point_mat;
-        world_point.x = world_point_mat(0,0);
-        world_point.y = world_point_mat(1,0);
-        world_point.z = world_point_mat(2,0);
-        projected_points.push_back(world_point);
+        std::vector<geometry_msgs::Point> projected_points;
+        for(auto image_point_itr = image_points_itr->begin(); image_point_itr != image_points_itr->end(); image_point_itr++)
+        {
+            Eigen::MatrixXd image_point_mat = Eigen::MatrixXd(3,1);
+            image_point_mat(0,0) = image_point_itr->x;
+            image_point_mat(1,0) = image_point_itr->y;
+            image_point_mat(2,0) = 1;
+            geometry_msgs::Point world_point;
+            Eigen::MatrixXd world_point_mat = Eigen::MatrixXd(4,1);;
+            world_point_mat = p_mat_inv * image_point_mat;
+            world_point.x = world_point_mat(0,0);
+            world_point.y = world_point_mat(1,0);
+            world_point.z = world_point_mat(2,0);
+            projected_points.push_back(world_point);
+        }
+        projected_points_array.push_back(projected_points);
     }
-    return projected_points;
+    return projected_points_array;
 }
 
 void ImagePointsProjector::setCameraInfo(sensor_msgs::CameraInfo info)
