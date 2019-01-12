@@ -19,6 +19,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(OpenCV REQUIRED)
 
+find_package(Eigen3 REQUIRED)
+
 generate_dynamic_reconfigure_options(cfg/white_line_estimator.cfg)
 
 catkin_package(
@@ -32,7 +34,7 @@ include_directories(
 
 add_executable(white_line_estimator_node 
   src/white_line_estimator_node.cpp src/white_line_estimator.cpp 
-  src/color_filter.cpp src/image_projector.cpp src/contour_projector.cpp)
+  src/color_filter.cpp src/pointcloud_projector.cpp src/image_points_projector.cpp)
 target_link_libraries(white_line_estimator_node ${catkin_LIBRARIES} ${OpenCV_LIBS})
 add_dependencies(white_line_estimator_node ${catkin_EXPORTED_TARGETS})
 
