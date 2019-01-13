@@ -14,6 +14,11 @@ using namespace std;
 using namespace Eigen;
 
 
+typedef
+	std::map<kpid, std::set<kpid>>
+		WhichKpId;
+
+
 cv::Mat
 Matcher::createMatcherMask(
 	const KeyFrame &kf1, const KeyFrame &kf2,
@@ -36,7 +41,7 @@ Matcher::createMatcherMask(
 cv::Mat
 createMatcherMask(
 	const KeyFrame &kf1, const KeyFrame &kf2,
-	const std::map<kpid, std::set<kpid>> &map1to2)
+	const WhichKpId &map1to2)
 {
 	cv::Mat mask (kf2.numOfKeyPoints(), kf1.numOfKeyPoints(), CV_8UC1, 0);
 
@@ -65,11 +70,10 @@ Matcher::matchForInitialization(
 	Line2 L1 = Line2::Through(Vector2d(0,0), Vector2d(kf2.cameraParam.width,0));
 	Line2 L2 = Line2::Through(Vector2d(0,0), Vector2d(0,kf2.cameraParam.height));
 
-	vector<kpid> kf1targetList, kf2targetList;
+	set<kpid> kf2targetList;
+	WhichKpId kpList1to2;
 
 	for (kpid i1=0; i1<kf1.fKeypoints.size(); i1++) {
-
-		bool foundMatch1 = false;
 
 		// Epipolar line in KF2 for this keypoint
 		Vector3d kp1 (kf1.fKeypoints[i1].pt.x, kf1.fKeypoints[i1].pt.y, 1.0);
@@ -91,7 +95,7 @@ Matcher::matchForInitialization(
 		if (intersect1.x() < 0 and intersect2.y() < 0)
 			continue;
 
-		kpid targetKp2;
+		kf2targetList.clear();
 
 		for(kpid i2=0; i2<kf2.fKeypoints.size(); i2++) {
 			Vector2d kp2(kf2.fKeypoints[i2].pt.x, kf2.fKeypoints[i2].pt.y);
@@ -100,15 +104,18 @@ Matcher::matchForInitialization(
 			if (d > 3.84*VMap::mScaleFactors[kf2.fKeypoints[i2].octave])
 				continue;
 
-			// XXX: Unfinished
-			// Employ brute force match using list of compatible points?
-
+			kf2targetList.insert(i2);
 		}
 
-		if (foundMatch1) {
-//			FeaturePair mPair = {i1, kf1.fKeypoints[i1], targetKp2, kf2.fKeypoints[targetKp2]};
-			foundMatch1 = false;
-		}
+		kpList1to2.insert(make_pair(i1, kf2targetList));
 	}
 
+	cv::Mat matcherMask = createMatcherMask(kf1, kf2, kpList1to2);
+	vector<cv::DMatch> matchResult;
+	matcher->clear();
+	matcher->match(kf2.fDescriptors, kf1.fDescriptors, matchResult, matcherMask);
+
+	for (auto &match: matchResult) {
+
+	}
 }
