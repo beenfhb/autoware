@@ -16,6 +16,9 @@
 //headers in ROS
 #include <ros/ros.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/Quaternion.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 
 //headers in Eigen
 #include <Eigen/LU>
@@ -32,6 +35,8 @@ private:
     boost::optional<CvCameraInfo> camera_info_;
     boost::optional<CvProjMatrix> proj_matrix_;
     std::mutex mtx_;
+    void getRPY(geometry_msgs::Quaternion q,double &roll,double &pitch,double &yaw);
+    void getQuaternion(double roll,double pitch,double yaw,geometry_msgs::Quaternion& q);
 };
 
 #endif  //IMAGE_PROJECTOR_H_INCLUDED

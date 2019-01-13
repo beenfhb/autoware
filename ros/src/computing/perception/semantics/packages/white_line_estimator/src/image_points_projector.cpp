@@ -48,6 +48,24 @@ boost::optional<std::vector<std::vector<geometry_msgs::Point> > > ImagePointsPro
     return projected_points_array;
 }
 
+void ImagePointsProjector::getRPY(geometry_msgs::Quaternion q,double &roll,double &pitch,double &yaw)
+{
+    tf2::Quaternion quat(q.x,q.y,q.z,q.w);
+    tf2::Matrix3x3(quat).getRPY(roll, pitch, yaw);
+    return;
+}
+
+void ImagePointsProjector::getQuaternion(double roll,double pitch,double yaw,geometry_msgs::Quaternion& q)
+{
+    tf2::Quaternion quat;
+    quat.setRPY(roll,pitch,yaw);
+    q.x = quat.getAxis().x()*cos(quat.getAxis().w());
+    q.y = quat.getAxis().y()*cos(quat.getAxis().w());
+    q.z = quat.getAxis().z()*cos(quat.getAxis().w());
+    q.w = quat.getAxis().w();
+    return;
+}
+
 void ImagePointsProjector::setCameraInfo(sensor_msgs::CameraInfo info)
 {
     std::lock_guard<std::mutex> lock(mtx_);

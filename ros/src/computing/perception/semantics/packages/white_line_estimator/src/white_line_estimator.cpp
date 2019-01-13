@@ -24,9 +24,34 @@ WhiteLineEstimator::~WhiteLineEstimator()
 
 }
 
-visualization_msgs::MarkerArray WhiteLineEstimator::generateMarkers(std::vector<std::vector<geometry_msgs::Point> > points,std::string frame)
+visualization_msgs::MarkerArray WhiteLineEstimator::generateMarkers(std::vector<std::vector<geometry_msgs::Point> > points,std::string frame, ros::Time stamp)
 {
     visualization_msgs::MarkerArray markers;
+    for(int i=0; i<points.size(); i++)
+    {
+        for(int m=0; m<points[i].size(); m++)
+        {
+            visualization_msgs::Marker marker;
+            marker.header.frame_id = frame;
+            marker.header.stamp = stamp;
+            marker.type = marker.CUBE;
+            marker.action = marker.ADD;
+            marker.ns = "white_line";
+            marker.id = i;
+            if(m != points[i].size()-1)
+            {
+                marker.pose.position.x = ((points[i])[m].x + (points[i])[m+1].x)/2;
+                marker.pose.position.y = ((points[i])[m].y + (points[i])[m+1].y)/2;
+                marker.pose.position.z = ((points[i])[m].z + (points[i])[m+1].z)/2;
+            }
+            else
+            {
+                marker.pose.position.x = ((points[i])[m].x + (points[i])[0].x)/2;
+                marker.pose.position.y = ((points[i])[m].y + (points[i])[0].y)/2;
+                marker.pose.position.z = ((points[i])[m].z + (points[i])[0].z)/2;
+            }
+        }
+    }
     return markers;
 }
 
