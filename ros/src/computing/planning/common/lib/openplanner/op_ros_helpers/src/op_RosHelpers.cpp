@@ -470,14 +470,27 @@ void RosHelpers::ConvertFromRoadNetworkToAutowareVisualizeMapFormat(const Planne
 	lane_waypoint_marker.type = visualization_msgs::Marker::LINE_STRIP;
 	lane_waypoint_marker.action = visualization_msgs::Marker::ADD;
 	lane_waypoint_marker.scale.x = 0.15;
-	std_msgs::ColorRGBA roll_color, total_color, curr_color;
+	std_msgs::ColorRGBA roll_color;
 	roll_color.r = 1;
 	roll_color.g = 0.5;
 	roll_color.b = 0;
 	roll_color.a = 0.5;
-
 	lane_waypoint_marker.color = roll_color;
-	lane_waypoint_marker.frame_locked = false;
+        lane_waypoint_marker.frame_locked = false;
+
+        visualization_msgs::Marker stop_line_marker;
+        stop_line_marker.header.frame_id = "map";
+        stop_line_marker.header.stamp = ros::Time();
+        stop_line_marker.ns = "road_network_stop_line";
+        stop_line_marker.type = visualization_msgs::Marker::LINE_STRIP;
+        stop_line_marker.action = visualization_msgs::Marker::ADD;
+        stop_line_marker.scale.x = 0.15;
+        roll_color.r = 1;
+        roll_color.g = 1;
+        roll_color.b = 1;
+        roll_color.a = 0.5;
+        stop_line_marker.color = roll_color;
+        stop_line_marker.frame_locked = false;
 
 	markerArray.markers.clear();
 
@@ -485,23 +498,39 @@ void RosHelpers::ConvertFromRoadNetworkToAutowareVisualizeMapFormat(const Planne
 	{
 		for(unsigned int j = 0; j < map.roadSegments.at(i).Lanes.size(); j++)
 		{
-			lane_waypoint_marker.points.clear();
+		  for(unsigned int sl = 0; sl < map.roadSegments.at(i).Lanes.at(j).stopLines.size(); sl++)
+		  {
+		    if(map.roadSegments.at(i).Lanes.at(j).stopLines.at(sl).id > 0)
+		    {
+                      stop_line_marker.points.clear();
+                      stop_line_marker.id = map.roadSegments.at(i).Lanes.at(j).stopLines.at(sl).id;
+                      for(unsigned int p = 0; p < map.roadSegments.at(i).Lanes.at(j).stopLines.at(sl).points.size(); p++)
+                      {
+                        geometry_msgs::Point point;
+                        point.x = map.roadSegments.at(i).Lanes.at(j).stopLines.at(sl).points.at(p).x;
+                        point.y = map.roadSegments.at(i).Lanes.at(j).stopLines.at(sl).points.at(p).y;
+                        point.z = map.roadSegments.at(i).Lanes.at(j).stopLines.at(sl).points.at(p).z;
+                        stop_line_marker.points.push_back(point);
+                      }
 
-			lane_waypoint_marker.id = map.roadSegments.at(i).Lanes.at(j).id;
-			for(unsigned int p = 0; p < map.roadSegments.at(i).Lanes.at(j).points.size(); p++)
-			{
-				geometry_msgs::Point point;
+                      markerArray.markers.push_back(stop_line_marker);
+		    }
+		  }
 
 
+                  lane_waypoint_marker.points.clear();
+                  lane_waypoint_marker.id = map.roadSegments.at(i).Lanes.at(j).id;
+                  for(unsigned int p = 0; p < map.roadSegments.at(i).Lanes.at(j).points.size(); p++)
+                  {
+                    geometry_msgs::Point point;
+                    point.x = map.roadSegments.at(i).Lanes.at(j).points.at(p).pos.x;
+                    point.y = map.roadSegments.at(i).Lanes.at(j).points.at(p).pos.y;
+                    point.z = map.roadSegments.at(i).Lanes.at(j).points.at(p).pos.z;
 
-				  point.x = map.roadSegments.at(i).Lanes.at(j).points.at(p).pos.x;
-				  point.y = map.roadSegments.at(i).Lanes.at(j).points.at(p).pos.y;
-				  point.z = map.roadSegments.at(i).Lanes.at(j).points.at(p).pos.z;
+                    lane_waypoint_marker.points.push_back(point);
+                  }
 
-				  lane_waypoint_marker.points.push_back(point);
-			}
-
-			markerArray.markers.push_back(lane_waypoint_marker);
+                  markerArray.markers.push_back(lane_waypoint_marker);
 		}
 	}
 }

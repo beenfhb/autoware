@@ -363,7 +363,7 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
 		return FindBehaviorState(FOLLOW_STATE);
 
 	else if(m_pParams->enableSwerving
-			&& pCParams->distanceToNext <= m_pParams->minDistanceToAvoid
+			&& (pCParams->distanceToNext <= m_pParams->minDistanceToAvoid || pCParams->distanceToNext == m_pParams->horizonDistance)
 			&& !pCParams->bFullyBlock
 			&& pCParams->iCurrSafeTrajectory != pCParams->iPrevSafeTrajectory)
 		return FindBehaviorState(OBSTACLE_AVOIDANCE_STATE);
@@ -397,7 +397,7 @@ BehaviorStateMachine* FollowStateII::GetNextState()
 		return FindBehaviorState(STOP_SIGN_STOP_STATE);
 
 	else if(m_pParams->enableSwerving
-			&& pCParams->distanceToNext <= m_pParams->minDistanceToAvoid
+	                && (pCParams->distanceToNext <= m_pParams->minDistanceToAvoid || pCParams->distanceToNext == m_pParams->horizonDistance)
 			&& !pCParams->bFullyBlock
 			&& pCParams->iCurrSafeTrajectory != pCParams->iPrevSafeTrajectory)
 		return FindBehaviorState(OBSTACLE_AVOIDANCE_STATE);

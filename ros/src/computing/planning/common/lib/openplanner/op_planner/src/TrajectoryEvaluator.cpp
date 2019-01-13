@@ -466,42 +466,42 @@ void TrajectoryEvaluator::calculateDistanceCosts(const PlanningParams& params, c
 	}
     }
 
-//    for(unsigned int j = 0; j < trajectory_points.size(); j++)
-//    {
-//      RelativeInfo info;
-//      int prev_index = 0;
-//      PlanningHelpers::GetRelativeInfoLimited(roll_outs.at(i), trajectory_points.at(j), info, prev_index);
-//
-//      double actual_lateral_distance = fabs(info.perp_distance) - 0.05; //add small distance so this never become zero
-//      double actual_longitudinal_distance = info.from_back_distance + roll_outs.at(i).at(info.iBack).cost - 0.05; //add small distance so this never become zero
-//      double t_diff = fabs(info.perp_point.timeCost - trajectory_points.at(j).timeCost);
-//      double a_diff = info.angle_diff;
-//      double traj_prob = info.perp_point.collisionCost;
-//
-//      if(actual_longitudinal_distance > params.pathDensity && actual_lateral_distance < g_lateral_skip_value && !info.bAfter && !info.bBefore && t_diff < eval_params_.collision_time_)
-//      {
-//        trajectory_costs.at(i).longitudinal_cost  += 1.0/actual_longitudinal_distance;
-//
-//        std::cout << info.bAfter << ", " << info.bBefore << ", " << actual_lateral_distance << ", " << actual_longitudinal_distance <<", " << t_diff <<", " << a_diff <<" ," << traj_prob <<std::endl;
-//
-//        if(actual_lateral_distance < c_lateral_d) // collision point
-//        {
-//          trajectory_costs.at(i).lateral_cost += 2.0; // use half meter fixed critical distance as contact cost for all collision points in the range
-//          collision_points.push_back(info.perp_point);
-//          if(actual_longitudinal_distance < params.minFollowingDistance)
-//            trajectory_costs.at(i).bBlocked = true;
-//
-//          if(trajectory_costs.at(i).closest_obj_distance > actual_longitudinal_distance)
-//          {
-//            trajectory_costs.at(i).closest_obj_distance = actual_longitudinal_distance;
-//          }
-//        }
-//        else
-//          {
-//            trajectory_costs.at(i).lateral_cost += 1.0/actual_lateral_distance;
-//          }
-//      }
-//    }
+    for(unsigned int j = 0; j < trajectory_points.size(); j++)
+    {
+      RelativeInfo info;
+      int prev_index = 0;
+      PlanningHelpers::GetRelativeInfoLimited(roll_outs.at(i), trajectory_points.at(j), info, prev_index);
+
+      double actual_lateral_distance = fabs(info.perp_distance) - 0.05; //add small distance so this never become zero
+      double actual_longitudinal_distance = info.from_back_distance + roll_outs.at(i).at(info.iBack).cost - 0.05; //add small distance so this never become zero
+      double t_diff = fabs(info.perp_point.timeCost - trajectory_points.at(j).timeCost);
+      double a_diff = info.angle_diff;
+      double traj_prob = info.perp_point.collisionCost;
+
+      if(actual_longitudinal_distance > params.pathDensity && actual_longitudinal_distance < params.minFollowingDistance && actual_lateral_distance < g_lateral_skip_value && !info.bAfter && !info.bBefore && t_diff < eval_params_.collision_time_)
+      {
+        trajectory_costs.at(i).longitudinal_cost  += 1.0/actual_longitudinal_distance;
+
+        //std::cout << info.bAfter << ", " << info.bBefore << ", " << actual_lateral_distance << ", " << actual_longitudinal_distance <<", " << t_diff <<", " << a_diff <<" ," << traj_prob <<std::endl;
+
+        if(actual_lateral_distance < c_lateral_d && t_diff) // collision point
+        {
+          trajectory_costs.at(i).lateral_cost += 2.0; // use half meter fixed critical distance as contact cost for all collision points in the range
+          collision_points.push_back(info.perp_point);
+          if(actual_longitudinal_distance < params.minFollowingDistance)
+            trajectory_costs.at(i).bBlocked = true;
+
+          if(trajectory_costs.at(i).closest_obj_distance > actual_longitudinal_distance)
+          {
+            trajectory_costs.at(i).closest_obj_distance = actual_longitudinal_distance;
+          }
+        }
+        else
+          {
+            trajectory_costs.at(i).lateral_cost += 1.0/actual_lateral_distance;
+          }
+      }
+    }
   }
 }
 

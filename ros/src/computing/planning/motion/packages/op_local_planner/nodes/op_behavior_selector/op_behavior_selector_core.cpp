@@ -587,7 +587,7 @@ void BehaviorGen::LogLocalPlanningInfo(double dt)
 
 void BehaviorGen::MainLoop()
 {
-	ros::Rate loop_rate(100);
+	ros::Rate loop_rate(50);
 
 
 	timespec planningTimer;

@@ -377,7 +377,7 @@ void BehaviorPrediction::MoveParticles(ObjParticles* pParts)
 	carInfo.length = pParts->obj.l;
 	carInfo.max_acceleration = 2.0;
 	carInfo.max_deceleration = -1.5;
-	carInfo.max_speed_forward = 4;
+	carInfo.max_speed_forward = 6;
 	carInfo.min_speed_forward = 0;
 	carInfo.max_steer_angle = 0.4;
 	carInfo.min_steer_angle = -0.4;
@@ -440,10 +440,10 @@ void BehaviorPrediction::MoveParticles(ObjParticles* pParts)
 		break;
 		case BEH_YIELDING_STATE:
 		{
-//			if(curr_part_info.state == PlannerHNS::STOPPING_STATE)
-//				p->vel = 0 + p->vel_rand;
-//			else
-			p->vel = curr_part_info.vel/2.0 + p->vel_rand;
+			if(curr_part_info.state == PlannerHNS::STOPPING_STATE)
+			  p->vel = 0 + p->vel_rand;
+			else
+			  p->vel = curr_part_info.vel/2.0 + p->vel_rand;
 
 			p->acc = -1;
 

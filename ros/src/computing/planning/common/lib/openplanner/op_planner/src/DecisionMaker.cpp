@@ -234,7 +234,7 @@ void DecisionMaker::InitBehaviorStates()
  		{
  			pValues->currentStopSignID = stopSignID;
  			pValues->stoppingDistances.push_back(distanceToClosestStopLine);
- 			std::cout << "LP => D: " << pValues->distanceToStop() << ", PrevSignID: " << pValues->prevTrafficLightID << ", CurrSignID: " << pValues->currentTrafficLightID << ", Green: " << bGreenTrafficLight << std::endl;
+ 			//std::cout << "LP => D: " << pValues->distanceToStop() << ", PrevSignID: " << pValues->prevTrafficLightID << ", CurrSignID: " << pValues->currentTrafficLightID << ", Green: " << bGreenTrafficLight << std::endl;
  		}
  	}
 
@@ -437,6 +437,11 @@ void DecisionMaker::InitBehaviorStates()
 			acceleration_critical = m_CarInfo.max_deceleration ;
 
 		desiredVelocity = acceleration_critical  * dt + CurrStatus.speed;
+
+              if(m_pCurrentBehaviorState->GetCalcParams()->iCurrSafeTrajectory != m_pCurrentBehaviorState->GetCalcParams()->iCentralTrajectory)
+              {
+                      desiredVelocity  = desiredVelocity * 0.75;
+              }
 
 		//std::cout << "bEnd : " << preCalcPrams->bFinalLocalTrajectory << ", Min D: " << preCalcPrams->minStoppingDistance << ", D To Goal: " << preCalcPrams->distanceToGoal << std::endl;
 		//std::cout << "Forward Target Acc: " << m_CarInfo.max_acceleration  << ", PID Velocity: " << desiredVelocity << ", Max Velocity : " << max_velocity  << std::endl;

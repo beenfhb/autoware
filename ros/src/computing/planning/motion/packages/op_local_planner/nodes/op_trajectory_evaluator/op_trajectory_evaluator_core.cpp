@@ -271,7 +271,7 @@ void TrajectoryEvalCore::callbackGetBehaviorState(const geometry_msgs::TwistStam
 
 void TrajectoryEvalCore::MainLoop()
 {
-	ros::Rate loop_rate(100);
+	ros::Rate loop_rate(50);
 
 	PlannerHNS::WayPoint prevState, state_change;
 
