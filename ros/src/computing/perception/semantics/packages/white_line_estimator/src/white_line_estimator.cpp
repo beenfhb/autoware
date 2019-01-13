@@ -24,6 +24,24 @@ WhiteLineEstimator::~WhiteLineEstimator()
 
 }
 
+void WhiteLineEstimator::getRPY(geometry_msgs::Quaternion q,double &roll,double &pitch,double &yaw)
+{
+    tf2::Quaternion quat(q.x,q.y,q.z,q.w);
+    tf2::Matrix3x3(quat).getRPY(roll, pitch, yaw);
+    return;
+}
+
+void WhiteLineEstimator::getQuaternion(double roll,double pitch,double yaw,geometry_msgs::Quaternion& q)
+{
+    tf2::Quaternion quat;
+    quat.setRPY(roll,pitch,yaw);
+    q.x = quat.getAxis().x()*cos(quat.getAxis().w());
+    q.y = quat.getAxis().y()*cos(quat.getAxis().w());
+    q.z = quat.getAxis().z()*cos(quat.getAxis().w());
+    q.w = quat.getAxis().w();
+    return;
+}
+
 visualization_msgs::MarkerArray WhiteLineEstimator::generateMarkers(std::vector<std::vector<geometry_msgs::Point> > points,std::string frame, ros::Time stamp)
 {
     visualization_msgs::MarkerArray markers;
@@ -43,13 +61,40 @@ visualization_msgs::MarkerArray WhiteLineEstimator::generateMarkers(std::vector<
                 marker.pose.position.x = ((points[i])[m].x + (points[i])[m+1].x)/2;
                 marker.pose.position.y = ((points[i])[m].y + (points[i])[m+1].y)/2;
                 marker.pose.position.z = ((points[i])[m].z + (points[i])[m+1].z)/2;
+                double length = std::sqrt(std::pow(((points[i])[m].x - (points[i])[m+1].x)/2,2)
+                    + std::pow(((points[i])[m].y - (points[i])[m+1].y)/2,2) 
+                    + std::pow(((points[i])[m].z - (points[i])[m+1].z)/2,2));
+                marker.scale.x = length;
+                marker.scale.y = 0.1;
+                marker.scale.z = 0.1;
+                double roll = 0;
+                double yaw = std::atan2((points[i])[m+1].y-(points[i])[m].y,(points[i])[m+1].x-(points[i])[m].x);
+                double pitch = std::atan2((points[i])[m+1].z-(points[i])[m].z,(points[i])[m+1].x-(points[i])[m].x);
+                marker.color.r = 1;
+                marker.color.g = 1;
+                marker.color.b = 1;
+                marker.color.a = 1;
             }
             else
             {
                 marker.pose.position.x = ((points[i])[m].x + (points[i])[0].x)/2;
                 marker.pose.position.y = ((points[i])[m].y + (points[i])[0].y)/2;
                 marker.pose.position.z = ((points[i])[m].z + (points[i])[0].z)/2;
+                double length = std::sqrt(std::pow(((points[i])[m].x - (points[i])[m+1].x)/2,2)
+                    + std::pow(((points[i])[m].y - (points[i])[m+1].y)/2,2) 
+                    + std::pow(((points[i])[m].z - (points[i])[m+1].z)/2,2));
+                marker.scale.x = length;
+                marker.scale.y = 0.1;
+                marker.scale.z = 0.1;
+                double roll = 0;
+                double yaw = std::atan2((points[i])[0].y-(points[i])[m].y,(points[i])[0].x-(points[i])[m].x);
+                double pitch = std::atan2((points[i])[0].z-(points[i])[m].z,(points[i])[0].x-(points[i])[m].x);
+                marker.color.r = 1;
+                marker.color.g = 1;
+                marker.color.b = 1;
+                marker.color.a = 1;
             }
+            markers.markers.push_back(marker);
         }
     }
     return markers;
@@ -85,6 +130,8 @@ void WhiteLineEstimator::sensorCallback(const sensor_msgs::ImageConstPtr& image,
         ROS_ERROR("failed to project white line contours to the world points.");
         return;
     }
+    visualization_msgs::MarkerArray markers = generateMarkers(projected_white_line_contours.get(),pointcloud->header.frame_id,image->header.stamp);
+    marker_pub_.publish(markers);
     try
     {
         cv_ptr = cv_bridge::toCvCopy(image, sensor_msgs::image_encodings::MONO8);

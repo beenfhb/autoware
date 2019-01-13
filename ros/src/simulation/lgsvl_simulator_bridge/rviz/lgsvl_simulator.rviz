@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /OverlayImage1
       Splitter Ratio: 0.5
     Tree Height: 396
   - Class: rviz/Selection
@@ -84,7 +85,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 253
+      Max Intensity: 255
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: PointCloud2
@@ -118,6 +119,8 @@ Visualization Manager:
         All Enabled: true
         base_link:
           Value: true
+        camera:
+          Value: true
         velodyne:
           Value: true
       Marker Scale: 1
@@ -128,9 +131,29 @@ Visualization Manager:
       Tree:
         base_link:
           velodyne:
-            {}
+            camera:
+              {}
       Update Interval: 0
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /white_line_estimator/marker
+      Name: MarkerArray
+      Namespaces:
+        white_line: true
+      Queue Size: 100
+      Value: true
+    - Class: jsk_rviz_plugin/OverlayImage
+      Enabled: true
+      Name: OverlayImage
+      Topic: /ground_image
+      Value: true
+      alpha: 0.5
+      height: 128
+      keep aspect ratio: true
+      left: 32
+      top: 32
+      width: 320
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -156,7 +179,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 14.1009302
+      Distance: 17.3863373
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -171,10 +194,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.520397961
+      Pitch: 0.650398016
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.63539982
+      Yaw: 2.64539909
     Saved: ~
 Window Geometry:
   Displays:

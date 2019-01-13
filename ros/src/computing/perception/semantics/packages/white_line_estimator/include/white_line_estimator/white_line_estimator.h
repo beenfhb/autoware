@@ -58,5 +58,7 @@ private:
     void configureCallback(white_line_estimator::white_line_estimatorConfig &config, uint32_t level);
     dynamic_reconfigure::Server<white_line_estimator::white_line_estimatorConfig>::CallbackType callback_func_type_;
     visualization_msgs::MarkerArray generateMarkers(std::vector<std::vector<geometry_msgs::Point> > points,std::string frame,ros::Time stamp);
+    void getRPY(geometry_msgs::Quaternion q,double &roll,double &pitch,double &yaw);
+    void getQuaternion(double roll,double pitch,double yaw,geometry_msgs::Quaternion& q);
 };
 #endif  //WHITE_LINE_ESTIMATOR_HINCLUDED
