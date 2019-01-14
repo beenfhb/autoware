@@ -101,6 +101,7 @@ Matcher::matchForInitialization(
 			Vector2d kp2(kf2.fKeypoints[i2].pt.x, kf2.fKeypoints[i2].pt.y);
 			auto d = epl2.absDistance(kp2);
 
+			// XXX: Using scale factor makes it more dependent to ORB
 			if (d > 3.84*VMap::mScaleFactors[kf2.fKeypoints[i2].octave])
 				continue;
 
