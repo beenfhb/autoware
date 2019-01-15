@@ -242,6 +242,9 @@ void SimuDecisionMaker::FirstLocalizeMe(const WayPoint& initCarPos)
 
 	beh.maxVelocity = UpdateVelocityDirectlyToTrajectory(beh, vehicleState, dt);
 
+	if(beh.state != FORWARD_STATE && beh.state != OBSTACLE_AVOIDANCE_STATE && beh.state != FOLLOW_STATE && beh.maxVelocity < 0.5)
+	  beh.maxVelocity = 0;
+
 	//std::cout << "Eval_i: " << tc.index << ", Curr_i: " <<  m_pCurrentBehaviorState->GetCalcParams()->iCurrSafeTrajectory << ", Prev_i: " << m_pCurrentBehaviorState->GetCalcParams()->iPrevSafeTrajectory << std::endl;
 
 	return beh;
