@@ -23,6 +23,7 @@ Nmea2TFPoseNode::Nmea2TFPoseNode()
   : private_nh_("~")
   , MAP_FRAME_("map")
   , GPS_FRAME_("gps")
+  , use_mgrs_(false)
   , roll_(0)
   , pitch_(0)
   , yaw_(0)
@@ -44,6 +45,7 @@ void Nmea2TFPoseNode::initForROS()
 {
   // ros parameter settings
   private_nh_.getParam("plane", plane_number_);
+  private_nh_.getParam("use_mgrs", use_mgrs_);
 
   // setup subscriber
   sub1_ = nh_.subscribe("nmea_sentence", 100, &Nmea2TFPoseNode::callbackFromNmeaSentence, this);
