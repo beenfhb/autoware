@@ -33,7 +33,8 @@ double convertDecimalToDDMMSS(const double decimal)
 }
 
 
-void getMinMax(autoware_map_msgs::Point &min, autoware_map_msgs::Point &max, const std::vector<autoware_map_msgs::Point>points){
+void getMinMax(autoware_map_msgs::Point &min, autoware_map_msgs::Point &max, const std::vector<autoware_map_msgs::Point>points)
+{
     min = max = points.front();
     for (auto pt : points)
     {
@@ -46,44 +47,36 @@ void getMinMax(autoware_map_msgs::Point &min, autoware_map_msgs::Point &max, con
     }
 }
 
-
+//determine whether point lies within an area by counting winding number
 bool isWithinArea(double x, double y, const std::vector<autoware_map_msgs::Point> vertices)
 {
-    autoware_map::Point min, max, outside_point;
-    getMinMax(min, max, vertices);
-    outside_point = min;
-    outside_point.x -= 0.0001;
-    outside_point.y -= 0.001;
+    std::vector<double> angles;
+    for (auto pt : vertices)
+    {
+        if(pt.x == x && pt.y== y) return false;
+        angles.push_back( atan2(pt.y - y, pt.x - x));
+    }
 
-    autoware_map_msgs::Point v1, v2,intersect;
-    int count = 0;
+    double angle_sum = 0;
     for (unsigned int idx = 0; idx < vertices.size(); idx++)
     {
-        v1 = vertices.at(idx);
-        if(idx + 1 < vertices.size())
+        double angle1, angle2;
+        angle1 = angles.at(idx);
+        if(idx + 1 >= vertices.size())
         {
-            v2 = vertices.at(idx + 1);
-        }
-        else
+            angle2 = angles.front();
+        }else
         {
-            v2 = vertices.front();
+            angle2 = angles.at(idx + 1);
         }
+        double angle_diff = addAngles(angle1, -angle2);
+        angle_sum += angle_diff;
+        std::cout << angle_diff << " " << angle1 << " " << angle2 << std::endl;
 
-        if(getIntersect(outside_point.x, outside_point.y, x, y,
-                        v1.x, v1.y, v2.x, v2.y,
-                        intersect.x, intersect.y))
-        {
-            if(intersect.x == x && intersect.y == y)
-            {
-                continue;
-            }
-            count++;
-        }
     }
-    if( count % 2 == 1)
-        return true;
-    else
-        return false;
+    //allow some precision error
+    if(fabs(angle_sum) < 1e-3) return false;
+    else return true;
 }
 
 bool getIntersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double &intersect_x, double &intersect_y )
