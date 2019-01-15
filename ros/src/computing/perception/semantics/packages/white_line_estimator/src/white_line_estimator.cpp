@@ -7,6 +7,7 @@ WhiteLineEstimator::WhiteLineEstimator(ros::NodeHandle nh,ros::NodeHandle pnh) :
     pnh_ = pnh;
     pointcloud_projector_ptr_ = boost::make_shared<PointCloudProjector>(500,15000);
     image_points_projector_ptr_ = boost::make_shared<ImagePointsProjector>();
+    vanishing_point_finder_ptr_ = boost::make_shared<VanishingPointFinder>();
     marker_pub_ = pnh_.advertise<visualization_msgs::MarkerArray>("marker",1);
     image_pub_ = it_.advertise("/ground_image", 10);
     image_sub_ptr_ = boost::make_shared<message_filters::Subscriber<sensor_msgs::Image> >(nh_, "image_raw", 1);
@@ -47,55 +48,29 @@ visualization_msgs::MarkerArray WhiteLineEstimator::generateMarkers(std::vector<
     visualization_msgs::MarkerArray markers;
     for(int i=0; i<points.size(); i++)
     {
+        visualization_msgs::Marker marker;
+        marker.header.frame_id = frame;
+        marker.header.stamp = stamp;
+        marker.type = marker.LINE_STRIP;
+        marker.action = marker.ADD;
+        marker.ns = "white_line";
+        marker.id = i;
+        std_msgs::ColorRGBA color;
+        color.r = 1;
+        color.g = 1;
+        color.b = 1;
+        color.a = 1;
+        marker.scale.x = 0.1;
+        marker.scale.y = 0.1;
+        marker.scale.z = 0.1;
         for(int m=0; m<points[i].size(); m++)
         {
-            visualization_msgs::Marker marker;
-            marker.header.frame_id = frame;
-            marker.header.stamp = stamp;
-            marker.type = marker.CUBE;
-            marker.action = marker.ADD;
-            marker.ns = "white_line";
-            marker.id = i;
-            if(m != points[i].size()-1)
-            {
-                marker.pose.position.x = ((points[i])[m].x + (points[i])[m+1].x)/2;
-                marker.pose.position.y = ((points[i])[m].y + (points[i])[m+1].y)/2;
-                marker.pose.position.z = ((points[i])[m].z + (points[i])[m+1].z)/2;
-                double length = std::sqrt(std::pow(((points[i])[m].x - (points[i])[m+1].x)/2,2)
-                    + std::pow(((points[i])[m].y - (points[i])[m+1].y)/2,2) 
-                    + std::pow(((points[i])[m].z - (points[i])[m+1].z)/2,2));
-                marker.scale.x = length;
-                marker.scale.y = 0.1;
-                marker.scale.z = 0.1;
-                double roll = 0;
-                double yaw = std::atan2((points[i])[m+1].y-(points[i])[m].y,(points[i])[m+1].x-(points[i])[m].x);
-                double pitch = std::atan2((points[i])[m+1].z-(points[i])[m].z,(points[i])[m+1].x-(points[i])[m].x);
-                marker.color.r = 1;
-                marker.color.g = 1;
-                marker.color.b = 1;
-                marker.color.a = 1;
-            }
-            else
-            {
-                marker.pose.position.x = ((points[i])[m].x + (points[i])[0].x)/2;
-                marker.pose.position.y = ((points[i])[m].y + (points[i])[0].y)/2;
-                marker.pose.position.z = ((points[i])[m].z + (points[i])[0].z)/2;
-                double length = std::sqrt(std::pow(((points[i])[m].x - (points[i])[m+1].x)/2,2)
-                    + std::pow(((points[i])[m].y - (points[i])[m+1].y)/2,2) 
-                    + std::pow(((points[i])[m].z - (points[i])[m+1].z)/2,2));
-                marker.scale.x = length;
-                marker.scale.y = 0.1;
-                marker.scale.z = 0.1;
-                double roll = 0;
-                double yaw = std::atan2((points[i])[0].y-(points[i])[m].y,(points[i])[0].x-(points[i])[m].x);
-                double pitch = std::atan2((points[i])[0].z-(points[i])[m].z,(points[i])[0].x-(points[i])[m].x);
-                marker.color.r = 1;
-                marker.color.g = 1;
-                marker.color.b = 1;
-                marker.color.a = 1;
-            }
-            markers.markers.push_back(marker);
+            marker.points.push_back(points[i][m]);
+            marker.colors.push_back(color);
         }
+        marker.points.push_back(points[i][0]);
+        marker.colors.push_back(color);
+        markers.markers.push_back(marker);
     }
     return markers;
 }
@@ -163,5 +138,13 @@ void WhiteLineEstimator::projectionMatrixCallback(const autoware_msgs::Projectio
 void WhiteLineEstimator::configureCallback(white_line_estimator::white_line_estimatorConfig &config, uint32_t level)
 {
     filter_.updateParameters(config.min_white_line_area,config.max_white_line_area);
+    image_points_projector_ptr_->setMagnification(config.x_magnification,config.y_magnification,config.z_offset);
+    HoughParams hough_params;
+    hough_params.hough_rho = config.hough_rho;
+    hough_params.hough_theta = config.hough_theta;
+    hough_params.hough_max_line_gap = config.hough_max_line_gap;
+    hough_params.hough_min_line_length = config.hough_min_line_length;
+    hough_params.hough_threshold = config.hough_threshold;
+    vanishing_point_finder_ptr_->setParameters(hough_params);
     return;
 }

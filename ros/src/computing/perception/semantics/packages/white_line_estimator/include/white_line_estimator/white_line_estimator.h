@@ -24,6 +24,7 @@
 #include <white_line_estimator/image_points_projector.h>
 #include <white_line_estimator/pointcloud_projector.h>
 #include <white_line_estimator/color_filter.h>
+#include <white_line_estimator/vanishing_point_finder.h>
 #include <white_line_estimator/white_line_estimatorConfig.h>
 
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> SyncPolicy;
@@ -48,6 +49,7 @@ private:
     cv::Mat camera_matrix_;
     cv::Mat dist_coeff_;
     cv::Size image_size_;
+    boost::shared_ptr<VanishingPointFinder> vanishing_point_finder_ptr_;
     boost::shared_ptr<PointCloudProjector> pointcloud_projector_ptr_;
     boost::shared_ptr<ImagePointsProjector> image_points_projector_ptr_;
     boost::shared_ptr<message_filters::Subscriber<sensor_msgs::Image> > image_sub_ptr_;

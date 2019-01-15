@@ -31,7 +31,11 @@ public:
     boost::optional<std::vector<std::vector<geometry_msgs::Point> > > project(std::vector<std::vector<cv::Point> > image_points);
     void setCameraInfo(sensor_msgs::CameraInfo info);
     void setProjectionMatrix(autoware_msgs::ProjectionMatrix proj_matrix);
+    void setMagnification(double x_axis,double y_axis,double z_offset);
 private:
+    double x_magnification_;
+    double y_magnification_;
+    double z_offset_;
     boost::optional<CvCameraInfo> camera_info_;
     boost::optional<CvProjMatrix> proj_matrix_;
     std::mutex mtx_;

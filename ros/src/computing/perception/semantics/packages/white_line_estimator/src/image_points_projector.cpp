@@ -10,6 +10,14 @@ ImagePointsProjector::~ImagePointsProjector()
     
 }
 
+void ImagePointsProjector::setMagnification(double x_axis,double y_axis,double z_offset)
+{
+    x_magnification_ = x_axis;
+    y_magnification_ = y_axis;
+    z_offset_ = z_offset;
+    return;
+}
+
 boost::optional<std::vector<std::vector<geometry_msgs::Point> > > ImagePointsProjector::project(std::vector<std::vector<cv::Point> > image_points)
 {
     std::lock_guard<std::mutex> lock(mtx_);
@@ -38,9 +46,9 @@ boost::optional<std::vector<std::vector<geometry_msgs::Point> > > ImagePointsPro
             geometry_msgs::Point world_point;
             Eigen::MatrixXd world_point_mat = Eigen::MatrixXd(4,1);;
             world_point_mat = p_mat_inv * image_point_mat;
-            world_point.x = world_point_mat(0,0);
-            world_point.y = world_point_mat(1,0);
-            world_point.z = world_point_mat(2,0);
+            world_point.x = world_point_mat(0,0)*x_magnification_;
+            world_point.y = world_point_mat(1,0)*y_magnification_;
+            world_point.z = world_point_mat(2,0)+z_offset_;
             projected_points.push_back(world_point);
         }
         projected_points_array.push_back(projected_points);
