@@ -71,8 +71,6 @@ bool isWithinArea(double x, double y, const std::vector<autoware_map_msgs::Point
         }
         double angle_diff = addAngles(angle1, -angle2);
         angle_sum += angle_diff;
-        std::cout << angle_diff << " " << angle1 << " " << angle2 << std::endl;
-
     }
     //allow some precision error
     if(fabs(angle_sum) < 1e-3) return false;
