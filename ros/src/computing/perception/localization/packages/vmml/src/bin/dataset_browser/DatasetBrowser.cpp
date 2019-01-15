@@ -52,6 +52,7 @@ DatasetBrowser::DatasetBrowser(QWidget *parent):
 	saveImageButton = ui.saveImageButton;
 	playButton = ui.playButton;
 	enableLidarScanRender = ui.enableLidarScanRender;
+	frameTextInfo = ui.frameTextInfo;
 }
 
 DatasetBrowser::~DatasetBrowser()
@@ -173,7 +174,9 @@ DatasetBrowser::setImageOnPosition (int v)
 	QImage curImage (image.data, image.cols, image.rows, image.step[0], QImage::Format_RGB888);
 	frame->setImage(curImage);
 
-	ui.frameTextInfo->setPlainText(QString::fromStdString(getCurrentFrameInfo(v)));
+//	frameTextInfo->setPlainText(QString::fromStdString(getCurrentFrameInfo(v)));
+	QString frameInfoStr = QString::fromStdString(getCurrentFrameInfo(v));
+	QMetaObject::invokeMethod(frameTextInfo, "setPlainText", Q_ARG(QString, frameInfoStr));
 }
 
 

@@ -56,6 +56,7 @@ private:
 	QLabel *timeOffsetLabel;
 	QPushButton *saveImageButton;
 	QCheckBox *enableLidarScanRender;
+	QPlainTextEdit *frameTextInfo;
 
 	QPushButton *playButton;
 
