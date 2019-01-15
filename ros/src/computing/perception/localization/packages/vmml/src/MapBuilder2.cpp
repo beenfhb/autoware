@@ -202,6 +202,7 @@ void
 MapBuilder2::runFromDataset(GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos)
 {
 	sourceDataset = sourceDs;
+	cMap->reset();
 
 	if (startPos==std::numeric_limits<dataItemId>::max() and
 		stopPos==std::numeric_limits<dataItemId>::max()) {
@@ -294,4 +295,26 @@ MapBuilder2::setMask(const cv::Mat &m)
 {
 	mask = m.clone();
 	cMap->setMask(mask);
+}
+
+
+void
+MapBuilder2::simulateOpticalFlow(GenericDataset::ConstPtr sourceDs, dataItemId startPos, dataItemId stopPos)
+{
+	if (startPos==std::numeric_limits<dataItemId>::max() and stopPos==std::numeric_limits<dataItemId>::max()) {
+		startPos = 0;
+		stopPos = sourceDs->size()-1;
+	}
+
+	cMap->reset();
+
+	// First keyframe
+	auto frameItem = sourceDs->get(startPos);
+	InputFrame kf1 = createInputFrameX(frameItem);
+
+	for (dataItemId ix=startPos+1; ix<=stopPos; ix++) {
+		// XXX: Unfinished
+		InputFrame cInpFrame = createInputFrameX(sourceDs->get(ix));
+
+	}
 }

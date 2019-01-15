@@ -158,6 +158,14 @@ TTransform::displacement (
 	const TTransform &other,
 	double &linear, double &angular) const
 {
+	TTransform T = this->inverse() * other;
+	linear = T.translation().norm();
+	angular = 2*acos(abs(T.qw()));
+
+	///////////
+
+/*
+
 	linear = (this->position()-other.position()).norm();
 
 	Vector4d q1 = vectorFromQuaternion(this->orientation().normalized()),
@@ -166,6 +174,7 @@ TTransform::displacement (
 		q1.head(3).dot(q2.head(3)) /
 		(q1.head(3).norm() * q2.head(3).norm())
 	);
+*/
 }
 
 

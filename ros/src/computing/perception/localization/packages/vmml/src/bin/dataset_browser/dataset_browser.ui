@@ -45,18 +45,6 @@
          <property name="enabled">
           <bool>true</bool>
          </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>109</width>
-           <height>16777215</height>
-          </size>
-         </property>
          <property name="title">
           <string>LiDAR Scans</string>
          </property>
@@ -64,6 +52,9 @@
           <bool>true</bool>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_4">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetDefaultConstraint</enum>
+          </property>
           <item>
            <widget class="QCheckBox" name="enableLidarScanRender">
             <property name="sizePolicy">
@@ -74,6 +65,22 @@
             </property>
             <property name="text">
              <string>Enable</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPlainTextEdit" name="frameTextInfo">
+            <property name="font">
+             <font>
+              <family>Courier [unknown]</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+            <property name="plainText">
+             <string notr="true"/>
             </property>
            </widget>
           </item>
@@ -101,12 +108,30 @@
         <number>7</number>
        </property>
        <item>
+        <widget class="QPushButton" name="prevFrameButton">
+         <property name="text">
+          <string>Prev</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="playButton">
          <property name="text">
           <string>Play</string>
          </property>
          <property name="checkable">
           <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="nextFrameButton">
+         <property name="text">
+          <string>Next</string>
+         </property>
+         <property name="icon">
+          <iconset theme=":next">
+           <normaloff>.</normaloff>.</iconset>
          </property>
         </widget>
        </item>

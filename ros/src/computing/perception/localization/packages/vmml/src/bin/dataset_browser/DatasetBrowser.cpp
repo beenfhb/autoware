@@ -172,6 +172,8 @@ DatasetBrowser::setImageOnPosition (int v)
 
 	QImage curImage (image.data, image.cols, image.rows, image.step[0], QImage::Format_RGB888);
 	frame->setImage(curImage);
+
+	ui.frameTextInfo->setPlainText(QString::fromStdString(getCurrentFrameInfo(v)));
 }
 
 
@@ -180,6 +182,8 @@ DatasetBrowser::disableControlsOnPlaying (bool state)
 {
 	timelineSlider->setDisabled(state);
 	saveImageButton->setDisabled(state);
+	ui.nextFrameButton->setDisabled(state);
+	ui.prevFrameButton->setDisabled(state);
 }
 
 
@@ -229,6 +233,30 @@ DatasetBrowser::on_playButton_clicked(bool checked)
 }
 
 
+void
+DatasetBrowser::on_nextFrameButton_clicked(bool c)
+{
+	int curPos = timelineSlider->sliderPosition();
+	if (curPos < timelineSlider->maximum()) {
+		curPos += 1;
+		timelineSlider->setSliderPosition(curPos);
+		setImageOnPosition(curPos);
+	}
+}
+
+
+void
+DatasetBrowser::on_prevFrameButton_clicked(bool c)
+{
+	int curPos = timelineSlider->sliderPosition();
+	if (curPos > 0) {
+		curPos -= 1;
+		timelineSlider->setSliderPosition(curPos);
+		setImageOnPosition(curPos);
+	}
+}
+
+
 std::vector<BaseFrame::PointXYI>
 DatasetBrowser::projectScan
 (pcl::PointCloud<pcl::PointXYZ>::ConstPtr lidarScan)
@@ -258,3 +286,24 @@ DatasetBrowser::drawPoints
 	}
 }
 
+
+std::string
+DatasetBrowser::getCurrentFrameInfo(uint32_t frNum) const
+{
+	stringstream ss;
+	ss << fixed << setprecision(3);
+
+	auto curFrame = openDs->get(frNum);
+	ss << "#: " << curFrame->getId() << endl;
+
+	auto pos = curFrame->getPosition();
+	ss << "Position: " << pos.x() << ", " << pos.y() << ", " << pos.z() << endl;
+
+	auto ort = curFrame->getOrientation();
+	ss << "Orientation (XYZW): " << ort.x() << ", " << ort.y() << ", " << ort.z() << ", " << ort.w() << endl;
+
+	auto rpyRad = quaternionToRPY(ort);
+	ss << "Orientation (RPYrad): " << rpyRad[0] << ", " << rpyRad[1] << ", " << rpyRad[2] << endl;
+
+	return ss.str();
+}

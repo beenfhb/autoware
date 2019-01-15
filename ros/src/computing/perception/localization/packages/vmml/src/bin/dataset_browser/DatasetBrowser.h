@@ -43,6 +43,8 @@ public slots:
 	void on_timelineSlider_sliderMoved(int value);
 	void on_saveImageButton_clicked(bool checked);
 	void on_playButton_clicked(bool checked);
+	void on_nextFrameButton_clicked(bool c);
+	void on_prevFrameButton_clicked(bool c);
 
 private:
 	Ui::DatasetBrowser_frm ui;
@@ -73,6 +75,8 @@ private:
 
 	// Special case for Meidai Bag Dataset: show projection of Velodyne scans
 	LidarScanBag::Ptr meidaiPointClouds = nullptr;
+
+	std::string getCurrentFrameInfo(uint32_t frNum) const;
 };
 
 #endif /* _DATASETBROWSER_H_ */

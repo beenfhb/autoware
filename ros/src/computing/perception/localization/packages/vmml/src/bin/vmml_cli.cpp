@@ -245,6 +245,9 @@ public:
 
 		else if (command[0]=="cd" or command[0]=="chdir")
 			changeWorkingDirectory(command[1]);
+
+		else if (command[0]=="flow")
+			simulate_flow(command);
 	}
 
 
@@ -850,6 +853,23 @@ private:
 		debug ("Map keyframes dumped to " + dumpDir.string());
 	}
 
+	void simulate_flow(const stringTokens &cmd)
+	{
+		MapBuilder2 mapBuilder;
+		mapBuilder.setMask(loadedDataset->getMask());
+		shared_ptr<Viewer> imgViewer (new Viewer (loadedDataset));
+		imgViewer->setMap(mapBuilder.getMap());
+		dataItemId currentItemId;
+
+		/* KeyFrame Callback */
+		MapBuilder2::frameCallback frmCallback =
+		[&] (const InputFrame &f)
+		{
+			imgViewer->update(f.sourceId, mapBuilder.getCurrentKeyFrameId());
+		};
+		mapBuilder.registerFrameCallback(frmCallback);
+
+	}
 };
 
 

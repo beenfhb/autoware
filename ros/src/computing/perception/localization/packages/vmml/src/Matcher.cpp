@@ -39,7 +39,7 @@ Matcher::createMatcherMask(
 
 
 cv::Mat
-createMatcherMask(
+Matcher::createMatcherMask(
 	const KeyFrame &kf1, const KeyFrame &kf2,
 	const WhichKpId &map1to2)
 {
@@ -137,7 +137,12 @@ Matcher::matchForInitialization(
 			kp1 = match.queryIdx,
 			kp2 = match.trainIdx;
 
-		// XXX: Check if kp2 is truly in kp1's epipolar line
+		// XXX: Re-Check if kp2 is truly in kp1's epipolar line
+		Line2 epl = createEpipolarLine(F12, kf1.fKeypoints[kp1]);
 
+		if (isKeypointInEpipolarLine(epl, kf2.fKeypoints[kp2])==true) {
+			FeaturePair pair12 = {kp1, kf1.fKeypoints[kp1].pt, kp2, kf2.fKeypoints[kp2].pt};
+			featurePairs.push_back(pair12);
+		}
 	}
 }

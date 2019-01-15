@@ -18,6 +18,7 @@
 #include "Frame.h"
 #include "utilities.h"
 #include "INIReader.h"
+#include "Matcher.h"
 
 
 
@@ -157,7 +158,8 @@ void VMap::estimateStructure(const kfid &kfid1, const kfid &kfid2)
 		*kf2 = getKeyFrameById(kfid2);
 
 	vector<FeaturePair> featurePairs_1_2;
-	KeyFrame::match(*kf1, *kf2, descriptorMatcher, featurePairs_1_2);
+//	KeyFrame::match(*kf1, *kf2, descriptorMatcher, featurePairs_1_2);
+	Matcher::matchForInitialization(*kf1, *kf2, featurePairs_1_2, descriptorMatcher);
 
 	vector<mpid> newMapPointList;
 	KeyFrame::triangulate(kf1, kf2, newMapPointList, featurePairs_1_2,
@@ -583,6 +585,8 @@ VMap::reset()
 	pointAppearances.clear();
 	framePoints.clear();
 	framePointsInv.clear();
+
+	// XXX: Unfinished
 }
 
 

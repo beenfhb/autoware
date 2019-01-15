@@ -104,6 +104,12 @@ public:
 	checkDataPoints (GenericDataset::ConstPtr sourceDs, const dataItemId startPos, const dataItemId stopPos)
 	const;
 
+	void
+	simulateOpticalFlow(
+		GenericDataset::ConstPtr sourceDs,
+		dataItemId startPos=std::numeric_limits<dataItemId>::max(),
+		dataItemId stopPos=std::numeric_limits<dataItemId>::max());
+
 
 protected:
 

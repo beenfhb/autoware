@@ -26,6 +26,22 @@ public:
 		std::vector<FeaturePair> &featurePairs,
 		cv::Ptr<cv::DescriptorMatcher> matcher);
 
+	// XXX: Not implemented yet
+	static void
+	matchMapPoints(
+		const KeyFrame &kfOld,
+		const KeyFrame &kfNew,
+		std::vector<FeaturePair> &matchedKeyPts,
+		cv::Ptr<cv::DescriptorMatcher> matcher);
+
+	// XXX: Not implemented yet
+	static void
+	matchNonMapPoints(
+		const KeyFrame &kfOld,
+		const KeyFrame &kfNew,
+		std::vector<FeaturePair> &featurePairs,
+		cv::Ptr<cv::DescriptorMatcher> matcher);
+
 protected:
 
 	static cv::Mat
