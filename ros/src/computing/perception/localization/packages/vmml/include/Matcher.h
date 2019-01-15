@@ -38,6 +38,9 @@ protected:
 		const KeyFrame &kf1, const KeyFrame &kf2,
 		const std::map<kpid, std::set<kpid>> &map1to2);
 
+	static bool
+	isKeypointInEpipolarLine (const Line2 &epl2, const cv::KeyPoint &cvkp2);
+
 };
 
 #endif /* _MATCHER_H_ */

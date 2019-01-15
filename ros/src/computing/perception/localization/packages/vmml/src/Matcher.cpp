@@ -57,6 +57,30 @@ createMatcherMask(
 }
 
 
+/*
+ * Create an epipolar line in Frame 2 based on Fundamental Matrix F12, using a keypoint from Frame 1
+ */
+Line2 createEpipolarLine (const Matrix3d &F12, const cv::KeyPoint &kp1)
+{
+	Line2 epl2;
+	epl2.coeffs() = F12 * Vector3d(kp1.pt.x, kp1.pt.y, 1.0);
+	return epl2;
+}
+
+
+bool Matcher::isKeypointInEpipolarLine (const Line2 &epl2, const cv::KeyPoint &cvkp2)
+{
+	Vector2d kp2(cvkp2.pt.x, cvkp2.pt.y);
+	auto d = epl2.absDistance(kp2);
+
+	// XXX: Using scale factor makes us more dependent to ORB
+	if (d > 3.84*VMap::mScaleFactors[cvkp2.octave])
+		return false;
+	else
+		return true;
+}
+
+
 void
 Matcher::matchForInitialization(
 		const KeyFrame &kf1,
@@ -76,12 +100,9 @@ Matcher::matchForInitialization(
 	for (kpid i1=0; i1<kf1.fKeypoints.size(); i1++) {
 
 		// Epipolar line in KF2 for this keypoint
-		Vector3d kp1 (kf1.fKeypoints[i1].pt.x, kf1.fKeypoints[i1].pt.y, 1.0);
+		Line2 epl2 = createEpipolarLine(F12, kf1.fKeypoints[i1]);
 
-		Line2 epl2;
-		epl2.coeffs() = F12 * kp1;
-
-		// Skip if this line is not intersecting with image rectangle
+		// Skip if this line is not intersecting with image rectangle in Frame 2
 		Vector2d
 			intersect1 = epl2.intersection(L1),
 			intersect2 = epl2.intersection(L2);
@@ -98,13 +119,8 @@ Matcher::matchForInitialization(
 		kf2targetList.clear();
 
 		for(kpid i2=0; i2<kf2.fKeypoints.size(); i2++) {
-			Vector2d kp2(kf2.fKeypoints[i2].pt.x, kf2.fKeypoints[i2].pt.y);
-			auto d = epl2.absDistance(kp2);
-
-			// XXX: Using scale factor makes it more dependent to ORB
-			if (d > 3.84*VMap::mScaleFactors[kf2.fKeypoints[i2].octave])
+			if (isKeypointInEpipolarLine(epl2, kf2.fKeypoints[i2]) == false)
 				continue;
-
 			kf2targetList.insert(i2);
 		}
 
@@ -117,6 +133,11 @@ Matcher::matchForInitialization(
 	matcher->match(kf2.fDescriptors, kf1.fDescriptors, matchResult, matcherMask);
 
 	for (auto &match: matchResult) {
+		kpid
+			kp1 = match.queryIdx,
+			kp2 = match.trainIdx;
+
+		// XXX: Check if kp2 is truly in kp1's epipolar line
 
 	}
 }
