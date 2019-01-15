@@ -1,10 +1,10 @@
 launch: $(find range_vision_fusion)/launch/range_vision_fusion.launch
 
 args:
-- arg: {default: /detection/lidar_objects, name: detected_objects_range}
+- arg: {default: /detection/lidar_detector/objects, name: detected_objects_range}
   title: Detected Objects Range
   type: str
-- arg: {default: /detection/vision_objects, name: detected_objects_vision}
+- arg: {default: /detection/image_detector/objects, name: detected_objects_vision}
   title: Detected Objects Vision
   type: str
 - arg: {default: /camera_info, name: camera_info_src}

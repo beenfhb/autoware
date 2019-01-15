@@ -114,27 +114,37 @@ class AwLgsvlSimulatorWidget(QtWidgets.QWidget):
     def __init__(self, guimgr):
         super(AwLgsvlSimulatorWidget, self).__init__()
         self.bridge_process = QtCore.QProcess(self)
-        #self.bridge_console = AwProcessViewer(self.bridge_process)
+        self.bridge_console = AwProcessViewer(self.bridge_process)
         self.bridge_button  = QtWidgets.QPushButton("Launch Bridge Server")
         self.bridge_button.setCheckable(True)
         self.bridge_button.toggled.connect(self.launch_bridge)
 
-        self.local_net_addr = QtWidgets.QLineEdit()
-        self.local_net_part = QtWidgets.QLineEdit()
+        #self.lgsvl_manager = QtNetwork.QNetworkAccessManager(self)
+        self.lgsvl_button  = QtWidgets.QPushButton("Launch Simulator")
+        self.lgsvl_button.clicked.connect(self.launch_lgsvl)
+
+        #self.lgsvl_server_addr = QtWidgets.QLineEdit()
+        #self.lgsvl_server_port = QtWidgets.QLineEdit()
+        #self.lgsvl_server_addr.setText("10.100.2.1")
+        #self.lgsvl_server_port.setText("5000")
+
+        self.lgsvl_client_addr = QtWidgets.QLineEdit()
+        self.lgsvl_client_port = QtWidgets.QLineEdit()
         for host in QtNetwork.QNetworkInterface.allAddresses():
             if not host.isLoopback():
                 if host.protocol() == QtNetwork.QAbstractSocket.IPv4Protocol:
-                    self.local_net_addr.setText(host.toString())
-        self.local_net_part.setText("9090")
+                    self.lgsvl_client_addr.setText(host.toString())
+        self.lgsvl_client_port.setText("9090")
 
         layout = QtWidgets.QGridLayout()
         layout.addWidget(QtWidgets.QLabel("Address"), 0, 0)
         layout.addWidget(QtWidgets.QLabel("Port"),    1, 0)
-        layout.addWidget(self.local_net_addr, 0, 1)
-        layout.addWidget(self.local_net_part, 1, 1)
+        layout.addWidget(self.lgsvl_client_addr, 0, 1)
+        layout.addWidget(self.lgsvl_client_port, 1, 1)
         layout.addWidget(self.bridge_button,  2, 0, 1, 2)
-        layout.setRowStretch(3, 1)
-        #layout.addWidget(self.bridge_console, 3, 0, 1, 2)
+        layout.addWidget(self.lgsvl_button,   3, 0, 1, 2)
+        #layout.setRowStretch(4, 1)
+        layout.addWidget(self.bridge_console, 4, 0, 1, 2)
         self.setLayout(layout)
 
     def launch_bridge(self, checked):
@@ -142,6 +152,57 @@ class AwLgsvlSimulatorWidget(QtWidgets.QWidget):
             self.bridge_process.start("roslaunch rosbridge_server rosbridge_websocket.launch")
         else:
             self.bridge_process.terminate()
+
+    def launch_lgsvl(self):
+
+        lgsvl_param = {
+            "bin_type": "tier4-develop",
+            "initial_configuration": {
+                "map": "SanFrancisco",
+                "time_of_day": 12,
+                "freeze_time_of_day": True,
+                "fog_intensity": 0,
+                "rain_intensity": 0,
+                "road_wetness": 0,
+                "enable_traffic": True,
+                "enable_pedestrian": True,
+                "traffic_density": 300
+            },
+            "vehicles": [
+                {
+                    "type": "XE_Rigged-autoware",
+                    "address": "10.254.1.60",
+                    "port": 9090,
+                    "command_type": "twist",
+                    "enable_lidar": True,
+                    "enable_gps": True,
+                    "enable_main_camera": True,
+                    #"enable_high_quality_rendering": True,
+                    "enable_high_quality_rendering": False,
+                    "position": {
+                        "n": 4140310.4,
+                        "e": 590681.5,
+                        "h": 10
+                    },
+                    "orientation": {
+                        "r": 0,
+                        "p": 0,
+                        "y": 269.9
+                    }
+                }
+            ]
+        }
+
+        import requests
+        try:
+            responce = requests.post('http://10.100.2.1:5000/simulator/launch', json=lgsvl_param)
+            print responce.status_code
+            print responce.json()
+            responce = requests.post('http://10.100.2.1:5000/simulator/terminate', json={"instance_id": responce.json()["instance_id"]})
+            print responce.status_code
+            print responce.json()
+        except:
+            print "Request Error"
 
 
 

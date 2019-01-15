@@ -1,4 +1,0 @@
-children: null
-config:
-  args.file: $(env HOME)/.autoware/data/tf/tf.launch
-plugin: map/transform

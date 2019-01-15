@@ -1,3 +1,3 @@
 rules :
-  - { type: unit, name: filter,  plugin: leaf/points/ray_ground_filter }
-  - { type: unit, name: cluster, plugin: leaf/points/euclidean_cluster }
+  - { type: unit, name: projection,  plugin: leaf/fusion/tl_projection }
+  - { type: unit, name: recognition, plugin: leaf/fusion/tl_recognition }
