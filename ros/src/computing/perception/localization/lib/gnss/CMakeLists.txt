@@ -21,6 +21,12 @@ target_link_libraries(gnss
         ${catkin_LIBRARIES}
         )
 
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(gnss-test test/test_gnss_lib.test test/src/test_gnss.cpp)
+  target_link_libraries(gnss-test ${catkin_LIBRARIES} gnss)
+endif()
+
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
         FILES_MATCHING PATTERN "*.hpp"

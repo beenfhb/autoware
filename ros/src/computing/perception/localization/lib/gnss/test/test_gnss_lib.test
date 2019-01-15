@@ -1,0 +1,5 @@
+<launch>
+
+  <test test-name="test-gnss" pkg="gnss" type="gnss-test" name="test"/>
+
+</launch>
