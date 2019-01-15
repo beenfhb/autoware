@@ -1,2 +1,0 @@
-args:
-    - { type: calib, title: Calibration File, arg: file }

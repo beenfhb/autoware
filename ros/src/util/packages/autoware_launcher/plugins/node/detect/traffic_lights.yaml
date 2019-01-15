@@ -1,0 +1,3 @@
+rules :
+  - { type: unit, name: filter,  plugin: leaf/points/ray_ground_filter }
+  - { type: unit, name: cluster, plugin: leaf/points/euclidean_cluster }

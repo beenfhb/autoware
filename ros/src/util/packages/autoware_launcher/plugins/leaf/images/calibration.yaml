@@ -1,0 +1,28 @@
+args:
+- arg: {default: $(env HOME)/.autoware/data/calibration/calibration.yml, name: file}
+  title: File
+  type: calib
+- arg: {default: velodyne, name: target_frame}
+  title: Target Frame
+  type: str
+- arg: {default: camera, name: camera_frame}
+  title: Camera Frame
+  type: str
+- arg: {default: 'True', name: register_lidar2camera_tf}
+  title: Register Lidar2camera Tf
+  type: str
+- arg: {default: 'True', name: publish_extrinsic_mat}
+  title: Publish Extrinsic Mat
+  type: str
+- arg: {default: 'True', name: publish_camera_info}
+  title: Publish Camera Info
+  type: str
+- arg: {default: /camera_info, name: camera_info_topic}
+  title: Camera Info Topic
+  type: str
+- arg: {default: /image_raw, name: image_topic_src}
+  title: Image Topic Src
+  type: str
+- arg: {default: /projection_matrix, name: projection_matrix_topic}
+  title: Projection Matrix Topic
+  type: str

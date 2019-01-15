@@ -99,6 +99,10 @@ class AwQtGuiClient(object):
         simulations.hide()
         window.addViewMenu("Simulation", simulations.setVisible)
 
+        # Debug
+        simulations.show()
+        self.__sim_rosbag.rosbag_file.path.setText("/home/isamu-takagi/.autoware/log/20150324.bag")
+
         self.__server.register_runner(self.__process)
         self.__process.register_server(self.__server)
 

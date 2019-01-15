@@ -1,0 +1,15 @@
+launch: $(find points_preprocessor)/launch/ray_ground_filter.launch
+
+args:
+- { title: input_point_topic,           type: str,  arg: {name: input_point_topic,           default: "/points_raw"} }
+- { title: sensor_height,               type: real, arg: {name: sensor_height,               default: "1.8"}  }
+- { title: clipping_height,             type: real, arg: {name: clipping_height,             default: "0.2"}  }
+- { title: min_point_distance,          type: real, arg: {name: min_point_distance,          default: "1.85"} }
+- { title: radial_divider_angle,        type: real, arg: {name: radial_divider_angle,        default: "0.08"} }
+- { title: concentric_divider_distance, type: real, arg: {name: concentric_divider_distance, default: "0.01"} }
+- { title: local_max_slope,             type: real, arg: {name: local_max_slope,             default: "8"}    }
+- { title: general_max_slope,           type: real, arg: {name: general_max_slope,           default: "5"}    }
+- { title: min_height_threshold,        type: real, arg: {name: min_height_threshold,        default: "0.05"} }
+- { title: reclass_distance_threshold,  type: real, arg: {name: reclass_distance_threshold,  default: "0.2"}  }
+
+

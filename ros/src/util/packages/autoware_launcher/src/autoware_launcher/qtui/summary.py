@@ -20,11 +20,16 @@ class AwSummaryPanel(QtWidgets.QStackedWidget):
     def node_ui_created(self, lnode):
         panel = self.__client.guimgr().create_widget(lnode, lnode.plugin().panel())
         panel.setup_widget()
-        self.__panels[lnode.path()] = panel
-        self.addWidget(panel)
+        #self.__panels[lnode.path()] = panel
+        #self.addWidget(panel)
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidget(panel)
+        scroll.setWidgetResizable(True)
+        self.__panels[lnode.path()] = scroll
+        self.addWidget(scroll)
 
     def node_ui_updated(self, lnode):
-        self.__panels[lnode.path()].setup_widget()
+        self.__panels[lnode.path()].widget().setup_widget()
 
     #def config_removed(self, lpath):
 

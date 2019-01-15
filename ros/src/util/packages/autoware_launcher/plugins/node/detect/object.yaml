@@ -1,0 +1,6 @@
+rules :
+  - { type: unit, name: points_filter, plugin: leaf/points/ray_ground_filter }
+  - { type: unit, name: points_detect, plugin: leaf/points/euclidean_cluster }
+  - { type: unit, name: images_detect, plugin: leaf/images/yolov3 }
+  - { type: unit, name: fusion,        plugin: leaf/fusion/range_vision_fusion }
+  - { type: unit, name: tracking,      plugin: leaf/fusion/imm_ukf_pda_track   }
