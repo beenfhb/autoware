@@ -72,9 +72,10 @@ bool Matcher::isKeypointInEpipolarLine (const Line2 &epl2, const cv::KeyPoint &c
 {
 	Vector2d kp2(cvkp2.pt.x, cvkp2.pt.y);
 	auto d = epl2.absDistance(kp2);
+	auto lim = 3.84*VMap::mScaleFactors[cvkp2.octave];
 
 	// XXX: Using scale factor makes us more dependent to ORB
-	if (d > 3.84*VMap::mScaleFactors[cvkp2.octave])
+	if (d > lim)
 		return false;
 	else
 		return true;
@@ -99,6 +100,8 @@ Matcher::matchForInitialization(
 
 	for (kpid i1=0; i1<kf1.fKeypoints.size(); i1++) {
 
+		Vector2d keypoint1 (kf1.fKeypoints[i1].pt.x, kf1.fKeypoints[i1].pt.y);
+
 		// Epipolar line in KF2 for this keypoint
 		Line2 epl2 = createEpipolarLine(F12, kf1.fKeypoints[i1]);
 
@@ -118,13 +121,17 @@ Matcher::matchForInitialization(
 
 		kf2targetList.clear();
 
-		for(kpid i2=0; i2<kf2.fKeypoints.size(); i2++) {
+		for(kpid i2=0; i2<kf2.fKeypoints.size(); ++i2) {
+
+			Vector2d keypoint2 (kf2.fKeypoints[i2].pt.x, kf2.fKeypoints[i2].pt.y);
+
 			if (isKeypointInEpipolarLine(epl2, kf2.fKeypoints[i2]) == false)
 				continue;
 			kf2targetList.insert(i2);
 		}
 
-		kpList1to2.insert(make_pair(i1, kf2targetList));
+		if (kf2targetList.size() != 0)
+			kpList1to2.insert(make_pair(i1, kf2targetList));
 	}
 
 	cv::Mat matcherMask = createMatcherMask(kf1, kf2, kpList1to2);

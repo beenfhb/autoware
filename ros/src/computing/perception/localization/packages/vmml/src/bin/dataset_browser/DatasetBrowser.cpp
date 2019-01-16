@@ -65,18 +65,22 @@ DatasetBrowser::on_timelineSlider_sliderMoved(int v)
 	return setImageOnPosition(v);
 }
 
+const string defaultImageExtension = "png";
 
-/*
 void
 DatasetBrowser::on_saveImageButton_clicked(bool checked)
 {
-	QString fname = QFileDialog::getSaveFileName(this, tr("Save Image"));
+	Path cwd = boost::filesystem::current_path();
+	int currentId = timelineSlider->value();
+	string imageName = to_string(currentId) + '.' + defaultImageExtension;
+	Path fullName = cwd / Path(imageName);
+
+	QString fname = QFileDialog::getSaveFileName(this, tr("Save Image"), QString::fromStdString(fullName.string()));
 	if (fname.length()==0)
 		return;
 	cv::Mat image = openDs->get(timelineSlider->value())->getImage();
 	cv::imwrite(fname.toStdString(), image);
 }
-*/
 
 
 std::string dPoseLean (const Pose &frame)
@@ -92,24 +96,6 @@ std::string dPoseLean (const Pose &frame)
 	return ss.str();
 }
 
-const string defaultImageExtension = "png";
-
-void DatasetBrowser::on_saveImageButton_clicked(bool checked)
-{
-	Path cwd = boost::filesystem::current_path();
-	int currentId = timelineSlider->value();
-	string imageName = to_string(currentId) + '.' + defaultImageExtension;
-	Path fullName = cwd / Path(imageName);
-
-	auto cDataItem = openDs->get(currentId);
-	cv::Mat image = cDataItem->getImage();
-	cv::imwrite(fullName.string(), image);
-
-	// write camera coordinate to STDOUT
-	Pose fp = cDataItem->getPose();
-	cout << cDataItem->getId() << ' ' << toSeconds(cDataItem->getTimestamp()) << ' ' << dPoseLean(fp) <<  endl << flush;
-}
-
 
 // XXX: Change this
 const string lidarCalibrationParams("/home/sujiwo/Autoware/ros/src/computing/perception/localization/packages/vmml/params/meidai-64e-S2.yaml");
@@ -122,10 +108,16 @@ DatasetBrowser::changeDataset(GenericDataset::Ptr ds, datasetType ty)
 	dataItem0 = ds->get(0);
 
 	if (ty==DatasetBrowser::MeidaiType) {
-		MeidaiBagDataset::Ptr meidaiDs = static_pointer_cast<MeidaiBagDataset>(ds);
+		meidaiDs = static_pointer_cast<MeidaiBagDataset>(ds);
 		meidaiDs->setLidarParameters(lidarCalibrationParams, string(), defaultLidarToCameraTransform);
 		meidaiPointClouds = meidaiDs->getLidarScanBag();
 		meidaiDs->isPreprocessed = true;
+		ui.preprocessImageCheck->setChecked(meidaiDs->isPreprocessed);
+		datasetCameraParam = meidaiCamera1Params;
+	}
+	else if (ty==DatasetBrowser::OxfordType) {
+		oxfordDs = static_pointer_cast<OxfordDataset>(ds);
+		datasetCameraParam = oxfordDs->getCameraParameter();
 	}
 
 	setImageOnPosition(0);
@@ -257,6 +249,27 @@ DatasetBrowser::on_prevFrameButton_clicked(bool c)
 		timelineSlider->setSliderPosition(curPos);
 		setImageOnPosition(curPos);
 	}
+}
+
+
+void
+DatasetBrowser::on_preprocessImageCheck_stateChanged(int state)
+{
+	state==0 ?
+		meidaiDs->isPreprocessed=false :
+		meidaiDs->isPreprocessed=true;
+	setImageOnPosition(timelineSlider->sliderPosition());
+}
+
+
+void
+DatasetBrowser::on_frame_mouseMove(int frame_x, int frame_y)
+{
+	double xr, yr;
+	xr = (double(datasetCameraParam.width) / double(frame->width())) * double(frame_x);
+	yr = (double(datasetCameraParam.height) / double(frame->height())) * double(frame_y);
+	ui.xCoordPos->setText(QString("%1").arg(xr, 0, 'f', 3));
+	ui.yCoordPos->setText(QString("%1").arg(yr, 0, 'f', 3));
 }
 
 

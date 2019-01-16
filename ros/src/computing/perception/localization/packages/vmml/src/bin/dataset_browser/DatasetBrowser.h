@@ -21,6 +21,8 @@
 #include "BaseFrame.h"
 #include "datasets/GenericDataset.h"
 #include "datasets/LidarScanBag.h"
+#include "datasets/OxfordDataset.h"
+#include "datasets/MeidaiBagDataset.h"
 
 
 class DatasetBrowser: public QWidget
@@ -45,11 +47,18 @@ public slots:
 	void on_playButton_clicked(bool checked);
 	void on_nextFrameButton_clicked(bool c);
 	void on_prevFrameButton_clicked(bool c);
+	void on_preprocessImageCheck_stateChanged(int s);
+	void on_frame_mouseMove(int x, int y);
 
 private:
 	Ui::DatasetBrowser_frm ui;
 
 	GenericDataset::Ptr openDs;
+	// Cast pointer
+	MeidaiBagDataset::Ptr meidaiDs;
+	OxfordDataset::Ptr oxfordDs;
+
+	CameraPinholeParams datasetCameraParam;
 
 	QSlider *timelineSlider;
 	RatioLayoutedFrame *frame;
