@@ -24,6 +24,7 @@ class AwRosbagSimulatorWidget(QtWidgets.QWidget):
         self.rosbag_stop   = QtWidgets.QPushButton("Stop")
         self.rosbag_pause  = QtWidgets.QPushButton("Pause")
         self.rosbag_state  = QtWidgets.QLabel()
+        self.rosbag_stime  = QtWidgets.QLineEdit()
         #start time
         #repeat
         #rate

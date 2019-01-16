@@ -1,1 +1,4 @@
-children : []
+rules :
+  - { type: unit, name: lane_rule,   plugin: leaf/_temp/lane_rule }
+  - { type: unit, name: lane_stop,   plugin: leaf/_temp/lane_stop }
+  - { type: unit, name: lane_select, plugin: leaf/_temp/lane_select }

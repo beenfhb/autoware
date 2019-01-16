@@ -1,0 +1,14 @@
+args:
+- arg: {default: /detection/object_tracker/objects, name: input_topic}
+  title: Input Topic
+  type: str
+- arg: {default: '0.1', name: interval_sec}
+  title: Interval Sec
+  type: str
+- arg: {default: '20', name: num_prediction}
+  title: Num Prediction
+  type: str
+- arg: {default: '2', name: sensor_height}
+  title: Sensor Height
+  type: str
+launch: $(find naive_motion_predict)/launch/naive_motion_predict.launch

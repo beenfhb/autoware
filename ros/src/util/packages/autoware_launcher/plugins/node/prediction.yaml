@@ -1,1 +1,2 @@
-children : []
+rules :
+  - { type: unit, name: native_motion_predict, plugin: leaf/_temp/native_motion_predict }

@@ -1,0 +1,11 @@
+args:
+- arg: {default: 'False', name: avoidance}
+  title: Avoidance
+  type: str
+- arg: {default: '13', name: avoid_distance}
+  title: Avoid Distance
+  type: str
+- arg: {default: '4', name: avoid_velocity_limit_mps}
+  title: Avoid Velocity Limit Mps
+  type: str
+launch: $(find astar_planner)/launch/obstacle_avoid.launch

@@ -1,1 +1,6 @@
-children : []
+rules :
+  - { type: unit, name: obstacle_avoid,   plugin: leaf/_temp/obstacle_avoid }
+  - { type: unit, name: velocity_set,     plugin: leaf/_temp/velocity_set }
+  - { type: unit, name: waypoint_loader,  plugin: leaf/_temp/waypoint_loader }
+  - { type: unit, name: pure_pursuit,     plugin: leaf/_temp/pure_pursuit }
+  - { type: unit, name: twist_filter,     plugin: leaf/_temp/twist_filter }

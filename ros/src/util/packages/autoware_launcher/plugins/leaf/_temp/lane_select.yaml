@@ -1,0 +1,5 @@
+args:
+- arg: {default: 'False', name: enablePlannerDynamicSwitch}
+  title: Enableplannerdynamicswitch
+  type: str
+launch: $(find lane_planner)/launch/lane_select.launch
