@@ -177,6 +177,8 @@ protected:
 	cv::Mat fDescriptors;
 
 	std::vector<cv::KeyPoint> fKeypoints;
+
+	friend class Matcher;
 };
 
 #endif /* _BASEFRAME_H_ */

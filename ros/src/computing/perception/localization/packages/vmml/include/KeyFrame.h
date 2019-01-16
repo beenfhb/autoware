@@ -163,8 +163,6 @@ protected:
 
 	friend class VMap;
 
-	friend class Matcher;
-
 	kfid id;
 
 	// To be used for referring to original dataset
