@@ -20,8 +20,8 @@
 
 template<class PointType>
 MatchingScore<PointType>::MatchingScore()
-    : fermi_kT_(0.01)
-    , fermi_mu_(0.05)
+    : fermi_kT_(0.05)
+    , fermi_mu_(0.25)
 {
 }
 
@@ -51,7 +51,7 @@ double MatchingScore<PointType>::calcMatchingScore(const boost::shared_ptr< pcl:
 template<class PointType>
 double MatchingScore<PointType>::calcFermiDistributionFunction(const double x, const double kT, const double mu)
 {
-    return 1.0/(std::exp((x-mu)/kT)+1.0);
+    return 1.0 / (std::exp((x-mu)/kT)+1.0);
 }
 
 template<class PointType>
@@ -64,7 +64,7 @@ std::vector< PointWithDistance<PointType> > MatchingScore<PointType>::convertPoi
         PointWithDistance<PointType> point_with_distance;
         tree_.nearestKSearch(point, 1, nn_indices, nn_dists);
         point_with_distance.point = point;
-        point_with_distance.distance = nn_dists[0];
+        point_with_distance.distance = std::sqrt(nn_dists[0]);
         point_with_distance_array.push_back(point_with_distance);
     }
     return point_with_distance_array;

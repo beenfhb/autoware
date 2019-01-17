@@ -20,7 +20,7 @@
 
 MatchingScoreHistogram::MatchingScoreHistogram()
     : number_of_bins_(100)
-    , bin_width_(0.002)
+    , bin_width_(0.005)
     , bin_max_height_(100)
 {
 }
@@ -38,7 +38,7 @@ void MatchingScoreHistogram::initHistogram()
 
     //to make the scale constant
     bin_msg.min_value = number_of_bins_ * bin_width_;
-    bin_msg.max_value = (number_of_bins_+0.001)*bin_width_;
+    bin_msg.max_value = (number_of_bins_+0.001) * bin_width_;
     bin_msg.count = bin_max_height_;
     histogram_msg_.bins.push_back(bin_msg);
 }

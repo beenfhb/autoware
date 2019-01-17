@@ -1531,8 +1531,8 @@ params :
       desc  : fermi_kT
       label : Fermi kT
       min   : 0
-      max   : 0.1
-      v     : 0.01
+      max   : 0.5
+      v     : 0.05
       cmd_param :
         dash      : ''
         delim     : ':='
@@ -1540,8 +1540,8 @@ params :
       desc  : fermi_mu
       label : Fermi mu
       min   : 0
-      max   : 0.5
-      v     : 0.05
+      max   : 1.0
+      v     : 0.25
       cmd_param :
         dash      : ''
         delim     : ':='

@@ -17,8 +17,8 @@
   <arg name="cutoff_upper_limit_z" default="2.5" />
   <arg name="cutoff_lower_limit_range" default="3.0" />
   <arg name="cutoff_upper_limit_range" default="30.0" />
-  <arg name="fermi_kT" default="0.01" />
-  <arg name="fermi_mu" default="0.05" />
+  <arg name="fermi_kT" default="0.05" />
+  <arg name="fermi_mu" default="0.25" />
 
   <node pkg="lidar_localizer" type="ndt_matching" name="ndt_matching" output="log">
     <param name="method_type" value="$(arg method_type)" />
