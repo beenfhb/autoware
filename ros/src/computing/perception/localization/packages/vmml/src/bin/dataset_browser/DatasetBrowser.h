@@ -49,6 +49,7 @@ public slots:
 	void on_prevFrameButton_clicked(bool c);
 	void on_preprocessImageCheck_stateChanged(int s);
 	void on_frame_mouseMove(int x, int y);
+	void on_scaleInput_editingFinished();
 
 private:
 	Ui::DatasetBrowser_frm ui;

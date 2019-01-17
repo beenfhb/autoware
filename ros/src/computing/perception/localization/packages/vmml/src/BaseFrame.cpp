@@ -11,6 +11,7 @@
 #include "MapPoint.h"
 
 
+
 using namespace Eigen;
 using namespace std;
 
@@ -126,6 +127,29 @@ BaseFrame::perturb (PerturbationMode mode,
 }
 
 
+// For computing pseudo inverse
+#include <Eigen/SVD>
+
+template<typename Scalar, int r, int c>
+Eigen::Matrix<Scalar,c,r>
+pseudoInverse(const Eigen::Matrix<Scalar,r,c> &M)
+{
+	Eigen::Matrix<Scalar,c,r> pinv;
+
+	JacobiSVD <Matrix<Scalar,r,c>> svd(M, ComputeFullU|ComputeFullV);
+	auto U = svd.matrixU();
+	auto V = svd.matrixV();
+//	auto Sx = svd.singularValues();
+	Matrix<Scalar,c,r> Sx = Matrix<Scalar,c,r>::Zero();
+	for (auto i=0; i<r; ++i) {
+		Sx(i,i) = 1/svd.singularValues()[i];
+	}
+	pinv = V * Sx * U.transpose();
+
+	return pinv;
+}
+
+
 std::vector<BaseFrame::PointXYI>
 BaseFrame::projectLidarScan
 (pcl::PointCloud<pcl::PointXYZ>::ConstPtr lidarScan, const TTransform &lidarToCameraTransform, const CameraPinholeParams &cameraParams)
@@ -187,10 +211,10 @@ BaseFrame::FundamentalMatrix(const BaseFrame &F1, const BaseFrame &F2)
 	if (F1.cameraParam.fx==0 or F2.cameraParam.fx==0)
 		throw runtime_error("Camera parameters are not defined");
 
+/*
 	TTransform T12 = F1.mPose.inverse() * F2.mPose;
 	Matrix3d R = T12.rotation();
 	Vector3d t = T12.translation();
-	t = -R * t;
 
 	Vector3d A = F1.cameraParam.toMatrix3() * R.transpose() * t;
 	Matrix3d C = Matrix3d::Zero();
@@ -202,6 +226,22 @@ BaseFrame::FundamentalMatrix(const BaseFrame &F1, const BaseFrame &F2)
 	C(2,1) = A[0];
 
 	return F2.cameraParam.toMatrix3().inverse().transpose() * R * F1.cameraParam.toMatrix3().transpose() * C;
+*/
+	// XXX: Change to general version using Pseudo-inverse
+
+	Vector3d e2 = F2.project3(F1.position());
+	e2 = e2 / e2[2];
+	Matrix3d C = Matrix3d::Zero();
+	C(0,1) = -e2[2];
+	C(0,2) = e2[1];
+	C(1,0) = e2[2];
+	C(1,2) = -e2[0];
+	C(2,0) = -e2[1];
+	C(2,1) = e2[0];
+
+	auto P1inv = pseudoInverse(F1.projectionMatrix());
+	Matrix3d F12 = C * F2.projectionMatrix() * P1inv;
+	return F12;
 }
 
 

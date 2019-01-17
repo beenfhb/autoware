@@ -376,6 +376,7 @@ void
 MeidaiBagDataset::createTrajectories(ptime startTimep, ptime stopTimep, bool useLidar)
 {
 	Trajectory *trajectorySrc;
+	TTransform srcMultiplier = TTransform::Identity();
 	bool doCompensateTime = false;
 
 	ros::Time
@@ -409,11 +410,14 @@ MeidaiBagDataset::createTrajectories(ptime startTimep, ptime stopTimep, bool use
 		createTrajectoryFromNDT(*lidarBag, ndtTrack, gnssTrack, pcdMapFilePath);
 		trajectorySrc = &ndtTrack;
 		cameraTrackSource = CameraTrackSource::NDT;
+		// XXX: Check this value
+		srcMultiplier = lidarToCameraTransform;
 	}
 
 	else {
 		trajectorySrc = &gnssTrack;
 		cameraTrackSource = CameraTrackSource::GNSS;
+		// XXX: Find transformation from GNSS to camera
 	}
 
 	cout << "Creating Camera Trajectory\n";
@@ -438,9 +442,8 @@ MeidaiBagDataset::createTrajectories(ptime startTimep, ptime stopTimep, bool use
 		}
 		else
 			poseX = trajectorySrc->interpolate(tm);
-		// XXX: Check this value
-		PoseStamped poseX1 = poseX * lidarToCameraTransform;
-//		cameraTrack.push_back(poseX1);
+
+		PoseStamped poseX1 = poseX * srcMultiplier;
 		cameraTrack[imageBagPos] = poseX1;
 
 		cout << i+1 << " / " << cameraRawBag->size() << "  \r";

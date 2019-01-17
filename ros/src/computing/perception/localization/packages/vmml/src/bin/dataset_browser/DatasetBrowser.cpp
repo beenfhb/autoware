@@ -113,12 +113,14 @@ DatasetBrowser::changeDataset(GenericDataset::Ptr ds, datasetType ty)
 		meidaiPointClouds = meidaiDs->getLidarScanBag();
 		meidaiDs->isPreprocessed = true;
 		ui.preprocessImageCheck->setChecked(meidaiDs->isPreprocessed);
-		datasetCameraParam = meidaiCamera1Params;
+		meidaiDs->addCameraParameter(meidaiCamera1Params);
 	}
 	else if (ty==DatasetBrowser::OxfordType) {
 		oxfordDs = static_pointer_cast<OxfordDataset>(ds);
-		datasetCameraParam = oxfordDs->getCameraParameter();
 	}
+
+	datasetCameraParam = openDs->getCameraParameter();
+	ui.scaleInput->setText(QString("%1").arg(openDs->getZoomRatio(), 0, 'f', 3));
 
 	setImageOnPosition(0);
 }
@@ -273,12 +275,22 @@ DatasetBrowser::on_frame_mouseMove(int frame_x, int frame_y)
 }
 
 
+void
+DatasetBrowser::on_scaleInput_editingFinished()
+{
+	double scale = ui.scaleInput->text().toDouble();
+	openDs->setZoomRatio(scale);
+	datasetCameraParam = openDs->getCameraParameter();
+	setImageOnPosition(timelineSlider->sliderPosition());
+}
+
+
 std::vector<BaseFrame::PointXYI>
 DatasetBrowser::projectScan
 (pcl::PointCloud<pcl::PointXYZ>::ConstPtr lidarScan)
 const
 {
-	return BaseFrame::projectLidarScan(lidarScan, defaultLidarToCameraTransform, meidaiCamera1Params);
+	return BaseFrame::projectLidarScan(lidarScan, defaultLidarToCameraTransform, datasetCameraParam);
 }
 
 
@@ -312,14 +324,19 @@ DatasetBrowser::getCurrentFrameInfo(uint32_t frNum) const
 	auto curFrame = openDs->get(frNum);
 	ss << "#: " << curFrame->getId() << endl;
 
+	try {
 	auto pos = curFrame->getPosition();
-	ss << "Position: " << pos.x() << ", " << pos.y() << ", " << pos.z() << endl;
+		ss << "Position: " << pos.x() << ", " << pos.y() << ", " << pos.z() << endl;
 
-	auto ort = curFrame->getOrientation();
-	ss << "Orientation (XYZW): " << ort.x() << ", " << ort.y() << ", " << ort.z() << ", " << ort.w() << endl;
+		auto ort = curFrame->getOrientation();
+		ss << "Orientation (XYZW): " << ort.x() << ", " << ort.y() << ", " << ort.z() << ", " << ort.w() << endl;
 
-	auto rpyRad = quaternionToRPY(ort);
-	ss << "Orientation (RPYrad): " << rpyRad[0] << ", " << rpyRad[1] << ", " << rpyRad[2] << endl;
+		auto rpyRad = quaternionToRPY(ort);
+		ss << "Orientation (RPYrad): " << rpyRad[0] << ", " << rpyRad[1] << ", " << rpyRad[2] << endl;
+
+	} catch (out_of_range &e) {
+		ss << "This frame does not have position/orientation info" << endl;
+	}
 
 	return ss.str();
 }
