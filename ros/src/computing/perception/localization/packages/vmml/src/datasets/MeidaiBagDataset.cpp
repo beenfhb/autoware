@@ -44,6 +44,10 @@ const TTransform defaultLidarToCameraTransform =
 		Vector3d(0.9, 0.3, -0.6),
 		-1.520777, -0.015, -1.5488);
 
+const TTransform defaultGpsToCameraTransform
+	(2.1003, 0.3004, 1.3996,		// Translation
+	-0.496, 0.478, -0.510, 0.514);	// Quaternion
+
 
 class cache_error : public runtime_error
 {};
@@ -418,6 +422,7 @@ MeidaiBagDataset::createTrajectories(ptime startTimep, ptime stopTimep, bool use
 		trajectorySrc = &gnssTrack;
 		cameraTrackSource = CameraTrackSource::GNSS;
 		// XXX: Find transformation from GNSS to camera
+		srcMultiplier = defaultGpsToCameraTransform;
 	}
 
 	cout << "Creating Camera Trajectory\n";

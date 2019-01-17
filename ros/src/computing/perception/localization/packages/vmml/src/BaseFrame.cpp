@@ -211,7 +211,6 @@ BaseFrame::FundamentalMatrix(const BaseFrame &F1, const BaseFrame &F2)
 	if (F1.cameraParam.fx==0 or F2.cameraParam.fx==0)
 		throw runtime_error("Camera parameters are not defined");
 
-/*
 	TTransform T12 = F1.mPose.inverse() * F2.mPose;
 	Matrix3d R = T12.rotation();
 	Vector3d t = T12.translation();
@@ -226,11 +225,10 @@ BaseFrame::FundamentalMatrix(const BaseFrame &F1, const BaseFrame &F2)
 	C(2,1) = A[0];
 
 	return F2.cameraParam.toMatrix3().inverse().transpose() * R * F1.cameraParam.toMatrix3().transpose() * C;
-*/
 	// XXX: Change to general version using Pseudo-inverse
 
+/*
 	Vector3d e2 = F2.project3(F1.position());
-	e2 = e2 / e2[2];
 	Matrix3d C = Matrix3d::Zero();
 	C(0,1) = -e2[2];
 	C(0,2) = e2[1];
@@ -242,6 +240,7 @@ BaseFrame::FundamentalMatrix(const BaseFrame &F1, const BaseFrame &F2)
 	auto P1inv = pseudoInverse(F1.projectionMatrix());
 	Matrix3d F12 = C * F2.projectionMatrix() * P1inv;
 	return F12;
+*/
 }
 
 
