@@ -19,9 +19,9 @@ boost::optional<cv::Point> VanishingPointFinder::find(cv::Mat image)
     return p;
 }
 
-boost::optional<cv::Point> VanishingPointFinder::findCrossingPoint(std::array<cv::Point,2> line0, std::array<cv::Point,2> line1)
+boost::optional<cv::Point2d> VanishingPointFinder::findCrossingPoint(std::array<cv::Point,2> line0, std::array<cv::Point,2> line1)
 {
-    cv::Point ret;
+    cv::Point2d ret;
     if ((line0[1].x-line0[0].x) != 0.0 && (line1[1].x-line1[0].x) != 0.0)
     {
         double a0 = (line0[1].y-line0[0].y)/(line0[1].x-line0[0].x);
@@ -62,9 +62,9 @@ boost::optional<cv::Point> VanishingPointFinder::findCrossingPoint(std::array<cv
     }
 }
 
-std::vector<cv::Point> VanishingPointFinder::findCandidatePoints(std::vector<cv::Vec4i> lines)
+std::vector<cv::Point2d> VanishingPointFinder::findCandidatePoints(std::vector<cv::Vec4i> lines)
 {
-    std::vector<cv::Point> points;
+    std::vector<cv::Point2d> points;
     for(int i=0; i<lines.size(); i++)
     {
         for(int m=0; m<lines.size(); m++)
@@ -80,6 +80,13 @@ std::vector<cv::Point> VanishingPointFinder::findCandidatePoints(std::vector<cv:
             cv::Point p1 = cv::Point(l0[2],l0[3]);
             cv::Point p2 = cv::Point(l1[0],l1[1]);
             cv::Point p3 = cv::Point(l1[2],l1[3]);
+            std::array<cv::Point,2> line0 = {p0,p1};
+            std::array<cv::Point,2> line1 = {p2,p3};
+            boost::optional<cv::Point2d> crossing_point = findCrossingPoint(line0,line1);
+            if(crossing_point)
+            {
+                points.push_back(crossing_point.get());
+            }
         }
     }
     return points;

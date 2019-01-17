@@ -30,8 +30,8 @@ public:
         params_ = params;
     }
 private:
-    std::vector<cv::Point> findCandidatePoints(std::vector<cv::Vec4i> lines);
-    boost::optional<cv::Point> findCrossingPoint(std::array<cv::Point,2> line0, std::array<cv::Point,2> line1);
+    std::vector<cv::Point2d> findCandidatePoints(std::vector<cv::Vec4i> lines);
+    boost::optional<cv::Point2d> findCrossingPoint(std::array<cv::Point,2> line0, std::array<cv::Point,2> line1);
     HoughParams params_;
 };
 #endif  //VANISHING_POINT_FINDER_H_INCLUDED
