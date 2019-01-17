@@ -7,6 +7,9 @@
 //headers in boost
 #include <boost/optional.hpp>
 
+//headers in STL
+#include <array>
+
 struct HoughParams
 {
     double hough_rho;
@@ -28,6 +31,7 @@ public:
     }
 private:
     std::vector<cv::Point> findCandidatePoints(std::vector<cv::Vec4i> lines);
+    boost::optional<cv::Point> findCrossingPoint(std::array<cv::Point,2> line0, std::array<cv::Point,2> line1);
     HoughParams params_;
 };
 #endif  //VANISHING_POINT_FINDER_H_INCLUDED
