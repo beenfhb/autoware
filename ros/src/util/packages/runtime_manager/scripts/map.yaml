@@ -26,7 +26,7 @@ buttons :
           if self.checkbox_auto_update.GetValue() else None
 
   vector_map :
-    run   : rosrun map_file vector_map_loader
+    run   : roslaunch map_file vector_map_loader.launch
     param : vector_map_loader
     gui   :
       stat_topic : [ vmap ]
@@ -73,20 +73,27 @@ params :
       path_type : multi
       v         : ''
       cmd_param :
-        delim     : ''
+        delim     : ' '
         unpack    : ','
 
   - name  : vector_map_loader
     vars  :
-    - name      : path_vec
+    - name      : map_files
       kind      : path
       path_type : multi
       v         : ''
       cmd_param :
-        delim     : ''
-        unpack    : ','
+        delim     : ':='
+        dash      : ''
         must      : True
-
+    - name     : use_autoware_map
+      desc     : use autoware map instead of ADAS V1.2
+      label    : Autoware Map
+      kind     : checkbox
+      v        : False
+      cmd_param :
+        delim     : ':='
+        dash      : ''
   - name  : tf
     vars  :
     - name      : file
