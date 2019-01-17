@@ -1,4 +1,5 @@
 from python_qt_binding import QtCore
+from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
 from ..core import console
@@ -13,9 +14,15 @@ class AwQuickStartPanel(QtWidgets.QWidget):
         super(AwQuickStartPanel, self).__init__()
         self.guimgr = guimgr
         self.frames = {"root/" + name: None for name in ["map", "vehicle", "sensing", "visualization"]}
+        self.awlogo = QtWidgets.QLabel()
+
+        pixmap = QtGui.QPixmap("/home/isamu-takagi/AutowareWork/autoware-launcher-py/ros/src/util/packages/runtime_manager/scripts/images/autoware_logo_1.png")
+        self.awlogo.setPixmap(pixmap)
+        self.awlogo.setAlignment(QtCore.Qt.AlignCenter)
+        self.awlogo.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
 
     def profile_ui_cleared(self):
-        self.guimgr.panel_setup(self)
+        self.guimgr.panel_setup(self, self.awlogo)
 
     def node_ui_created(self, lnode):
         print "Quick Created: " + lnode.path()
@@ -33,7 +40,7 @@ class AwQuickStartPanel(QtWidgets.QWidget):
             if state == 0x02: frame.term_requested()
 
     def setup_widget(self, node):
-        self.guimgr.panel_setup(self)
+        self.guimgr.panel_setup(self, self.awlogo)
         for child in node.childnodes():
             if child.path() in self.frames:
                 frame = self.guimgr.create_widget(child, child.plugin().frame(), widget = AwLaunchFrame)
@@ -50,9 +57,9 @@ class AwLaunchFrame(QtWidgets.QWidget):
         self.states = ["Launch", "Terminate"]
 
         guimgr.frame_setup(self)
-        
-        self.title.setText(node.name().capitalize() + " : " + node.get_config("info.title", "No Title"))
-        guimgr.frame_add_text_widget(self, node.get_config("info.description", "No Description"))
+
+        self.title.setText(node.name().capitalize())
+        guimgr.frame_add_text_widget(self, node.get_config("info.title", "No Description"))
 
         self.button = QtWidgets.QPushButton(self.states[0])
         self.button.clicked.connect(self.onclicked)

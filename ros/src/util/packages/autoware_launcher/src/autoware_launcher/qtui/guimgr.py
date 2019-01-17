@@ -74,14 +74,14 @@ class AwQtGuiManager(object):
         index = panel.layout().count() - 2
         panel.layout().insertWidget(index, widget)
 
-    def panel_setup(self, widget):
+    def panel_setup(self, widget, spacer = None):
 
         if widget.layout() is None:
-            self.__panel_setup(widget)
+            self.__panel_setup(widget, spacer)
         else:
             self.__panel_reset(widget)
 
-    def __panel_setup(self, widget):
+    def __panel_setup(self, widget, spacer):
 
         footer_layout = QtWidgets.QHBoxLayout()
         footer_layout.setContentsMargins(2, 2, 2, 2)
@@ -93,7 +93,10 @@ class AwQtGuiManager(object):
         widget_layout = QtWidgets.QVBoxLayout()
         widget_layout.setContentsMargins(16, 16, 16, 16)
         widget_layout.setSpacing(16)
-        widget_layout.addStretch()
+        if not spacer:
+            widget_layout.addStretch()
+        else:
+            widget_layout.addWidget(spacer)
         widget_layout.addWidget(widget.footer)
         widget.setLayout(widget_layout)
 

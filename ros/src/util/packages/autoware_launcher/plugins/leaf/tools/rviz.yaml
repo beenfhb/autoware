@@ -1,2 +1,5 @@
 args:
     - { title: Config File, type: file, arg: file }
+
+info:
+    - { type: node }

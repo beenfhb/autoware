@@ -16,6 +16,7 @@ from .network    import AwTcpServerPanel
 from .quickstart import AwQuickStartPanel
 from .simulation import AwRosbagSimulatorWidget
 from .simulation import AwLgsvlSimulatorWidget
+from .simulation import AwGazeboSimulatorWidget
 
 
 
@@ -57,6 +58,7 @@ class AwQtGuiClient(object):
         self.__quickstart = AwQuickStartPanel(self.__guimgr)
         self.__sim_rosbag = AwRosbagSimulatorWidget(self.__guimgr)
         self.__sim_lgsvl  = AwLgsvlSimulatorWidget (self.__guimgr)
+        self.__sim_gazebo = AwGazeboSimulatorWidget(self.__guimgr)
 
         tabwidget = QtWidgets.QTabWidget()
         tabwidget.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
@@ -71,18 +73,24 @@ class AwQtGuiClient(object):
         vsplitter.layout().addWidget(self.__treeview)
         vsplitter.layout().addWidget(self.__control)
 
-        hsplitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        hsplitter.addWidget(vsplitter)
-        hsplitter.addWidget(tabwidget)
+        self.__develop = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        self.__develop.addWidget(vsplitter)
+        self.__develop.addWidget(tabwidget)
 
-        mainwidget = QtWidgets.QTabWidget()
-        mainwidget.addTab(hsplitter,         "Profile Edit")
-        mainwidget.addTab(self.__quickstart, "Quick Start")
-        mainwidget.addTab(self.__network,    "Server Debug")
+        #mainwidget = QtWidgets.QTabWidget()
+        #mainwidget.addTab(hsplitter,         "Profile Edit")
+        #mainwidget.addTab(self.__quickstart, "Quick Start")
+        #mainwidget.addTab(self.__network,    "Server Debug")
+
+        mainwidget = QtWidgets.QStackedWidget()
+        mainwidget.addWidget(self.__quickstart)
+        mainwidget.addWidget(self.__develop)
+        mainwidget.addWidget(self.__network)
 
         simulations = QtWidgets.QTabWidget()
-        simulations.addTab(self.__sim_rosbag, "Rosbag Play")
-        simulations.addTab(self.__sim_lgsvl,  "LGSVL Simulator")
+        simulations.addTab(self.__sim_rosbag, "Rosbag")
+        simulations.addTab(self.__sim_lgsvl,  "LGSVL")
+        simulations.addTab(self.__sim_gazebo, "Gazebo")
 
         mainsplitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
         mainsplitter.addWidget(mainwidget)
@@ -99,9 +107,16 @@ class AwQtGuiClient(object):
         simulations.hide()
         window.addViewMenu("Simulation", simulations.setVisible)
 
+        def switch_develop_mode(checked):
+            if checked:
+                mainwidget.setCurrentWidget(self.__develop)
+            else:
+                mainwidget.setCurrentWidget(self.__quickstart)
+        window.addViewMenu("Develop Mode", switch_develop_mode)
+
         # Debug
         simulations.show()
-        self.__sim_rosbag.rosbag_file.path.setText("/home/isamu-takagi/.autoware/log/20150324.bag")
+        self.__sim_rosbag.rosbag_file.path.setText(fspath.userhome(".autoware/log/20150324.bag"))
 
         self.__server.register_runner(self.__process)
         self.__process.register_server(self.__server)

@@ -65,16 +65,20 @@ class AwDefaultNodeFrame(widgets.AwAbstructFrame):
         super(AwDefaultNodeFrame, self).__init__(guimgr, node, view)
 
         super(AwDefaultNodeFrame, self).setup_widget()
-        self.set_title(self.node.name().capitalize() + " : " + self.node.get_config("info.title", "No Title"))
+        self.set_title(self.node.name().capitalize())
         self.add_button(AwConfigButton(self.guimgr.client(), self.node.path()))
 
-        config = node.config()
-        description = []
-        for data in self.node.plugin().info():
-            description.append(self.guimgr.widget(data).tostring(self.node, data))
-        for data in self.node.plugin().args():
-            description.append(self.guimgr.widget(data).tostring(self.node, data))
-        description = "\n".join(description) if description else "No Description"
+        description = self.node.get_config("info.title")
+        if description:
+            description = description.capitalize()
+        else:
+            config = node.config()
+            description = []
+            for data in self.node.plugin().info():
+                description.append(self.guimgr.widget(data).tostring(self.node, data))
+            for data in self.node.plugin().args():
+                description.append(self.guimgr.widget(data).tostring(self.node, data))
+            description = "\n".join(description) if description else "No Description"
 
         self.add_text_widget(description)
 
