@@ -1,21 +1,24 @@
 #ifndef PARTICLE_FILTER_H_INCLUDED
 #define PARTICLE_FILTER_H_INCLUDED
 
+//headers in Eigen
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+
+//headers in STL
+#include <functional>
 
 class ParticleFilter {
  public:
   ParticleFilter(int dimensions, int num_particles, Eigen::VectorXd init_value);
   ParticleFilter(int dimensions, int num_particles);
   ~ParticleFilter();
-  Eigen::VectorXd get_state();
-  Eigen::MatrixXd get_states() { return states_; };
+  Eigen::VectorXd getState();
+  Eigen::MatrixXd getStates() { return states_; };
   void setWeights(Eigen::VectorXd weights);
   void addSystemNoise(Eigen::VectorXd &control_input, double variance);
   void addSystemNoise(double variance);
   void resample(double threshold);
-
  private:
   double getEss() { return 1 / weights_.cwiseAbs2().sum(); };
   int dimensions_;

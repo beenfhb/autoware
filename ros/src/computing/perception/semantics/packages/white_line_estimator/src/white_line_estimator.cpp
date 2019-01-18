@@ -145,6 +145,11 @@ void WhiteLineEstimator::configureCallback(white_line_estimator::white_line_esti
     hough_params.hough_max_line_gap = config.hough_max_line_gap;
     hough_params.hough_min_line_length = config.hough_min_line_length;
     hough_params.hough_threshold = config.hough_threshold;
-    vanishing_point_finder_ptr_->setParameters(hough_params);
+    vanishing_point_finder_ptr_->setHoughParameters(hough_params);
+    ParticleFilterParams pf_params;
+    pf_params.num_particles = config.num_particles;
+    pf_params.init_vanishing_point_x = config.init_vanishing_point_x;
+    pf_params.init_vanishing_point_y = config.init_vanishing_point_y;
+    vanishing_point_finder_ptr_->setParticleFilterParameters(pf_params);
     return;
 }

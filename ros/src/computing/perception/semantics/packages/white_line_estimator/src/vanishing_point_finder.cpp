@@ -2,7 +2,7 @@
 
 VanishingPointFinder::VanishingPointFinder()
 {
-
+    pf_config_recieved_ = false;
 }
 
 VanishingPointFinder::~VanishingPointFinder()
@@ -10,12 +10,24 @@ VanishingPointFinder::~VanishingPointFinder()
 
 }
 
+cv::Point2d VanishingPointFinder::estimateVanishingPoint(std::vector<cv::Point2d> candidate_points)
+{
+    cv::Point2d p;
+    Eigen::MatrixXd states = particle_filter_ptr_->getStates();
+    return p;
+}
+
 boost::optional<cv::Point> VanishingPointFinder::find(cv::Mat image)
 {
     cv::Point p;
     std::vector<cv::Vec4i> lines;
+    if(!pf_config_recieved_)
+    {
+        return boost::none;
+    }
     cv::HoughLinesP(image,lines,params_.hough_rho,params_.hough_theta,
         params_.hough_threshold,params_.hough_min_line_length,params_.hough_max_line_gap);
+    std::vector<cv::Point2d> candidate_points = findCandidatePoints(lines);
     return p;
 }
 

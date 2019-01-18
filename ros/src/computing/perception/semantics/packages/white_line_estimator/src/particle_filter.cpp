@@ -36,7 +36,7 @@ ParticleFilter::~ParticleFilter() {}
 
 void ParticleFilter::setWeights(Eigen::VectorXd weights) { weights_ = weights / weights.sum(); }
 
-Eigen::VectorXd ParticleFilter::get_state() {
+Eigen::VectorXd ParticleFilter::getState() {
   using namespace Eigen;
   VectorXd normalized_state = VectorXd::Zero(dimensions_);
   for (int i = 0; i < num_partcles_; i++) {
