@@ -498,6 +498,8 @@ private:
 		debug("Frequency (Hz): " + to_string(loadedDataset->hertz()));
 
 		debug("Duration (sec): " + to_string(loadedDataset->length()));
+
+		debug("Zoom: " + to_string(loadedDataset->getZoomRatio()));
 	}
 
 
@@ -578,7 +580,7 @@ private:
 				return;
 			}
 
-			loadedDataset = OxfordDataset::load(datasetPath.string(), cmd[1]);
+			loadedDataset = OxfordDataset::load(datasetPath.string(), cmd[2]);
 			slDatasourceType = OXFORD_DATASET_TYPE;
 			oxfordDsPtr = static_pointer_cast<OxfordDataset> (loadedDataset);
 			debug ("Oxford-type Dataset Loaded");

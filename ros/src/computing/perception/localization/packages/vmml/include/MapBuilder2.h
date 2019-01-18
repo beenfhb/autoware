@@ -94,6 +94,8 @@ public:
 			dataItemId stopPos=std::numeric_limits<dataItemId>::max()
 		);
 
+	std::vector<kpid> dryRun () const;
+
 	void setMask (const cv::Mat &m);
 
 	bool

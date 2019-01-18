@@ -117,6 +117,9 @@ DatasetBrowser::changeDataset(GenericDataset::Ptr ds, datasetType ty)
 	}
 	else if (ty==DatasetBrowser::OxfordType) {
 		oxfordDs = static_pointer_cast<OxfordDataset>(ds);
+		// Can not be used in Oxford dataset
+		ui.enableLidarScanRender->setDisabled(true);
+		ui.preprocessImageCheck->setDisabled(true);
 	}
 
 	datasetCameraParam = openDs->getCameraParameter();
