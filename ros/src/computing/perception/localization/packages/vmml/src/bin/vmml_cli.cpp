@@ -28,6 +28,7 @@
 #include "Localizer.h"
 #include "MapBuilder2.h"
 #include "Viewer.h"
+#include "Matcher.h"
 #include "datasets/OxfordDataset.h"
 #include "datasets/MeidaiBagDataset.h"
 #include "utilities.h"
@@ -246,8 +247,8 @@ public:
 		else if (command[0]=="cd" or command[0]=="chdir")
 			changeWorkingDirectory(command[1]);
 
-		else if (command[0]=="flow")
-			simulate_flow(command);
+		else if (command[0]=="match")
+			doMatch(command);
 	}
 
 
@@ -855,22 +856,31 @@ private:
 		debug ("Map keyframes dumped to " + dumpDir.string());
 	}
 
-	void simulate_flow(const stringTokens &cmd)
+
+	// Match Testing
+	void doMatch(const stringTokens &cmd)
 	{
-		MapBuilder2 mapBuilder;
-		mapBuilder.setMask(loadedDataset->getMask());
-		shared_ptr<Viewer> imgViewer (new Viewer (loadedDataset));
-		imgViewer->setMap(mapBuilder.getMap());
-		dataItemId currentItemId;
+		int
+			frnum1 = stoi(cmd[1]),
+			frnum2 = stoi(cmd[2]);
 
-		/* KeyFrame Callback */
-		MapBuilder2::frameCallback frmCallback =
-		[&] (const InputFrame &f)
-		{
-			imgViewer->update(f.sourceId, mapBuilder.getCurrentKeyFrameId());
-		};
-		mapBuilder.registerFrameCallback(frmCallback);
+		auto
+			Frame1 = loadedDataset->getAsFrame(frnum1),
+			Frame2 = loadedDataset->getAsFrame(frnum2);
 
+		MapBuilder2 mpBuilder;
+		auto cvFeatDetector = mpBuilder.getMap()->getFeatureDetector();
+		auto cvFeatMatcher = mpBuilder.getMap()->getDescriptorMatcher();
+
+		cv::Mat mask = loadedDataset->getMask();
+		Frame1->computeFeatures(cvFeatDetector, mask);
+		Frame2->computeFeatures(cvFeatDetector, mask);
+
+		vector<Matcher::KpPair> validKpPairs;
+		TTransform T12;
+		Matcher::matchAny(*Frame1, *Frame2, validKpPairs, cvFeatMatcher, T12);
+
+		cv::Mat matchResult;
 	}
 };
 

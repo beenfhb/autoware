@@ -153,3 +153,68 @@ Matcher::matchForInitialization(
 		}
 	}
 }
+
+
+void
+Matcher::matchAny(
+	const BaseFrame &Fr1,
+	const BaseFrame &Fr2,
+	std::vector<KpPair> &featurePairs,
+	cv::Ptr<cv::DescriptorMatcher> matcher,
+	TTransform &T12)
+{
+	// Estimate F
+	featurePairs.clear();
+	Matrix3d F12 = BaseFrame::FundamentalMatrix(Fr1, Fr2);
+
+	// Establish initial correspondences
+	vector<cv::DMatch> initialMatches;
+	matcher->match(Fr2.fDescriptors, Fr1.fDescriptors, initialMatches);
+	vector<int> inliersMatch;
+
+	// Find outlier/inlier
+	for (int ip=0; ip<initialMatches.size(); ++ip) {
+
+		auto dm = initialMatches[ip];
+
+		Line2 line2 = createEpipolarLine(F12, Fr1.fKeypoints[dm.trainIdx]);
+		if (isKeypointInEpipolarLine(line2, Fr2.fKeypoints[dm.queryIdx])==true) {
+			inliersMatch.push_back(ip);
+		}
+	}
+
+	// Compute F
+	cv::Mat points1(inliersMatch.size(), 2, CV_32F),
+			points2(inliersMatch.size(), 2, CV_32F);
+	for (int ip=0; ip<inliersMatch.size(); ++ip) {
+		cv::DMatch m = initialMatches[inliersMatch[ip]];
+		points1.at<float>(ip,0) = Fr1.fKeypoints[m.trainIdx].pt.x;
+		points1.at<float>(ip,1) = Fr1.fKeypoints[m.trainIdx].pt.y;
+		points2.at<float>(ip,0) = Fr2.fKeypoints[m.queryIdx].pt.x;
+		points2.at<float>(ip,1) = Fr2.fKeypoints[m.queryIdx].pt.y;
+	}
+	// XXX: Unfinished
+
+	// Lets do matching again
+
+	// Convert F to Essential Matrix E, and compute R & T from Fr1 to Fr2
+
+	// Put valid feature pairs in results
+}
+
+
+cv::Mat
+Matcher::drawMatches(
+	const BaseFrame &F1,
+	const BaseFrame &F2,
+	const std::vector<KpPair> &featurePairs,
+	DrawMode m)
+{
+	cv::Mat result(std::max(F1.height(), F2.height()), F1.width()+F2.width(), F1.image.type());
+	F1.image.copyTo( result(cv::Rect(0,0,F1.width(),F1.height())) );
+	F2.image.copyTo( result(cv::Rect(F1.width(),0,F2.width(),F2.height())) );
+
+	// XXX: Unfinished
+
+	return result;
+}

@@ -254,3 +254,18 @@ BaseFrame::Ptr BaseFrame::create(cv::Mat img, const Pose &p, const CameraPinhole
 	bframe->cameraParam = cam;
 	return bframe;
 }
+
+
+// Image dimensions
+int
+BaseFrame::width() const
+{
+	return cameraParam.width;
+}
+
+
+int
+BaseFrame::height() const
+{
+	return cameraParam.height;
+}

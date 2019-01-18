@@ -19,6 +19,8 @@
 class Matcher {
 public:
 
+	typedef std::pair<kpid,kpid> KpPair;
+
 	static void
 	matchForInitialization(
 		const KeyFrame &kf1,
@@ -42,6 +44,26 @@ public:
 		std::vector<FeaturePair> &featurePairs,
 		cv::Ptr<cv::DescriptorMatcher> matcher);
 
+	static void
+	matchAny(
+		const BaseFrame &F1,
+		const BaseFrame &F2,
+		std::vector<KpPair> &featurePairs,
+		cv::Ptr<cv::DescriptorMatcher> matcher,
+		TTransform &T12);
+
+	enum DrawMode {
+		DrawOpticalFlow,
+		DrawSideBySide
+	};
+
+	static cv::Mat
+	drawMatches(
+		const BaseFrame &F1,
+		const BaseFrame &F2,
+		const std::vector<KpPair> &featurePairs,
+		DrawMode m);
+
 protected:
 
 	static cv::Mat
@@ -56,6 +78,7 @@ protected:
 
 	static bool
 	isKeypointInEpipolarLine (const Line2 &epl2, const cv::KeyPoint &cvkp2);
+
 
 };
 

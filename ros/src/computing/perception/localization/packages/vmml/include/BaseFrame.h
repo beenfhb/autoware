@@ -158,6 +158,10 @@ public:
 	Eigen::Matrix3d
 	FundamentalMatrix(const BaseFrame &F1, const BaseFrame &F2);
 
+	// Image dimensions
+	int width() const;
+	int height() const;
+
 protected:
 	cv::Mat image;
 
