@@ -151,6 +151,8 @@ protected:
 	void VisualizePrediction();
 	void UpdatePlanningParams(ros::NodeHandle& _nh);
 	void GenerateCurbsObstacles(std::vector<PlannerHNS::DetectedObject>& curb_obstacles);
+	std::string GetPredictionLogDataLine(std::vector<PlannerHNS::TrajectoryTracker*> trajectoryTrackers, std::string path_id);
+	std::string GetPredictionLogDataRealWeightItem(std::vector<PlannerHNS::TrajectoryTracker*> trajectoryTrackers, std::string path_id);
 
 public:
 	MotionPrediction();

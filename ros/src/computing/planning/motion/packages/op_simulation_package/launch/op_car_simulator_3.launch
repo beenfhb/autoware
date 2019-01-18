@@ -1,16 +1,17 @@
 <!-- -->
 <launch>
 	<arg name="id" 							default="3" />		
-	<arg name="enableRvizPoseSelect"		default="true"   />	
-	<arg name="enableLooper"				default="true"   />	
+	<arg name="enableRvizPoseSelect"		default="false"   />
+	<arg name="experimentName" 				default="merge" />	
+	<arg name="enableLooper"				default="false"   />	
 	<arg name="meshPath" 					default="package://model_publisher/../../../.config/model/default.dae" />
 	<arg name="baseColorR"					default="0.5" />
-	<arg name="baseColorG"					default="0.1" />
-	<arg name="baseColorB"					default="0.5" />
-	<arg name="logFolder" 					default="/home/hatem/SimuLogs/SimulatedCar3/" />	
+	<arg name="baseColorG"					default="0.5" />
+	<arg name="baseColorB"					default="1" />
+	<arg name="logFolder" 					default="" />	
 	
-	<arg name="maxVelocity" 				default="5" />
-	<arg name="minVelocity" 				default="0.0" />	
+	<arg name="maxVelocity" 				default="0" />
+	<arg name="minVelocity" 				default="0" />	
 	<arg name="maxLocalPlanDistance" 		default="50" />
 	<arg name="samplingTipMargin" 			default="5"  /> 
 	<arg name="samplingOutMargin" 			default="15" /> 
@@ -19,7 +20,7 @@
 	<arg name="pathDensity" 				default="0.5" />
 	<arg name="rollOutDensity" 				default="0.25" />
 	<arg name="rollOutsNumber" 				default="8"    />
-	<arg name="enableSwerving" 				default="true"  />
+	<arg name="enableSwerving" 				default="false"  />
 	<arg name="enableFollowing" 			default="true" />
 	
 	<arg name="horizonDistance" 			default="120"  />
@@ -29,11 +30,11 @@
 	<arg name="maxDistanceToAvoid" 			default="5.0"  /> <!-- should be smaller than minDistanceToAvoid -->
 	<arg name="speedProfileFactor"			default="1.3"  />
 	
-	<arg name="horizontalSafetyDistance"	default="1"  />
-	<arg name="verticalSafetyDistance"		default="1"  />
+	<arg name="horizontalSafetyDistance"	default="0.2"  />
+	<arg name="verticalSafetyDistance"		default="0.5"  />
 		
-	<arg name="enableTrafficLightBehavior" 	default="true" />
-	<arg name="enableStopSignBehavior" 		default="true" />	
+	<arg name="enableTrafficLightBehavior" 	default="false" />
+	<arg name="enableStopSignBehavior" 		default="false" />	
 	<arg name="enableLaneChange" 			default="false" />	
 	
 	<arg name="width" 						default="1.85"  />
@@ -45,7 +46,7 @@
 	<arg name="steeringDelay" 				default="1.2" />
 	<arg name="minPursuiteDistance" 		default="2.5"  />
 	<arg name="maxAcceleration" 			default="2"  />
-	<arg name="maxDeceleration"		 		default="-2"  />
+	<arg name="maxDeceleration"		 		default="-4"  />
 	
 	<arg name="enableCurbObstacles" 		default="false" /> 
 	<arg name="enableObjectTracking" 		default="true" /> <!-- use internal kalman filter for track obstacles " -->
@@ -54,15 +55,16 @@
 	<arg name="enableStepByStepSignal" 		default="false" />
 	<arg name="enableSimulatedVelodyne" 	default="false" />
 	
-	<arg name="mapSource" 					default="0" /> <!-- Autoware=0, Vector Map Folder=1, kml=2 -->
-	<arg name="mapFileName" 				default="/media/hatem/8ac0c5d5-8793-4b98-8728-55f8d67ec0f4/data/ToyotaCity2/map/vector_map/" />
+	<arg name="mapSource" 					default="2" /> <!-- Autoware=0, Vector Map Folder=1, kml=2 -->
+	<arg name="mapFileName" 				default="/media/hatem/8ac0c5d5-8793-4b98-8728-55f8d67ec0f4/data/NagoyaUniversityMap_COI/kml_map/assure_around_nu_complete_with_dir_actions_2018.kml" />
 	
 	<arg name="enableUsingJoyStick" 	default="false" />  
 	
 	
 	<node pkg="op_simulation_package" type="op_car_simulator" name="op_car_simulator3" output="screen">		
 		<param name="id" 							value="$(arg id)" />				
-		<param name="enableRvizPoseSelect" 			value="$(arg enableRvizPoseSelect)" />			
+		<param name="enableRvizPoseSelect" 			value="$(arg enableRvizPoseSelect)" />
+		<param name="experimentName" 				value="$(arg experimentName)" />			
 		<param name="enableLooper" 					value="$(arg enableLooper)" />				
 		<param name="meshPath" 						value="$(arg meshPath)" />
 		<param name="baseColorR" 					value="$(arg baseColorR)" />

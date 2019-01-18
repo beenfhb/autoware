@@ -115,11 +115,11 @@ MotionPrediction::~MotionPrediction()
 
 	op_utility_ns::DataRW::WriteLogData(fileName.str(),
 			"PredictionLog_",
-			"time,x,y,heading,Velocity,Acceleration,Indicator,"
-			"id_1,n_part_forward_1,p_forward_1,w_forward_1,n_part_stopping_1,p_stopping_1,w_stopping_1,n_part_yielding_1,p_yielding_1,w_yielding_1,best_beh_1,all_p_1,all_w_1,best_p_1, best_w_1,"
-			"id_2,n_part_forward_2,p_forward_2,w_forward_2,n_part_stopping_2,p_stopping_2,w_stopping_2,n_part_yielding_2,p_yielding_2,w_yielding_2,best_beh_2,all_p_2,all_w_2,best_p_2, best_w_2,"
-			"id_3,n_part_forward_3,p_forward_3,w_forward_3,n_part_stopping_3,p_stopping_3,w_stopping_3,n_part_yielding_3,p_yielding_3,w_yielding_3,best_beh_3,all_p_3,all_w_3,best_p_3, best_w_3,"
-			"id_4,n_part_forward_4,p_forward_4,w_forward_4,n_part_stopping_4,p_stopping_4,w_stopping_4,n_part_yielding_4,p_yielding_4,w_yielding_4,best_beh_4,all_p_4,all_w_4,best_p_4, best_w_4," , m_LogData);
+			"time,x,y,heading,Velocity,Acceleration,Indicator,Best_Traj,real_W_F,real_W_L,real_W_R,Best_Beh_P,Best_Beh_W,Best_w_f,Best_w_s,Best_w_y,"
+			"id_F,n_part_forward_F,p_forward_F,w_forward_F,n_part_stopping_F,p_stopping_F,w_stopping_F,n_part_yielding_F,p_yielding_F,w_yielding_F,best_beh_F,all_p_F,all_w_F,best_p_F,best_w_F,real_w_F,"
+			"id_L,n_part_forward_L,p_forward_L,w_forward_L,n_part_stopping_L,p_stopping_L,w_stopping_L,n_part_yielding_L,p_yielding_L,w_yielding_L,best_beh_L,all_p_L,all_w_L,best_p_L,best_w_L,real_w_L,"
+			"id_R,n_part_forward_R,p_forward_R,w_forward_R,n_part_stopping_R,p_stopping_R,w_stopping_R,n_part_yielding_R,p_yielding_R,w_yielding_R,best_beh_R,all_p_R,all_w_R,best_p_R,best_w_R,real_w_R,"
+			"id_U,n_part_forward_U,p_forward_U,w_forward_U,n_part_stopping_U,p_stopping_U,w_stopping_U,n_part_yielding_U,p_yielding_U,w_yielding_U,best_beh_U,all_p_U,all_w_U,best_p_U,best_w_U,real_w_U," , m_LogData);
 }
 
 void MotionPrediction::UpdatePlanningParams(ros::NodeHandle& _nh)
@@ -354,6 +354,40 @@ void MotionPrediction::GenerateCurbsObstacles(std::vector<PlannerHNS::DetectedOb
 	}
 }
 
+std::string MotionPrediction::GetPredictionLogDataLine(std::vector<PlannerHNS::TrajectoryTracker*> trajectoryTrackers, std::string path_id)
+{
+  for(unsigned int i=0; i < trajectoryTrackers.size(); i++)
+  {
+    if(trajectoryTrackers.at(i)->id_.compare(path_id) == 0)
+    {
+      std::ostringstream dataLine;
+      dataLine << trajectoryTrackers.at(i)->id_ << ",";
+      dataLine << trajectoryTrackers.at(i)->nAliveForward << "," << trajectoryTrackers.at(i)->pForward << "," << trajectoryTrackers.at(i)->w_avg_forward <<",";
+      dataLine << trajectoryTrackers.at(i)->nAliveStop << "," << trajectoryTrackers.at(i)->pStop << "," << trajectoryTrackers.at(i)->w_avg_stop <<",";
+      dataLine << trajectoryTrackers.at(i)->nAliveYield << "," << trajectoryTrackers.at(i)->pYield << "," << trajectoryTrackers.at(i)->w_avg_yield <<"," << trajectoryTrackers.at(i)->best_beh_by_p <<",";
+      dataLine << trajectoryTrackers.at(i)->all_p << "," << trajectoryTrackers.at(i)->all_w << "," << trajectoryTrackers.at(i)->best_p <<"," << trajectoryTrackers.at(i)->best_w <<"," << trajectoryTrackers.at(i)->all_w_real <<",";
+      return dataLine.str();
+    }
+  }
+
+  return "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,";
+}
+
+std::string MotionPrediction::GetPredictionLogDataRealWeightItem(std::vector<PlannerHNS::TrajectoryTracker*> trajectoryTrackers, std::string path_id)
+{
+  for(unsigned int i=0; i < trajectoryTrackers.size(); i++)
+  {
+    if(trajectoryTrackers.at(i)->id_.compare(path_id) == 0)
+    {
+      std::ostringstream dataLine;
+      dataLine << trajectoryTrackers.at(i)->all_w_real <<",";
+      return dataLine.str();
+    }
+  }
+
+  return "0,";
+}
+
 void MotionPrediction::LogDataRaw()
 {
 	if(m_PredictBeh.m_ParticleInfo_II.size() == 0 )
@@ -364,69 +398,104 @@ void MotionPrediction::LogDataRaw()
 	dataLine << m_t << "," << pObj->center.pos.x << "," <<  pObj->center.pos.y << "," << pObj->center.pos.a << "," << pObj->center.v << "," << pObj->acceleration_desc
 			<< "," << pObj->indicator_state << ",";
 
-	if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 0)
+	if(m_PredictBeh.m_ParticleInfo_II.at(0)->best_forward_track != nullptr)
 	{
-		PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(0);
-		dataLine << pTrajectoryTracker->id_ << ",";
-		dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
-		dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
-		dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
-		dataLine << pTrajectoryTracker->all_p << "," << pTrajectoryTracker->all_w << "," << pTrajectoryTracker->best_p <<"," << pTrajectoryTracker->best_w <<",";
-
-		if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 1)
-		{
-			PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(1);
-			dataLine << pTrajectoryTracker->id_ << ",";
-			dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
-			dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
-			dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
-			dataLine << pTrajectoryTracker->all_p << "," << pTrajectoryTracker->all_w << "," << pTrajectoryTracker->best_p <<"," << pTrajectoryTracker->best_w <<",";
-
-			if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 2)
-			{
-				PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(2);
-				dataLine << pTrajectoryTracker->id_ << ",";
-				dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
-				dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
-				dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
-				dataLine << pTrajectoryTracker->all_p << "," << pTrajectoryTracker->all_w << "," << pTrajectoryTracker->best_p <<"," << pTrajectoryTracker->best_w <<",";
-
-				if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 3)
-				{
-					PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(3);
-					dataLine << pTrajectoryTracker->id_ << ",";
-					dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
-					dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
-					dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
-					dataLine << pTrajectoryTracker->all_p << "," << pTrajectoryTracker->all_w << "," << pTrajectoryTracker->best_p <<"," << pTrajectoryTracker->best_w <<",";
-				}
-				else
-				{
-					dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-				}
-			}
-			else
-			{
-				dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-				dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-			}
-
-		}
-		else
-		{
-			dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-			dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-			dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-		}
-
+	  if(m_PredictBeh.m_ParticleInfo_II.at(0)->best_forward_track->id_.compare("F")==0)
+	    dataLine << "1" << ",";
+	  else if(m_PredictBeh.m_ParticleInfo_II.at(0)->best_forward_track->id_.compare("L")==0)
+	    dataLine << "2" << ",";
+	  else if(m_PredictBeh.m_ParticleInfo_II.at(0)->best_forward_track->id_.compare("R")==0)
+	    dataLine << "3" << ",";
+	  else
+	    dataLine << "0" << ",";
 	}
 	else
-	{
-		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-	}
+          dataLine << "0" << ",";
+
+
+	dataLine << GetPredictionLogDataRealWeightItem(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "F");
+	dataLine << GetPredictionLogDataRealWeightItem(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "L");
+	dataLine << GetPredictionLogDataRealWeightItem(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "R");
+
+        if(m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track != nullptr)
+        {
+            dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->best_beh_by_p << ",";
+            dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->best_beh_by_w << ",";
+            dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->w_avg_forward << ",";
+            dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->w_avg_stop << ",";
+            dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->w_avg_yield << ",";
+        }
+        else
+          dataLine << "-1,-1,0,0,0,";
+
+	dataLine << GetPredictionLogDataLine(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "F");
+	dataLine << GetPredictionLogDataLine(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "L");
+	dataLine << GetPredictionLogDataLine(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "R");
+	dataLine << GetPredictionLogDataLine(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "U");
+
+//	if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 0)
+//	{
+//		PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(0);
+//		dataLine << pTrajectoryTracker->id_ << ",";
+//		dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
+//		dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
+//		dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
+//		dataLine << pTrajectoryTracker->all_p << "," << pTrajectoryTracker->all_w << "," << pTrajectoryTracker->best_p <<"," << pTrajectoryTracker->best_w <<",";
+//
+//		if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 1)
+//		{
+//			PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(1);
+//			dataLine << pTrajectoryTracker->id_ << ",";
+//			dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
+//			dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
+//			dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
+//			dataLine << pTrajectoryTracker->all_p << "," << pTrajectoryTracker->all_w << "," << pTrajectoryTracker->best_p <<"," << pTrajectoryTracker->best_w <<",";
+//
+//			if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 2)
+//			{
+//				PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(2);
+//				dataLine << pTrajectoryTracker->id_ << ",";
+//				dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
+//				dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
+//				dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
+//				dataLine << pTrajectoryTracker->all_p << "," << pTrajectoryTracker->all_w << "," << pTrajectoryTracker->best_p <<"," << pTrajectoryTracker->best_w <<",";
+//
+//				if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 3)
+//				{
+//					PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(3);
+//					dataLine << pTrajectoryTracker->id_ << ",";
+//					dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
+//					dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
+//					dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
+//					dataLine << pTrajectoryTracker->all_p << "," << pTrajectoryTracker->all_w << "," << pTrajectoryTracker->best_p <<"," << pTrajectoryTracker->best_w <<",";
+//				}
+//				else
+//				{
+//					dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+//				}
+//			}
+//			else
+//			{
+//				dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+//				dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+//			}
+//
+//		}
+//		else
+//		{
+//			dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+//			dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+//			dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+//		}
+//
+//	}
+//	else
+//	{
+//		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+//		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+//		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+//		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
+//	}
 
 	m_LogData.push_back(dataLine.str());
 

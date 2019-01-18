@@ -438,11 +438,6 @@ void DecisionMaker::InitBehaviorStates()
 
 		desiredVelocity = acceleration_critical  * dt + CurrStatus.speed;
 
-              if(m_pCurrentBehaviorState->GetCalcParams()->iCurrSafeTrajectory != m_pCurrentBehaviorState->GetCalcParams()->iCentralTrajectory)
-              {
-                      desiredVelocity  = desiredVelocity * 0.75;
-              }
-
 		//std::cout << "bEnd : " << preCalcPrams->bFinalLocalTrajectory << ", Min D: " << preCalcPrams->minStoppingDistance << ", D To Goal: " << preCalcPrams->distanceToGoal << std::endl;
 		//std::cout << "Forward Target Acc: " << m_CarInfo.max_acceleration  << ", PID Velocity: " << desiredVelocity << ", Max Velocity : " << max_velocity  << std::endl;
 		//std::cout << "Forward Target Acc: " << acceleration_critical  << ", PID Velocity: " << desiredVelocity << ", Max Velocity : " << max_velocity  << std::endl;
