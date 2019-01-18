@@ -201,15 +201,15 @@ void MotionPrediction::UpdatePlanningParams(ros::NodeHandle& _nh)
 
 	_nh.getParam("/op_motion_predictor/enableParticleFilterPrediction", 	m_PredictBeh.m_bParticleFilter);
 
-	std::cout << "Particles Num Before : " <<  m_PredictBeh.g_PredParams.PARTICLES_NUM << std::endl;
+	std::cout << "Particles Num Before : " <<  m_PredictBeh.g_PredParams.MAX_PARTICLES_NUM << std::endl;
 	_nh.getParam("/op_motion_predictor/pose_weight_factor", 	m_PredictBeh.g_PredParams.POSE_FACTOR);
 	_nh.getParam("/op_motion_predictor/dir_weight_factor", 	m_PredictBeh.g_PredParams.DIRECTION_FACTOR);
 	_nh.getParam("/op_motion_predictor/vel_weight_factor", 	m_PredictBeh.g_PredParams.VELOCITY_FACTOR);
 	_nh.getParam("/op_motion_predictor/acc_weight_factor", 	m_PredictBeh.g_PredParams.ACCELERATE_FACTOR);
 	_nh.getParam("/op_motion_predictor/ind_weight_factor", 	m_PredictBeh.g_PredParams.INDICATOR_FACTOR);
 
-	_nh.getParam("/op_motion_predictor/particles_number", 	m_PredictBeh.g_PredParams.PARTICLES_NUM);
-	_nh.getParam("/op_motion_predictor/min_particles_num", 	m_PredictBeh.g_PredParams.MIN_PARTICLE_NUM);
+	_nh.getParam("/op_motion_predictor/particles_number", 	m_PredictBeh.g_PredParams.MAX_PARTICLES_NUM);
+	_nh.getParam("/op_motion_predictor/min_particles_num", 	m_PredictBeh.g_PredParams.MIN_PARTICLES_NUM);
 	_nh.getParam("/op_motion_predictor/keep_percentage", 	m_PredictBeh.g_PredParams.KEEP_PERCENTAGE);
 	m_PredictBeh.SetForTrajTracker();
 

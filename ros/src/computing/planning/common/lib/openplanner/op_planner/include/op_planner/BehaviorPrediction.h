@@ -19,8 +19,8 @@ class PredictionParams
 {
 public:
 
-int PARTICLES_NUM;
-int MIN_PARTICLE_NUM;
+int MAX_PARTICLES_NUM;
+int MIN_PARTICLES_NUM;
 double KEEP_PERCENTAGE;
 
 double  POSE_FACTOR;
@@ -31,8 +31,8 @@ double  INDICATOR_FACTOR;
 
 	PredictionParams()
 	{
-		PARTICLES_NUM = 30;
-		MIN_PARTICLE_NUM = 1;
+		MAX_PARTICLES_NUM = 30;
+		MIN_PARTICLES_NUM = 1;
 		KEEP_PERCENTAGE = 0.5;
 
 		POSE_FACTOR = 0.1;
@@ -192,8 +192,10 @@ public:
 	double w_avg_left;
 	double w_avg_right;
 
-	static int particle_numbers;
-	static int min_particle_numbers;
+	static int max_particles_number;
+	static int min_particles_number;
+	static int active_intentions_number;
+	static int total_particles_number;
 
 	PassiveDecisionMaker m_SinglePathDecisionMaker;
 
@@ -444,7 +446,7 @@ public:
 
 	void InsertNewParticle(const Particle& p)
 	{
-		if(m_CurrParts.size() > particle_numbers) return;
+		if(m_CurrParts.size() >= total_particles_number) return;
 
 		m_CurrParts.push_back(p);
 
@@ -519,27 +521,27 @@ public:
 		{
 			if(parts_list.at(i).beh == PlannerHNS::BEH_STOPPING_STATE)
 			{
-				if(nAliveStop == min_particle_numbers && bForce == true) continue;
+				if(nAliveStop == min_particles_number && bForce == true) continue;
 				nAliveStop--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_YIELDING_STATE)
 			{
-				if(nAliveYield == min_particle_numbers && bForce == true) continue;
+				if(nAliveYield == min_particles_number && bForce == true) continue;
 				nAliveYield--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_FORWARD_STATE)
 			{
-				if(nAliveForward == min_particle_numbers  && bForce == true) continue;
+				if(nAliveForward == min_particles_number  && bForce == true) continue;
 				nAliveForward--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_BRANCH_LEFT_STATE)
 			{
-				if(nAliveLeft == min_particle_numbers && bForce == true) continue;
+				if(nAliveLeft == min_particles_number && bForce == true) continue;
 				nAliveLeft--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_BRANCH_RIGHT_STATE)
 			{
-				if(nAliveRight == min_particle_numbers && bForce == true) continue;
+				if(nAliveRight == min_particles_number && bForce == true) continue;
 				nAliveRight--;
 			}
 
@@ -588,27 +590,27 @@ public:
 		{
 			if(parts_list.at(i).beh == PlannerHNS::BEH_STOPPING_STATE)
 			{
-				if(nAliveStop == min_particle_numbers && bForce == true) continue;
+				if(nAliveStop == min_particles_number && bForce == true) continue;
 				nAliveStop--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_YIELDING_STATE)
 			{
-				if(nAliveYield == min_particle_numbers && bForce == true) continue;
+				if(nAliveYield == min_particles_number && bForce == true) continue;
 				nAliveYield--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_FORWARD_STATE)
 			{
-				if(nAliveForward == min_particle_numbers  && bForce == true) continue;
+				if(nAliveForward == min_particles_number  && bForce == true) continue;
 				nAliveForward--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_BRANCH_LEFT_STATE)
 			{
-				if(nAliveLeft == min_particle_numbers && bForce == true) continue;
+				if(nAliveLeft == min_particles_number && bForce == true) continue;
 				nAliveLeft--;
 			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_BRANCH_RIGHT_STATE)
 			{
-				if(nAliveRight == min_particle_numbers && bForce == true) continue;
+				if(nAliveRight == min_particles_number && bForce == true) continue;
 				nAliveRight--;
 			}
 
@@ -672,13 +674,13 @@ public:
 		}
 
 
-		pStop  = (double)nAliveStop/(double)particle_numbers;
-		pYield = (double)nAliveYield/(double)particle_numbers;
-		pForward = (double)nAliveForward/(double)particle_numbers;
-		pLeft = (double)nAliveLeft/(double)particle_numbers;
-		pRight = (double)nAliveRight/(double)particle_numbers;
+		pStop  = (double)nAliveStop/(double)max_particles_number;
+		pYield = (double)nAliveYield/(double)max_particles_number;
+		pForward = (double)nAliveForward/(double)max_particles_number;
+		pLeft = (double)nAliveLeft/(double)max_particles_number;
+		pRight = (double)nAliveRight/(double)max_particles_number;
 
-		all_p = (double)(nAliveStop + nAliveForward + nAliveYield + nAliveLeft + nAliveRight) / (double)particle_numbers;
+		all_p = (double)(nAliveStop + nAliveForward + nAliveYield + nAliveLeft + nAliveRight) / (double)(total_particles_number);
 
 //		for(unsigned int i = 0; i < m_ForwardPart.size(); i++)
 //		{
@@ -1351,8 +1353,9 @@ public:
 
 	void SetForTrajTracker()
 	{
-		TrajectoryTracker::particle_numbers = g_PredParams.PARTICLES_NUM;
-		TrajectoryTracker::min_particle_numbers = g_PredParams.MIN_PARTICLE_NUM;
+		TrajectoryTracker::max_particles_number = g_PredParams.MAX_PARTICLES_NUM;
+		TrajectoryTracker::min_particles_number = g_PredParams.MIN_PARTICLES_NUM;
+		TrajectoryTracker::total_particles_number = TrajectoryTracker::max_particles_number * TrajectoryTracker::active_intentions_number;
 	}
 
 	//move to CPP later
@@ -1378,11 +1381,8 @@ public:
 		delete_me.clear();
 	}
 
-	void GetBestParticleWeight(std::vector<Particle>& part_list, Particle* pBestF, Particle* pBestS, Particle* pBestY)
+	void GetBestParticleWeight(std::vector<Particle>& part_list, Particle** pBestF, Particle** pBestS, Particle** pBestY)
 	{
-		pBestF = nullptr;
-		pBestS = nullptr;
-		pBestY = nullptr;
 
 		if(part_list.size() < 1) return;
 
@@ -1424,13 +1424,19 @@ public:
 		}
 
 		if(f_max_i >= 0)
-			pBestF = &part_list.at(f_max_i);
+		{
+			*pBestF = &part_list.at(f_max_i);
+		}
 
 		if(s_max_i >= 0)
-			pBestS = &part_list.at(s_max_i);
+		{
+			*pBestS = &part_list.at(s_max_i);
+		}
 
 		if(y_max_i >= 0)
-			pBestY = &part_list.at(y_max_i);
+		{
+			*pBestY = &part_list.at(y_max_i);
+		}
 
 	}
 
