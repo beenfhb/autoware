@@ -13,7 +13,21 @@ VanishingPointFinder::~VanishingPointFinder()
 cv::Point2d VanishingPointFinder::estimateVanishingPoint(std::vector<cv::Point2d> candidate_points)
 {
     cv::Point2d p;
+    cv::Mat_<float> points_mat(0,2);
+    for(auto && point : candidate_points)
+    {
+        cv::Mat row = (cv::Mat_<float>(1, 2) << point.x, point.y);
+        points_mat.push_back(row);
+    }
+    cv::flann::Index flann_index(points_mat, cv::flann::KDTreeIndexParams(1));
     Eigen::MatrixXd states = particle_filter_ptr_->getStates();
+    for (int i = 0; i < pf_params_.num_particles; i++)
+    {
+        cv::Mat query = (cv::Mat_<float>(1, 2) << states(0,i),states(1,i));
+        cv::Mat indices, dists;
+        unsigned int max_neighbours = 10;
+        flann_index.radiusSearch(query, indices, dists, rad_params_.radius, max_neighbours,cv::flann::SearchParams(32));
+    }
     return p;
 }
 

@@ -31,6 +31,11 @@ struct ParticleFilterParams
     int init_vanishing_point_y;
 };
 
+struct RadiusSearchParams
+{
+    double radius;
+};
+
 class VanishingPointFinder
 {
 public:
@@ -49,6 +54,10 @@ public:
         init_value << pf_params_.init_vanishing_point_x,pf_params_.init_vanishing_point_y;
         particle_filter_ptr_ = boost::make_shared<ParticleFilter>(2,pf_params_.num_particles,init_value);
     }
+    void setRadiusSearchParameters(RadiusSearchParams params)
+    {
+        rad_params_ = params;
+    }
 private:
     cv::Point2d estimateVanishingPoint(std::vector<cv::Point2d> candidate_points);
     std::vector<cv::Point2d> findCandidatePoints(std::vector<cv::Vec4i> lines);
@@ -56,6 +65,7 @@ private:
     HoughParams params_;
     boost::shared_ptr<ParticleFilter> particle_filter_ptr_;
     ParticleFilterParams pf_params_;
+    RadiusSearchParams rad_params_;
     volatile bool pf_config_recieved_;
 };
 #endif  //VANISHING_POINT_FINDER_H_INCLUDED

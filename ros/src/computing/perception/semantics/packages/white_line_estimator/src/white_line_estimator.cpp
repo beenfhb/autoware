@@ -137,8 +137,11 @@ void WhiteLineEstimator::projectionMatrixCallback(const autoware_msgs::Projectio
 
 void WhiteLineEstimator::configureCallback(white_line_estimator::white_line_estimatorConfig &config, uint32_t level)
 {
+    //set parameters in ColorFilter
     filter_.updateParameters(config.min_white_line_area,config.max_white_line_area);
+    //set parameters in ImageProjector
     image_points_projector_ptr_->setMagnification(config.x_magnification,config.y_magnification,config.z_offset);
+    //set parameters for Hough transform in VanishingPointFinder
     HoughParams hough_params;
     hough_params.hough_rho = config.hough_rho;
     hough_params.hough_theta = config.hough_theta;
@@ -146,10 +149,15 @@ void WhiteLineEstimator::configureCallback(white_line_estimator::white_line_esti
     hough_params.hough_min_line_length = config.hough_min_line_length;
     hough_params.hough_threshold = config.hough_threshold;
     vanishing_point_finder_ptr_->setHoughParameters(hough_params);
+    //set parameters for Particle filter in VanishingPointFinder
     ParticleFilterParams pf_params;
     pf_params.num_particles = config.num_particles;
     pf_params.init_vanishing_point_x = config.init_vanishing_point_x;
     pf_params.init_vanishing_point_y = config.init_vanishing_point_y;
     vanishing_point_finder_ptr_->setParticleFilterParameters(pf_params);
+    //set parameters for Radius search in VanishingPointFinder
+    RadiusSearchParams rad_params;
+    rad_params.radius = config.search_radius;
+    vanishing_point_finder_ptr_->setRadiusSearchParameters(rad_params);
     return;
 }
