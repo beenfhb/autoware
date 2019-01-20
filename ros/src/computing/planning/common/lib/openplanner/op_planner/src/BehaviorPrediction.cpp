@@ -17,9 +17,10 @@ namespace PlannerHNS
 
 constexpr double LOOK_AHEAD_DISTANCE = 0.5;
 constexpr double PREDICTED_PATH_DENSITY = 0.5;
+constexpr double PARKING_LEFT_MARGIN = 1.5; // meters
 int TrajectoryTracker::max_particles_number = 30;
 int TrajectoryTracker::min_particles_number = 0;
-int TrajectoryTracker::active_intentions_number = 3;
+int TrajectoryTracker::active_intentions_number = 4;
 int TrajectoryTracker::total_particles_number = 90;
 
 BehaviorPrediction::BehaviorPrediction()
@@ -249,6 +250,7 @@ void BehaviorPrediction::SamplesFreshParticles(ObjParticles* pParts)
 	p.acc = 0;
 	p.indicator = 0;
 	bool bRegenerate = true;
+	WayPoint left_p;
 
 	if(op_utility_ns::UtilityH::GetTimeDiffNow(m_GenerationTimer) > 2)
 	{
@@ -269,6 +271,9 @@ void BehaviorPrediction::SamplesFreshParticles(ObjParticles* pParts)
 		PlanningHelpers::GetRelativeInfo(pParts->m_TrajectoryTracker.at(t)->trajectory, pParts->obj.center, pParts->m_TrajectoryTracker.at(t)->m_CurrRelativeInf);
 		pParts->m_TrajectoryTracker.at(t)->followPoint = PlanningHelpers::GetFollowPointOnTrajectory(pParts->m_TrajectoryTracker.at(t)->trajectory, pParts->m_TrajectoryTracker.at(t)->m_CurrRelativeInf, pParts->obj.center.v, point_index);
 		p.pose = PlanningHelpers::GetFollowPointOnTrajectory(pParts->m_TrajectoryTracker.at(t)->trajectory, pParts->m_TrajectoryTracker.at(t)->m_CurrRelativeInf, LOOK_AHEAD_DISTANCE, point_index);
+		left_p = p.pose;
+		left_p.pos.x += PARKING_LEFT_MARGIN * cos(left_p.pos.a+M_PI_2);
+		left_p.pos.y += PARKING_LEFT_MARGIN * sin(left_p.pos.a+M_PI_2);
 
 		//missing particles number
 		int nPs = TrajectoryTracker::total_particles_number - pParts->m_TrajectoryTracker.at(t)->m_CurrParts.size();
@@ -277,106 +282,165 @@ void BehaviorPrediction::SamplesFreshParticles(ObjParticles* pParts)
 		{
 			Particle* pTempP = &pParts->m_TrajectoryTracker.at(t)->m_CurrParts.at(i);
 			pTempP->car_curr_pose = p.pose;
+			pTempP->car_curr_pose = p.pose;
+			pTempP->car_left_pose = left_p;
 			pTempP->pose.v = pParts->obj.center.v + gen_v();
 		}
 
 		if(nPs > 0)
 		{
-			Particle* pBestF = nullptr, *pBestS = nullptr, *pBestY = nullptr;
-			GetBestParticleWeight(pParts->m_TrajectoryTracker.at(t)->m_CurrParts,&pBestF, &pBestS, &pBestY);
+//			Particle pBestF, pBestS, pBestY, pBestP;
+//			GetBestParticleWeight(pParts->m_TrajectoryTracker.at(t)->m_CurrParts,pBestF, pBestS, pBestY, pBestP);
+//			std::cout << "---------> " << pBestF.bNewParticle << pBestS.bNewParticle << pBestY.bNewParticle << pBestP.bNewParticle <<std::endl;
 
-			//std::cout << pBestF << ", " << pBestS << ","  << pBestY << std::endl;
-			//Particle* pBestOne =  GetBestParticleWeight(pParts->m_TrajectoryTracker.at(t)->m_CurrParts);
-			//if(pBestOne == nullptr) // First Time to Generate particles
-			if(pBestF == nullptr && pBestS == nullptr && pBestY == nullptr)
+			int n_ps_f = TrajectoryTracker::max_particles_number - pParts->m_TrajectoryTracker.at(t)->nAliveForward;
+			int n_ps_s = TrajectoryTracker::max_particles_number - pParts->m_TrajectoryTracker.at(t)->nAliveStop;
+			int n_ps_y = TrajectoryTracker::max_particles_number - pParts->m_TrajectoryTracker.at(t)->nAliveYield;
+			int n_ps_p = TrajectoryTracker::max_particles_number - pParts->m_TrajectoryTracker.at(t)->nAlivePark;
+
+			std::cout << ">>>>> Total Size Before: " <<pParts->m_TrajectoryTracker.at(t)->m_CurrParts.size() << std::endl;
+			for(unsigned int i=0; i < TrajectoryTracker::total_particles_number; i++)
 			{
-			    Particle p_new = p;
-                              for(unsigned int i=0; i < TrajectoryTracker::max_particles_number; i++)
-                              {
-                                      p_new.beh = PlannerHNS::BEH_FORWARD_STATE;
-                                      pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
-                              }
-                              for(unsigned int i=0; i < TrajectoryTracker::max_particles_number; i++)
-                              {
-                                      p_new.beh = PlannerHNS::BEH_STOPPING_STATE;
-                                      pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
-                              }
-                              for(unsigned int i=0; i < TrajectoryTracker::max_particles_number; i++)
-                              {
-                                      p_new.beh = PlannerHNS::BEH_YIELDING_STATE;
-                                      pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
-                              }
+				Particle p_new = p;
+				if(i <= TrajectoryTracker::max_particles_number/TrajectoryTracker::active_intentions_number)
+					p_new.beh = PlannerHNS::BEH_FORWARD_STATE;
+				else if(i <= 2.0*TrajectoryTracker::max_particles_number/TrajectoryTracker::active_intentions_number)
+					p_new.beh = PlannerHNS::BEH_STOPPING_STATE;
+				else if(i <= 3.0*TrajectoryTracker::max_particles_number/TrajectoryTracker::active_intentions_number)
+				  p_new.beh = PlannerHNS::BEH_YIELDING_STATE;
+				else
+					p_new.beh = PlannerHNS::BEH_PARKING_STATE;
 
-                              for(unsigned int i=0; i < pParts->m_TrajectoryTracker.at(t)->m_CurrParts.size(); i++)
-                              {
-                                Particle* p_part = &pParts->m_TrajectoryTracker.at(t)->m_CurrParts.at(i);
-                                p_part->car_curr_pose = p.pose;
-                                p_part->car_prev_pose = p.pose;
-                                p_part->pose.pos.x += gen_x();
-                                p_part->pose.pos.y += gen_x();
-                                //p_part->pose.pos.a += gen_a();
-                                p_part->pose.v = pParts->obj.center.v + gen_v();
-                                if(p_part->pose.v < 0) p_part->pose.v = 0;
-                                p_part->vel_rand = gen_v();
-                                p_part->pTraj = pParts->m_TrajectoryTracker.at(t);
-                              }
-
+				p_new.car_curr_pose = p.pose;
+				p_new.car_prev_pose = p.pose;
+				p_new.pose.pos.x += gen_x();
+				p_new.pose.pos.y += gen_x();
+				//p_new.pose.pos.a += gen_a();
+				p_new.pose.v = pParts->obj.center.v + gen_v();
+				if(p_new.pose.v < 0) p_new.pose.v = 0;
+				p_new.vel_rand = gen_v();
+				p_new.pTraj = pParts->m_TrajectoryTracker.at(t);
+				pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
 			}
-			else
-			{
-			  int n_ps_f = TrajectoryTracker::max_particles_number - pParts->m_TrajectoryTracker.at(t)->nAliveForward;
-			  int n_ps_s = TrajectoryTracker::max_particles_number - pParts->m_TrajectoryTracker.at(t)->nAliveStop;
-			  int n_ps_y = TrajectoryTracker::max_particles_number - pParts->m_TrajectoryTracker.at(t)->nAliveYield;
 
-			  Particle p_new;
-			  if(pBestF != nullptr)
-			  {
-                            for(unsigned int i=0; i < n_ps_f; i++)
-                            {
-                                p_new = *pBestF;
-                                p_new.car_curr_pose = p.pose;
-                                p_new.pose.pos.x += gen_x();
-                                p_new.pose.pos.y += gen_x();
-                                //p_new.pose.pos.a += gen_a();
-                                p_new.vel_rand = gen_v();
-                                p_new.pose.v += gen_v();
-                                if(p_new.pose.v < 0) p_new.pose.v = 0;
-                                pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
-                            }
-			  }
+			std::cout << ">>>>> Total Size After: " <<pParts->m_TrajectoryTracker.at(t)->m_CurrParts.size() << std::endl;
+			//if(pBestF == nullptr && pBestS == nullptr && pBestY == nullptr && pBestP == nullptr)
+//			{
+//			    Particle p_new = p;
+//			    p_new.bNewParticle = true;
+//                              for(unsigned int i=0; i < n_ps_f; i++)
+//                              {
+//                                      p_new.beh = PlannerHNS::BEH_FORWARD_STATE;
+//                                      pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
+//                              }
+//                              for(unsigned int i=0; i < n_ps_s; i++)
+//                              {
+//                                      p_new.beh = PlannerHNS::BEH_STOPPING_STATE;
+//                                      pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
+//                              }
+//                              for(unsigned int i=0; i < n_ps_y; i++)
+//                              {
+//                                      p_new.beh = PlannerHNS::BEH_YIELDING_STATE;
+//                                      pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
+//                              }
+//                              for(unsigned int i=0; i < n_ps_p; i++)
+//			      {
+//				      p_new.beh = PlannerHNS::BEH_PARKING_STATE;
+//				      pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
+//			      }
+//
+//                              for(unsigned int i=0; i < pParts->m_TrajectoryTracker.at(t)->m_CurrParts.size(); i++)
+//                              {
+//                                Particle* p_part = &pParts->m_TrajectoryTracker.at(t)->m_CurrParts.at(i);
+//                                if(p_part->bNewParticle == true)
+//                                  {
+//                                    p_part->bNewParticle = false;
+//				  p_part->car_curr_pose = p.pose;
+//				  p_part->car_prev_pose = p.pose;
+//				  p_part->car_left_pose = left_p;
+//				  p_part->pose.pos.x += gen_x();
+//				  p_part->pose.pos.y += gen_x();
+//				  //p_part->pose.pos.a += gen_a();
+//				  p_part->pose.v = pParts->obj.center.v + gen_v();
+//				  if(p_part->pose.v < 0) p_part->pose.v = 0;
+//				  p_part->vel_rand = gen_v();
+//				  p_part->pTraj = pParts->m_TrajectoryTracker.at(t);
+//                                  }
+//                              }
 
-                          if(pBestS != nullptr)
-                            {
-                              for(unsigned int i=0; i < n_ps_s; i++)
-                              {
-                                  p_new = *pBestS;
-                                  p_new.car_curr_pose = p.pose;
-                                  p_new.pose.pos.x += gen_x();
-                                  p_new.pose.pos.y += gen_x();
-                                  //p_new.pose.pos.a += gen_a();
-                                  p_new.vel_rand = gen_v();
-                                  p_new.pose.v += gen_v();
-                                  if(p_new.pose.v < 0) p_new.pose.v = 0;
-                                  pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
-                              }
-                            }
-
-                          if(pBestY != nullptr)
-                            {
-                              for(unsigned int i=0; i < n_ps_y; i++)
-                              {
-                                  p_new = *pBestY;
-                                  p_new.car_curr_pose = p.pose;
-                                  p_new.pose.pos.x += gen_x();
-                                  p_new.pose.pos.y += gen_x();
-                                  //p_new.pose.pos.a += gen_a();
-                                  p_new.vel_rand = gen_v();
-                                  p_new.pose.v += gen_v();
-                                  if(p_new.pose.v < 0) p_new.pose.v = 0;
-                                  pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
-                              }
-                            }
-			}
+//			}
+//			else
+//			{
+//			  int n_ps_f = TrajectoryTracker::max_particles_number - pParts->m_TrajectoryTracker.at(t)->nAliveForward;
+//			  int n_ps_s = TrajectoryTracker::max_particles_number - pParts->m_TrajectoryTracker.at(t)->nAliveStop;
+//			  int n_ps_y = TrajectoryTracker::max_particles_number - pParts->m_TrajectoryTracker.at(t)->nAliveYield;
+//			  int n_ps_p = TrajectoryTracker::max_particles_number - pParts->m_TrajectoryTracker.at(t)->nAlivePark;
+//
+//
+//			  Particle p_new;
+//			  if(pBestF != nullptr)
+//			  {
+//                            for(unsigned int i=0; i < n_ps_f; i++)
+//                            {
+//                                p_new = *pBestF;
+//                                p_new.car_curr_pose = p.pose;
+//                                p_new.pose.pos.x += gen_x();
+//                                p_new.pose.pos.y += gen_x();
+//                                //p_new.pose.pos.a += gen_a();
+//                                p_new.vel_rand = gen_v();
+//                                p_new.pose.v += gen_v();
+//                                if(p_new.pose.v < 0) p_new.pose.v = 0;
+//                                pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
+//                            }
+//			  }
+//
+//                          if(pBestS != nullptr)
+//                            {
+//                              for(unsigned int i=0; i < n_ps_s; i++)
+//                              {
+//                                  p_new = *pBestS;
+//                                  p_new.car_curr_pose = p.pose;
+//                                  p_new.pose.pos.x += gen_x();
+//                                  p_new.pose.pos.y += gen_x();
+//                                  //p_new.pose.pos.a += gen_a();
+//                                  p_new.vel_rand = gen_v();
+//                                  p_new.pose.v += gen_v();
+//                                  if(p_new.pose.v < 0) p_new.pose.v = 0;
+//                                  pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
+//                              }
+//                            }
+//
+//                          if(pBestY != nullptr)
+//                            {
+//                              for(unsigned int i=0; i < n_ps_y; i++)
+//                              {
+//                                  p_new = *pBestY;
+//                                  p_new.car_curr_pose = p.pose;
+//                                  p_new.pose.pos.x += gen_x();
+//                                  p_new.pose.pos.y += gen_x();
+//                                  //p_new.pose.pos.a += gen_a();
+//                                  p_new.vel_rand = gen_v();
+//                                  p_new.pose.v += gen_v();
+//                                  if(p_new.pose.v < 0) p_new.pose.v = 0;
+//                                  pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
+//                              }
+//                            }
+//                          if(pBestP != nullptr)
+//                            {
+//                              for(unsigned int i=0; i < n_ps_p; i++)
+//                              {
+//                                  p_new = *pBestP;
+//                                  p_new.car_curr_pose = p.pose;
+//                                  p_new.pose.pos.x += gen_x();
+//                                  p_new.pose.pos.y += gen_x();
+//                                  //p_new.pose.pos.a += gen_a();
+//                                  p_new.vel_rand = gen_v();
+//                                  p_new.pose.v += gen_v();
+//                                  if(p_new.pose.v < 0) p_new.pose.v = 0;
+//                                  pParts->m_TrajectoryTracker.at(t)->InsertNewParticle(p_new);
+//                              }
+//                            }
+//			}
 		}
 	}
 }
@@ -450,6 +514,7 @@ void BehaviorPrediction::MoveParticles(ObjParticles* pParts)
 
 		curr_part_info = decision_make.MoveStepII(dt, p->pose, trans_diff, p->pTraj->trajectory, carInfo);
 		p->car_prev_pose = p->car_curr_pose;
+		p->indicator = FromIndicatorToNumber(curr_part_info.indicator);
 
 		switch(p->beh)
 		{
@@ -474,7 +539,7 @@ void BehaviorPrediction::MoveParticles(ObjParticles* pParts)
 		{
 			p->vel = 0 + p->vel_rand;
 			//p->vel = curr_part_info.vel + p->vel_rand;
-			p->acc = -1;
+			p->acc = 3;
 
 			if(m_bDebugMotion)
 			{
@@ -484,9 +549,9 @@ void BehaviorPrediction::MoveParticles(ObjParticles* pParts)
 		break;
 		case BEH_YIELDING_STATE:
 		{
-			if(curr_part_info.state == PlannerHNS::STOPPING_STATE)
-			  p->vel = 0 + p->vel_rand;
-			else
+//			if(curr_part_info.state == PlannerHNS::STOPPING_STATE)
+//			  p->vel = 0 + p->vel_rand;
+//			else
 			  p->vel = curr_part_info.vel/2.0 + p->vel_rand;
 
 			p->acc = -1;
@@ -497,11 +562,25 @@ void BehaviorPrediction::MoveParticles(ObjParticles* pParts)
 			}
 		}
 		break;
+		case BEH_PARKING_STATE:
+		{
+//		  if(curr_part_info.state != PlannerHNS::STOPPING_STATE)
+//		    {
+		      p->indicator = 4;
+//		    }
+
+			p->vel = 0 + p->vel_rand;
+			p->acc = 0;
+
+			if(m_bDebugMotion)
+			{
+				std::cout << ">> PP Traj(" <<  p->pTraj->index << ") Velocity (" << p->vel << ", " << pParts->obj.center.v << ") , Acceleration(" << p->acc <<", " << pParts->obj.acceleration_desc << ")" << std::endl;
+			}
+		}
+		break;
 		default:
 			break;
 		}
-
-		p->indicator = FromIndicatorToNumber(curr_part_info.indicator);
 
 		p->info_to_path = curr_part_info.info_to_path;
 	}
@@ -637,7 +716,9 @@ void BehaviorPrediction::RemoveWeakParticles(ObjParticles* pParts)
 			else if(pParts->m_AllParticles.at(i)->beh == BEH_STOPPING_STATE)
 				std::cout << "S, ";
 			else if(pParts->m_AllParticles.at(i)->beh == BEH_YIELDING_STATE)
-							std::cout << "Y, ";
+				std::cout << "Y, ";
+			else if(pParts->m_AllParticles.at(i)->beh == BEH_PARKING_STATE)
+				std::cout << "P, ";
 
 			std::cout << pParts->m_AllParticles.at(i)->pTraj->index <<" => ";
 			std::cout << "W:" << THREE_PERC_POINTS(pParts->m_AllParticles.at(i)->w)
@@ -657,6 +738,7 @@ void BehaviorPrediction::RemoveWeakParticles(ObjParticles* pParts)
 					<< ", F_N:" << pParts->m_TrajectoryTracker.at(t)->nAliveForward
 					<< ", S_N:" << pParts->m_TrajectoryTracker.at(t)->nAliveStop
 					<< ", Y_N:" << pParts->m_TrajectoryTracker.at(t)->nAliveYield
+					<< ", P_N:" << pParts->m_TrajectoryTracker.at(t)->nAlivePark
 					<< ", Percentage: " << g_PredParams.KEEP_PERCENTAGE << std::endl;
 		}
 	}
@@ -674,6 +756,7 @@ void BehaviorPrediction::RemoveWeakParticles(ObjParticles* pParts)
 					<< ", F_N:" << pParts->m_TrajectoryTracker.at(t)->nAliveForward
 					<< ", S_N:" << pParts->m_TrajectoryTracker.at(t)->nAliveStop
 					<< ", Y_N:" << pParts->m_TrajectoryTracker.at(t)->nAliveYield
+					<< ", P_N:" << pParts->m_TrajectoryTracker.at(t)->nAlivePark
 					<< ", Percentage: " << g_PredParams.KEEP_PERCENTAGE << std::endl;
 		}
 		std::cout << "End Behavior Weights ------ " << std::endl;
@@ -715,6 +798,7 @@ void BehaviorPrediction::FindBest(ObjParticles* pParts)
 					<< " | Forwd Avg W: " << TWO_PERC_POINTS(pParts->m_TrajectoryTracker.at(t)->w_avg_forward)
 					<< " | Stop  Avg W: " << TWO_PERC_POINTS(pParts->m_TrajectoryTracker.at(t)->w_avg_stop)
 					<< " | Yield Avg W: " << TWO_PERC_POINTS(pParts->m_TrajectoryTracker.at(t)->w_avg_yield)
+					<< " | Park  Avg W: " << TWO_PERC_POINTS(pParts->m_TrajectoryTracker.at(t)->w_avg_park)
 					<< " >>> Best W: " << TWO_PERC_POINTS(pParts->m_TrajectoryTracker.at(t)->best_w)
 					<< std::endl;
 		std::cout << "ID(" << t <<"," <<pParts->m_TrajectoryTracker.at(t)->id_ << ")"
@@ -723,6 +807,7 @@ void BehaviorPrediction::FindBest(ObjParticles* pParts)
 						<< " | Forwd Avg P: " << TWO_PERC_POINTS(pParts->m_TrajectoryTracker.at(t)->pForward)
 						<< " | Stop  Avg P: " << TWO_PERC_POINTS(pParts->m_TrajectoryTracker.at(t)->pStop)
 						<< " | Yield Avg P: " << TWO_PERC_POINTS(pParts->m_TrajectoryTracker.at(t)->pYield)
+						<< " | Park  Avg P: " << TWO_PERC_POINTS(pParts->m_TrajectoryTracker.at(t)->pPark)
 						<< " >>> Best P: " << TWO_PERC_POINTS(pParts->m_TrajectoryTracker.at(t)->best_p)
 						<< std::endl;
 
@@ -772,6 +857,8 @@ void BehaviorPrediction::FindBest(ObjParticles* pParts)
 			str_beh = "Forward";
 		else if(pParts->best_behavior_track->best_beh_by_p == BEH_YIELDING_STATE)
 			str_beh = "Yielding";
+		else if(pParts->best_behavior_track->best_beh_by_p == BEH_PARKING_STATE)
+			str_beh = "Parking";
 
 		if(m_bDebugOut )
 		{
@@ -820,6 +907,14 @@ void BehaviorPrediction::FindBest(ObjParticles* pParts)
 				", AllP: " << pParts->m_TrajectoryTracker.at(t)->all_p <<
 				" -> YY Parts:" << pParts->m_TrajectoryTracker.at(t)->nAliveYield << std::endl;
 			}
+
+			if(pParts->m_TrajectoryTracker.at(t)->nAlivePark > 0)
+			{
+				std::cout << "ID(" << t <<"," <<pParts->m_TrajectoryTracker.at(t)->id_ << ")" << " | BestP: " << pParts->m_TrajectoryTracker.at(t)->best_p <<
+				", BestW: " << pParts->m_TrajectoryTracker.at(t)->best_w <<
+				", AllP: " << pParts->m_TrajectoryTracker.at(t)->all_p <<
+				" -> PP Parts:" << pParts->m_TrajectoryTracker.at(t)->nAlivePark << std::endl;
+			}
 		}
 
 		std::cout << "------------------------------------------------ --------------" << std::endl<< std::endl;
@@ -837,18 +932,26 @@ void BehaviorPrediction::CalPredictionTimeForObject(ObjParticles* pCarPart, cons
 
 int BehaviorPrediction::FromIndicatorToNumber(const PlannerHNS::LIGHT_INDICATOR& indi)
 {
-	if(indi == PlannerHNS::INDICATOR_NONE)
-		return 0;
-	else if(indi == PlannerHNS::INDICATOR_LEFT)
-	{
-		return 1;
-	}
-	else if(indi == PlannerHNS::INDICATOR_RIGHT)
-		return 2;
-	else if(indi == PlannerHNS::INDICATOR_BOTH)
-		return 3;
-	else
-		return 0;
+  if(indi == PlannerHNS::INDICATOR_NONE)
+  {
+      return 0;
+  }
+  else if(indi == PlannerHNS::INDICATOR_LEFT)
+  {
+      return 1;
+  }
+  else if(indi == PlannerHNS::INDICATOR_RIGHT)
+  {
+      return 2;
+  }
+  else if(indi == PlannerHNS::INDICATOR_BOTH)
+  {
+      return 3;
+  }
+  else
+  {
+      return 0;
+  }
 }
 
 PlannerHNS::LIGHT_INDICATOR BehaviorPrediction::FromNumbertoIndicator(const int& num)
@@ -865,20 +968,26 @@ PlannerHNS::LIGHT_INDICATOR BehaviorPrediction::FromNumbertoIndicator(const int&
 		return PlannerHNS::INDICATOR_NONE;
 }
 
-double BehaviorPrediction::CalcIndicatorWeight(PlannerHNS::LIGHT_INDICATOR p_ind, PlannerHNS::LIGHT_INDICATOR obj_ind)
+double BehaviorPrediction::CalcIndicatorWeight(int p_ind, int obj_ind)
 {
 	if(p_ind == obj_ind)
-		return 1.0 - MEASURE_IND_ERROR;
+	  return 1.0 - MEASURE_IND_ERROR;
+	else if(p_ind == 4 &&  (obj_ind == 1 || obj_ind == 3))
+	  return 1.0 - MEASURE_IND_ERROR;
 	else
-		return MEASURE_IND_ERROR;
+	  return MEASURE_IND_ERROR;
 }
 
 double BehaviorPrediction::CalcAccelerationWeight(int p_acl, int obj_acl)
 {
 	if(p_acl == obj_acl)
-		return 1.0 - MEASURE_ACC_ERROR;
+	  return 1.0 - MEASURE_ACC_ERROR;
+	else if(p_acl == 2 && (obj_acl == 0 || obj_acl == 1))
+	  return 1.0 - MEASURE_ACC_ERROR;
+	else if(p_acl == 3 && (obj_acl == 0 || obj_acl == -1))
+	  return 1.0 - MEASURE_ACC_ERROR;
 	else
-		return MEASURE_ACC_ERROR;
+	  return MEASURE_ACC_ERROR;
 }
 
 void BehaviorPrediction::CalOnePartWeight(ObjParticles* pParts,Particle& p)
@@ -913,7 +1022,7 @@ void BehaviorPrediction::CalOnePartWeight(ObjParticles* pParts,Particle& p)
 	p.dir_w  = 1.0/a_diff;
 	p.dir_w_real  = 1.0/a_diff_real;
 	p.vel_w = 1.0/vel_diff;
-	p.ind_w = CalcIndicatorWeight(FromNumbertoIndicator(p.indicator), pParts->obj.indicator_state);
+	p.ind_w = CalcIndicatorWeight(p.indicator, FromIndicatorToNumber(pParts->obj.indicator_state));
 	p.acl_w = CalcAccelerationWeight(p.acc, pParts->obj.acceleration_desc);
 
 

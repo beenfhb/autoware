@@ -14,7 +14,7 @@ namespace PlannerHNS
 {
 
 constexpr double PLANNING_HORIZON = 120;
-constexpr double ADD_BREAK_DISTANCE = 25.0;
+constexpr double ADD_BREAK_DISTANCE = 5.0;
 constexpr double MIN_INDICATOR_DISTANCE = 15.0;
 
 PassiveDecisionMaker::PassiveDecisionMaker()
@@ -73,7 +73,6 @@ PassiveDecisionMaker::~PassiveDecisionMaker()
 	double distanceToClosestStopLine = 0;
 
 	distanceToClosestStopLine = PlanningHelpers::GetDistanceToClosestStopLineAndCheck(path, currPose, 0, stopLineID, stopSignID, trafficLightID) - m_DistanceToCarEdge;
-
 	if(distanceToClosestStopLine > -2 && distanceToClosestStopLine < m_MinStoppingDistance)
 	{
 		return true;
@@ -103,9 +102,13 @@ PassiveDecisionMaker::~PassiveDecisionMaker()
 
 	 bool bStopLine = CheckForStopLine(currPose, path, carInfo);
 	 if(bStopLine)
+	   {
 		 beh.state = PlannerHNS::STOPPING_STATE;
+	   }
 	 else
+	   {
 		 beh.state = PlannerHNS::FORWARD_STATE;
+	   }
 
 	beh.indicator = PlanningHelpers::GetIndicatorsFromPath(path, currPose, m_MinStoppingDistance + MIN_INDICATOR_DISTANCE);
 

@@ -115,11 +115,30 @@ MotionPrediction::~MotionPrediction()
 
 	op_utility_ns::DataRW::WriteLogData(fileName.str(),
 			"PredictionLog_",
-			"time,x,y,heading,Velocity,Acceleration,Indicator,Best_Traj,real_W_F,real_W_L,real_W_R,Best_Beh_P,Best_Beh_W,Best_w_f,Best_w_s,Best_w_y,"
-			"id_F,n_part_forward_F,p_forward_F,w_forward_F,n_part_stopping_F,p_stopping_F,w_stopping_F,n_part_yielding_F,p_yielding_F,w_yielding_F,best_beh_F,all_p_F,all_w_F,best_p_F,best_w_F,real_w_F,"
-			"id_L,n_part_forward_L,p_forward_L,w_forward_L,n_part_stopping_L,p_stopping_L,w_stopping_L,n_part_yielding_L,p_yielding_L,w_yielding_L,best_beh_L,all_p_L,all_w_L,best_p_L,best_w_L,real_w_L,"
-			"id_R,n_part_forward_R,p_forward_R,w_forward_R,n_part_stopping_R,p_stopping_R,w_stopping_R,n_part_yielding_R,p_yielding_R,w_yielding_R,best_beh_R,all_p_R,all_w_R,best_p_R,best_w_R,real_w_R,"
-			"id_U,n_part_forward_U,p_forward_U,w_forward_U,n_part_stopping_U,p_stopping_U,w_stopping_U,n_part_yielding_U,p_yielding_U,w_yielding_U,best_beh_U,all_p_U,all_w_U,best_p_U,best_w_U,real_w_U," , m_LogData);
+			"time,x,y,heading,Velocity,Acceleration,Indicator,Best_Traj,real_W_F,real_W_L,real_W_R,Best_Beh_P,Best_Beh_W,Best_w_f,Best_w_s,Best_w_y,Best_w_p,"
+			"id_F,n_part_forward_F,p_forward_F,w_forward_F,"
+			"n_part_stopping_F,p_stopping_F,w_stopping_F,"
+			"n_part_yielding_F,p_yielding_F,w_yielding_F,"
+			"n_part_parking_F,p_parking_F,w_parking_F,"
+			"best_beh_F,all_p_F,all_w_F,best_p_F,best_w_F,real_w_F,"
+
+			"id_L,n_part_forward_L,p_forward_L,w_forward_L,"
+			"n_part_stopping_L,p_stopping_L,w_stopping_L,"
+			"n_part_yielding_L,p_yielding_L,w_yielding_L,"
+			"n_part_parking_L,p_parking_L,w_parking_L,"
+			"best_beh_L,all_p_L,all_w_L,best_p_L,best_w_L,real_w_L,"
+
+			"id_R,n_part_forward_R,p_forward_R,w_forward_R,"
+			"n_part_stopping_R,p_stopping_R,w_stopping_R,"
+			"n_part_yielding_R,p_yielding_R,w_yielding_R,"
+			"n_part_parking_R,p_parking_R,w_parking_R,"
+			"best_beh_R,all_p_R,all_w_R,best_p_R,best_w_R,real_w_R,"
+
+			"id_U,n_part_forward_U,p_forward_U,w_forward_U,"
+			"n_part_stopping_U,p_stopping_U,w_stopping_U,"
+			"n_part_yielding_U,p_yielding_U,w_yielding_U,"
+			"n_part_parking_U,p_parking_U,w_parking_U,"
+			"best_beh_U,all_p_U,all_w_U,best_p_U,best_w_U,real_w_U," , m_LogData);
 }
 
 void MotionPrediction::UpdatePlanningParams(ros::NodeHandle& _nh)
@@ -364,13 +383,15 @@ std::string MotionPrediction::GetPredictionLogDataLine(std::vector<PlannerHNS::T
       dataLine << trajectoryTrackers.at(i)->id_ << ",";
       dataLine << trajectoryTrackers.at(i)->nAliveForward << "," << trajectoryTrackers.at(i)->pForward << "," << trajectoryTrackers.at(i)->w_avg_forward <<",";
       dataLine << trajectoryTrackers.at(i)->nAliveStop << "," << trajectoryTrackers.at(i)->pStop << "," << trajectoryTrackers.at(i)->w_avg_stop <<",";
-      dataLine << trajectoryTrackers.at(i)->nAliveYield << "," << trajectoryTrackers.at(i)->pYield << "," << trajectoryTrackers.at(i)->w_avg_yield <<"," << trajectoryTrackers.at(i)->best_beh_by_p <<",";
+      dataLine << trajectoryTrackers.at(i)->nAliveYield << "," << trajectoryTrackers.at(i)->pYield << "," << trajectoryTrackers.at(i)->w_avg_yield <<",";
+      dataLine << trajectoryTrackers.at(i)->nAlivePark << "," << trajectoryTrackers.at(i)->pPark << "," << trajectoryTrackers.at(i)->w_avg_park <<",";
+      dataLine << trajectoryTrackers.at(i)->best_beh_by_p <<",";
       dataLine << trajectoryTrackers.at(i)->all_p << "," << trajectoryTrackers.at(i)->all_w << "," << trajectoryTrackers.at(i)->best_p <<"," << trajectoryTrackers.at(i)->best_w <<"," << trajectoryTrackers.at(i)->all_w_real <<",";
       return dataLine.str();
     }
   }
 
-  return "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,";
+  return "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,";
 }
 
 std::string MotionPrediction::GetPredictionLogDataRealWeightItem(std::vector<PlannerHNS::TrajectoryTracker*> trajectoryTrackers, std::string path_id)
@@ -424,9 +445,10 @@ void MotionPrediction::LogDataRaw()
             dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->w_avg_forward << ",";
             dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->w_avg_stop << ",";
             dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->w_avg_yield << ",";
+            dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->w_avg_park << ",";
         }
         else
-          dataLine << "-1,-1,0,0,0,";
+          dataLine << "-1,-1,0,0,0,0,";
 
 	dataLine << GetPredictionLogDataLine(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "F");
 	dataLine << GetPredictionLogDataLine(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "L");
@@ -546,6 +568,8 @@ void MotionPrediction::VisualizePrediction()
 				PlannerHNS::Particle* pPart = &m_PredictBeh.m_ParticleInfo_II.at(i)->m_TrajectoryTracker.at(t)->m_CurrParts.at(j);
 				p_wp = pPart->pose;
 				if(pPart->beh == PlannerHNS::BEH_STOPPING_STATE)
+					p_wp.bDir = PlannerHNS::STANDSTILL_DIR;
+				else if(pPart->beh == PlannerHNS::BEH_PARKING_STATE)
 					p_wp.bDir = PlannerHNS::STANDSTILL_DIR;
 				else if(pPart->beh == PlannerHNS::BEH_YIELDING_STATE)
 					p_wp.bDir = PlannerHNS::BACKWARD_DIR;

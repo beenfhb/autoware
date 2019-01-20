@@ -1234,6 +1234,8 @@ void RosHelpers::VisualizeIntentionState(const PlannerHNS::WayPoint& currState, 
 		str_out << "Forward";
 	else if(beh == BEH_YIELDING_STATE)
 		str_out << "Yielding";
+	else if(beh == BEH_PARKING_STATE)
+		str_out << "Parking";
 	else
 		str_out << "Unknown!";
 

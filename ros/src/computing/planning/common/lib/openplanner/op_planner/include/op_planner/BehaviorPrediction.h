@@ -96,13 +96,15 @@ public:
 	double vel_prev_big;
 	double prev_time_diff;
 	double prev_vel_diff;
-	int acc; //[-1 ->Slowing, 0, Stopping, 1 -> accelerating]
+	int acc; //[-1 ->Slowing, 0, Stopping, 1 -> accelerating, 2 -> both stopping and accelerating, 3 -> both slowing and stopping  ]
 	double acc_raw;
-	int indicator; //[0 -> No, 1 -> Left, 2 -> Right , 3 -> both]
+	int indicator; //[0 -> No, 1 -> Left, 2 -> Right, 3 -> both, 4 -> left and both]
 	WayPoint pose;
 	WayPoint car_curr_pose;
+	WayPoint car_left_pose;
 	WayPoint car_prev_pose;
 	bool bStopLine;
+	bool bNewParticle;
 	double w;
 	double w_real;
 	double pose_w_real;
@@ -119,29 +121,30 @@ public:
 
 	Particle()
 	{
-		vel_rand = 0;
-		ang = 0;
-		prev_vel_diff = 0;
-		prev_time_diff = 0;
-		vel_prev_big = 0;
-		original_index = 0;
-		bStopLine = false;
-		pTraj = nullptr;
-		w = 0;
-		w_real = 0;
-		w_raw = 0;
-		pose_w = 0;
-		pose_w_real = 0;
-		dir_w = 0;
-		dir_w_real = 0;
-		vel_w = 0;
-		acl_w = 0;
-		ind_w = 0;
-		beh = BEH_STOPPING_STATE;
-		vel = 0;
-		acc = 0;
-		acc_raw = 0;
-		indicator = 0;
+	  bNewParticle = true;
+	  vel_rand = 0;
+	  ang = 0;
+	  prev_vel_diff = 0;
+	  prev_time_diff = 0;
+	  vel_prev_big = 0;
+	  original_index = 0;
+	  bStopLine = false;
+	  pTraj = nullptr;
+	  w = 0;
+	  w_real = 0;
+	  w_raw = 0;
+	  pose_w = 0;
+	  pose_w_real = 0;
+	  dir_w = 0;
+	  dir_w_real = 0;
+	  vel_w = 0;
+	  acl_w = 0;
+	  ind_w = 0;
+	  beh = BEH_STOPPING_STATE;
+	  vel = 0;
+	  acc = 0;
+	  acc_raw = 0;
+	  indicator = 0;
 	}
 };
 
@@ -176,12 +179,14 @@ public:
 
 	int nAliveStop;
 	int nAliveYield;
+	int nAlivePark;
 	int nAliveForward;
 	int nAliveLeft;
 	int nAliveRight;
 
 	double pStop;
 	double pYield;
+	double pPark;
 	double pForward;
 	double pLeft;
 	double pRight;
@@ -189,6 +194,7 @@ public:
 	double w_avg_forward;
 	double w_avg_stop;
 	double w_avg_yield;
+	double w_avg_park;
 	double w_avg_left;
 	double w_avg_right;
 
@@ -206,12 +212,14 @@ public:
 		index = 0;
 		nAliveStop = 0;
 		nAliveYield = 0;
+		nAlivePark = 0;
 		nAliveForward = 0;
 		nAliveLeft = 0;
 		nAliveRight = 0;
 
 		pStop  = 0;
 		pYield = 0;
+		pPark = 0;
 		pForward = 0;
 		pLeft = 0;
 		pRight = 0;
@@ -226,15 +234,12 @@ public:
 		w_avg_forward = 0;
 		w_avg_stop = 0;
 		w_avg_yield = 0;
+		w_avg_park = 0;
 		w_avg_left = 0;
 		w_avg_right = 0;
 	}
 
 	virtual ~TrajectoryTracker()
-	{
-	}
-
-	void InitDecision()
 	{
 	}
 
@@ -251,12 +256,14 @@ public:
 		trajectory = obj.trajectory;
 		nAliveStop = obj.nAliveStop;
 		nAliveYield = obj.nAliveYield;
+		nAlivePark = obj.nAlivePark;
 		nAliveForward = obj.nAliveForward;
 		nAliveLeft = obj.nAliveLeft;
 		nAliveRight = obj.nAliveRight;
 
 		pStop  = obj.pStop;
 		pYield = obj.pYield;
+		pPark = obj.pPark;
 		pForward = obj.pForward;
 		pLeft = obj.pLeft;
 		pRight = obj.pRight;
@@ -280,6 +287,7 @@ public:
 		w_avg_forward = obj.w_avg_forward;
 		w_avg_stop = obj.w_avg_stop;
 		w_avg_yield = obj.w_avg_yield;
+		w_avg_park = obj.w_avg_park;
 		w_avg_left = obj.w_avg_left;
 		w_avg_right = obj.w_avg_right;
 	}
@@ -316,20 +324,32 @@ public:
 
 		nAliveStop = 0;
 		nAliveYield = 0;
+		nAlivePark = 0;
 		nAliveForward = 0;
 		nAliveLeft = 0;
 		nAliveRight = 0;
 
 		pStop  = 0;
 		pYield = 0;
+		pPark = 0;
 		pForward = 0;
 		pLeft = 0;
 		pRight = 0;
 		best_beh_by_p = PlannerHNS::BEH_UNKNOWN_STATE;
 		best_beh_by_w = PlannerHNS::BEH_UNKNOWN_STATE;
 		best_p = 0;
+		all_p = 0;
+		all_w_real = 0;
 
-		InitDecision();
+		w_avg_forward = 0;
+		w_avg_stop = 0;
+		w_avg_yield = 0;
+		w_avg_park = 0;
+		w_avg_left = 0;
+		w_avg_right = 0;
+		best_w = 0;
+		all_w = 0;
+		rms_error = 0;
 	}
 
 	static bool sort_weights_des(const Particle& p1, const Particle& p2)
@@ -454,6 +474,8 @@ public:
 			nAliveStop++;
 		else if(p.beh == PlannerHNS::BEH_YIELDING_STATE)
 			nAliveYield++;
+		else if(p.beh == PlannerHNS::BEH_PARKING_STATE)
+			nAlivePark++;
 		else if(p.beh == PlannerHNS::BEH_FORWARD_STATE)
 			nAliveForward++;
 		else if(p.beh == PlannerHNS::BEH_BRANCH_LEFT_STATE)
@@ -498,6 +520,7 @@ public:
 		m_CurrParts.clear();
 		nAliveStop = 0;
 		nAliveYield = 0;
+		nAlivePark = 0;
 		nAliveForward = 0;
 		nAliveLeft = 0;
 		nAliveRight = 0;
@@ -529,6 +552,11 @@ public:
 				if(nAliveYield == min_particles_number && bForce == true) continue;
 				nAliveYield--;
 			}
+			else if(parts_list.at(i).beh == PlannerHNS::BEH_PARKING_STATE)
+			{
+				if(nAlivePark == min_particles_number && bForce == true) continue;
+				nAlivePark--;
+			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_FORWARD_STATE)
 			{
 				if(nAliveForward == min_particles_number  && bForce == true) continue;
@@ -554,21 +582,14 @@ public:
 	{
 		SortParticlesByWeight();
 
+		if(m_CurrParts.size() > 2 && fabs(m_CurrParts.at(0).w - m_CurrParts.at(m_CurrParts.size()-1).w) < 0.0001)
+		  return;
+
 		if(percent > 0 && percent < 1)
 			DeleteParticlesWithPercentageThan(m_CurrParts, percent, bForce);
 
 		if(cut_off > 0 && cut_off < 1)
 			DeleteParticlesWithWeightLessThan(m_CurrParts, cut_off, bForce);
-
-		//when particle filter is so bad , and doesn't filter particles, we try to delete far and strange ones forcibly
-//		for(int i=0; i < m_CurrParts.size(); i++)
-//		{
-//			if(m_CurrParts.at(i).info_to_path.bAfter ||  (m_CurrParts.at(i).info_to_path.bBefore && m_CurrParts.at(i).info_to_path.to_front_distance > 15)  || m_CurrParts.at(i).info_to_path.perp_distance >= 15)
-//			{
-//				m_CurrParts.erase(m_CurrParts.begin()+i);
-//				i--;
-//			}
-//		}
 	}
 
 	void DeleteParticlesWithWeightLessThan(std::vector<Particle>& parts_list, double cut_off, const bool& bForce = false)
@@ -598,6 +619,11 @@ public:
 				if(nAliveYield == min_particles_number && bForce == true) continue;
 				nAliveYield--;
 			}
+			else if(parts_list.at(i).beh == PlannerHNS::BEH_PARKING_STATE)
+			{
+				if(nAlivePark == min_particles_number && bForce == true) continue;
+				nAlivePark--;
+			}
 			else if(parts_list.at(i).beh == PlannerHNS::BEH_FORWARD_STATE)
 			{
 				if(nAliveForward == min_particles_number  && bForce == true) continue;
@@ -624,6 +650,7 @@ public:
 		double s_sum = 0;
 		double f_sum = 0;
 		double y_sum = 0;
+		double p_sum = 0;
 		double l_sum = 0;
 		double r_sum = 0;
 		double all_sum = 0;
@@ -631,10 +658,12 @@ public:
 		w_avg_forward = 0;
 		w_avg_stop = 0;
 		w_avg_yield = 0;
+		w_avg_park = 0;
 		w_avg_left = 0;
 		w_avg_right = 0;
 		pStop = 0;
 		pYield = 0;
+		pPark = 0;
 		pForward = 0;
 		pLeft = 0;
 		pRight = 0;
@@ -648,6 +677,8 @@ public:
 				s_sum += m_CurrParts.at(i).w;
 			else if(m_CurrParts.at(i).beh == PlannerHNS::BEH_YIELDING_STATE)
 				y_sum += m_CurrParts.at(i).w;
+			else if(m_CurrParts.at(i).beh == PlannerHNS::BEH_PARKING_STATE)
+				p_sum += m_CurrParts.at(i).w;
 			else if(m_CurrParts.at(i).beh == PlannerHNS::BEH_FORWARD_STATE)
 				f_sum += m_CurrParts.at(i).w;
 			else if(m_CurrParts.at(i).beh == PlannerHNS::BEH_BRANCH_LEFT_STATE)
@@ -662,6 +693,8 @@ public:
 			w_avg_stop = s_sum/(double)nAliveStop;
 		if(nAliveYield > 0)
 			w_avg_yield = y_sum/(double)nAliveYield;
+		if(nAlivePark > 0)
+			w_avg_park = p_sum/(double)nAlivePark;
 		if(nAliveLeft > 0)
 			w_avg_left = l_sum/(double)nAliveLeft;
 		if(nAliveRight > 0)
@@ -676,11 +709,12 @@ public:
 
 		pStop  = (double)nAliveStop/(double)max_particles_number;
 		pYield = (double)nAliveYield/(double)max_particles_number;
+		pPark = (double)nAlivePark/(double)max_particles_number;
 		pForward = (double)nAliveForward/(double)max_particles_number;
 		pLeft = (double)nAliveLeft/(double)max_particles_number;
 		pRight = (double)nAliveRight/(double)max_particles_number;
 
-		all_p = (double)(nAliveStop + nAliveForward + nAliveYield + nAliveLeft + nAliveRight) / (double)(total_particles_number);
+		all_p = (double)(nAliveStop + nAliveForward + nAliveYield + nAliveLeft + nAliveRight + nAlivePark) / (double)(total_particles_number);
 
 //		for(unsigned int i = 0; i < m_ForwardPart.size(); i++)
 //		{
@@ -741,6 +775,12 @@ public:
 			best_beh_by_p = PlannerHNS::BEH_YIELDING_STATE;
 		}
 
+		if(pPark > best_p)
+		{
+			best_p = pPark;
+			best_beh_by_p = PlannerHNS::BEH_PARKING_STATE;
+		}
+
 		if(pForward > best_p)
 		{
 			best_p = pForward;
@@ -770,6 +810,12 @@ public:
 		{
 			best_w = w_avg_yield;
 			best_beh_by_w = PlannerHNS::BEH_YIELDING_STATE;
+		}
+
+		if(w_avg_park > best_w)
+		{
+			best_w = w_avg_park;
+			best_beh_by_w = PlannerHNS::BEH_PARKING_STATE;
 		}
 
 		if(w_avg_forward > best_w)
@@ -1269,11 +1315,17 @@ public:
 				i_best_for_track = t;
 			}
 
-			if(m_TrajectoryTracker.at(t)->all_p > best_behavior_track->all_p || (m_TrajectoryTracker.at(t)->all_p == best_behavior_track->all_p && m_TrajectoryTracker.at(t)->best_w > best_behavior_track->best_w))
+			if(m_TrajectoryTracker.at(t)->best_w > best_behavior_track->best_w)
 			{
 				best_behavior_track = m_TrajectoryTracker.at(t);
 				i_best_beh_track = t;
 			}
+
+//			if(m_TrajectoryTracker.at(t)->all_p > best_behavior_track->all_p || (m_TrajectoryTracker.at(t)->all_p == best_behavior_track->all_p && m_TrajectoryTracker.at(t)->best_w > best_behavior_track->best_w))
+//			{
+//				best_behavior_track = m_TrajectoryTracker.at(t);
+//				i_best_beh_track = t;
+//			}
 		}
 	}
 };
@@ -1317,7 +1369,7 @@ protected:
 	//int GetTrajectoryPredictedDirection(const std::vector<WayPoint>& path, const PlannerHNS::WayPoint& pose, const double& pred_distance);
 	int FromIndicatorToNumber(const PlannerHNS::LIGHT_INDICATOR& ind);
 	PlannerHNS::LIGHT_INDICATOR FromNumbertoIndicator(const int& num);
-	double CalcIndicatorWeight(PlannerHNS::LIGHT_INDICATOR p_ind, PlannerHNS::LIGHT_INDICATOR obj_ind);
+	double CalcIndicatorWeight(int p_ind, int obj_ind);
 	double CalcAccelerationWeight(int p_acl, int obj_acl);
 
 	void CalPredictionTimeForObject(ObjParticles* pCarPart, const double& max_pre_distance);
@@ -1381,7 +1433,7 @@ public:
 		delete_me.clear();
 	}
 
-	void GetBestParticleWeight(std::vector<Particle>& part_list, Particle** pBestF, Particle** pBestS, Particle** pBestY)
+	void GetBestParticleWeight(std::vector<Particle>& part_list, Particle& pBestF, Particle& pBestS, Particle& pBestY, Particle& pBestP)
 	{
 
 		if(part_list.size() < 1) return;
@@ -1394,6 +1446,9 @@ public:
 
 		double y_max_w = DBL_MIN;
 		unsigned int y_max_i = -1;
+
+		double p_max_w = DBL_MIN;
+		unsigned int p_max_i = -1;
 
 		for(unsigned int i=0; i < part_list.size(); i++)
 		{
@@ -1421,22 +1476,36 @@ public:
 					y_max_i = i;
 				}
 			}
+			else if(part_list.at(i).beh == BEH_PARKING_STATE)
+			{
+				if(part_list.at(i).w > p_max_w)
+				{
+					p_max_w = part_list.at(i).w;
+					p_max_i = i;
+				}
+			}
 		}
 
 		if(f_max_i >= 0)
 		{
-			*pBestF = &part_list.at(f_max_i);
+			pBestF = part_list.at(f_max_i);
 		}
 
 		if(s_max_i >= 0)
 		{
-			*pBestS = &part_list.at(s_max_i);
+			pBestS = part_list.at(s_max_i);
 		}
 
 		if(y_max_i >= 0)
 		{
-			*pBestY = &part_list.at(y_max_i);
+			pBestY = part_list.at(y_max_i);
 		}
+		if(p_max_i >= 0)
+		{
+			pBestP = part_list.at(p_max_i);
+		}
+
+
 
 	}
 
