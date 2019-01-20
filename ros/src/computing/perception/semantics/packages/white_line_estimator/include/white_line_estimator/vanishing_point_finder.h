@@ -1,6 +1,9 @@
 #ifndef VANISHING_POINT_FINDER_H_INCLUDED
 #define VANISHING_POINT_FINDER_H_INCLUDED
 
+//headers in ROS
+#include <ros/ros.h>
+
 //headers in OpenCV
 #include <opencv2/opencv.hpp>
 
@@ -34,6 +37,7 @@ struct ParticleFilterParams
 struct RadiusSearchParams
 {
     double radius;
+    unsigned int max_neighbours;
 };
 
 class VanishingPointFinder
@@ -59,9 +63,14 @@ public:
         rad_params_ = params;
     }
 private:
+    // update particle filter and estimate vanishing point
     cv::Point2d estimateVanishingPoint(std::vector<cv::Point2d> candidate_points);
-    std::vector<cv::Point2d> findCandidatePoints(std::vector<cv::Vec4i> lines);
+    // find candidate points of vanishing point
+    std::vector<cv::Point2d> findCandidatePoints(std::vector<cv::Vec4i> lines,cv::Size size);
+    // find crossing points from two lines
     boost::optional<cv::Point2d> findCrossingPoint(std::array<cv::Point,2> line0, std::array<cv::Point,2> line1);
+    // get weight of each particle
+    double getWeight(std::vector<int> indices,std::vector<float> dists);
     HoughParams params_;
     boost::shared_ptr<ParticleFilter> particle_filter_ptr_;
     ParticleFilterParams pf_params_;

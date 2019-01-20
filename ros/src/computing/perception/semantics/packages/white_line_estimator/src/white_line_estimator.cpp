@@ -98,6 +98,8 @@ void WhiteLineEstimator::sensorCallback(const sensor_msgs::ImageConstPtr& image,
     }
     cv::Mat filterd_image;
     std::vector<std::vector<cv::Point> > contours = filter_.filterWhiteLine(src_image,ground_mask,filterd_image);
+    vanishing_point_finder_ptr_->find(filterd_image);
+    /*
     boost::optional<std::vector<std::vector<geometry_msgs::Point> > > projected_white_line_contours;
     projected_white_line_contours = image_points_projector_ptr_->project(contours);
     if(!projected_white_line_contours)
@@ -118,6 +120,7 @@ void WhiteLineEstimator::sensorCallback(const sensor_msgs::ImageConstPtr& image,
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
+    */
     return;
 }
 
@@ -158,6 +161,7 @@ void WhiteLineEstimator::configureCallback(white_line_estimator::white_line_esti
     //set parameters for Radius search in VanishingPointFinder
     RadiusSearchParams rad_params;
     rad_params.radius = config.search_radius;
+    rad_params.max_neighbours = config.max_neighbours;
     vanishing_point_finder_ptr_->setRadiusSearchParameters(rad_params);
     return;
 }
