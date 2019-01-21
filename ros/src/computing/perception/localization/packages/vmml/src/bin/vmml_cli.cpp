@@ -248,7 +248,10 @@ public:
 			changeWorkingDirectory(command[1]);
 
 		else if (command[0]=="match")
-			doMatch(command);
+			match_frames_cmd(command);
+
+		else if (command[0]=="project")
+			projection_cmd(command);
 	}
 
 
@@ -501,6 +504,11 @@ private:
 		debug("Duration (sec): " + to_string(loadedDataset->length()));
 
 		debug("Zoom: " + to_string(loadedDataset->getZoomRatio()));
+
+		// Image size
+		auto cam = loadedDataset->getCameraParameter();
+		debug("Image width: " + to_string(cam.width));
+		debug("Image height: " + to_string(cam.height));
 	}
 
 
@@ -591,6 +599,8 @@ private:
 			loadedDataset = MeidaiBagDataset::load(datasetPath.string());
 			meidaiDsPtr = static_pointer_cast<MeidaiBagDataset>(loadedDataset);
 			slDatasourceType = MEIDAI_DATASET_TYPE;
+			meidaiDsPtr->addCameraParameter(meidaiCamera1Params);
+			meidaiDsPtr->isPreprocessed = false;
 			debug ("Nagoya University Dataset Loaded");
 		}
 
@@ -723,7 +733,6 @@ private:
 		}
 
 		else if (slDatasourceType == MEIDAI_DATASET_TYPE) {
-			meidaiDsPtr->addCameraParameter(meidaiCamera1Params);
 			mapBuilder.getMap()->setInfo("sourceType", "Meidai");
 			mapBuilder.getMap()->setInfo("originalPath", meidaiDsPtr->getPath());
 		}
@@ -858,7 +867,7 @@ private:
 
 
 	// Match Testing
-	void doMatch(const stringTokens &cmd)
+	void match_frames_cmd(const stringTokens &cmd)
 	{
 		if (cmd.size()<3) {
 			debug("Usage: match <frame#1> <frame#2> [mode=o|s]");
@@ -870,10 +879,14 @@ private:
 			frnum2 = stoi(cmd[2]);
 
 		Matcher::DrawMode drawmode;
-		if (cmd[3]=='o')
+		if (cmd.size()==3)
 			drawmode = Matcher::DrawOpticalFlow;
-		else if (cmd[3]=='s')
-			drawmode = Matcher::DrawSideBySide;
+		else {
+			if (cmd[3][0]=='o')
+				drawmode = Matcher::DrawOpticalFlow;
+			else if (cmd[3][0]=='s')
+				drawmode = Matcher::DrawSideBySide;
+		}
 
 		auto
 			Frame1 = loadedDataset->getAsFrame(frnum1),
@@ -897,6 +910,28 @@ private:
 		const string matchFiledump("match.png");
 		cv::imwrite(matchFiledump, matchResult);
 		debug("Matching result written to "+matchFiledump);
+	}
+
+
+	// Projection test
+	void projection_cmd(const stringTokens &cmd)
+	{
+		if (cmd.size()<3) {
+			debug("Usage: project <frame#1> <pcd file>");
+			return;
+		}
+
+		int frameNum = stoi(cmd[1]);
+		pcl::PointCloud<pcl::PointXYZ>::Ptr pcdInput (new pcl::PointCloud<pcl::PointXYZ>);
+		pcl::PCDReader fReader;
+		fReader.read(cmd[2], *pcdInput);
+
+		auto currentFrame = loadedDataset->getAsFrame(frameNum);
+		cv::Mat frameImageProjection = currentFrame->projectPointCloud(*pcdInput, 200);
+
+		const string projectionDump ("projection.png");
+		cv::imwrite(projectionDump, frameImageProjection);
+		debug("Projection result written to " + projectionDump);
 	}
 };
 

@@ -328,11 +328,11 @@ DatasetBrowser::getCurrentFrameInfo(uint32_t frNum) const
 	ss << "#: " << curFrame->getId() << endl;
 
 	try {
-	auto pos = curFrame->getPosition();
+	auto pos = curFrame->getPose();
 		ss << "Position: " << pos.x() << ", " << pos.y() << ", " << pos.z() << endl;
 
 		auto ort = curFrame->getOrientation();
-		ss << "Orientation (XYZW): " << ort.x() << ", " << ort.y() << ", " << ort.z() << ", " << ort.w() << endl;
+		ss << "Orientation (XYZW): " << pos.qx() << ", " << pos.qy() << ", " << pos.qz() << ", " << pos.qw() << endl;
 
 		auto rpyRad = quaternionToRPY(ort);
 		ss << "Orientation (RPYrad): " << rpyRad[0] << ", " << rpyRad[1] << ", " << rpyRad[2] << endl;

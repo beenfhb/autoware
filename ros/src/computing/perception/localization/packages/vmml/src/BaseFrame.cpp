@@ -269,3 +269,57 @@ BaseFrame::height() const
 {
 	return cameraParam.height;
 }
+
+
+/*
+ * Project point cloud in World Coordinate (eg. PCL Map) to this frame
+ */
+void
+BaseFrame::projectPointCloud(
+	const pcl::PointCloud<pcl::PointXYZ> &pointsInWorld,
+	const double cutDistance,
+	MatrixProjectionResult &projRes) const
+{
+	vector<Vector3d> ptList;
+	ptList.reserve(pointsInWorld.size());
+
+	// Transform to screen coordinates, filter out all points behind us
+	uint64 i=0;
+	for (auto &pt: pointsInWorld) {
+		Vector3d pte(pt.x, pt.y, pt.z);
+		pte = this->transform(pte);
+		if (pte.z() >= 0 and pte.z() <= cutDistance) {
+			ptList[i] = pte;
+			++i;
+		}
+	}
+
+	projRes.resize(ptList.size(), Eigen::NoChange);
+	i=0;
+	for (auto &pt: ptList) {
+		Vector3d pt2 = cameraParam.toMatrix() * pt.homogeneous();
+		pt2 /= pt2[2];
+		projRes.row(i) = pt2.hnormalized();
+	}
+}
+
+
+/*
+ * Project/Render point cloud in World Coordinate using image of this frame
+ */
+cv::Mat
+BaseFrame::projectPointCloud(
+	const pcl::PointCloud<pcl::PointXYZ> &pointsInWorld,
+	const double cutDistance) const
+{
+	cv::Mat frameImage = this->image.clone();
+	MatrixProjectionResult projRes;
+
+	projectPointCloud(pointsInWorld, cutDistance, projRes);
+	for (int r=0; r<projRes.rows(); ++r) {
+		cv::Point2f p2f (projRes(r,0), projRes(r,1));
+		cv::circle(frameImage, p2f, 2, cv::Scalar(0,0,255));
+	}
+
+	return frameImage;
+}

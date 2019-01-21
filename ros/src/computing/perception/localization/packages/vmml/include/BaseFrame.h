@@ -67,6 +67,22 @@ public:
 	// Transform a point in World coordinate to Frame-centric one
 	Eigen::Vector3d transform (const Eigen::Vector3d &pt3) const;
 
+	typedef Eigen::Matrix<double,Eigen::Dynamic,2> MatrixProjectionResult;
+
+	/*
+	 * Project point cloud in World Coordinate (eg. PCL Map) using this frame's pose
+	 */
+	void projectPointCloud(
+		const pcl::PointCloud<pcl::PointXYZ> &pointsInWorld,
+		const double cutDistance,
+		MatrixProjectionResult &projRes) const;
+
+	/*
+	 * Project/Render point cloud in World Coordinate using image of this frame
+	 */
+	cv::Mat projectPointCloud(const pcl::PointCloud<pcl::PointXYZ> &pointsInWorld,
+		const double cutDistance) const;
+
 	void setCameraParam(const CameraPinholeParams *c)
 	{ cameraParam = *c; }
 

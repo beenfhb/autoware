@@ -5,6 +5,7 @@
  *      Author: sujiwo
  */
 
+#include <algorithm>
 #include <Matcher.h>
 
 #include "utilities.h"
@@ -172,16 +173,35 @@ Matcher::matchAny(
 	matcher->match(Fr2.fDescriptors, Fr1.fDescriptors, initialMatches);
 	vector<int> inliersMatch;
 
+	// Debug
+	featurePairs.reserve(inliersMatch.size());
+	sort(initialMatches.begin(), initialMatches.end(),
+		[&](const cv::DMatch &m1, const cv::DMatch &m2)
+		{return m1.distance > m2.distance;}
+	);
+	for (int i=0; i<100; ++i) {
+		auto pr = initialMatches[i];
+		featurePairs.push_back( make_pair((kpid)pr.trainIdx, (kpid)pr.queryIdx) );
+	}
+	return;
+
 	// Find outlier/inlier
 	for (int ip=0; ip<initialMatches.size(); ++ip) {
 
 		auto dm = initialMatches[ip];
-
 		Line2 line2 = createEpipolarLine(F12, Fr1.fKeypoints[dm.trainIdx]);
 		if (isKeypointInEpipolarLine(line2, Fr2.fKeypoints[dm.queryIdx])==true) {
 			inliersMatch.push_back(ip);
 		}
 	}
+
+	// XXX: Debug
+	featurePairs.reserve(inliersMatch.size());
+	for (auto &i: inliersMatch) {
+		auto pr = initialMatches[i];
+		featurePairs.push_back( make_pair((kpid)pr.trainIdx, (kpid)pr.queryIdx) );
+	}
+	return;
 
 	// Compute F
 	cv::Mat points1(inliersMatch.size(), 2, CV_32F),
@@ -215,7 +235,6 @@ Matcher::drawMatches(
 	F1.image.copyTo( result(cv::Rect(0,0,F1.width(),F1.height())) );
 	F2.image.copyTo( result(cv::Rect(F1.width(),0,F2.width(),F2.height())) );
 
-	// XXX: Make list of shifted F2's keypoints
 	vector<pair<cv::Point2f, cv::Point2f>> pointPairList(featurePairs.size());
 	for (int i=0; i<featurePairs.size(); ++i) {
 		cv::Point2f p2 = F2.fKeypoints[i].pt;
@@ -228,20 +247,32 @@ Matcher::drawMatches(
 	const cv::Scalar
 		colorBlue(255, 0, 0),
 		colorGreen(0, 255, 0),
-		colorRed(0, 0, 255);
+		colorRed(0, 0, 255),
+		colorYellow(0, 255, 255);
+	const int
+		pointRadius = 3;
+
+	Pose P1z = F2.pose();
+	Vector2d C2in1 = F1.project(P1z.position());
+	cv::circle(result, cv::Point2f(C2in1.x(), C2in1.y()), pointRadius, colorYellow);
 
 	// XXX: Unfinished
 	if (mode==DrawOpticalFlow) {
 		for (auto &pr: pointPairList) {
-			cv::circle(result, pr.first, 4, colorBlue);
-			cv::circle(result, pr.second, 4, colorRed);
-//			cv::Point2f pt1s = pr.first + cv::Vec2f(F1.width(), 0);
-//			cv::line(result, pt1s, pr.second, colorGreen);
+			cv::circle(result, pr.first, pointRadius, colorBlue);
+			cv::circle(result, pr.second, pointRadius, colorBlue);
+			cv::Point2f pt1s = pr.first;
+			pt1s.x += F1.width();
+			cv::line(result, pt1s, pr.second, colorGreen);
 		}
 	}
 
 	else if (mode==DrawSideBySide) {
-
+		for (auto &pr: pointPairList) {
+			cv::circle(result, pr.first, pointRadius, colorBlue);
+			cv::circle(result, pr.second, pointRadius, colorBlue);
+			cv::line(result, pr.first, pr.second, colorGreen);
+		}
 	}
 
 	else throw runtime_error("Invalid mode");
