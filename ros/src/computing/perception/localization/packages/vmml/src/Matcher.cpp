@@ -193,9 +193,10 @@ Matcher::matchAny(
 		points2.at<float>(ip,0) = Fr2.fKeypoints[m.queryIdx].pt.x;
 		points2.at<float>(ip,1) = Fr2.fKeypoints[m.queryIdx].pt.y;
 	}
+	cv::Mat Fcv = cv::findFundamentalMat(points1, points2);
 	// XXX: Unfinished
 
-	// Lets do matching again
+	// Let's do matching again
 
 	// Convert F to Essential Matrix E, and compute R & T from Fr1 to Fr2
 
@@ -208,13 +209,42 @@ Matcher::drawMatches(
 	const BaseFrame &F1,
 	const BaseFrame &F2,
 	const std::vector<KpPair> &featurePairs,
-	DrawMode m)
+	DrawMode mode)
 {
 	cv::Mat result(std::max(F1.height(), F2.height()), F1.width()+F2.width(), F1.image.type());
 	F1.image.copyTo( result(cv::Rect(0,0,F1.width(),F1.height())) );
 	F2.image.copyTo( result(cv::Rect(F1.width(),0,F2.width(),F2.height())) );
 
+	// XXX: Make list of shifted F2's keypoints
+	vector<pair<cv::Point2f, cv::Point2f>> pointPairList(featurePairs.size());
+	for (int i=0; i<featurePairs.size(); ++i) {
+		cv::Point2f p2 = F2.fKeypoints[i].pt;
+		p2.x += F1.width();
+		pointPairList[i] = make_pair(
+			F1.fKeypoints[i].pt,
+			p2);
+	}
+
+	const cv::Scalar
+		colorBlue(255, 0, 0),
+		colorGreen(0, 255, 0),
+		colorRed(0, 0, 255);
+
 	// XXX: Unfinished
+	if (mode==DrawOpticalFlow) {
+		for (auto &pr: pointPairList) {
+			cv::circle(result, pr.first, 4, colorBlue);
+			cv::circle(result, pr.second, 4, colorRed);
+//			cv::Point2f pt1s = pr.first + cv::Vec2f(F1.width(), 0);
+//			cv::line(result, pt1s, pr.second, colorGreen);
+		}
+	}
+
+	else if (mode==DrawSideBySide) {
+
+	}
+
+	else throw runtime_error("Invalid mode");
 
 	return result;
 }

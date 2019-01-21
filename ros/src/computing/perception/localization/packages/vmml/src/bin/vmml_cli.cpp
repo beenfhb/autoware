@@ -860,9 +860,20 @@ private:
 	// Match Testing
 	void doMatch(const stringTokens &cmd)
 	{
+		if (cmd.size()<3) {
+			debug("Usage: match <frame#1> <frame#2> [mode=o|s]");
+			return;
+		}
+
 		int
 			frnum1 = stoi(cmd[1]),
 			frnum2 = stoi(cmd[2]);
+
+		Matcher::DrawMode drawmode;
+		if (cmd[3]=='o')
+			drawmode = Matcher::DrawOpticalFlow;
+		else if (cmd[3]=='s')
+			drawmode = Matcher::DrawSideBySide;
 
 		auto
 			Frame1 = loadedDataset->getAsFrame(frnum1),
@@ -881,6 +892,11 @@ private:
 		Matcher::matchAny(*Frame1, *Frame2, validKpPairs, cvFeatMatcher, T12);
 
 		cv::Mat matchResult;
+		matchResult = Matcher::drawMatches(*Frame1, *Frame2, validKpPairs, drawmode);
+
+		const string matchFiledump("match.png");
+		cv::imwrite(matchFiledump, matchResult);
+		debug("Matching result written to "+matchFiledump);
 	}
 };
 
