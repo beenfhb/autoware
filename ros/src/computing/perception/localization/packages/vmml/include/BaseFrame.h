@@ -73,14 +73,14 @@ public:
 	 * Project point cloud in World Coordinate (eg. PCL Map) using this frame's pose
 	 */
 	void projectPointCloud(
-		const pcl::PointCloud<pcl::PointXYZ> &pointsInWorld,
+		pcl::PointCloud<pcl::PointXYZ>::ConstPtr pointsInWorld,
 		const double cutDistance,
 		MatrixProjectionResult &projRes) const;
 
 	/*
 	 * Project/Render point cloud in World Coordinate using image of this frame
 	 */
-	cv::Mat projectPointCloud(const pcl::PointCloud<pcl::PointXYZ> &pointsInWorld,
+	cv::Mat projectPointCloud(pcl::PointCloud<pcl::PointXYZ>::ConstPtr pointsInWorld,
 		const double cutDistance) const;
 
 	void setCameraParam(const CameraPinholeParams *c)

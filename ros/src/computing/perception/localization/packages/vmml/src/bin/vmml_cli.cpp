@@ -922,12 +922,12 @@ private:
 		}
 
 		int frameNum = stoi(cmd[1]);
-		pcl::PointCloud<pcl::PointXYZ>::Ptr pcdInput (new pcl::PointCloud<pcl::PointXYZ>);
+		pcl::PointCloud<pcl::PointXYZ>::Ptr pcdInput(new pcl::PointCloud<pcl::PointXYZ>);
 		pcl::PCDReader fReader;
 		fReader.read(cmd[2], *pcdInput);
 
 		auto currentFrame = loadedDataset->getAsFrame(frameNum);
-		cv::Mat frameImageProjection = currentFrame->projectPointCloud(*pcdInput, 200);
+		cv::Mat frameImageProjection = currentFrame->projectPointCloud(pcdInput, 200);
 
 		const string projectionDump ("projection.png");
 		cv::imwrite(projectionDump, frameImageProjection);

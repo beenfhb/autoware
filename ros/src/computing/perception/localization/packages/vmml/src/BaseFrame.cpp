@@ -277,14 +277,14 @@ BaseFrame::height() const
  */
 void
 BaseFrame::projectPointCloud(
-	const pcl::PointCloud<pcl::PointXYZ> &pointsInWorld,
+	pcl::PointCloud<pcl::PointXYZ>::ConstPtr pointsInWorld,
 	const double cutDistance,
 	MatrixProjectionResult &projRes) const
 {
 	pcl::FrustumCulling<pcl::PointXYZ> frustum;
-	pcl::PointCloud<pcl::PointXYZ>::ConstPtr pointsIn(&pointsInWorld);
+//	pointsIn.
 
-	frustum.setInputCloud(pointsIn);
+	frustum.setInputCloud(pointsInWorld);
 	frustum.setNearPlaneDistance(0.5);
 	frustum.setFarPlaneDistance(cutDistance);
 	frustum.setHorizontalFOV(cameraParam.getHorizontalFoV() * 180 / M_PI);
@@ -319,7 +319,7 @@ BaseFrame::projectPointCloud(
  */
 cv::Mat
 BaseFrame::projectPointCloud(
-	const pcl::PointCloud<pcl::PointXYZ> &pointsInWorld,
+	pcl::PointCloud<pcl::PointXYZ>::ConstPtr pointsInWorld,
 	const double cutDistance) const
 {
 	cv::Mat frameImage = this->image.clone();
