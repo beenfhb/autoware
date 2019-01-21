@@ -365,7 +365,7 @@ void DecisionMaker::InitBehaviorStates()
 		indication_distance = m_params.minIndicationDistance;
 
 	currentBehavior.indicator = PlanningHelpers::GetIndicatorsFromPath(m_Path, state, indication_distance);
-	if(currentBehavior.state == GOAL_STATE || currentBehavior.state == FINISH_STATE || currentBehavior.state == STOPPING_STATE || m_params.maxSpeed == 0)
+	if(currentBehavior.state == GOAL_STATE || currentBehavior.state == FINISH_STATE || m_params.maxSpeed == 0)
 	  currentBehavior.indicator = INDICATOR_BOTH;
 
 	return currentBehavior;

@@ -79,7 +79,9 @@ protected:
 	PlannerHNS::PlanningParams m_PlanningParams;
 	PlannerHNS::MAP_SOURCE_TYPE m_MapType;
 	std::string m_MapPath;
-	std::vector<std::string>  m_LogData;
+	std::vector<std::string>  m_LogDataCar0;
+	std::vector<std::string>  m_LogDataCar1;
+	std::vector<std::string>  m_LogDataCar2;
 	double m_t;
 	timespec m_LogTime;
 

@@ -113,32 +113,95 @@ MotionPrediction::~MotionPrediction()
 	else
 		fileName << op_utility_ns::UtilityH::GetHomeDirectory()+op_utility_ns::DataRW::LoggingMainfolderName + op_utility_ns::DataRW::ExperimentsFolderName + m_ExperimentFolderName + op_utility_ns::DataRW::PredictionFolderName;
 
-	op_utility_ns::DataRW::WriteLogData(fileName.str(),
-			"PredictionLog_",
-			"time,x,y,heading,Velocity,Acceleration,Indicator,Best_Traj,real_W_F,real_W_L,real_W_R,Best_Beh_P,Best_Beh_W,Best_w_f,Best_w_s,Best_w_y,Best_w_p,"
-			"id_F,n_part_forward_F,p_forward_F,w_forward_F,"
-			"n_part_stopping_F,p_stopping_F,w_stopping_F,"
-			"n_part_yielding_F,p_yielding_F,w_yielding_F,"
-			"n_part_parking_F,p_parking_F,w_parking_F,"
-			"best_beh_F,all_p_F,all_w_F,best_p_F,best_w_F,real_w_F,"
+	if(m_LogDataCar0.size() > 2)
+	{
+          op_utility_ns::DataRW::WriteLogData(fileName.str(),
+                          "PredictionLogCar0_",
+                          "time,x,y,heading,Velocity,Acceleration,Indicator,Best_Traj,real_W_F,real_W_L,real_W_R,Best_Beh_P,Best_Beh_W,Best_w_f,Best_w_s,Best_w_y,Best_w_p,"
+                          "id_F,n_part_forward_F,p_forward_F,w_forward_F,"
+                          "n_part_stopping_F,p_stopping_F,w_stopping_F,"
+                          "n_part_yielding_F,p_yielding_F,w_yielding_F,"
+                          "n_part_parking_F,p_parking_F,w_parking_F,"
+                          "best_beh_F,all_p_F,all_w_F,best_p_F,best_w_F,real_w_F,"
 
-			"id_L,n_part_forward_L,p_forward_L,w_forward_L,"
-			"n_part_stopping_L,p_stopping_L,w_stopping_L,"
-			"n_part_yielding_L,p_yielding_L,w_yielding_L,"
-			"n_part_parking_L,p_parking_L,w_parking_L,"
-			"best_beh_L,all_p_L,all_w_L,best_p_L,best_w_L,real_w_L,"
+                          "id_L,n_part_forward_L,p_forward_L,w_forward_L,"
+                          "n_part_stopping_L,p_stopping_L,w_stopping_L,"
+                          "n_part_yielding_L,p_yielding_L,w_yielding_L,"
+                          "n_part_parking_L,p_parking_L,w_parking_L,"
+                          "best_beh_L,all_p_L,all_w_L,best_p_L,best_w_L,real_w_L,"
 
-			"id_R,n_part_forward_R,p_forward_R,w_forward_R,"
-			"n_part_stopping_R,p_stopping_R,w_stopping_R,"
-			"n_part_yielding_R,p_yielding_R,w_yielding_R,"
-			"n_part_parking_R,p_parking_R,w_parking_R,"
-			"best_beh_R,all_p_R,all_w_R,best_p_R,best_w_R,real_w_R,"
+                          "id_R,n_part_forward_R,p_forward_R,w_forward_R,"
+                          "n_part_stopping_R,p_stopping_R,w_stopping_R,"
+                          "n_part_yielding_R,p_yielding_R,w_yielding_R,"
+                          "n_part_parking_R,p_parking_R,w_parking_R,"
+                          "best_beh_R,all_p_R,all_w_R,best_p_R,best_w_R,real_w_R,"
 
-			"id_U,n_part_forward_U,p_forward_U,w_forward_U,"
-			"n_part_stopping_U,p_stopping_U,w_stopping_U,"
-			"n_part_yielding_U,p_yielding_U,w_yielding_U,"
-			"n_part_parking_U,p_parking_U,w_parking_U,"
-			"best_beh_U,all_p_U,all_w_U,best_p_U,best_w_U,real_w_U," , m_LogData);
+                          "id_U,n_part_forward_U,p_forward_U,w_forward_U,"
+                          "n_part_stopping_U,p_stopping_U,w_stopping_U,"
+                          "n_part_yielding_U,p_yielding_U,w_yielding_U,"
+                          "n_part_parking_U,p_parking_U,w_parking_U,"
+                          "best_beh_U,all_p_U,all_w_U,best_p_U,best_w_U,real_w_U," , m_LogDataCar0);
+	}
+
+        if(m_LogDataCar1.size() > 2)
+        {
+          op_utility_ns::DataRW::WriteLogData(fileName.str(),
+                          "PredictionLogCar1_",
+                          "time,x,y,heading,Velocity,Acceleration,Indicator,Best_Traj,real_W_F,real_W_L,real_W_R,Best_Beh_P,Best_Beh_W,Best_w_f,Best_w_s,Best_w_y,Best_w_p,"
+                          "id_F,n_part_forward_F,p_forward_F,w_forward_F,"
+                          "n_part_stopping_F,p_stopping_F,w_stopping_F,"
+                          "n_part_yielding_F,p_yielding_F,w_yielding_F,"
+                          "n_part_parking_F,p_parking_F,w_parking_F,"
+                          "best_beh_F,all_p_F,all_w_F,best_p_F,best_w_F,real_w_F,"
+
+                          "id_L,n_part_forward_L,p_forward_L,w_forward_L,"
+                          "n_part_stopping_L,p_stopping_L,w_stopping_L,"
+                          "n_part_yielding_L,p_yielding_L,w_yielding_L,"
+                          "n_part_parking_L,p_parking_L,w_parking_L,"
+                          "best_beh_L,all_p_L,all_w_L,best_p_L,best_w_L,real_w_L,"
+
+                          "id_R,n_part_forward_R,p_forward_R,w_forward_R,"
+                          "n_part_stopping_R,p_stopping_R,w_stopping_R,"
+                          "n_part_yielding_R,p_yielding_R,w_yielding_R,"
+                          "n_part_parking_R,p_parking_R,w_parking_R,"
+                          "best_beh_R,all_p_R,all_w_R,best_p_R,best_w_R,real_w_R,"
+
+                          "id_U,n_part_forward_U,p_forward_U,w_forward_U,"
+                          "n_part_stopping_U,p_stopping_U,w_stopping_U,"
+                          "n_part_yielding_U,p_yielding_U,w_yielding_U,"
+                          "n_part_parking_U,p_parking_U,w_parking_U,"
+                          "best_beh_U,all_p_U,all_w_U,best_p_U,best_w_U,real_w_U," , m_LogDataCar1);
+        }
+
+        if(m_LogDataCar2.size() > 2)
+        {
+          op_utility_ns::DataRW::WriteLogData(fileName.str(),
+                          "PredictionLogCar2_",
+                          "time,x,y,heading,Velocity,Acceleration,Indicator,Best_Traj,real_W_F,real_W_L,real_W_R,Best_Beh_P,Best_Beh_W,Best_w_f,Best_w_s,Best_w_y,Best_w_p,"
+                          "id_F,n_part_forward_F,p_forward_F,w_forward_F,"
+                          "n_part_stopping_F,p_stopping_F,w_stopping_F,"
+                          "n_part_yielding_F,p_yielding_F,w_yielding_F,"
+                          "n_part_parking_F,p_parking_F,w_parking_F,"
+                          "best_beh_F,all_p_F,all_w_F,best_p_F,best_w_F,real_w_F,"
+
+                          "id_L,n_part_forward_L,p_forward_L,w_forward_L,"
+                          "n_part_stopping_L,p_stopping_L,w_stopping_L,"
+                          "n_part_yielding_L,p_yielding_L,w_yielding_L,"
+                          "n_part_parking_L,p_parking_L,w_parking_L,"
+                          "best_beh_L,all_p_L,all_w_L,best_p_L,best_w_L,real_w_L,"
+
+                          "id_R,n_part_forward_R,p_forward_R,w_forward_R,"
+                          "n_part_stopping_R,p_stopping_R,w_stopping_R,"
+                          "n_part_yielding_R,p_yielding_R,w_yielding_R,"
+                          "n_part_parking_R,p_parking_R,w_parking_R,"
+                          "best_beh_R,all_p_R,all_w_R,best_p_R,best_w_R,real_w_R,"
+
+                          "id_U,n_part_forward_U,p_forward_U,w_forward_U,"
+                          "n_part_stopping_U,p_stopping_U,w_stopping_U,"
+                          "n_part_yielding_U,p_yielding_U,w_yielding_U,"
+                          "n_part_parking_U,p_parking_U,w_parking_U,"
+                          "best_beh_U,all_p_U,all_w_U,best_p_U,best_w_U,real_w_U," , m_LogDataCar2);
+        }
 }
 
 void MotionPrediction::UpdatePlanningParams(ros::NodeHandle& _nh)
@@ -411,125 +474,66 @@ std::string MotionPrediction::GetPredictionLogDataRealWeightItem(std::vector<Pla
 
 void MotionPrediction::LogDataRaw()
 {
-	if(m_PredictBeh.m_ParticleInfo_II.size() == 0 )
-		return;
-
-	std::ostringstream dataLine;
-	PlannerHNS::DetectedObject* pObj = &m_PredictBeh.m_ParticleInfo_II.at(0)->obj;
-	dataLine << m_t << "," << pObj->center.pos.x << "," <<  pObj->center.pos.y << "," << pObj->center.pos.a << "," << pObj->center.v << "," << pObj->acceleration_desc
-			<< "," << pObj->indicator_state << ",";
-
-	if(m_PredictBeh.m_ParticleInfo_II.at(0)->best_forward_track != nullptr)
+	for(unsigned int i=0; i < m_PredictBeh.m_ParticleInfo_II.size(); i++)
 	{
-	  if(m_PredictBeh.m_ParticleInfo_II.at(0)->best_forward_track->id_.compare("F")==0)
-	    dataLine << "1" << ",";
-	  else if(m_PredictBeh.m_ParticleInfo_II.at(0)->best_forward_track->id_.compare("L")==0)
-	    dataLine << "2" << ",";
-	  else if(m_PredictBeh.m_ParticleInfo_II.at(0)->best_forward_track->id_.compare("R")==0)
-	    dataLine << "3" << ",";
-	  else
-	    dataLine << "0" << ",";
-	}
-	else
-          dataLine << "0" << ",";
+          std::ostringstream dataLine;
+          PlannerHNS::DetectedObject* pObj = &m_PredictBeh.m_ParticleInfo_II.at(i)->obj;
+          dataLine << m_t << "," << pObj->center.pos.x << "," <<  pObj->center.pos.y << "," << pObj->center.pos.a << "," << pObj->center.v << "," << pObj->acceleration_desc
+                          << "," << pObj->indicator_state << ",";
+
+          if(m_PredictBeh.m_ParticleInfo_II.at(i)->best_forward_track != nullptr)
+          {
+            if(m_PredictBeh.m_ParticleInfo_II.at(i)->best_forward_track->id_.compare("F")==0)
+              dataLine << "1" << ",";
+            else if(m_PredictBeh.m_ParticleInfo_II.at(i)->best_forward_track->id_.compare("L")==0)
+              dataLine << "2" << ",";
+            else if(m_PredictBeh.m_ParticleInfo_II.at(i)->best_forward_track->id_.compare("R")==0)
+              dataLine << "3" << ",";
+            else
+              dataLine << "0" << ",";
+          }
+          else
+            dataLine << "0" << ",";
 
 
-	dataLine << GetPredictionLogDataRealWeightItem(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "F");
-	dataLine << GetPredictionLogDataRealWeightItem(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "L");
-	dataLine << GetPredictionLogDataRealWeightItem(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "R");
+          dataLine << GetPredictionLogDataRealWeightItem(m_PredictBeh.m_ParticleInfo_II.at(i)->m_TrajectoryTracker, "F");
+          dataLine << GetPredictionLogDataRealWeightItem(m_PredictBeh.m_ParticleInfo_II.at(i)->m_TrajectoryTracker, "L");
+          dataLine << GetPredictionLogDataRealWeightItem(m_PredictBeh.m_ParticleInfo_II.at(i)->m_TrajectoryTracker, "R");
 
-        if(m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track != nullptr)
-        {
-            dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->best_beh_by_p << ",";
-            dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->best_beh_by_w << ",";
-            dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->w_avg_forward << ",";
-            dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->w_avg_stop << ",";
-            dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->w_avg_yield << ",";
-            dataLine << m_PredictBeh.m_ParticleInfo_II.at(0)->best_behavior_track->w_avg_park << ",";
-        }
-        else
-          dataLine << "-1,-1,0,0,0,0,";
+          if(m_PredictBeh.m_ParticleInfo_II.at(i)->best_behavior_track != nullptr)
+          {
+              dataLine << m_PredictBeh.m_ParticleInfo_II.at(i)->best_behavior_track->best_beh_by_p << ",";
+              dataLine << m_PredictBeh.m_ParticleInfo_II.at(i)->best_behavior_track->best_beh_by_w << ",";
+              dataLine << m_PredictBeh.m_ParticleInfo_II.at(i)->best_behavior_track->w_avg_forward << ",";
+              dataLine << m_PredictBeh.m_ParticleInfo_II.at(i)->best_behavior_track->w_avg_stop << ",";
+              dataLine << m_PredictBeh.m_ParticleInfo_II.at(i)->best_behavior_track->w_avg_yield << ",";
+              dataLine << m_PredictBeh.m_ParticleInfo_II.at(i)->best_behavior_track->w_avg_park << ",";
+          }
+          else
+            dataLine << "-1,-1,0,0,0,0,";
 
-	dataLine << GetPredictionLogDataLine(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "F");
-	dataLine << GetPredictionLogDataLine(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "L");
-	dataLine << GetPredictionLogDataLine(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "R");
-	dataLine << GetPredictionLogDataLine(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker, "U");
+          dataLine << GetPredictionLogDataLine(m_PredictBeh.m_ParticleInfo_II.at(i)->m_TrajectoryTracker, "F");
+          dataLine << GetPredictionLogDataLine(m_PredictBeh.m_ParticleInfo_II.at(i)->m_TrajectoryTracker, "L");
+          dataLine << GetPredictionLogDataLine(m_PredictBeh.m_ParticleInfo_II.at(i)->m_TrajectoryTracker, "R");
+          dataLine << GetPredictionLogDataLine(m_PredictBeh.m_ParticleInfo_II.at(i)->m_TrajectoryTracker, "U");
 
-//	if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 0)
-//	{
-//		PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(0);
-//		dataLine << pTrajectoryTracker->id_ << ",";
-//		dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
-//		dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
-//		dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
-//		dataLine << pTrajectoryTracker->all_p << "," << pTrajectoryTracker->all_w << "," << pTrajectoryTracker->best_p <<"," << pTrajectoryTracker->best_w <<",";
-//
-//		if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 1)
-//		{
-//			PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(1);
-//			dataLine << pTrajectoryTracker->id_ << ",";
-//			dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
-//			dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
-//			dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
-//			dataLine << pTrajectoryTracker->all_p << "," << pTrajectoryTracker->all_w << "," << pTrajectoryTracker->best_p <<"," << pTrajectoryTracker->best_w <<",";
-//
-//			if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 2)
-//			{
-//				PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(2);
-//				dataLine << pTrajectoryTracker->id_ << ",";
-//				dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
-//				dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
-//				dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
-//				dataLine << pTrajectoryTracker->all_p << "," << pTrajectoryTracker->all_w << "," << pTrajectoryTracker->best_p <<"," << pTrajectoryTracker->best_w <<",";
-//
-//				if(m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.size() > 3)
-//				{
-//					PlannerHNS::TrajectoryTracker* pTrajectoryTracker = m_PredictBeh.m_ParticleInfo_II.at(0)->m_TrajectoryTracker.at(3);
-//					dataLine << pTrajectoryTracker->id_ << ",";
-//					dataLine << pTrajectoryTracker->nAliveForward << "," << pTrajectoryTracker->pForward << "," << pTrajectoryTracker->w_avg_forward <<",";
-//					dataLine << pTrajectoryTracker->nAliveStop << "," << pTrajectoryTracker->pStop << "," << pTrajectoryTracker->w_avg_stop <<",";
-//					dataLine << pTrajectoryTracker->nAliveYield << "," << pTrajectoryTracker->pYield << "," << pTrajectoryTracker->w_avg_yield <<"," << pTrajectoryTracker->best_beh_by_p <<",";
-//					dataLine << pTrajectoryTracker->all_p << "," << pTrajectoryTracker->all_w << "," << pTrajectoryTracker->best_p <<"," << pTrajectoryTracker->best_w <<",";
-//				}
-//				else
-//				{
-//					dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-//				}
-//			}
-//			else
-//			{
-//				dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-//				dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-//			}
-//
-//		}
-//		else
-//		{
-//			dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-//			dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-//			dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-//		}
-//
-//	}
-//	else
-//	{
-//		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-//		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-//		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-//		dataLine << 0 << "," << 0 << "," << 0 << "," << 0 <<"," << 0 << "," << 0 << "," << 0 <<"," << 0 <<","<< 0 << "," << 0 <<"," << 0 <<","<< 0 <<","<< 0 << "," << 0 <<"," << 0 <<",";
-//	}
+          if(i==0)
+            m_LogDataCar0.push_back(dataLine.str());
+          else if(i == 1)
+            m_LogDataCar1.push_back(dataLine.str());
+          else if(i == 2)
+            m_LogDataCar2.push_back(dataLine.str());
 
-	m_LogData.push_back(dataLine.str());
-
-	if(m_t==0)
-	{
-		op_utility_ns::UtilityH::GetTickCount(m_LogTime);
-		m_t = 0.01;
-	}
-	else
-	{
-		m_t += op_utility_ns::UtilityH::GetTimeDiffNow(m_LogTime);
-		op_utility_ns::UtilityH::GetTickCount(m_LogTime);
+          if(m_t==0)
+          {
+                  op_utility_ns::UtilityH::GetTickCount(m_LogTime);
+                  m_t = 0.01;
+          }
+          else
+          {
+                  m_t += op_utility_ns::UtilityH::GetTimeDiffNow(m_LogTime);
+                  op_utility_ns::UtilityH::GetTickCount(m_LogTime);
+          }
 	}
 }
 
