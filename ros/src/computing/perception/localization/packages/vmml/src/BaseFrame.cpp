@@ -6,6 +6,7 @@
  */
 
 
+#include <pcl/filters/frustum_culling.h>
 #include <exception>
 #include "BaseFrame.h"
 #include "MapPoint.h"
@@ -280,26 +281,35 @@ BaseFrame::projectPointCloud(
 	const double cutDistance,
 	MatrixProjectionResult &projRes) const
 {
-	vector<Vector3d> ptList;
-	ptList.reserve(pointsInWorld.size());
+	pcl::FrustumCulling<pcl::PointXYZ> frustum;
+	pcl::PointCloud<pcl::PointXYZ>::ConstPtr pointsIn(&pointsInWorld);
 
-	// Transform to screen coordinates, filter out all points behind us
-	uint64 i=0;
-	for (auto &pt: pointsInWorld) {
-		Vector3d pte(pt.x, pt.y, pt.z);
-		pte = this->transform(pte);
-		if (pte.z() >= 0 and pte.z() <= cutDistance) {
-			ptList[i] = pte;
-			++i;
-		}
-	}
+	frustum.setInputCloud(pointsIn);
+	frustum.setNearPlaneDistance(0.5);
+	frustum.setFarPlaneDistance(cutDistance);
+	frustum.setHorizontalFOV(cameraParam.getHorizontalFoV() * 180 / M_PI);
+	frustum.setVerticalFOV(cameraParam.getVerticalFoV() * 180 / M_PI);
 
-	projRes.resize(ptList.size(), Eigen::NoChange);
-	i=0;
-	for (auto &pt: ptList) {
-		Vector3d pt2 = cameraParam.toMatrix() * pt.homogeneous();
-		pt2 /= pt2[2];
-		projRes.row(i) = pt2.hnormalized();
+	Eigen::Matrix4f cam2robot;
+	cam2robot <<
+			0, 0, 1, 0,
+            0,-1, 0, 0,
+            1, 0, 0, 0,
+            0, 0, 0, 1;
+	Matrix4f poseFilt = this->mPose.cast<float>() * cam2robot;
+	frustum.setCameraPose(poseFilt);
+
+	pcl::PointCloud<pcl::PointXYZ> filtered;
+	frustum.filter(filtered);
+
+	projRes.resize(filtered.size(), Eigen::NoChange);
+	auto camMat4 = projectionMatrix();
+	for (uint64 i=0; i<filtered.size(); ++i) {
+		auto pp = filtered.at(i);
+		Vector4d pv(pp.x, pp.y, pp.z, 1);
+		Vector3d pj = camMat4 * pv;
+		pj /= pj[2];
+		projRes.row(i) = pj.hnormalized();
 	}
 }
 

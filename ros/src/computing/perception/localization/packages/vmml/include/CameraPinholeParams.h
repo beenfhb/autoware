@@ -50,6 +50,7 @@ struct CameraPinholeParams
 	CameraPinholeParams
 	operator* (const float f) const;
 
+	// Field of Views, in radian
 	float getHorizontalFoV () const;
 	float getVerticalFoV () const;
 
