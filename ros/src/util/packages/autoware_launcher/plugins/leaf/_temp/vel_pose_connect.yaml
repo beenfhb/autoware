@@ -1,11 +1,11 @@
 args:
-- arg: {default: /ndt_pose, name: topic_pose_stamped}
+- defs: {default: /ndt_pose, name: topic_pose_stamped}
   title: Topic Pose Stamped
   type: str
-- arg: {default: /estimate_twist, name: topic_twist_stamped}
+- defs: {default: /estimate_twist, name: topic_twist_stamped}
   title: Topic Twist Stamped
   type: str
-- arg: {default: 'False', name: sim_mode}
+- defs: {default: 'False', name: sim_mode}
   title: Sim Mode
   type: str
 launch: $(find autoware_connector)/launch/vel_pose_connect.launch

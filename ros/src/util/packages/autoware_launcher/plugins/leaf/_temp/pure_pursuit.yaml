@@ -1,8 +1,8 @@
 args:
-- arg: {default: 'True', name: is_linear_interpolation}
+- defs: {default: 'True', name: is_linear_interpolation}
   title: Is Linear Interpolation
   type: str
-- arg: {default: 'False', name: publishes_for_steering_robot}
+- defs: {default: 'False', name: publishes_for_steering_robot}
   title: Publishes For Steering Robot
   type: str
 

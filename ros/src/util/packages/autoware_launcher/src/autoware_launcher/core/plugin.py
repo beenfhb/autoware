@@ -106,7 +106,7 @@ class AwPluginNode(object):
     def default_config(self):
         config = {}
         for args in self.__args:
-            args = args["arg"]
+            args = args["defs"]
             for arg in args if type(args) == list else [args]:
                 config["args."+arg["name"]] = arg["default"]
         return config
@@ -182,10 +182,10 @@ class AwPluginNode(object):
             data.setdefault("view", "info." + data["type"])
         for data in self.__args:
             data.setdefault("view", "args." + data["type"])
-            if type(data["arg"]) == list:
-                data["arg"] = [complete_args(arg, data["type"]) for arg in data["arg"]]
+            if type(data["defs"]) == list:
+                data["defs"] = [complete_args(arg, data["type"]) for arg in data["defs"]]
             else:
-                data["arg"] = complete_args(data["arg"], data["type"])
+                data["defs"] = complete_args(data["defs"], data["type"])
 
 
 if __name__ == "__main__":

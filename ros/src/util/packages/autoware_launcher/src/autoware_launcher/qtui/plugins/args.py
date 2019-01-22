@@ -30,18 +30,18 @@ class AwLineTextEdit(widgets.AwAbstructFrame):
 
         super(AwLineTextEdit, self).setup_widget()
         self.edit = QtWidgets.QLineEdit()
-        self.edit.setText(self.node.get_config("args." + self.opts["arg"]["name"]))
+        self.edit.setText(self.node.get_config("args." + self.opts["defs"]["name"]))
         self.edit.editingFinished.connect(self.edited)
         self.add_widget(self.edit)
         self.set_title(self.opts["title"])
 
     def edited(self):
-        cfgkey = "args." + self.opts["arg"]["name"]
+        cfgkey = "args." + self.opts["defs"]["name"]
         self.node.update({"config": {cfgkey: self.edit.text()}})
 
     @staticmethod
     def tostring(node, opts):
-        return "{}: {}".format(opts["title"], node.get_config("args." + opts["arg"]["name"]))
+        return "{}: {}".format(opts["title"], node.get_config("args." + opts["defs"]["name"]))
 
 
 
@@ -54,18 +54,18 @@ class AwTextListEdit(widgets.AwAbstructFrame):
 
         super(AwTextListEdit, self).setup_widget()
         self.edit = QtWidgets.QLineEdit()
-        self.edit.setText("/".join(self.node.get_config("args." + self.opts["arg"]["name"])))
+        self.edit.setText("/".join(self.node.get_config("args." + self.opts["defs"]["name"])))
         self.edit.editingFinished.connect(self.edited)
         self.add_widget(self.edit)
         self.set_title(self.opts["title"])
 
     def edited(self):
-        cfgkey = "args." + self.opts["arg"]["name"]
+        cfgkey = "args." + self.opts["defs"]["name"]
         self.node.update({"config": {cfgkey: self.edit.text().split("/")}})
 
     @staticmethod
     def tostring(node, opts):
-        return "{}: {}".format(opts["title"], "/".join(node.get_config("args." + opts["arg"]["name"])))
+        return "{}: {}".format(opts["title"], "/".join(node.get_config("args." + opts["defs"]["name"])))
 
 
 
@@ -85,19 +85,19 @@ class AwFileSelect(widgets.AwAbstructFrame):
         self.widget = QtWidgets.QLineEdit()
         self.widget.setReadOnly(True)
         self.add_widget(self.widget)
-        self.widget.setText(self.node.get_config("args." + self.opts["arg"]["name"]))
+        self.widget.setText(self.node.get_config("args." + self.opts["defs"]["name"]))
 
     def browsed(self):
         filepath, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Select File", fspath.userhome())
         filepath = fspath.envpath(filepath)
         if filepath:
-            cfgkey = "args." + self.opts["arg"]["name"]
+            cfgkey = "args." + self.opts["defs"]["name"]
             self.node.update({"config": {cfgkey: filepath}})
             self.widget.setText(filepath)
 
     @staticmethod
     def tostring(node, opts):
-        return "{}: {}".format(opts["title"], node.get_config("args." + opts["arg"]["name"]))
+        return "{}: {}".format(opts["title"], node.get_config("args." + opts["defs"]["name"]))
 
 
 
@@ -118,20 +118,20 @@ class AwFileListSelect(widgets.AwAbstructFrame):
         self.widget.setReadOnly(True)
         self.add_widget(self.widget)
 
-        filepaths = self.node.get_config("args." + self.opts["arg"]["name"], [])
+        filepaths = self.node.get_config("args." + self.opts["defs"]["name"], [])
         self.widget.setText("\n".join(filepaths))
 
     def browsed(self):
         filepaths, filetype = QtWidgets.QFileDialog.getOpenFileNames(self, "Select Files", fspath.userhome())
         filepaths = map(fspath.envpath, filepaths)
         if filepaths:
-            cfgkey = "args." + self.opts["arg"]["name"]
+            cfgkey = "args." + self.opts["defs"]["name"]
             self.node.update({"config": {cfgkey: filepaths}})
             self.widget.setText("\n".join(filepaths))
 
     @staticmethod
     def tostring(node, opts):
-        return "{}: {} files".format(opts["title"], len(node.get_config("args." + opts["arg"]["name"])))
+        return "{}: {} files".format(opts["title"], len(node.get_config("args." + opts["defs"]["name"])))
 
 
 
@@ -150,7 +150,7 @@ class AwTransformEdit(widgets.AwAbstructFrame):
         mapper = QtCore.QSignalMapper(widget)
         for idx, txt in enumerate(["Tx", "Ty", "Tz", "Rx", "Ry", "Rz"]):
             field = QtWidgets.QLineEdit()
-            field.setText(self.node.get_config("args." + self.opts["arg"][idx]["name"]))
+            field.setText(self.node.get_config("args." + self.opts["defs"][idx]["name"]))
             field.editingFinished.connect(mapper.map)
             mapper.setMapping(field, idx)
             widget.layout().addWidget(QtWidgets.QLabel(txt + ":"))
@@ -162,14 +162,14 @@ class AwTransformEdit(widgets.AwAbstructFrame):
         self.set_title(self.opts["title"])
 
     def edited(self, idx):
-        cfgkey = "args." + self.opts["arg"][idx]["name"]
+        cfgkey = "args." + self.opts["defs"][idx]["name"]
         self.node.update({"config": {cfgkey: self.fields[idx].text()}})
 
     @staticmethod
     def tostring(node, opts):
         result = opts["title"] + ": "
         for idx, txt in enumerate(["Tx", "Ty", "Tz", "Rx", "Ry", "Rz"]):
-            result += txt + "=" + node.get_config("args." + opts["arg"][idx]["name"]) + ", "
+            result += txt + "=" + node.get_config("args." + opts["defs"][idx]["name"]) + ", "
         return result
 
 

@@ -1,4 +1,4 @@
 args:
-    - { type: str, title: Local Frame, arg: local_frame }
-    - { type: str, title: Device Addr, arg: device_addr }
-    - { type: str, title: Device Port, arg: device_port }
+    - { type: str, title: Local Frame, defs: local_frame }
+    - { type: str, title: Device Addr, defs: device_addr }
+    - { type: str, title: Device Port, defs: device_port }

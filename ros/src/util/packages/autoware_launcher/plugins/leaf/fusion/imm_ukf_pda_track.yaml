@@ -1,50 +1,50 @@
 args:
-- arg: {default: /detection/fusion_tools/objects, name: tracker_input_topic}
+- defs: {default: /detection/fusion_tools/objects, name: tracker_input_topic}
   title: Tracker Input Topic
   type: str
-- arg: {default: /detection/objects, name: tracker_output_topic}
+- defs: {default: /detection/objects, name: tracker_output_topic}
   title: Tracker Output Topic
   type: str
-- arg: {default: world, name: tracking_frame}
+- defs: {default: world, name: tracking_frame}
   title: Tracking Frame
   type: str
-#- arg: {default: map, name: vectormap_frame}
+#- defs: {default: map, name: vectormap_frame}
 #  title: Vectormap Frame
 #  type: str
-- arg: {default: '8', name: life_time_thres}
+- defs: {default: '8', name: life_time_thres}
   title: Life Time Thres
   type: str
-- arg: {default: '9.22', name: gating_thres}
+- defs: {default: '9.22', name: gating_thres}
   title: Gating Thres
   type: str
-- arg: {default: '0.99', name: gate_probability}
+- defs: {default: '0.99', name: gate_probability}
   title: Gate Probability
   type: str
-- arg: {default: '0.9', name: detection_probability}
+- defs: {default: '0.9', name: detection_probability}
   title: Detection Probability
   type: str
-- arg: {default: '0.5', name: static_velocity_thres}
+- defs: {default: '0.5', name: static_velocity_thres}
   title: Static Velocity Thres
   type: str
-- arg: {default: '3', name: static_num_history_thres}
+- defs: {default: '3', name: static_num_history_thres}
   title: Static Num History Thres
   type: str
-- arg: {default: '1000', name: prevent_explosion_thres}
+- defs: {default: '1000', name: prevent_explosion_thres}
   title: Prevent Explosion Thres
   type: str
-- arg: {default: '2.71', name: lane_direction_chi_thres}
+- defs: {default: '2.71', name: lane_direction_chi_thres}
   title: Lane Direction Chi Thres
   type: str
-- arg: {default: '1', name: nearest_lane_distance_thres}
+- defs: {default: '1', name: nearest_lane_distance_thres}
   title: Nearest Lane Distance Thres
   type: str
-- arg: {default: '0.5', name: merge_distance_threshold}
+- defs: {default: '0.5', name: merge_distance_threshold}
   title: Merge Distance Threshold
   type: str
-- arg: {default: 'False', name: use_sukf}
+- defs: {default: 'False', name: use_sukf}
   title: Use Sukf
   type: str
-- arg: {default: 'False', name: use_vectormap}
+- defs: {default: 'False', name: use_vectormap}
   title: Use Vectormap
   type: str
 launch: $(find imm_ukf_pda_track)/launch/imm_ukf_pda_track.launch

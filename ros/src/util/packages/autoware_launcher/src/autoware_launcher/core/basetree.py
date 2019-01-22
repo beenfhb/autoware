@@ -4,7 +4,12 @@ import yaml
 
 
 class AwBaseTree(object):
-    pass
+
+    def __init__(self):
+        self.__nodes = {}
+
+    def find(self, path):
+        return __nodes.get(path)
 
 
 
