@@ -1,0 +1,15 @@
+<Plugin File> is [Dictionary]
+
+    args: List of <Arguments>
+
+<Arguments> is [List of Dictionary]
+
+    text: [String]
+    type: <Argument Type>
+    defs: <Argument Definition>
+
+<Argument Defs> is 
+
+    name: [String]
+    default: [Variant]
+

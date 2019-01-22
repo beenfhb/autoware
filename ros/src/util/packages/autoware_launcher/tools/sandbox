@@ -1,0 +1,11 @@
+#! /usr/bin/env python
+
+import rospkg
+from autoware_launcher.core import fspath
+
+rospack = rospkg.RosPack()
+for name in rospack.list():
+    path = rospack.get_path(name)
+    if path.startswith(fspath.autoware()):
+        print "{:35} {}".format(name, path)
+

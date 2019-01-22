@@ -1,6 +1,7 @@
 import os
 import yaml
 
+from . import basetree
 from . import console
 from . import fspath
 
