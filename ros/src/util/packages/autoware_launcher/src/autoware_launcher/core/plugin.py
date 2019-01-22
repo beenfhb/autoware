@@ -162,7 +162,7 @@ class AwPluginNode(object):
                 self.__rule[data["name"]] = data
 
         # Validation
-        args_type = ["str", "strlist", "int", "real", "tf", "file", "filelist", "calib"]
+        args_type = ["bool", "str", "strlist", "int", "real", "tf", "file", "filelist", "calib"]
         rule_type = ["unit", "list"]
         for data in self.__args:
             if data["type"] not in args_type: raise Exception("Plugin Args Type: " + filepath)
@@ -170,7 +170,7 @@ class AwPluginNode(object):
             if data["type"] not in rule_type: raise TypeError("Plugin Rule Type: " + filepath)
 
         # Auto complete function
-        args_default = {"str":"", "strlist":[],  "calib":"", "file":"", "filelist":[], "int":"0", "real":"0.0", "tf":"0.0"}
+        args_default = {"bool":"False", "str":"", "strlist":[],  "calib":"", "file":"", "filelist":[], "int":"0", "real":"0.0", "tf":"0.0"}
         def complete_args(argdata, argtype):
             if type(argdata) == str:
                 argdata = {"name": argdata}

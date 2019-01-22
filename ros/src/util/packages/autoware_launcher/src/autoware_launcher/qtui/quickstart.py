@@ -16,7 +16,7 @@ class AwQuickStartPanel(QtWidgets.QWidget):
         self.frames = {"root/" + name: None for name in ["map", "vehicle", "sensing", "visualization"]}
         self.awlogo = QtWidgets.QLabel()
 
-        pixmap = QtGui.QPixmap("/home/isamu-takagi/AutowareWork/autoware-launcher-py/ros/src/util/packages/runtime_manager/scripts/images/autoware_logo_1.png")
+        pixmap = QtGui.QPixmap(fspath.package("resources/autoware_logo.png"))
         self.awlogo.setPixmap(pixmap)
         self.awlogo.setAlignment(QtCore.Qt.AlignCenter)
         self.awlogo.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)

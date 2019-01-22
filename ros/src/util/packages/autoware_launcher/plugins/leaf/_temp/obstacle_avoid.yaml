@@ -1,7 +1,7 @@
 args:
 - defs: {default: 'False', name: avoidance}
   title: Avoidance
-  type: str
+  type: bool
 - defs: {default: '13', name: avoid_distance}
   title: Avoid Distance
   type: str

@@ -133,7 +133,11 @@ class AwQtGuiClient(object):
         self.__treeview.register_select_listener(self.__process)
         self.__treeview.register_select_listener(self.__control)
 
-        self.__server.make_profile("root/default")
+        if len(self.__sysarg) < 2:
+            self.__server.make_profile("root/default")
+        else:
+            self.__server.load_profile(self.__sysarg[1])
+
         return application.exec_()
 
 

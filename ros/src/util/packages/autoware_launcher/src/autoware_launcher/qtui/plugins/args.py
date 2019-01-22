@@ -7,6 +7,7 @@ from autoware_launcher.qtui import widgets
 def plugin_widgets():
     return \
     {
+        "bool"     : AwBoolEdit,
         "str"      : AwLineTextEdit,
         "strlist"  : AwTextListEdit,
         "topic"    : AwLineTextEdit,
@@ -66,6 +67,39 @@ class AwTextListEdit(widgets.AwAbstructFrame):
     @staticmethod
     def tostring(node, opts):
         return "{}: {}".format(opts["title"], "/".join(node.get_config("args." + opts["defs"]["name"])))
+
+
+
+class AwBoolEdit(widgets.AwAbstructFrame):
+
+    def __init__(self, guimgr, node, opts):
+        super(AwBoolEdit, self).__init__(guimgr, node, opts)
+        self.node = node
+        self.opts = opts
+
+        super(AwBoolEdit, self).setup_widget()
+        self.edit = QtWidgets.QCheckBox()
+        state = self.node.get_config("args." + self.opts["defs"]["name"])
+        if state == "True":
+            self.edit.setCheckState(QtCore.Qt.Checked)
+        if state == "False":
+            self.edit.setCheckState(QtCore.Qt.Unchecked)
+        self.edit.setText(state)
+        self.edit.stateChanged.connect(self.edited)
+        self.add_widget(self.edit)
+        self.set_title(self.opts["title"])
+
+    def edited(self, state):
+        print "edited" + str(state)
+        cfgkey = "args." + self.opts["defs"]["name"]
+        if state == QtCore.Qt.Checked:
+            self.node.update({"config": {cfgkey: "True"}})
+        if state == QtCore.Qt.Unchecked:
+            self.node.update({"config": {cfgkey: "False"}})
+
+    @staticmethod
+    def tostring(node, opts):
+        return "{}: {}".format(opts["title"], node.get_config("args." + opts["defs"]["name"]))
 
 
 
