@@ -5,8 +5,8 @@
   <xacro:include filename="$(find vehicle_description)/xacro/vehicle/steering.xacro" />
   <xacro:include filename="$(find velodyne_description)/xacro/sensor/urdf/HDL-32E.urdf.xacro"/>
   <xacro:include filename="$(find velodyne_description)/xacro/sensor/VLP-16.urdf.xacro"/>
-  <xacro:include filename="$(find velodyne_description)/xacro/sensor/monocular_camera.xacro"/>
-  <xacro:include filename="$(find velodyne_description)/xacro/sensor/imu.xacro"/>
+  <xacro:include filename="$(find vehicle_description)/xacro/sensor/monocular_camera.xacro"/>
+  <xacro:include filename="$(find vehicle_description)/xacro/sensor/imu.xacro"/>
 
   <xacro:arg name="gpu" default="false"/>
 
