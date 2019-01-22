@@ -24,6 +24,8 @@
 #include "datasets/OxfordDataset.h"
 #include "datasets/MeidaiBagDataset.h"
 
+#include <pcl/point_types.h>
+
 
 class DatasetBrowser: public QWidget
 {
@@ -50,6 +52,8 @@ public slots:
 	void on_preprocessImageCheck_stateChanged(int s);
 	void on_frame_mouseMove(int x, int y);
 	void on_scaleInput_editingFinished();
+	void on_pcdFileChooser_clicked(bool c);
+	void on_pcdCheckShow_stateChanged(int s);
 
 private:
 	Ui::DatasetBrowser_frm ui;
@@ -81,6 +85,7 @@ private:
 	const;
 
 	static void drawPoints (cv::Mat &target, const std::vector<BaseFrame::PointXYI> &pointList);
+	static void drawPoints (cv::Mat &target, const BaseFrame::MatrixProjectionResult &pointM);
 
 	GenericDataItem::ConstPtr dataItem0;
 
@@ -88,6 +93,9 @@ private:
 	LidarScanBag::Ptr meidaiPointClouds = nullptr;
 
 	std::string getCurrentFrameInfo(uint32_t frNum) const;
+
+	pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloudMap = nullptr;
+
 };
 
 #endif /* _DATASETBROWSER_H_ */

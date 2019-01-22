@@ -272,6 +272,47 @@ BaseFrame::height() const
 }
 
 
+void
+BaseFrame::projectPointCloud(
+		pcl::PointCloud<pcl::PointXYZ>::ConstPtr pointsInWorld,
+		const CameraPinholeParams &camera,
+		const Pose &cameraPose,
+		const double cutDistance,
+		MatrixProjectionResult &projRes)
+{
+	pcl::FrustumCulling<pcl::PointXYZ> frustum;
+
+	frustum.setInputCloud(pointsInWorld);
+	frustum.setNearPlaneDistance(0.5);
+	frustum.setFarPlaneDistance(cutDistance);
+	frustum.setHorizontalFOV(camera.getHorizontalFoV() * 180 / M_PI);
+	frustum.setVerticalFOV(camera.getVerticalFoV() * 180 / M_PI);
+
+	Eigen::Matrix4f cam2robot;
+	cam2robot <<
+			0, 0, 1, 0,
+            0,-1, 0, 0,
+            1, 0, 0, 0,
+            0, 0, 0, 1;
+	Matrix4f poseFilt = cameraPose.cast<float>() * cam2robot;
+	frustum.setCameraPose(poseFilt);
+
+	pcl::PointCloud<pcl::PointXYZ> filtered;
+	frustum.filter(filtered);
+
+	projRes.resize(filtered.size(), Eigen::NoChange);
+	// Must use this matrix data type (dont use auto)
+	Matrix<double,3,4> camMat4 = camera.toMatrix() * createExternalParamMatrix4(cameraPose);
+	for (uint64 i=0; i<filtered.size(); ++i) {
+		auto pp = filtered.at(i);
+		Vector4d pv(pp.x, pp.y, pp.z, 1);
+		Vector3d pj = camMat4 * pv;
+		pj /= pj[2];
+		projRes.row(i) = pj.hnormalized();
+	}
+}
+
+
 /*
  * Project point cloud in World Coordinate (eg. PCL Map) to this frame
  */
@@ -281,36 +322,7 @@ BaseFrame::projectPointCloud(
 	const double cutDistance,
 	MatrixProjectionResult &projRes) const
 {
-	pcl::FrustumCulling<pcl::PointXYZ> frustum;
-//	pointsIn.
-
-	frustum.setInputCloud(pointsInWorld);
-	frustum.setNearPlaneDistance(0.5);
-	frustum.setFarPlaneDistance(cutDistance);
-	frustum.setHorizontalFOV(cameraParam.getHorizontalFoV() * 180 / M_PI);
-	frustum.setVerticalFOV(cameraParam.getVerticalFoV() * 180 / M_PI);
-
-	Eigen::Matrix4f cam2robot;
-	cam2robot <<
-			0, 0, 1, 0,
-            0,-1, 0, 0,
-            1, 0, 0, 0,
-            0, 0, 0, 1;
-	Matrix4f poseFilt = this->mPose.cast<float>() * cam2robot;
-	frustum.setCameraPose(poseFilt);
-
-	pcl::PointCloud<pcl::PointXYZ> filtered;
-	frustum.filter(filtered);
-
-	projRes.resize(filtered.size(), Eigen::NoChange);
-	auto camMat4 = projectionMatrix();
-	for (uint64 i=0; i<filtered.size(); ++i) {
-		auto pp = filtered.at(i);
-		Vector4d pv(pp.x, pp.y, pp.z, 1);
-		Vector3d pj = camMat4 * pv;
-		pj /= pj[2];
-		projRes.row(i) = pj.hnormalized();
-	}
+	return projectPointCloud(pointsInWorld, cameraParam, mPose, cutDistance, projRes);
 }
 
 
@@ -325,7 +337,8 @@ BaseFrame::projectPointCloud(
 	cv::Mat frameImage = this->image.clone();
 	MatrixProjectionResult projRes;
 
-	projectPointCloud(pointsInWorld, cutDistance, projRes);
+//	projectPointCloud(pointsInWorld, cutDistance, projRes);
+	projectPointCloud(pointsInWorld, cameraParam, mPose, cutDistance, projRes);
 	for (int r=0; r<projRes.rows(); ++r) {
 		cv::Point2f p2f (projRes(r,0), projRes(r,1));
 		cv::circle(frameImage, p2f, 2, cv::Scalar(0,0,255));

@@ -77,6 +77,14 @@ public:
 		const double cutDistance,
 		MatrixProjectionResult &projRes) const;
 
+	static void
+	projectPointCloud(
+		pcl::PointCloud<pcl::PointXYZ>::ConstPtr pointsInWorld,
+		const CameraPinholeParams &camera,
+		const Pose &cameraPose,
+		const double cutDistance,
+		MatrixProjectionResult &res);
+
 	/*
 	 * Project/Render point cloud in World Coordinate using image of this frame
 	 */

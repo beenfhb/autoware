@@ -135,6 +135,8 @@ bool isTimeInside (const LidarScanBag::Ptr &bg, ros::Time Tx)
 }
 
 
+const double pcdMapFarDistance = 100;
+
 void
 DatasetBrowser::setImageOnPosition (int v)
 {
@@ -165,6 +167,14 @@ DatasetBrowser::setImageOnPosition (int v)
 
 				drawPoints(image, projections);
 			}
+		}
+	} catch (const std::exception &e) {}
+
+	try {
+		if (ui.pcdCheckShow->isChecked() and pointCloudMap!=nullptr) {
+			BaseFrame::MatrixProjectionResult pcdmapProj;
+			BaseFrame::projectPointCloud(pointCloudMap, datasetCameraParam, curItem->getPose(), pcdMapFarDistance, pcdmapProj);
+			drawPoints(image, pcdmapProj);
 		}
 	} catch (const std::exception &e) {}
 
@@ -318,6 +328,16 @@ DatasetBrowser::drawPoints
 }
 
 
+void
+DatasetBrowser::drawPoints (cv::Mat &target, const BaseFrame::MatrixProjectionResult &pointM)
+{
+	for (int r=0; r<pointM.rows(); ++r) {
+		cv::Point2f p2f (pointM(r,0), pointM(r,1));
+		cv::circle(target, p2f, 2, projectionColor, -1);
+	}
+}
+
+
 std::string
 DatasetBrowser::getCurrentFrameInfo(uint32_t frNum) const
 {
@@ -342,4 +362,26 @@ DatasetBrowser::getCurrentFrameInfo(uint32_t frNum) const
 	}
 
 	return ss.str();
+}
+
+
+void
+DatasetBrowser::on_pcdFileChooser_clicked(bool c)
+{
+	QString pcdFilename = QFileDialog::getOpenFileName(this, "Open PCD File");
+	disableControlsOnPlaying(true);
+
+	pointCloudMap = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PCDReader fReader;
+	fReader.read(pcdFilename.toStdString(), *pointCloudMap);
+	ui.pcdCheckShow->setDisabled(false);
+
+	disableControlsOnPlaying(false);
+}
+
+
+void
+DatasetBrowser::on_pcdCheckShow_stateChanged(int s)
+{
+	setImageOnPosition(timelineSlider->sliderPosition());
 }
