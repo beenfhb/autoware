@@ -72,13 +72,7 @@ KeyFrame::KeyFrame(
 
 	id = nextId++;
 
-	// Enforce gray image before computing features
-	cv::Mat grayImg;
-	if (imgSrc.channels()==1)
-		grayImg = imgSrc;
-	else
-		cv::cvtColor(imgSrc, grayImg, CV_BGR2GRAY, 1);
-	image = grayImg;
+	image = imgSrc;
 	computeFeatures(fdetector, mask);
 }
 

@@ -504,12 +504,7 @@ VMap::createFeatureDetector(FeatureDetectorT fd)
 	switch (fd) {
 	case FeatureDetectorT::ORB: {
 		cv::Ptr<cv::ORB> ORBf = cv::ORB::create(
-			MAX_ORB_POINTS_IN_FRAME,
-			1.2f,
-			8,
-			31,
-			0,
-			4);
+			MAX_ORB_POINTS_IN_FRAME);
 		rt = ORBf;
 
 		// Fill scale factors
@@ -602,7 +597,7 @@ VMap::createDescriptorMatcher(DescriptorMatcherT dm)
 	switch (dm) {
 	case DescriptorMatcherT::BruteForce:
 		// XXX: Should we activate cross-check for BFMatcher ?
-		return cv::BFMatcher::create(cv::NORM_HAMMING2);
+		return cv::BFMatcher::create(cv::NORM_HAMMING, false);
 		break;
 	}
 }

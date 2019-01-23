@@ -9,6 +9,7 @@
 #include <Matcher.h>
 
 #include "utilities.h"
+#include <opencv2/core/eigen.hpp>
 
 
 using namespace std;
@@ -41,16 +42,16 @@ Matcher::createMatcherMask(
 
 cv::Mat
 Matcher::createMatcherMask(
-	const KeyFrame &kf1, const KeyFrame &kf2,
+	const BaseFrame &kf1, const BaseFrame &kf2,
 	const WhichKpId &map1to2)
 {
-	cv::Mat mask (kf2.numOfKeyPoints(), kf1.numOfKeyPoints(), CV_8UC1, 0);
+	cv::Mat mask (kf1.numOfKeyPoints(), kf2.numOfKeyPoints(), CV_8UC1, 0);
 
 	for (auto &pr: map1to2) {
 		const kpid &k1 = pr.first;
 		const auto &kp2list = pr.second;
 		for (auto &k2: kp2list) {
-			mask.at<char>(k2, k1) = 0xff;
+			mask.at<char>(k1, k2) = 0xff;
 		}
 	}
 
@@ -83,6 +84,9 @@ bool Matcher::isKeypointInEpipolarLine (const Line2 &epl2, const cv::KeyPoint &c
 }
 
 
+/*
+ * XXX: This function is subject to elimination
+ */
 void
 Matcher::matchForInitialization(
 		const KeyFrame &kf1,
@@ -170,53 +174,80 @@ Matcher::matchAny(
 
 	// Establish initial correspondences
 	vector<cv::DMatch> initialMatches;
-	matcher->match(Fr2.fDescriptors, Fr1.fDescriptors, initialMatches);
+	matcher->match(Fr1.fDescriptors, Fr2.fDescriptors, initialMatches);
+	sort(initialMatches.begin(), initialMatches.end());
 	vector<int> inliersMatch;
 
 	// Debug
+/*
 	featurePairs.reserve(initialMatches.size());
-	sort(initialMatches.begin(), initialMatches.end(),
-		[&](const cv::DMatch &m1, const cv::DMatch &m2)
-		{return m1 < m2;}
-	);
-	for (int i=0; i<200; ++i) {
+	for (int i=0; i<100; ++i) {
 		auto pr = initialMatches[i];
-		featurePairs.push_back( make_pair((kpid)pr.trainIdx, (kpid)pr.queryIdx) );
+		featurePairs.push_back( make_pair(static_cast<kpid>(pr.queryIdx), static_cast<kpid>(pr.trainIdx)) );
 	}
 	return;
+*/
 
 	// Find outlier/inlier
 	for (int ip=0; ip<initialMatches.size(); ++ip) {
 
 		auto dm = initialMatches[ip];
-		Line2 line2 = createEpipolarLine(F12, Fr1.fKeypoints[dm.trainIdx]);
-		if (isKeypointInEpipolarLine(line2, Fr2.fKeypoints[dm.queryIdx])==true) {
+		Line2 line2 = createEpipolarLine(F12, Fr1.fKeypoints[dm.queryIdx]);
+		if (isKeypointInEpipolarLine(line2, Fr2.fKeypoints[dm.trainIdx])==true) {
 			inliersMatch.push_back(ip);
 		}
 	}
 
 	// XXX: Debug
+/*
 	featurePairs.reserve(inliersMatch.size());
 	for (auto &i: inliersMatch) {
 		auto pr = initialMatches[i];
-		featurePairs.push_back( make_pair((kpid)pr.trainIdx, (kpid)pr.queryIdx) );
+		featurePairs.push_back( make_pair((kpid)pr.queryIdx, (kpid)pr.trainIdx) );
 	}
 	return;
+*/
 
 	// Compute F
 	cv::Mat points1(inliersMatch.size(), 2, CV_32F),
 			points2(inliersMatch.size(), 2, CV_32F);
 	for (int ip=0; ip<inliersMatch.size(); ++ip) {
 		cv::DMatch m = initialMatches[inliersMatch[ip]];
-		points1.at<float>(ip,0) = Fr1.fKeypoints[m.trainIdx].pt.x;
-		points1.at<float>(ip,1) = Fr1.fKeypoints[m.trainIdx].pt.y;
-		points2.at<float>(ip,0) = Fr2.fKeypoints[m.queryIdx].pt.x;
-		points2.at<float>(ip,1) = Fr2.fKeypoints[m.queryIdx].pt.y;
+		points1.at<float>(ip,0) = Fr1.fKeypoints[m.queryIdx].pt.x;
+		points1.at<float>(ip,1) = Fr1.fKeypoints[m.queryIdx].pt.y;
+		points2.at<float>(ip,0) = Fr2.fKeypoints[m.trainIdx].pt.x;
+		points2.at<float>(ip,1) = Fr2.fKeypoints[m.trainIdx].pt.y;
 	}
 	cv::Mat Fcv = cv::findFundamentalMat(points1, points2);
-	// XXX: Unfinished
+	Matrix3d F12x;
+	cv2eigen(Fcv, F12x);
 
-	// Let's do matching again
+	// Let's do guided matching using epipolar lines
+	WhichKpId kpList1to2;
+	for (kpid i1=0; i1<Fr1.fKeypoints.size(); ++i1) {
+		Vector2d keypoint1 (Fr1.fKeypoints[i1].pt.x, Fr1.fKeypoints[i1].pt.y);
+
+		// Epipolar line in KF2 for this keypoint
+		Line2 epl2 = createEpipolarLine(F12x, Fr1.fKeypoints[i1]);
+
+		set<kpid> kf2targetList;
+		kf2targetList.clear();
+
+		for(kpid i2=0; i2<Fr2.fKeypoints.size(); ++i2) {
+			if (isKeypointInEpipolarLine(epl2, Fr2.fKeypoints[i2]) == false)
+				continue;
+			kf2targetList.insert(i2);
+		}
+
+		if (kf2targetList.size() != 0)
+			kpList1to2.insert(make_pair(i1, kf2targetList));
+	}
+
+	cv::Mat matcherMask = createMatcherMask(Fr1, Fr2, kpList1to2);
+	vector<cv::DMatch> matchResult;
+	matcher->clear();
+	matcher->match(Fr1.fDescriptors, Fr2.fDescriptors, matchResult, matcherMask);
+	sort(matchResult.begin(), matchResult.end());
 
 	// Convert F to Essential Matrix E, and compute R & T from Fr1 to Fr2
 
@@ -231,16 +262,17 @@ Matcher::drawMatches(
 	const std::vector<KpPair> &featurePairs,
 	DrawMode mode)
 {
-	cv::Mat result(std::max(F1.height(), F2.height()), F1.width()+F2.width(), F1.image.type());
-	F1.image.copyTo( result(cv::Rect(0,0,F1.width(),F1.height())) );
-	F2.image.copyTo( result(cv::Rect(F1.width(),0,F2.width(),F2.height())) );
+//	cv::Mat result(std::max(F1.height(), F2.height()), F1.width()+F2.width(), F1.image.type());
+//	F1.image.copyTo( result(cv::Rect(0,0,F1.width(),F1.height())) );
+//	F2.image.copyTo( result(cv::Rect(F1.width(),0,F2.width(),F2.height())) );
+	cv::Mat result = F2.image.clone();
 
 	vector<pair<cv::Point2f, cv::Point2f>> pointPairList(featurePairs.size());
 	for (int i=0; i<featurePairs.size(); ++i) {
-		cv::Point2f p2 = F2.fKeypoints[i].pt;
-		p2.x += F1.width();
+		cv::Point2f p2 = F2.fKeypoints[featurePairs[i].second].pt;
+//		p2.x += F1.width();
 		pointPairList[i] = make_pair(
-			F1.fKeypoints[i].pt,
+			F1.fKeypoints[featurePairs[i].first].pt,
 			p2);
 	}
 
@@ -253,16 +285,16 @@ Matcher::drawMatches(
 		pointRadius = 3;
 
 	// Draw P2 in P1
-	Pose P1z = F2.pose();
-	Vector2d C2in1 = F1.project(P1z.position());
-	cv::circle(result, cv::Point2f(C2in1.x(), C2in1.y()), pointRadius*2, colorYellow);
+//	Pose P1z = F2.pose();
+//	Vector2d C2in1 = F1.project(P1z.position());
+//	cv::circle(result, cv::Point2f(C2in1.x(), C2in1.y()), pointRadius*2, colorYellow);
 
 	if (mode==DrawOpticalFlow) {
 		for (auto &pr: pointPairList) {
-			cv::circle(result, pr.first, pointRadius, colorBlue);
+//			cv::circle(result, pr.first, pointRadius, colorBlue);
 			cv::circle(result, pr.second, pointRadius, colorBlue);
 			cv::Point2f pt1s = pr.first;
-			pt1s.x += F1.width();
+//			pt1s.x += F1.width();
 			cv::line(result, pt1s, pr.second, colorGreen);
 		}
 	}

@@ -123,6 +123,12 @@ public:
 
 	BaseFrame::Ptr getAsFrame(dataItemId i) const;
 
+	// Circle of Confusion
+	virtual float getFullResolutionCoC () const = 0;
+	// Basically, FullResCoC * zoomRatio
+	inline float getCoC () const
+	{ return getFullResolutionCoC()*getZoomRatio(); }
+
 protected:
 	static std::string dSetName;
 };

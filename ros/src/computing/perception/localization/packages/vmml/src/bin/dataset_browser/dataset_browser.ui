@@ -142,7 +142,7 @@
              <item row="1" column="0">
               <widget class="QLabel" name="label">
                <property name="text">
-                <string>X</string>
+                <string>Cursor X</string>
                </property>
               </widget>
              </item>
@@ -156,7 +156,7 @@
              <item row="2" column="0">
               <widget class="QLabel" name="label_2">
                <property name="text">
-                <string>Y</string>
+                <string>Cursor Y</string>
                </property>
               </widget>
              </item>

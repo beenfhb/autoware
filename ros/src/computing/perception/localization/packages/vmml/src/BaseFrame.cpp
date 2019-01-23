@@ -99,8 +99,15 @@ BaseFrame::computeFeatures (cv::Ptr<cv::FeatureDetector> fd, const cv::Mat &mask
 {
 	assert (image.empty() == false);
 
+	// Enforce gray image before computing features
+	cv::Mat grayImg;
+	if (image.channels()==1)
+		grayImg = image;
+	else
+		cv::cvtColor(image, grayImg, CV_BGR2GRAY, 1);
+
 	fd->detectAndCompute(
-		image,
+		grayImg,
 		mask,
 		fKeypoints,
 		fDescriptors,

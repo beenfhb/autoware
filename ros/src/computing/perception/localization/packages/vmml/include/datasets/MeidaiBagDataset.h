@@ -310,6 +310,10 @@ public:
 	} cameraTrackSource;
 
 
+	inline float getFullResolutionCoC() const
+	{ return 1.74545; }
+
+
 protected:
 	static std::string dSetName;
 

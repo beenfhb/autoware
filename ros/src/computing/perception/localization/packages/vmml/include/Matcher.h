@@ -73,7 +73,7 @@ protected:
 
 	static cv::Mat
 	createMatcherMask(
-		const KeyFrame &kf1, const KeyFrame &kf2,
+		const BaseFrame &kf1, const BaseFrame &kf2,
 		const std::map<kpid, std::set<kpid>> &map1to2);
 
 	static bool

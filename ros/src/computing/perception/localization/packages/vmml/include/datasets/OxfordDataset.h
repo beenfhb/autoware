@@ -220,6 +220,9 @@ public:
 
 	virtual Trajectory getCameraTrajectory(const ptime timeStart=MIN_TIME, const ptime timeStop=MAX_TIME) const;
 
+	inline virtual float getFullResolutionCoC() const
+	{ return 1.33333; }
+
 protected:
 	CameraPinholeParams oxfCamera;
 
