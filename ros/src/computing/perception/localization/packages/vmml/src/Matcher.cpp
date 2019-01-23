@@ -45,7 +45,9 @@ Matcher::createMatcherMask(
 	const BaseFrame &kf1, const BaseFrame &kf2,
 	const WhichKpId &map1to2)
 {
-	cv::Mat mask (kf1.numOfKeyPoints(), kf2.numOfKeyPoints(), CV_8UC1, 0);
+//	cv::Mat mask (kf1.numOfKeyPoints(), kf2.numOfKeyPoints(), CV_8UC1, 0);
+	cv::Mat mask;
+	mask = cv::Mat::zeros(kf1.numOfKeyPoints(), kf2.numOfKeyPoints(), CV_8UC1);
 
 	for (auto &pr: map1to2) {
 		const kpid &k1 = pr.first;
@@ -222,7 +224,7 @@ Matcher::matchAny(
 	Matrix3d F12x;
 	cv2eigen(Fcv, F12x);
 
-	// Let's do guided matching using epipolar lines
+	// Guided matching using epipolar lines
 	WhichKpId kpList1to2;
 	for (kpid i1=0; i1<Fr1.fKeypoints.size(); ++i1) {
 		Vector2d keypoint1 (Fr1.fKeypoints[i1].pt.x, Fr1.fKeypoints[i1].pt.y);
@@ -248,6 +250,17 @@ Matcher::matchAny(
 	matcher->clear();
 	matcher->match(Fr1.fDescriptors, Fr2.fDescriptors, matchResult, matcherMask);
 	sort(matchResult.begin(), matchResult.end());
+
+	// Debug
+/*
+	featurePairs.reserve(matchResult.size());
+	for (int i=0; i<matchResult.size(); ++i) {
+		auto &dm = matchResult[i];
+		auto p = make_pair(static_cast<kpid>(dm.queryIdx), static_cast<kpid>(dm.trainIdx));
+		featurePairs.push_back(p);
+	}
+	return;
+*/
 
 	// Convert F to Essential Matrix E, and compute R & T from Fr1 to Fr2
 
