@@ -102,8 +102,9 @@ struct AutowareStatus
 
   int found_stopsign_idx;
   int prev_stopped_wpidx;
+  int ordered_stop_idx;
 
-  AutowareStatus(void) : closest_waypoint(-1), velocity(0), found_stopsign_idx(-1), obstacle_waypoint(-1)
+  AutowareStatus(void) : closest_waypoint(-1), velocity(0), found_stopsign_idx(-1), obstacle_waypoint(-1), ordered_stop_idx(-1)
   {
   }
 
@@ -284,7 +285,6 @@ private:
   // entry callback
   void entryDriveState(cstring_t& state_name, int status);
   void entryGoState(cstring_t& state_name, int status);
-  void entryStopState(cstring_t& state_name, int status);
   // update callback
   void updateWaitDriveReadyState(cstring_t& state_name, int status);
   void updateWaitEngageState(cstring_t& state_name, int status);
@@ -294,6 +294,8 @@ private:
   void updateWaitState(cstring_t& state_name, int status);
   void updateStopState(cstring_t& state_name, int status);
   void updateStoplineState(cstring_t& state_name, int status);
+  void updateOrderedStopState(cstring_t& state_name, int status);
+  void updateReservedStopState(cstring_t& state_name, int status);
   // exit callback
   void exitWaitState(cstring_t& state_name, int status);
   void exitStopState(cstring_t& state_name, int status);
@@ -311,6 +313,8 @@ private:
   void callbackFromConfig(const autoware_config_msgs::ConfigDecisionMaker& msg);
   void callbackFromStateCmd(const std_msgs::String& msg);
   void callbackFromObstacleWaypoint(const std_msgs::Int32& msg);
+  void callbackFromStopOrder(const std_msgs::Int32& msg);
+  void callbackFromClearOrder(const std_msgs::Int32& msg);
 
   void setEventFlag(cstring_t& key, const bool& value)
   {
