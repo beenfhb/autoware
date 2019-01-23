@@ -158,8 +158,8 @@ void VMap::estimateStructure(const kfid &kfid1, const kfid &kfid2)
 		*kf2 = getKeyFrameById(kfid2);
 
 	vector<FeaturePair> featurePairs_1_2;
-//	KeyFrame::match(*kf1, *kf2, descriptorMatcher, featurePairs_1_2);
-	Matcher::matchForInitialization(*kf1, *kf2, featurePairs_1_2, descriptorMatcher);
+	KeyFrame::match(*kf1, *kf2, descriptorMatcher, featurePairs_1_2);
+//	Matcher::matchForInitialization(*kf1, *kf2, featurePairs_1_2, descriptorMatcher);
 
 	vector<mpid> newMapPointList;
 	KeyFrame::triangulate(kf1, kf2, newMapPointList, featurePairs_1_2,
@@ -503,7 +503,13 @@ VMap::createFeatureDetector(FeatureDetectorT fd)
 
 	switch (fd) {
 	case FeatureDetectorT::ORB: {
-		cv::Ptr<cv::ORB> ORBf = cv::ORB::create(MAX_ORB_POINTS_IN_FRAME);
+		cv::Ptr<cv::ORB> ORBf = cv::ORB::create(
+			MAX_ORB_POINTS_IN_FRAME,
+			1.2f,
+			8,
+			31,
+			0,
+			4);
 		rt = ORBf;
 
 		// Fill scale factors

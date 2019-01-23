@@ -174,12 +174,12 @@ Matcher::matchAny(
 	vector<int> inliersMatch;
 
 	// Debug
-	featurePairs.reserve(inliersMatch.size());
+	featurePairs.reserve(initialMatches.size());
 	sort(initialMatches.begin(), initialMatches.end(),
 		[&](const cv::DMatch &m1, const cv::DMatch &m2)
-		{return m1.distance > m2.distance;}
+		{return m1 < m2;}
 	);
-	for (int i=0; i<100; ++i) {
+	for (int i=0; i<200; ++i) {
 		auto pr = initialMatches[i];
 		featurePairs.push_back( make_pair((kpid)pr.trainIdx, (kpid)pr.queryIdx) );
 	}
@@ -252,11 +252,11 @@ Matcher::drawMatches(
 	const int
 		pointRadius = 3;
 
+	// Draw P2 in P1
 	Pose P1z = F2.pose();
 	Vector2d C2in1 = F1.project(P1z.position());
-	cv::circle(result, cv::Point2f(C2in1.x(), C2in1.y()), pointRadius, colorYellow);
+	cv::circle(result, cv::Point2f(C2in1.x(), C2in1.y()), pointRadius*2, colorYellow);
 
-	// XXX: Unfinished
 	if (mode==DrawOpticalFlow) {
 		for (auto &pr: pointPairList) {
 			cv::circle(result, pr.first, pointRadius, colorBlue);
