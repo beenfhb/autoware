@@ -891,6 +891,10 @@ private:
 		auto
 			Frame1 = loadedDataset->getAsFrame(frnum1),
 			Frame2 = loadedDataset->getAsFrame(frnum2);
+		/*
+		 * Set circle of confusion as uncertainty of 2D points
+		 */
+		Matcher::circleOfConfusionDiameter = loadedDataset->getCoC();
 
 		MapBuilder2 mpBuilder;
 		auto cvFeatDetector = mpBuilder.getMap()->getFeatureDetector();

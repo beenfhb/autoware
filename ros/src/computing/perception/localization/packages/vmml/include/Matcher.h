@@ -64,6 +64,12 @@ public:
 		const std::vector<KpPair> &featurePairs,
 		DrawMode m);
 
+	static void
+	decomposeE (const Eigen::Matrix3d &E, Eigen::Matrix3d &R1, Eigen::Matrix3d &R2, Eigen::Vector3d &t);
+
+	static float
+	circleOfConfusionDiameter;
+
 protected:
 
 	static cv::Mat
@@ -79,7 +85,12 @@ protected:
 	static bool
 	isKeypointInEpipolarLine (const Line2 &epl2, const cv::KeyPoint &cvkp2);
 
-
+	static int
+	CheckRT (
+		const Eigen::Matrix3d R, const Eigen::Vector3d &t,
+		const BaseFrame &F1, const BaseFrame &F2,
+		const std::vector<KpPair> &featurePairs,
+		float &parallax);
 };
 
 #endif /* _MATCHER_H_ */

@@ -25,9 +25,6 @@ using namespace Eigen;
 kfid KeyFrame::nextId = 1;
 
 
-Vector2d cv2eigen (const cv::Point2f &p)
-{ return Eigen::Vector2d (p.x, p.y); }
-
 typedef Matrix<double,3,4> poseMatrix;
 typedef Matrix4d poseMatrix4;
 

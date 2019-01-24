@@ -28,6 +28,10 @@
 class MapPoint;
 
 
+inline Eigen::Vector2d cv2eigen (const cv::Point2f &p)
+{ return Eigen::Vector2d (p.x, p.y); }
+
+
 class BaseFrame
 {
 public:
@@ -107,7 +111,9 @@ public:
 	 */
 	static Eigen::Matrix4d createExternalParamMatrix4(const Pose &ps);
 
-	Eigen::Matrix<double,3,4> projectionMatrix () const;
+	typedef Eigen::Matrix<double,3,4> ProjectionMat;
+
+	ProjectionMat projectionMatrix () const;
 
 	/*
 	 * Normal vector; Or, Z-Axis of this frame

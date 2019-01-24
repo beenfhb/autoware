@@ -9,6 +9,8 @@
 #include <Matcher.h>
 
 #include "utilities.h"
+#include "triangulation.h"
+
 #include <opencv2/core/eigen.hpp>
 
 
@@ -19,6 +21,9 @@ using namespace Eigen;
 typedef
 	std::map<kpid, std::set<kpid>>
 		WhichKpId;
+
+float
+	Matcher::circleOfConfusionDiameter = 1.0;
 
 
 cv::Mat
@@ -37,6 +42,34 @@ Matcher::createMatcherMask(
 	}
 
 	return mask;
+}
+
+
+void
+Matcher::decomposeE (
+	const Eigen::Matrix3d &E,
+	Eigen::Matrix3d &R1, Eigen::Matrix3d &R2,
+	Eigen::Vector3d &t)
+{
+	JacobiSVD <Matrix3d> svd(E, ComputeFullU|ComputeFullV);
+	Matrix3d U, W, V;
+	U = svd.matrixU();
+	V = svd.matrixV();
+
+	t = U.col(2);
+	t /= t.norm();
+
+	W = Matrix3d::Zero();
+	W(0,1) = -1;
+	W(1,0) = 1;
+	W(2,2) = 1;
+
+	R1 = U * W * V.transpose();
+	if (R1.determinant() < 0)
+		R1 = -R1;
+	R2 = U * W.transpose() * V.transpose();
+	if (R2.determinant() < 0)
+		R2 = -R2;
 }
 
 
@@ -72,6 +105,9 @@ Line2 createEpipolarLine (const Matrix3d &F12, const cv::KeyPoint &kp1)
 }
 
 
+/*
+ * XXX: Modify this function to employ circle of confusion instead of scale factors
+ */
 bool Matcher::isKeypointInEpipolarLine (const Line2 &epl2, const cv::KeyPoint &cvkp2)
 {
 	Vector2d kp2(cvkp2.pt.x, cvkp2.pt.y);
@@ -190,7 +226,9 @@ Matcher::matchAny(
 	return;
 */
 
-	// Find outlier/inlier
+	/*
+	 * Find outlier/inlier
+	 */
 	for (int ip=0; ip<initialMatches.size(); ++ip) {
 
 		auto dm = initialMatches[ip];
@@ -210,7 +248,9 @@ Matcher::matchAny(
 	return;
 */
 
-	// Compute F
+	/*
+	 * Compute F
+	 */
 	cv::Mat points1(inliersMatch.size(), 2, CV_32F),
 			points2(inliersMatch.size(), 2, CV_32F);
 	for (int ip=0; ip<inliersMatch.size(); ++ip) {
@@ -224,7 +264,9 @@ Matcher::matchAny(
 	Matrix3d F12x;
 	cv2eigen(Fcv, F12x);
 
-	// Guided matching using epipolar lines
+	/*
+	 * Guided matching using epipolar lines
+	 */
 	WhichKpId kpList1to2;
 	for (kpid i1=0; i1<Fr1.fKeypoints.size(); ++i1) {
 		Vector2d keypoint1 (Fr1.fKeypoints[i1].pt.x, Fr1.fKeypoints[i1].pt.y);
@@ -251,20 +293,30 @@ Matcher::matchAny(
 	matcher->match(Fr1.fDescriptors, Fr2.fDescriptors, matchResult, matcherMask);
 	sort(matchResult.begin(), matchResult.end());
 
-	// Debug
-/*
-	featurePairs.reserve(matchResult.size());
-	for (int i=0; i<matchResult.size(); ++i) {
-		auto &dm = matchResult[i];
-		auto p = make_pair(static_cast<kpid>(dm.queryIdx), static_cast<kpid>(dm.trainIdx));
-		featurePairs.push_back(p);
+	/*
+	 * Weed out outliers
+	 * Put valid feature pairs in results
+	 */
+	inliersMatch.clear();
+	for (int ip=0; ip<matchResult.size(); ++ip) {
+		auto dm = matchResult[ip];
+		Line2 line2 = createEpipolarLine(F12x, Fr1.fKeypoints[dm.queryIdx]);
+		if (isKeypointInEpipolarLine(line2, Fr2.fKeypoints[dm.trainIdx])==true) {
+			inliersMatch.push_back(ip);
+			auto p = make_pair(static_cast<kpid>(dm.queryIdx), static_cast<kpid>(dm.trainIdx));
+			featurePairs.push_back(p);
+		}
 	}
-	return;
-*/
+//	return;
 
-	// Convert F to Essential Matrix E, and compute R & T from Fr1 to Fr2
-
-	// Put valid feature pairs in results
+	/*
+	 * Convert F to Essential Matrix E, and compute R & T from Fr1 to Fr2
+	 */
+	Matrix3d Ex = Fr2.cameraParam.toMatrix3().transpose() * F12x * Fr1.cameraParam.toMatrix3();
+	Matrix3d R1, R2;
+	Vector3d t1, t2;
+	decomposeE(Ex, R1, R2, t1);
+	t2 = -t1;
 }
 
 
@@ -323,4 +375,90 @@ Matcher::drawMatches(
 	else throw runtime_error("Invalid mode");
 
 	return result;
+}
+
+
+int
+Matcher::CheckRT (
+	const Eigen::Matrix3d R, const Eigen::Vector3d &t,
+	const BaseFrame &F1, const BaseFrame &F2,
+	const std::vector<KpPair> &featurePairs,
+	float &parallax)
+{
+	int nGood = 0;
+	Vector3d
+		origin1 = Vector3d::Zero(),
+		origin2 = -R.transpose() * t;
+
+	// Build new projection matrices
+	// For camera 1: K[I | O]
+	BaseFrame::ProjectionMat P1 = BaseFrame::ProjectionMat::Zero();
+	P1.block<3,3>(0,0) = F1.cameraParam.toMatrix3();
+
+	// For camera 2: K[R | t]
+	BaseFrame::ProjectionMat P2 = BaseFrame::ProjectionMat::Zero();
+	P2.block<3,3>(0,0) = R;
+	P2.block<3,1>(0,3) = t;
+	P2 = F2.cameraParam.toMatrix3() * P2;
+
+	vector<double> vCosParallax(featurePairs.size());
+
+	/*
+	 * Triangulate each point pair as if first camera is in the origin
+	 */
+	for (int ip=0; ip<featurePairs.size(); ++ip) {
+
+		Vector2d
+			pt1 = cv2eigen(F1.fKeypoints[featurePairs[ip].first].pt),
+			pt2 = cv2eigen(F1.fKeypoints[featurePairs[ip].second].pt);
+
+		Vector4d point3D_;
+		TriangulateDLT(P1, P2, pt1, pt2, point3D_);
+		Vector3d point3D = (point3D_ / point3D_[3]).hnormalized();
+
+		if (!isfinite(point3D[2]) or !isfinite(point3D[1]) or !isfinite(point3D[2]) )
+			continue;
+
+		Vector3d
+			normal1 = point3D - origin1,
+			normal2 = point3D - origin2;
+		double
+			dist1 = normal1.norm(),
+			dist2 = normal2.norm();
+
+		double cosParallax = normal1.dot(normal2) / (dist1 * dist2);
+
+		// Check that depth regarding camera1&2 must be positive
+		if (cosParallax < 0.99998) {
+			if (point3D[2]<=0)
+				continue;
+			Vector3d point3D2 = R*point3D + t;
+			if (point3D2[2]<=0)
+				continue;
+		}
+
+		// Check reprojection errors
+		Vector3d
+			proj1 = P1 * point3D,
+			proj2 = P2 * point3D;
+		proj1 /= proj1[2];
+		proj2 /= proj2[2];
+
+		float
+			squareError1 = pow((proj1-pt1).norm(), 2),
+			squareError2 = pow((proj2-pt2).norm(), 2),
+			threshold = pow(Matcher::circleOfConfusionDiameter, 2);
+		if (squareError1 > threshold or squareError2 > threshold)
+			continue;
+
+		nGood++;
+	}
+
+	if (nGood > 0) {
+		// XXX: Unfinished
+	}
+	else
+		parallax = 0;
+
+	return nGood;
 }

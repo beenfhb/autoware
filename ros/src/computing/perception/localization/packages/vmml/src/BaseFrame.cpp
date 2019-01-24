@@ -80,7 +80,7 @@ BaseFrame::createExternalParamMatrix4(const Pose &ps)
 }
 
 
-Eigen::Matrix<double,3,4>
+BaseFrame::ProjectionMat
 BaseFrame::projectionMatrix () const
 {
 	return cameraParam.toMatrix() * externalParamMatrix4();
