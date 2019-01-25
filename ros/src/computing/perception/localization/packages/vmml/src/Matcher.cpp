@@ -317,6 +317,32 @@ Matcher::matchAny(
 	Vector3d t1, t2;
 	decomposeE(Ex, R1, R2, t1);
 	t2 = -t1;
+
+	// Currently unused
+	float parallax1, parallax2, parallax3, parallax4;
+	vector<int> nGood(4);
+
+	nGood[0] = CheckRT(R1, t1, Fr1, Fr2, featurePairs, parallax1);
+	nGood[1] = CheckRT(R2, t1, Fr1, Fr2, featurePairs, parallax1);
+	nGood[2] = CheckRT(R1, t2, Fr1, Fr2, featurePairs, parallax1);
+	nGood[3] = CheckRT(R2, t2, Fr1, Fr2, featurePairs, parallax1);
+
+	// XXX: Watch out the result of this line
+	int bestGood = std::max_element(nGood.begin(), nGood.end()) - nGood.begin();
+	Affine3d T1122;
+	if (bestGood==0) {
+		T1122 = Eigen::Translation3d(t1) * Quaterniond(R1);
+	}
+	else if (bestGood==1) {
+		T1122 = Eigen::Translation3d(t1) * Quaterniond(R2);
+	}
+	else if (bestGood==2) {
+		T1122 = Eigen::Translation3d(t2) * Quaterniond(R1);
+	}
+	else if (bestGood==3) {
+		T1122 = Eigen::Translation3d(t2) * Quaterniond(R2);
+	}
+	T12 = T1122;
 }
 
 
@@ -439,14 +465,14 @@ Matcher::CheckRT (
 
 		// Check reprojection errors
 		Vector3d
-			proj1 = P1 * point3D,
-			proj2 = P2 * point3D;
+			proj1 = P1 * point3D.homogeneous(),
+			proj2 = P2 * point3D.homogeneous();
 		proj1 /= proj1[2];
 		proj2 /= proj2[2];
 
 		float
-			squareError1 = pow((proj1-pt1).norm(), 2),
-			squareError2 = pow((proj2-pt2).norm(), 2),
+			squareError1 = pow((proj1.hnormalized()-pt1).norm(), 2),
+			squareError2 = pow((proj2.hnormalized()-pt2).norm(), 2),
 			threshold = pow(Matcher::circleOfConfusionDiameter, 2);
 		if (squareError1 > threshold or squareError2 > threshold)
 			continue;
@@ -455,7 +481,7 @@ Matcher::CheckRT (
 	}
 
 	if (nGood > 0) {
-		// XXX: Unfinished
+		// XXX: Unfinished, we do not collect parallaxes
 	}
 	else
 		parallax = 0;
