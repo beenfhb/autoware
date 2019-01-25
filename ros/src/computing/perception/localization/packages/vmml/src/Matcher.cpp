@@ -101,9 +101,11 @@ Line2 createEpipolarLine (const Matrix3d &F12, const cv::KeyPoint &kp1)
 {
 	Line2 epl2;
 	epl2.coeffs() = F12 * Vector3d(kp1.pt.x, kp1.pt.y, 1.0);
+	epl2.normalize();
 	return epl2;
 }
 
+double __d;
 
 /*
  * XXX: Modify this function to employ circle of confusion instead of scale factors
@@ -111,14 +113,18 @@ Line2 createEpipolarLine (const Matrix3d &F12, const cv::KeyPoint &kp1)
 bool Matcher::isKeypointInEpipolarLine (const Line2 &epl2, const cv::KeyPoint &cvkp2)
 {
 	Vector2d kp2(cvkp2.pt.x, cvkp2.pt.y);
-	auto d = epl2.absDistance(kp2);
-	auto lim = 3.84*VMap::mScaleFactors[cvkp2.octave];
+	auto cof = epl2.coeffs();
+	auto d = abs( cof.dot(kp2.homogeneous()) / sqrt(cof[0]*cof[0] + cof[1]*cof[1]) );
+//	auto lim = 3.84*VMap::mScaleFactors[cvkp2.octave];
+	auto lim = circleOfConfusionDiameter;
 
 	// XXX: Using scale factor makes us more dependent to ORB
 	if (d > lim)
 		return false;
-	else
+	else {
+		__d = d;
 		return true;
+	}
 }
 
 
@@ -198,6 +204,9 @@ Matcher::matchForInitialization(
 }
 
 
+
+
+
 void
 Matcher::matchAny(
 	const BaseFrame &Fr1,
@@ -206,6 +215,9 @@ Matcher::matchAny(
 	cv::Ptr<cv::DescriptorMatcher> matcher,
 	TTransform &T12)
 {
+	// debug variable. set this inside debugger
+	int __debugMatch__ = 2;
+
 	// Estimate F
 	featurePairs.clear();
 	Matrix3d F12 = BaseFrame::FundamentalMatrix(Fr1, Fr2);
@@ -216,37 +228,39 @@ Matcher::matchAny(
 	sort(initialMatches.begin(), initialMatches.end());
 	vector<int> inliersMatch;
 
-	// Debug
-/*
-	featurePairs.reserve(initialMatches.size());
-	for (int i=0; i<100; ++i) {
-		auto pr = initialMatches[i];
-		featurePairs.push_back( make_pair(static_cast<kpid>(pr.queryIdx), static_cast<kpid>(pr.trainIdx)) );
+	// Debug brute force matching
+	if (__debugMatch__==1) {
+		featurePairs.reserve(initialMatches.size());
+		for (int i=0; i<initialMatches.size(); ++i) {
+			auto pr = initialMatches[i];
+			featurePairs.push_back( make_pair(static_cast<kpid>(pr.queryIdx), static_cast<kpid>(pr.trainIdx)) );
+		}
+		return;
 	}
-	return;
-*/
 
 	/*
 	 * Find outlier/inlier
 	 */
+	vector<double> distv;
 	for (int ip=0; ip<initialMatches.size(); ++ip) {
 
 		auto dm = initialMatches[ip];
 		Line2 line2 = createEpipolarLine(F12, Fr1.fKeypoints[dm.queryIdx]);
 		if (isKeypointInEpipolarLine(line2, Fr2.fKeypoints[dm.trainIdx])==true) {
 			inliersMatch.push_back(ip);
+			distv.push_back(__d);
 		}
 	}
 
-	// XXX: Debug
-/*
-	featurePairs.reserve(inliersMatch.size());
-	for (auto &i: inliersMatch) {
-		auto pr = initialMatches[i];
-		featurePairs.push_back( make_pair((kpid)pr.queryIdx, (kpid)pr.trainIdx) );
+	// Debug Inlier/Outlier selection from initial F12
+	if (__debugMatch__==2) {
+		featurePairs.reserve(inliersMatch.size());
+		for (auto &i: inliersMatch) {
+			auto pr = initialMatches[i];
+			featurePairs.push_back( make_pair((kpid)pr.queryIdx, (kpid)pr.trainIdx) );
+		}
+		return;
 	}
-	return;
-*/
 
 	/*
 	 * Compute F
@@ -307,7 +321,9 @@ Matcher::matchAny(
 			featurePairs.push_back(p);
 		}
 	}
-//	return;
+	if (__debugMatch__==3) {
+		return;
+	}
 
 	/*
 	 * Convert F to Essential Matrix E, and compute R & T from Fr1 to Fr2
@@ -351,17 +367,22 @@ Matcher::drawMatches(
 	const BaseFrame &F1,
 	const BaseFrame &F2,
 	const std::vector<KpPair> &featurePairs,
-	DrawMode mode)
+	DrawMode mode,
+	int maxNumOfPairs)
 {
-//	cv::Mat result(std::max(F1.height(), F2.height()), F1.width()+F2.width(), F1.image.type());
-//	F1.image.copyTo( result(cv::Rect(0,0,F1.width(),F1.height())) );
-//	F2.image.copyTo( result(cv::Rect(F1.width(),0,F2.width(),F2.height())) );
-	cv::Mat result = F2.image.clone();
+	cv::Mat result(std::max(F1.height(), F2.height()), F1.width()+F2.width(), F1.image.type());
+	F1.image.copyTo( result(cv::Rect(0,0,F1.width(),F1.height())) );
+	F2.image.copyTo( result(cv::Rect(F1.width(),0,F2.width(),F2.height())) );
+//	cv::Mat result = F2.image.clone();
+	if (maxNumOfPairs<0)
+		maxNumOfPairs = featurePairs.size();
+	else
+		maxNumOfPairs = min(maxNumOfPairs, static_cast<int>(featurePairs.size()));
 
 	vector<pair<cv::Point2f, cv::Point2f>> pointPairList(featurePairs.size());
 	for (int i=0; i<featurePairs.size(); ++i) {
 		cv::Point2f p2 = F2.fKeypoints[featurePairs[i].second].pt;
-//		p2.x += F1.width();
+		p2.x += F1.width();
 		pointPairList[i] = make_pair(
 			F1.fKeypoints[featurePairs[i].first].pt,
 			p2);
@@ -376,25 +397,35 @@ Matcher::drawMatches(
 		pointRadius = 3;
 
 	// Draw P2 in P1
-//	Pose P1z = F2.pose();
-//	Vector2d C2in1 = F1.project(P1z.position());
-//	cv::circle(result, cv::Point2f(C2in1.x(), C2in1.y()), pointRadius*2, colorYellow);
+	Pose P1z = F2.pose();
+	Vector2d C2in1 = F1.project(P1z.position());
+	cv::circle(result, cv::Point2f(C2in1.x(), C2in1.y()), pointRadius*2, colorYellow);
 
 	if (mode==DrawOpticalFlow) {
-		for (auto &pr: pointPairList) {
-//			cv::circle(result, pr.first, pointRadius, colorBlue);
+		for (int n=0; n<maxNumOfPairs; ++n) {
+			auto &pr = pointPairList[n];
+			cv::circle(result, pr.first, pointRadius, colorBlue);
 			cv::circle(result, pr.second, pointRadius, colorBlue);
 			cv::Point2f pt1s = pr.first;
-//			pt1s.x += F1.width();
+			pt1s.x += F1.width();
 			cv::line(result, pt1s, pr.second, colorGreen);
 		}
 	}
 
 	else if (mode==DrawSideBySide) {
-		for (auto &pr: pointPairList) {
+		for (int n=0; n<maxNumOfPairs; ++n) {
+			auto &pr = pointPairList[n];
 			cv::circle(result, pr.first, pointRadius, colorBlue);
 			cv::circle(result, pr.second, pointRadius, colorBlue);
 			cv::line(result, pr.first, pr.second, colorGreen);
+		}
+	}
+
+	else if (mode==DrawOnlyPoints) {
+		for (int n=0; n<maxNumOfPairs; ++n) {
+			auto &pr = pointPairList[n];
+			cv::circle(result, pr.first, pointRadius, colorBlue);
+			cv::circle(result, pr.second, pointRadius, colorBlue);
 		}
 	}
 

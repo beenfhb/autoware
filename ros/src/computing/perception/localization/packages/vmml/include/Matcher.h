@@ -54,7 +54,8 @@ public:
 
 	enum DrawMode {
 		DrawOpticalFlow,
-		DrawSideBySide
+		DrawSideBySide,
+		DrawOnlyPoints
 	};
 
 	static cv::Mat
@@ -62,7 +63,8 @@ public:
 		const BaseFrame &F1,
 		const BaseFrame &F2,
 		const std::vector<KpPair> &featurePairs,
-		DrawMode m);
+		DrawMode m,
+		int maxNumOfPairs=-1);
 
 	static void
 	decomposeE (const Eigen::Matrix3d &E, Eigen::Matrix3d &R1, Eigen::Matrix3d &R2, Eigen::Vector3d &t);

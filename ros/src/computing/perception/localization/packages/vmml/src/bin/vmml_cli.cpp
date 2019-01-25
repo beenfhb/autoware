@@ -886,6 +886,13 @@ private:
 				drawmode = Matcher::DrawOpticalFlow;
 			else if (cmd[3][0]=='s')
 				drawmode = Matcher::DrawSideBySide;
+			else if (cmd[3][0]=='p')
+				drawmode = Matcher::DrawOnlyPoints;
+		}
+
+		int maxNum = -1;
+		if (cmd.size()>4) {
+			maxNum = stoi(cmd[4]);
 		}
 
 		auto
@@ -896,6 +903,7 @@ private:
 		 */
 		Matcher::circleOfConfusionDiameter = loadedDataset->getCoC();
 
+		// Need map's feature detector and matcher
 		MapBuilder2 mpBuilder;
 		auto cvFeatDetector = mpBuilder.getMap()->getFeatureDetector();
 		auto cvFeatMatcher = mpBuilder.getMap()->getDescriptorMatcher();
@@ -909,7 +917,7 @@ private:
 		Matcher::matchAny(*Frame1, *Frame2, validKpPairs, cvFeatMatcher, T12);
 
 		cv::Mat matchResult;
-		matchResult = Matcher::drawMatches(*Frame1, *Frame2, validKpPairs, drawmode);
+		matchResult = Matcher::drawMatches(*Frame1, *Frame2, validKpPairs, drawmode, maxNum);
 
 		const string matchFiledump("match.png");
 		cv::imwrite(matchFiledump, matchResult);
