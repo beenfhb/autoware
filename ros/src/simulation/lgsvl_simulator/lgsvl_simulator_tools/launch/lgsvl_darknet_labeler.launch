@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="lgsvl_simulator_tools" type="lgsvl_darknet_labeler.py" name="lgsvl_darknet_labeler">
+    </node>
+</launch>

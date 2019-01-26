@@ -131,6 +131,15 @@ IF (CUDA_FOUND)
             ${catkin_EXPORTED_TARGETS}
             )
 
+    #non ros executable
+    add_executable(darknet 
+        darknet/src/darknet.c
+        darknet/src/detector.c
+        darknet/src/demo.c
+    )
+    target_link_libraries(darknet vision_darknet_detect_lib)
+    add_dependencies(darknet ${catkin_EXPORTED_TARGETS})
+
     #ros node
     cuda_add_executable(vision_darknet_detect
             src/vision_darknet_detect_node.cpp
