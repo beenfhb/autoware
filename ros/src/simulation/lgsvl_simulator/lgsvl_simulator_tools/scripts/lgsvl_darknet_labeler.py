@@ -8,7 +8,7 @@ import os
 import datetime
 import shutil
 from cv_bridge import CvBridge, CvBridgeError
-
+import random
 from labeled_image import LabeledImage
 
 class LgsvlDarknetLabaler:
@@ -23,6 +23,7 @@ class LgsvlDarknetLabaler:
         self.datknet_path = rospack.get_path('vision_darknet_detect') + "/darknet"
         object_types_str = "" 
         i = 0
+        self.bridge = CvBridge()
         self.labeled_images = {}
         for object_type in object_types:
             if i != (len(object_types)-1):
@@ -38,20 +39,30 @@ class LgsvlDarknetLabaler:
             f.write(object_types_str)
         shutil.copytree(self.package_path+"/template/cfg", self.data_dir+"/cfg")
         shutil.copyfile(self.package_path+"/template/class/class.txt", self.data_dir+"/data/class.txt")
+        shutil.copyfile(self.package_path+"/template/train_yolo.sh", self.data_dir+"/train_yolo.sh")
         self.image_sub = message_filters.Subscriber('/image_raw', Image)
         self.roi_sub = message_filters.Subscriber("/simulator/ground_truth/2d_detections", Detection2DArray)
         self.sync = message_filters.ApproximateTimeSynchronizer([self.image_sub, self.roi_sub], 10, 0.1, allow_headerless=True)
         self.count = 0
+        self.file_train = open(self.data_dir+'/cfg/train.txt', 'w')  
+        self.file_test = open(self.data_dir+'/cfg/test.txt', 'w')
         self.sync.registerCallback(self.callback)
     def callback(self,image,roi):
         try:
             image = self.bridge.imgmsg_to_cv2(image, "bgr8")
         except CvBridgeError, e:
             print e
+        labels = []
         for detection in roi.detections:
             self.labeled_images[detection.label].addROI(detection)
-        for detection in roi.detections:
-            self.labeled_images[detection.label].writeROIandImage(image)
+            if detection.label not in labels:
+                labels.append(detection.label)
+        for label in labels:
+            image_path = self.labeled_images[label].writeROIandImage(image) + "\n"
+            if random.random() < 0.3:
+                self.file_test.write(image_path)
+            else:
+                self.file_train.write(image_path)
         self.count = self.count + 1
     
         
