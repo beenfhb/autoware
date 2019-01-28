@@ -597,7 +597,7 @@ VMap::createDescriptorMatcher(DescriptorMatcherT dm)
 	switch (dm) {
 	case DescriptorMatcherT::BruteForce:
 		// XXX: Should we activate cross-check for BFMatcher ?
-		return cv::BFMatcher::create(cv::NORM_HAMMING, false);
+		return cv::BFMatcher::create(cv::NORM_HAMMING, true);
 		break;
 	}
 }

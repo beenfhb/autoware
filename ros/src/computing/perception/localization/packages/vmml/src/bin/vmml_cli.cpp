@@ -925,6 +925,7 @@ private:
 		const string matchFiledump("match.png");
 		cv::imwrite(matchFiledump, matchResult);
 		debug("Matching result written to "+matchFiledump);
+		debug("Got "+to_string(validKpPairs.size())+" pairs");
 	}
 
 

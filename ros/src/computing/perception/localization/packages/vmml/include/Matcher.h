@@ -96,7 +96,7 @@ protected:
 
 	static int
 	CheckRT (
-		const Eigen::Matrix3d R, const Eigen::Vector3d &t,
+		const Eigen::Matrix3d &R, const Eigen::Vector3d &t,
 		const BaseFrame &F1, const BaseFrame &F2,
 		const std::vector<KpPair> &featurePairs,
 		float &parallax);
