@@ -134,6 +134,11 @@ public:
 		return Eigen::Vector2d(kp.pt.x, kp.pt.y);
 	}
 
+	inline Eigen::Vector3d keypointh(kpid k) const
+	{
+		return keypointv(k).homogeneous();
+	}
+
 	cv::Mat allDescriptors() const
 	{ return fDescriptors; }
 

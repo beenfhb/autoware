@@ -55,7 +55,8 @@ public:
 	enum DrawMode {
 		DrawOpticalFlow,
 		DrawSideBySide,
-		DrawOnlyPoints
+		DrawOnlyPoints,
+		DrawEpipolarIn2
 	};
 
 	static cv::Mat
@@ -72,6 +73,9 @@ public:
 	static float
 	circleOfConfusionDiameter;
 
+	static int
+	__maxDraw;
+
 protected:
 
 	static cv::Mat
@@ -87,12 +91,16 @@ protected:
 	static bool
 	isKeypointInEpipolarLine (const Line2 &epl2, const cv::KeyPoint &cvkp2);
 
+	static bool
+	isKeypointInEpipolarLine (const Line2 &epl2, const Eigen::Vector2d &kp2);
+
 	static int
 	CheckRT (
 		const Eigen::Matrix3d R, const Eigen::Vector3d &t,
 		const BaseFrame &F1, const BaseFrame &F2,
 		const std::vector<KpPair> &featurePairs,
 		float &parallax);
+
 };
 
 #endif /* _MATCHER_H_ */

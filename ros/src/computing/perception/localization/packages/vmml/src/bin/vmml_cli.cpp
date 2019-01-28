@@ -888,11 +888,14 @@ private:
 				drawmode = Matcher::DrawSideBySide;
 			else if (cmd[3][0]=='p')
 				drawmode = Matcher::DrawOnlyPoints;
+			else if (cmd[3][0]=='e')
+				drawmode = Matcher::DrawEpipolarIn2;
 		}
 
 		int maxNum = -1;
 		if (cmd.size()>4) {
 			maxNum = stoi(cmd[4]);
+			Matcher::__maxDraw = maxNum;
 		}
 
 		auto

@@ -25,6 +25,16 @@ typedef
 float
 	Matcher::circleOfConfusionDiameter = 1.0;
 
+const cv::Scalar
+	colorBlue(255, 0, 0),
+	colorGreen(0, 255, 0),
+	colorRed(0, 0, 255),
+	colorYellow(0, 255, 255);
+const int
+	pointRadius = 3;
+
+int
+	Matcher::__maxDraw = 1;
 
 cv::Mat
 Matcher::createMatcherMask(
@@ -97,26 +107,37 @@ Matcher::createMatcherMask(
 /*
  * Create an epipolar line in Frame 2 based on Fundamental Matrix F12, using a keypoint from Frame 1
  */
-Line2 createEpipolarLine (const Matrix3d &F12, const cv::KeyPoint &kp1)
+Line2 createEpipolarLine (const Matrix3d &F12, const Vector2d &kp1)
 {
 	Line2 epl2;
-	epl2.coeffs() = F12 * Vector3d(kp1.pt.x, kp1.pt.y, 1.0);
+	epl2.coeffs() = F12 * kp1.homogeneous();
 	epl2.normalize();
 	return epl2;
 }
 
+
+Line2 createEpipolarLine (const Matrix3d &F12, const cv::KeyPoint &kp1)
+{
+	return createEpipolarLine( F12, Vector2d(kp1.pt.x, kp1.pt.y) );
+}
+
+
 double __d;
 
-/*
- * XXX: Modify this function to employ circle of confusion instead of scale factors
- */
+
 bool Matcher::isKeypointInEpipolarLine (const Line2 &epl2, const cv::KeyPoint &cvkp2)
 {
-	Vector2d kp2(cvkp2.pt.x, cvkp2.pt.y);
+	return isKeypointInEpipolarLine(epl2, Vector2d(cvkp2.pt.x, cvkp2.pt.y));
+}
+
+
+bool
+Matcher::isKeypointInEpipolarLine (const Line2 &epl2, const Eigen::Vector2d &kp2)
+{
 	auto cof = epl2.coeffs();
 	auto d = abs( cof.dot(kp2.homogeneous()) / sqrt(cof[0]*cof[0] + cof[1]*cof[1]) );
 //	auto lim = 3.84*VMap::mScaleFactors[cvkp2.octave];
-	auto lim = circleOfConfusionDiameter;
+	auto lim = 3.84 * circleOfConfusionDiameter;
 
 	// XXX: Using scale factor makes us more dependent to ORB
 	if (d > lim)
@@ -125,6 +146,33 @@ bool Matcher::isKeypointInEpipolarLine (const Line2 &epl2, const cv::KeyPoint &c
 		__d = d;
 		return true;
 	}
+}
+
+
+void drawEpipolarLine (cv::Mat &image, const Line2 &l)
+{
+	cv::Point2f pt1, pt2;
+	Vector3d lc = l.coeffs();
+	lc /= lc[2];
+	float Xc = -1/lc[0], Yc = -1/lc[1];
+
+	if (Xc >= 0 and Yc >= 0) {
+		pt1 = cv::Point2f(Xc, 0);
+		pt2 = cv::Point2f(0, Yc);
+
+	}
+
+	else if (Xc < 0 and Yc >= 0) {
+		pt1 = cv::Point2f( image.cols-1, -(1+lc[0]*image.cols)/lc[1] );
+		pt2 = cv::Point2f(0, Yc);
+	}
+
+	else if (Xc >= 0 and Yc < 0) {
+		pt1 = cv::Point2f(Xc, 0);
+		pt2 = cv::Point2f( -(1+lc[1]*image.rows)/lc[0], image.rows-1 );
+	}
+
+	cv::line(image, pt1, pt2, colorRed);
 }
 
 
@@ -215,16 +263,15 @@ Matcher::matchAny(
 	cv::Ptr<cv::DescriptorMatcher> matcher,
 	TTransform &T12)
 {
-	// debug variable. set this inside debugger
-	int __debugMatch__ = 2;
-
-	// Estimate F
 	featurePairs.clear();
-	Matrix3d F12 = BaseFrame::FundamentalMatrix(Fr1, Fr2);
+	// debug variable. set this inside debugger
+	int __debugMatch__ = -1;
 
 	// Establish initial correspondences
 	vector<cv::DMatch> initialMatches;
 	matcher->match(Fr1.fDescriptors, Fr2.fDescriptors, initialMatches);
+
+	// Sort by `distance'
 	sort(initialMatches.begin(), initialMatches.end());
 	vector<int> inliersMatch;
 
@@ -238,127 +285,57 @@ Matcher::matchAny(
 		return;
 	}
 
-	/*
-	 * Find outlier/inlier
-	 */
-	vector<double> distv;
-	for (int ip=0; ip<initialMatches.size(); ++ip) {
+	const int MaxBestMatch = 50;
 
-		auto dm = initialMatches[ip];
-		Line2 line2 = createEpipolarLine(F12, Fr1.fKeypoints[dm.queryIdx]);
-		if (isKeypointInEpipolarLine(line2, Fr2.fKeypoints[dm.trainIdx])==true) {
-			inliersMatch.push_back(ip);
-			distv.push_back(__d);
+	// Select N best matches
+	vector<cv::Point2f> pointsIn1(MaxBestMatch), pointsIn2(MaxBestMatch);
+	for (int i=0; i<MaxBestMatch; ++i) {
+		auto &m = initialMatches[i];
+		pointsIn1[i] = Fr1.fKeypoints[m.queryIdx].pt;
+		pointsIn2[i] = Fr2.fKeypoints[m.trainIdx].pt;
+	}
+	cv::Mat Fcv = cv::findFundamentalMat(pointsIn1, pointsIn2, cv::FM_RANSAC, 3.84*Matcher::circleOfConfusionDiameter);
+	// Need Eigen Matrix of F
+
+	Matrix3d F12;
+	cv2eigen(Fcv, F12);
+
+	/*
+	 * Guided Match
+	 */
+	// Prepare constraints
+	cv::Mat gdMask(Fr1.numOfKeyPoints(), Fr2.numOfKeyPoints(), CV_8UC1, 0);
+	vector<kpid> kpid1NeedMatch;
+	set<kpid> kpid2NeedMatch;
+	for (int i=0; i<initialMatches.size(); ++i) {
+		auto &m = initialMatches[i];
+		const Vector2d keypoint1v = Fr1.keypointv(m.queryIdx);
+		const Line2 epl2 = createEpipolarLine(F12, Fr1.fKeypoints[m.queryIdx]);
+		if (isKeypointInEpipolarLine(epl2, Fr2.keypointv(m.trainIdx))==false) {
+			kpid1NeedMatch.push_back(static_cast<kpid>(m.queryIdx));
+			kpid2NeedMatch.insert(static_cast<kpid>(m.trainIdx));
+		}
+		else {
+			featurePairs.push_back(make_pair(m.queryIdx, m.trainIdx));
 		}
 	}
-
-	// Debug Inlier/Outlier selection from initial F12
-	if (__debugMatch__==2) {
-		featurePairs.reserve(inliersMatch.size());
-		for (auto &i: inliersMatch) {
-			auto pr = initialMatches[i];
-			featurePairs.push_back( make_pair((kpid)pr.queryIdx, (kpid)pr.trainIdx) );
+	for (auto kp1: kpid1NeedMatch) {
+		gdMask.setTo(cv::Scalar(0));
+		const Line2 epl2 = createEpipolarLine(F12, Fr1.fKeypoints[kp1]);
+		for (auto kp2: kpid2NeedMatch) {
+			float d = epl2.absDistance(Fr2.keypointv(kp2));
+			if (d <= 3.84 * circleOfConfusionDiameter) {
+				gdMask.at<uint8_t>(kp1,kp2) = 0xff;
+			}
 		}
-		return;
+		vector<cv::DMatch> currentMatches;
+		matcher->match(Fr1.fDescriptors, Fr2.fDescriptors, currentMatches, gdMask);
+		cv::DMatch bestMatch = *std::max_element(currentMatches.begin(), currentMatches.end());
+		featurePairs.push_back(make_pair(kp1, bestMatch.trainIdx));
+		kpid2NeedMatch.erase(bestMatch.trainIdx);
 	}
 
-	/*
-	 * Compute F
-	 */
-	cv::Mat points1(inliersMatch.size(), 2, CV_32F),
-			points2(inliersMatch.size(), 2, CV_32F);
-	for (int ip=0; ip<inliersMatch.size(); ++ip) {
-		cv::DMatch m = initialMatches[inliersMatch[ip]];
-		points1.at<float>(ip,0) = Fr1.fKeypoints[m.queryIdx].pt.x;
-		points1.at<float>(ip,1) = Fr1.fKeypoints[m.queryIdx].pt.y;
-		points2.at<float>(ip,0) = Fr2.fKeypoints[m.trainIdx].pt.x;
-		points2.at<float>(ip,1) = Fr2.fKeypoints[m.trainIdx].pt.y;
-	}
-	cv::Mat Fcv = cv::findFundamentalMat(points1, points2);
-	Matrix3d F12x;
-	cv2eigen(Fcv, F12x);
-
-	/*
-	 * Guided matching using epipolar lines
-	 */
-	WhichKpId kpList1to2;
-	for (kpid i1=0; i1<Fr1.fKeypoints.size(); ++i1) {
-		Vector2d keypoint1 (Fr1.fKeypoints[i1].pt.x, Fr1.fKeypoints[i1].pt.y);
-
-		// Epipolar line in KF2 for this keypoint
-		Line2 epl2 = createEpipolarLine(F12x, Fr1.fKeypoints[i1]);
-
-		set<kpid> kf2targetList;
-		kf2targetList.clear();
-
-		for(kpid i2=0; i2<Fr2.fKeypoints.size(); ++i2) {
-			if (isKeypointInEpipolarLine(epl2, Fr2.fKeypoints[i2]) == false)
-				continue;
-			kf2targetList.insert(i2);
-		}
-
-		if (kf2targetList.size() != 0)
-			kpList1to2.insert(make_pair(i1, kf2targetList));
-	}
-
-	cv::Mat matcherMask = createMatcherMask(Fr1, Fr2, kpList1to2);
-	vector<cv::DMatch> matchResult;
-	matcher->clear();
-	matcher->match(Fr1.fDescriptors, Fr2.fDescriptors, matchResult, matcherMask);
-	sort(matchResult.begin(), matchResult.end());
-
-	/*
-	 * Weed out outliers
-	 * Put valid feature pairs in results
-	 */
-	inliersMatch.clear();
-	for (int ip=0; ip<matchResult.size(); ++ip) {
-		auto dm = matchResult[ip];
-		Line2 line2 = createEpipolarLine(F12x, Fr1.fKeypoints[dm.queryIdx]);
-		if (isKeypointInEpipolarLine(line2, Fr2.fKeypoints[dm.trainIdx])==true) {
-			inliersMatch.push_back(ip);
-			auto p = make_pair(static_cast<kpid>(dm.queryIdx), static_cast<kpid>(dm.trainIdx));
-			featurePairs.push_back(p);
-		}
-	}
-	if (__debugMatch__==3) {
-		return;
-	}
-
-	/*
-	 * Convert F to Essential Matrix E, and compute R & T from Fr1 to Fr2
-	 */
-	Matrix3d Ex = Fr2.cameraParam.toMatrix3().transpose() * F12x * Fr1.cameraParam.toMatrix3();
-	Matrix3d R1, R2;
-	Vector3d t1, t2;
-	decomposeE(Ex, R1, R2, t1);
-	t2 = -t1;
-
-	// Currently unused
-	float parallax1, parallax2, parallax3, parallax4;
-	vector<int> nGood(4);
-
-	nGood[0] = CheckRT(R1, t1, Fr1, Fr2, featurePairs, parallax1);
-	nGood[1] = CheckRT(R2, t1, Fr1, Fr2, featurePairs, parallax1);
-	nGood[2] = CheckRT(R1, t2, Fr1, Fr2, featurePairs, parallax1);
-	nGood[3] = CheckRT(R2, t2, Fr1, Fr2, featurePairs, parallax1);
-
-	// XXX: Watch out the result of this line
-	int bestGood = std::max_element(nGood.begin(), nGood.end()) - nGood.begin();
-	Affine3d T1122;
-	if (bestGood==0) {
-		T1122 = Eigen::Translation3d(t1) * Quaterniond(R1);
-	}
-	else if (bestGood==1) {
-		T1122 = Eigen::Translation3d(t1) * Quaterniond(R2);
-	}
-	else if (bestGood==2) {
-		T1122 = Eigen::Translation3d(t2) * Quaterniond(R1);
-	}
-	else if (bestGood==3) {
-		T1122 = Eigen::Translation3d(t2) * Quaterniond(R2);
-	}
-	T12 = T1122;
+	// XXX: Unfinished
 }
 
 
@@ -387,14 +364,6 @@ Matcher::drawMatches(
 			F1.fKeypoints[featurePairs[i].first].pt,
 			p2);
 	}
-
-	const cv::Scalar
-		colorBlue(255, 0, 0),
-		colorGreen(0, 255, 0),
-		colorRed(0, 0, 255),
-		colorYellow(0, 255, 255);
-	const int
-		pointRadius = 3;
 
 	// Draw P2 in P1
 	Pose P1z = F2.pose();
@@ -519,3 +488,5 @@ Matcher::CheckRT (
 
 	return nGood;
 }
+
+
