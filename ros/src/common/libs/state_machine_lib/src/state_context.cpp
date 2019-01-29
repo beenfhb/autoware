@@ -142,7 +142,7 @@ void StateContext::nextState(const std::string& transition_key)
 
   if (isCurrentState(_target_state_name))
   {
-    showStateName();
+    std::cout << state->getStateName() << "-";
   }
 }
 
