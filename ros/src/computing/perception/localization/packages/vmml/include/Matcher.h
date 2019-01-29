@@ -99,6 +99,7 @@ protected:
 		const Eigen::Matrix3d &R, const Eigen::Vector3d &t,
 		const BaseFrame &F1, const BaseFrame &F2,
 		const std::vector<KpPair> &featurePairs,
+		std::vector<bool> &goodFeaturePairs,
 		float &parallax);
 
 };

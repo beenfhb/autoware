@@ -259,10 +259,11 @@ void
 Matcher::matchAny(
 	const BaseFrame &Fr1,
 	const BaseFrame &Fr2,
-	std::vector<KpPair> &featurePairs,
+	std::vector<KpPair> &featurePairsRet,
 	cv::Ptr<cv::DescriptorMatcher> matcher,
 	TTransform &T12)
 {
+	vector<KpPair> featurePairs;
 	featurePairs.clear();
 	// debug variable. set this inside debugger
 	int __debugMatch__ = -1;
@@ -304,7 +305,6 @@ Matcher::matchAny(
 	 * Guided Match using new F
 	 */
 	// Prepare constraints
-/*
 	cv::Mat gdMask = cv::Mat::zeros(Fr1.numOfKeyPoints(), Fr2.numOfKeyPoints(), CV_8UC1);
 	vector<kpid> kpid1NeedMatch;
 	set<kpid> kpid2NeedMatch;
@@ -325,7 +325,6 @@ Matcher::matchAny(
 			kpid2NeedMatch.insert(static_cast<kpid>(m.trainIdx));
 		}
 	}
-*/
 
 	/*
 	 * Unfortunately, this piece of code for guided matching is still buggy at this time.
@@ -376,25 +375,41 @@ Matcher::matchAny(
 
 	float parallax1, parallax2, parallax3, parallax4;
 	vector<int> good(4);
-	good[0] = Matcher::CheckRT(R1, t, Fr1, Fr2, featurePairs, parallax1);
-	good[1] = Matcher::CheckRT(R1, -t, Fr1, Fr2, featurePairs, parallax2);
-	good[2] = Matcher::CheckRT(R2, t, Fr1, Fr2, featurePairs, parallax3);
-	good[3] = Matcher::CheckRT(R2, -t, Fr1, Fr2, featurePairs, parallax4);
+	vector<bool>
+		goodFeaturePairs1(featurePairs.size()),
+		goodFeaturePairs2(featurePairs.size()),
+		goodFeaturePairs3(featurePairs.size()),
+		goodFeaturePairs4(featurePairs.size()),
+		*goodFeaturePairs;
+	good[0] = Matcher::CheckRT(R1, t, Fr1, Fr2, featurePairs, goodFeaturePairs1, parallax1);
+	good[1] = Matcher::CheckRT(R1, -t, Fr1, Fr2, featurePairs, goodFeaturePairs2, parallax2);
+	good[2] = Matcher::CheckRT(R2, t, Fr1, Fr2, featurePairs, goodFeaturePairs3, parallax3);
+	good[3] = Matcher::CheckRT(R2, -t, Fr1, Fr2, featurePairs, goodFeaturePairs4, parallax4);
 
 	// XXX: Untested
 	auto g = *std::max_element(good.begin(), good.end());
 	t *= S;
 	if (g==good[0]) {
 		T12 = Eigen::Translation3d(t) * R1;
+		goodFeaturePairs = &goodFeaturePairs1;
 	}
 	else if (g==good[1]) {
 		T12 = Eigen::Translation3d(-t) * R1;
+		goodFeaturePairs = &goodFeaturePairs2;
 	}
 	else if (g==good[2]) {
 		T12 = Eigen::Translation3d(t) * R2;
+		goodFeaturePairs = &goodFeaturePairs3;
 	}
 	else if (g==good[3]) {
 		T12 = Eigen::Translation3d(-t) * R2;
+		goodFeaturePairs = &goodFeaturePairs4;
+	}
+	cout << "Got " << g << " triangulated pairs\n";
+	featurePairsRet.clear();
+	for (int i=0; i<featurePairs.size(); ++i) {
+		if (goodFeaturePairs->at(i)==true)
+			featurePairsRet.push_back(featurePairs.at(i));
 	}
 
 	return;
@@ -471,6 +486,7 @@ Matcher::CheckRT (
 	const Eigen::Matrix3d &R, const Eigen::Vector3d &t,
 	const BaseFrame &F1, const BaseFrame &F2,
 	const std::vector<KpPair> &featurePairs,
+	std::vector<bool> &goodFeaturePairs,
 	float &parallax)
 {
 	int nGood = 0;
@@ -540,6 +556,7 @@ Matcher::CheckRT (
 			continue;
 
 		nGood++;
+		goodFeaturePairs[ip] = true;
 	}
 
 	if (nGood > 0) {

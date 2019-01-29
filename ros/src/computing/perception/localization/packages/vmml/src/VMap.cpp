@@ -504,7 +504,15 @@ VMap::createFeatureDetector(FeatureDetectorT fd)
 	switch (fd) {
 	case FeatureDetectorT::ORB: {
 		cv::Ptr<cv::ORB> ORBf = cv::ORB::create(
-			MAX_ORB_POINTS_IN_FRAME);
+			MAX_ORB_POINTS_IN_FRAME,
+			1.2,
+			8,
+			32,
+			0,
+			2,
+			cv::ORB::HARRIS_SCORE,
+			32,
+			10);
 		rt = ORBf;
 
 		// Fill scale factors

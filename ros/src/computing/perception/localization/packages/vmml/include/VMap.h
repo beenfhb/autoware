@@ -36,7 +36,7 @@ class MapPoint;
 class ImageDatabase;
 
 
-#define MAX_ORB_POINTS_IN_FRAME 6000
+#define MAX_ORB_POINTS_IN_FRAME 9000
 
 
 enum FeatureDetectorT {
