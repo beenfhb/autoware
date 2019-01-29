@@ -304,6 +304,7 @@ Matcher::matchAny(
 	 * Guided Match using new F
 	 */
 	// Prepare constraints
+/*
 	cv::Mat gdMask = cv::Mat::zeros(Fr1.numOfKeyPoints(), Fr2.numOfKeyPoints(), CV_8UC1);
 	vector<kpid> kpid1NeedMatch;
 	set<kpid> kpid2NeedMatch;
@@ -324,6 +325,7 @@ Matcher::matchAny(
 			kpid2NeedMatch.insert(static_cast<kpid>(m.trainIdx));
 		}
 	}
+*/
 
 	/*
 	 * Unfortunately, this piece of code for guided matching is still buggy at this time.

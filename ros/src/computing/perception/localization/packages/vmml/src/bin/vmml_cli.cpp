@@ -919,6 +919,8 @@ private:
 		TTransform T12;
 		Matcher::matchAny(*Frame1, *Frame2, validKpPairs, cvFeatMatcher, T12);
 
+		Pose FP2 = Frame1->pose() * T12;
+
 		cv::Mat matchResult;
 		matchResult = Matcher::drawMatches(*Frame1, *Frame2, validKpPairs, drawmode, maxNum);
 
