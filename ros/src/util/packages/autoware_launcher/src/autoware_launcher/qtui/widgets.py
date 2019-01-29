@@ -2,7 +2,7 @@ from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 
 from ..core import console
-from ..core import fspath
+from ..core import myutils
 
 
 class AwAbstructPanel(QtWidgets.QWidget):
@@ -130,6 +130,6 @@ class AwFileSelect(QtCore.QObject):
         self.button.clicked.connect(self.browse)
 
     def browse(self):
-        filepath, filetype = QtWidgets.QFileDialog.getOpenFileName(self.button, "Select File", fspath.userhome())
+        filepath, filetype = QtWidgets.QFileDialog.getOpenFileName(self.button, "Select File", myutils.userhome())
         if filepath:
             self.path.setText(filepath)

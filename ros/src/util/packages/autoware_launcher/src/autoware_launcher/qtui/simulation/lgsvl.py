@@ -5,7 +5,7 @@ from python_qt_binding import QtNetwork
 from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 from autoware_launcher.core import console
-from autoware_launcher.core import fspath
+from autoware_launcher.core import myutils
 
 
 
@@ -49,7 +49,7 @@ class AwLgsvlSimulatorWidget(QtWidgets.QWidget):
         server_address = "http://{}:{}/simulator/".format(self.server_addr.text(), self.server_port.text())
         if checked:
             self.process.start("roslaunch rosbridge_server rosbridge_websocket.launch")
-            with open(fspath.package("resources/lgsvl.yaml")) as fp:
+            with open(myutils.package("resources/lgsvl.yaml")) as fp:
                 param = yaml.safe_load(fp)
             param["bin_type"] = "tier4-develop"
             param["vehicles"][0]["address"] = self.client_addr.text()

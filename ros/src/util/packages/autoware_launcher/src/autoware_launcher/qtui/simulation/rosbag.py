@@ -1,7 +1,7 @@
 from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 from autoware_launcher.core import console
-from autoware_launcher.core import fspath
+from autoware_launcher.core import myutils
 from autoware_launcher.qtui import widgets
 
 
@@ -80,7 +80,7 @@ class AwRosbagSimulatorWidget(QtWidgets.QWidget):
         self.rosbag_text.setText(stdout + stderr)
 
     def rosbag_started(self):
-        xml = fspath.package("launch/rosbagplay.xml")
+        xml = myutils.package("launch/rosbagplay.xml")
         arg = self.rosbag_file.path.text()
         self.rosbag_play_proc.start('roslaunch {} options:="{}" bagfile:={}'.format(xml, "--clock --start=100", arg))
         self.rosbag_play_proc.processId()

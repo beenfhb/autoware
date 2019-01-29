@@ -5,7 +5,7 @@ from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 
 from ..core import console
-from ..core import fspath
+from ..core import myutils
 
 # ToDo: move package
 #     core = client, mirror
@@ -17,7 +17,7 @@ class AwQtGuiManager(object):
         self.__client  = client
         self.__widgets = {}
 
-        for filepath in os.listdir(fspath.package("src/autoware_launcher/qtui/plugins")):
+        for filepath in os.listdir(myutils.package("src/autoware_launcher/qtui/plugins")):
             fkey, fext = os.path.splitext(os.path.basename(filepath))
             if (fkey != "__init__") and (fext == ".py"):
                 console.info("load plugin module: " + fkey)
@@ -28,12 +28,12 @@ class AwQtGuiManager(object):
     def client(self):
         return self.__client
 
-    def widget(self, opts):
-        return self.__widgets[opts["view"]]
+    def widget(self, view):
+        return self.__widgets[view.widget]
 
-    def create_widget(self, node, opts, parent = None, widget = None):
-        widget = widget or self.widget(opts)
-        return widget(self, node, opts)
+    def create_widget(self, node, view, parent = None, widget = None):
+        widget = widget or self.widget(view)
+        return widget(self, node, view)
 
     def create_frame(self, mirror, guikey = None, guicls = None):
         #print "Create Frame: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls)

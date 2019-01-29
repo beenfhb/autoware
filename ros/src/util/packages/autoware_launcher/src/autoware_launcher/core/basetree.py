@@ -6,16 +6,23 @@ import yaml
 class AwBaseTree(object):
 
     def __init__(self):
-        self.__nodes = {}
+        self.nodes = {}
 
     def find(self, path):
-        return __nodes.get(path)
+        return self.nodes.get(path)
 
+    def scan(self, path):
+        return filter(lambda node: node.startswith(path), self.nodes.keys())
+
+    def dump(self):
+        for name in sorted(self.nodes.keys()):
+            print "=================================================="
+            self.nodes[name].dump()
 
 
 class AwBaseNode(object):
 
-    def __init__(self):
+    def __init__(self, tree, path):
         self.__tree = tree
         self.__path = path
 

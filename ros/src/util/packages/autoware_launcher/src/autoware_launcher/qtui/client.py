@@ -2,7 +2,7 @@ from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 
 from ..core  import console
-from ..core  import fspath
+from ..core  import myutils
 from .guimgr import AwQtGuiManager
 from .mirror import AwLaunchTreeMirror
 
@@ -115,9 +115,11 @@ class AwQtGuiClient(object):
         window.addViewMenu("Develop Mode", switch_develop_mode)
 
         # Debug
-        simulations.show()
-        self.__sim_rosbag.rosbag_file.path.setText(fspath.userhome(".autoware/log/20150324.bag"))
+        mainwidget.setCurrentWidget(self.__develop)
+        simulations.hide()
+        self.__sim_rosbag.rosbag_file.path.setText(myutils.userhome(".autoware/log/20150324.bag"))
 
+        # connect objects
         self.__server.register_runner(self.__process)
         self.__process.register_server(self.__server)
 
@@ -158,13 +160,13 @@ class AwQtGuiClient(object):
         lnode = self.__mirror.create(lpath)
         for panel in self.__panels: panel.node_ui_created(lnode)
 
-        lpath = fspath.parentpath(lpath)
+        lpath = myutils.parentpath(lpath)
         while lpath:
             print "node_updated: " + lpath
             self.__mirror.clear(lpath)
             lnode = self.__mirror.create(lpath)
             for panel in self.__panels: panel.node_ui_updated(lnode)
-            lpath = fspath.parentpath(lpath)
+            lpath = myutils.parentpath(lpath)
 
     def node_updated(self, lpath):
         while lpath:
@@ -172,7 +174,7 @@ class AwQtGuiClient(object):
             self.__mirror.clear(lpath)
             lnode = self.__mirror.create(lpath)
             for panel in self.__panels: panel.node_ui_updated(lnode)
-            lpath = fspath.parentpath(lpath)
+            lpath = myutils.parentpath(lpath)
 
     def status_updated(self, lpath, state):
         print "status_updated:" + lpath + " " + str(state)

@@ -3,7 +3,7 @@ from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
 from ..core import console
-from ..core import fspath
+from ..core import myutils
 
 
 
@@ -39,7 +39,7 @@ class AwProcessPanel(QtWidgets.QStackedWidget):
         self.setCurrentWidget(item)
 
     def roslaunch(self, lpath, xtext):
-        xpath = fspath.package() + "/runner/" + lpath.replace("/", "-") + ".xml"
+        xpath = myutils.package() + "/runner/" + lpath.replace("/", "-") + ".xml"
         with open(xpath, mode="w") as fp:
             fp.write(xtext)
         print "roslaunch {}".format(xpath)

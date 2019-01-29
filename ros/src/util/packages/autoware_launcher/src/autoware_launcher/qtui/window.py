@@ -2,7 +2,7 @@ from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 
 from ..core import console
-from ..core import fspath
+from ..core import myutils
 
 
 
@@ -63,7 +63,7 @@ class AwMainWindow(AwAbstructWindow):
 
     def load_profile(self):
         import os
-        filename, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Load Profile", fspath.profile(), "Launch Profile (*.launch)")
+        filename, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Load Profile", myutils.profile(), "Launch Profile (*.launch)")
         filename, filetype = os.path.splitext(filename)
         if filename:
             self.client.load_profile(filename)
@@ -73,7 +73,7 @@ class AwMainWindow(AwAbstructWindow):
 
     def save_profile_as(self):
         import os
-        filename, filetype = QtWidgets.QFileDialog.getSaveFileName(self, "Save Profile As", fspath.profile(), "Launch Profile (*.launch)")
+        filename, filetype = QtWidgets.QFileDialog.getSaveFileName(self, "Save Profile As", myutils.profile(), "Launch Profile (*.launch)")
         filename, filetype = os.path.splitext(filename)
         if filename:
             if filetype != ".launch":

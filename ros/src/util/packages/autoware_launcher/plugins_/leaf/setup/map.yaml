@@ -1,7 +1,0 @@
-args:
-    - { type: file,     defs: transform_file,    title: Transform File    }
-    - { type: filelist, defs: point_cloud_files, title: Point Cloud Files, format: space }
-    - { type: filelist, defs: vector_map_files,  title: Vector Map Files,  format: space }
-
-info:
-    - { type: node }

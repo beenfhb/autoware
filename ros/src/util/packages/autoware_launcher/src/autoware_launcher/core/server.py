@@ -1,5 +1,5 @@
 from .       import console
-from .       import fspath
+from .       import myutils
 from .plugin import AwPluginTree
 from .launch import AwLaunchTree
 from .launch import AwLaunchNode
@@ -55,12 +55,12 @@ class AwLaunchServer(AwLaunchServerIF):
     def load_profile(self, fpath):
         console.info("load_profile: " + fpath)
         self.__profile = AwLaunchTree(self, self.__plugins)
-        self.__profile.load(fspath.profile(fpath), self.__plugins)
+        self.__profile.load(myutils.profile(fpath), self.__plugins)
         for client in self.__clients: client.profile_updated()
 
     def save_profile(self, fpath):
         console.info("save_profile: " + fpath)
-        self.__profile.save(fspath.profile(fpath))
+        self.__profile.save(myutils.profile(fpath))
 
     def list_node(self):
         console.info("list_node: ")

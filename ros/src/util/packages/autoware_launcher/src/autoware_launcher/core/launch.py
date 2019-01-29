@@ -3,7 +3,7 @@ import yaml
 
 from . import basetree
 from . import console
-from . import fspath
+from . import myutils
 
 
 
@@ -106,7 +106,7 @@ class AwLaunchTree(AwBaseTree):
             fp.write("dummy")
         for node in self.listnode():
             fullpath = node.fullpath() + ".yaml"
-            fspath.makedirs(os.path.dirname(fullpath), exist_ok = True)
+            myutils.makedirs(os.path.dirname(fullpath), exist_ok = True)
             with open(fullpath, mode = "w") as fp:
                 fp.write(yaml.safe_dump(node.export_data(), default_flow_style = False))
 
@@ -158,11 +158,15 @@ class AwLaunchNode(AwBaseNode):
         self.status = self.STOP
 
     def tostring(self):
-        data = {}
-        data["plugin"]   = self.plugin.todict()
-        data["config"]   = self.config
-        data["children"] = map(lambda child: child.nodename(), self.children())
-        return yaml.safe_dump(data)
+        return yaml.safe_dump(self.todict())
+
+    def todict(self):
+        return \
+        {
+            "plugin"  : self.plugin.todict(),
+            "config"  : self.config,
+            "children": [child.nodename() for child in self.children()]
+        }
 
     # experimental
     def remove_child(self, name):
@@ -215,19 +219,8 @@ class AwLaunchNode(AwBaseNode):
     def get_config(self, key, value):
         return self.config.get(key, value)
 
-    def generate_launch(self): # ToDo: list args from plugin
-        lines = []
-        lines.append('<launch>')
-        lines.append('  <include file="' + self.plugin.launch() + '">')
-        for arg_name, arg_data in self.config.items():
-            if arg_name.startswith("args."):
-                if arg_data:
-                    if type(arg_data) is list:
-                        arg_data = " ".join(arg_data)
-                    lines.append('    <arg name="' + arg_name[5:] + '" value="' + str(arg_data) + '"/>')
-        lines.append('  </include>')
-        lines.append('</launch>')
-        return "\n".join(lines)
+    def generate_launch(self):
+        return self.plugin.generate_launch(self.config)
 
     def import_data(self, data, plugins):
         self.plugin = plugins.find(data["plugin"])
@@ -259,6 +252,6 @@ if __name__ == "__main__":
     from .plugin import AwPluginTree
     plugin = AwPluginTree()
     launch = AwLaunchTree(None)
-    launch.load(fspath.profile("default"), plugin)
+    launch.load(myutils.profile("default"), plugin)
     launch.dump()
-    launch.save(fspath.profile("sample.bak"))
+    launch.save(myutils.profile("sample.bak"))

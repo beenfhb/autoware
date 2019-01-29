@@ -1,5 +1,5 @@
 from python_qt_binding import QtCore, QtWidgets
-from autoware_launcher.core import fspath
+from autoware_launcher.core import myutils
 from autoware_launcher.qtui import widgets
 
 
@@ -122,8 +122,8 @@ class AwFileSelect(widgets.AwAbstructFrame):
         self.widget.setText(self.node.get_config("args." + self.opts["defs"]["name"]))
 
     def browsed(self):
-        filepath, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Select File", fspath.userhome())
-        filepath = fspath.envpath(filepath)
+        filepath, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Select File", myutils.userhome())
+        filepath = myutils.envpath(filepath)
         if filepath:
             cfgkey = "args." + self.opts["defs"]["name"]
             self.node.update({"config": {cfgkey: filepath}})
@@ -156,8 +156,8 @@ class AwFileListSelect(widgets.AwAbstructFrame):
         self.widget.setText("\n".join(filepaths))
 
     def browsed(self):
-        filepaths, filetype = QtWidgets.QFileDialog.getOpenFileNames(self, "Select Files", fspath.userhome())
-        filepaths = map(fspath.envpath, filepaths)
+        filepaths, filetype = QtWidgets.QFileDialog.getOpenFileNames(self, "Select Files", myutils.userhome())
+        filepaths = map(myutils.envpath, filepaths)
         if filepaths:
             cfgkey = "args." + self.opts["defs"]["name"]
             self.node.update({"config": {cfgkey: filepaths}})

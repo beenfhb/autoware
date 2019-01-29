@@ -3,7 +3,7 @@ from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
 from ..core import console
-from ..core import fspath
+from ..core import myutils
 from ..core import AwLaunchClientIF
 
 
@@ -16,7 +16,7 @@ class AwQuickStartPanel(QtWidgets.QWidget):
         self.frames = {"root/" + name: None for name in ["map", "vehicle", "sensing", "visualization"]}
         self.awlogo = QtWidgets.QLabel()
 
-        pixmap = QtGui.QPixmap(fspath.package("resources/autoware_logo.png"))
+        pixmap = QtGui.QPixmap(myutils.package("resources/autoware_logo.png"))
         self.awlogo.setPixmap(pixmap)
         self.awlogo.setAlignment(QtCore.Qt.AlignCenter)
         self.awlogo.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)

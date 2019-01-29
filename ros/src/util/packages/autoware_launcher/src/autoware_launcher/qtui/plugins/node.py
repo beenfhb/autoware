@@ -20,12 +20,31 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
 
     def setup_widget(self):
         super(AwDefaultNodePanel, self).setup_widget()
+
+        # For Debug
         self.debug = QtWidgets.QLabel(self.node.tostring())
         self.debug.setVisible(False)
         self.add_frame(self.debug)
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
 
-        for data in self.node.plugin().info():
+        # data view
+        for view in self.node.plugin().panel().frames:
+            self.add_frame(self.guimgr.create_widget(self.node, view))
+
+        # node view
+        for rule in self.node.plugin().rules():
+            if rule.unique:
+                if self.node.haschild(rule.name):
+                    child_node = self.node.getchild(rule.name)
+                    child_view = child_node.plugin().frame()
+                    self.add_frame(self.guimgr.create_widget(child_node, child_view))
+                else:
+                    self.add_frame(AwNodeCreateButton(self.node, rule, "Create " + rule.name.capitalize()))
+            else:
+                pass
+
+        """
+        for data in self.node.plugin().exts():
             self.add_frame(self.guimgr.create_widget(self.node, data))
 
         for data in self.node.plugin().args():
@@ -48,6 +67,7 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
         for rule in self.node.plugin().rules():
             if rule["type"] == "list":
                 self.add_frame(AwNodeCreateButton(self.node, rule, "Add " + rule["name"]))
+        """
 
     # Debug
     def keyPressEvent(self, event):
@@ -68,16 +88,16 @@ class AwDefaultNodeFrame(widgets.AwAbstructFrame):
         self.set_title(self.node.name().capitalize())
         self.add_button(AwConfigButton(self.guimgr.client(), self.node.path()))
 
-        description = self.node.get_config("info.title")
+        description = self.node.get_config("exts.description")
         if description:
             description = description.capitalize()
         else:
             config = node.config()
             description = []
-            for data in self.node.plugin().info():
-                description.append(self.guimgr.widget(data).tostring(self.node, data))
-            for data in self.node.plugin().args():
-                description.append(self.guimgr.widget(data).tostring(self.node, data))
+            #for data in self.node.plugin().info():
+            #    description.append(self.guimgr.widget(data).tostring(self.node, data))
+            #for data in self.node.plugin().args():
+            #    description.append(self.guimgr.widget(data).tostring(self.node, data))
             description = "\n".join(description) if description else "No Description"
 
         self.add_text_widget(description)
@@ -100,22 +120,20 @@ class AwNodeCreateButton(QtWidgets.QPushButton):
         self.rule = rule
         self.clicked.connect(self.onclicked)
 
-    def newindex(self, name):
+    def newname(self):
 
-        index = 0
-        while self.node.haschild(name + str(index)):
-            index = index + 1
-        return name + str(index)
+        if self.rule.unique:
+            return self.rule.name
+        else:
+            index = 0
+            while self.node.haschild(self.rule.name + str(index)):
+                index = index + 1
+            return self.rule.name + str(index)
 
     def onclicked(self):
 
-        if len(self.rule["plugin"]) == 1:
-            if self.rule["type"] == "unit":
-                name = self.rule["name"]
-                self.node.addchild(name, self.rule["plugin"][0])
-            else:
-                name = self.newindex(self.rule["name"])
-                self.node.addchild(name, self.rule["plugin"][0])
+        if len(self.rule.plugins) == 1:
+            self.node.addchild(self.newname(), self.rule.plugins[0])
         else:
             self.open_window()
 
