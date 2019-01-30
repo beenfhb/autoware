@@ -94,6 +94,12 @@ public:
 			dataItemId stopPos=std::numeric_limits<dataItemId>::max()
 		);
 
+	void runFromDataset2
+	(GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos);
+
+	void visualOdometry
+	(GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos);
+
 	std::vector<kpid> dryRun () const;
 
 	void setMask (const cv::Mat &m);

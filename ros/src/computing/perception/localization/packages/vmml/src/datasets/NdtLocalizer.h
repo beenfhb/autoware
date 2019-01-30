@@ -63,6 +63,8 @@ public:
 	bool isPointInsideMap (const Eigen::Vector3d &pt) const;
 	bool isPointInsideMap (const pcl::PointXYZ &pt) const;
 
+	void setBaseLink (const TTransform &_velodyneToBaselink);
+
 protected:
 
 	NDMapPtr ndMap;
@@ -76,6 +78,9 @@ protected:
 	Eigen::Vector3d
 		pointMin=Eigen::Vector3d::Zero(),
 		pointMax=Eigen::Vector3d::Zero();
+
+	bool useBaselink;
+	TTransform velodyneToBaselink;
 };
 
 #endif /* _NDTLOCALIZER_H_ */

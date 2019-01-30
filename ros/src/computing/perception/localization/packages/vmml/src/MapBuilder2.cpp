@@ -318,3 +318,28 @@ MapBuilder2::simulateOpticalFlow(GenericDataset::ConstPtr sourceDs, dataItemId s
 
 	}
 }
+
+
+void
+MapBuilder2::runFromDataset2
+(GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos)
+{
+
+}
+
+
+void
+MapBuilder2::visualOdometry
+(GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos)
+{
+	assert (0<=startPos and startPos<sourceDs->size()-1);
+	assert (0<stopPos and stopPos<sourceDs->size());
+
+	auto anchor = sourceDs->getAsFrame(startPos);
+
+	for (dataItemId d=startPos+1; d<=stopPos; ++d) {
+		auto curFrame = sourceDs->getAsFrame(d);
+
+		// XXX: Unfinished
+	}
+}
