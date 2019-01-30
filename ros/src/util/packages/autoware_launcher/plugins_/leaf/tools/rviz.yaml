@@ -1,5 +1,0 @@
-args:
-    - { title: Config File, type: file, defs: file }
-
-info:
-    - { type: node }

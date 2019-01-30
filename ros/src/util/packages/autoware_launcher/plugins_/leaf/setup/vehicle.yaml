@@ -1,6 +1,0 @@
-args:
-    - { title: Vehicle Model File, type: file, defs: vehicle_model }
-    - { title: Vehicle Info File,  type: file, defs: vehicle_info  }
-
-info:
-    - { type: node }

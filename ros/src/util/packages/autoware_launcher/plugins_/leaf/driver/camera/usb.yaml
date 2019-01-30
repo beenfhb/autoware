@@ -1,4 +1,0 @@
-args:
-    - { title: Width,  type: int, defs: width  }
-    - { title: Height, type: int, defs: height }
-    - { title: FPS,    type: int, defs: fps    }

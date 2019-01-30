@@ -84,10 +84,16 @@ class AwPluginNode(basetree.AwBaseNode):
         return self.__frame
 
     def default_config(self):
-        values = {"str":""}
+        values = {"str":"", "int":"0"}
+        def default_value(data):
+            value = data.rest.get("default")
+            if value is None:
+                return values[data.type]
+            else:
+                return value
         config = {}
-        config.update({"args."+data.name: values[data.type] for data in self.__args})
-        config.update({"exts."+data.name: values[data.type] for data in self.__exts})
+        config.update({"args." + data.name: default_value(data) for data in self.__args})
+        config.update({"exts." + data.name: default_value(data) for data in self.__exts})
         return config
 
     # temporary
@@ -121,7 +127,7 @@ class AwPluginNode(basetree.AwBaseNode):
             self.__rosxml = ydata.get("rosxml", "$(find autoware_launcher)/plugins/{}.xml".format(self.path()))
             self.__exts   = [AwPluginDataElement(data) for data in ydata.get("exts", [])]
             self.__args   = [AwPluginDataElement(data) for data in ydata.get("args", [])]
-            self.__rules  = [AwPluginRuleElement(data, self.tree()) for data in ydata.get("rules", [])]
+            self.__rules  = [AwPluginRuleElement(data, self) for data in ydata.get("rules", [])]
             self.__panel  = AwPluginPanelElement(ydata.get("panel", {}))
             self.__frame  = AwPluginFrameElement(ydata.get("frame", {}))
 
@@ -160,43 +166,49 @@ class AwPluginNode(basetree.AwBaseNode):
         lines.append('<launch>')
         lines.append('  <include file="{}">'.format(self.__rosxml))
         for data in self.__args:
-            if config.get(data.name):
-                lines.append('    <arg name="{}" value="{}"/>'.format(data.name. data.xmlstr(config)))
+            argvalue = config.get("args." + data.name)
+            if argvalue is not None:
+                lines.append('    <arg name="{}" value="{}"/>'.format(data.name, data.xmlstr(argvalue)))
         lines.append('  </include>')
         lines.append('</launch>')
         return "\n".join(lines)
 
 
+
+# AwPluginArgumentDataElement
+# AwPluginExtendedDataElement
 class AwPluginDataElement(object):
 
     def __init__(self, data):
         self.name = data["name"]
         self.type = data["type"]
         self.list = data.get("list", None)
+        self.rest = data
 
     def todict(self):
         return vars(self)
 
-    def xmlstr(self, data):
+    def xmlstr(self, value):
         if self.list is None:
-            return config[self.name]
+            return value
         elif self.list == "space":
-            return " ".join(config[self.name])
+            return " ".join(value)
         else:
-            raise Error(__class__.__name__ + ".serialize")
+            raise Error(__class__.__name__ + ".xmlstr")
 
 class AwPluginRuleElement(object):
 
-    def __init__(self, data, tree):
+    def __init__(self, data, node):
         self.unique = not data.get("list", False)
         self.name = data["name"]
-        self.plugins = self.__init_plugins(data["plugin"], tree)
+        self.plugins = self.__init_plugins(data["plugin"], node)
 
     def todict(self):
         return vars(self)
 
-    def __init_plugins(self, plist, ptree):
+    def __init_plugins(self, plist, pnode):
         plugins = []
+        ptree = pnode.tree()
         plist = plist if type(plist) is list else [plist]
         for pdata in plist:
             if type(pdata) is dict:
@@ -205,9 +217,9 @@ class AwPluginRuleElement(object):
                 if ptree.find(pdata):
                     plugins.append(pdata)
                 else:
-                    console.warning("plugin is not found: {} in {}".format(pdata, self.path()))
+                    console.warning("plugin is not found: {} in {}".format(pdata, pnode.path()))
             else:
-                console.warning("unknown plugin rule: {} in {}".format(pdata, self.path()))
+                console.warning("unknown plugin rule: {} in {}".format(pdata, pnode.path()))
         return plugins
 
 class AwPluginFrameElement(object):

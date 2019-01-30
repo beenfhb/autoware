@@ -1,3 +1,0 @@
-rules :
-- { type: unit, name: concat, plugin: node/points/concat }
-- { type: unit, name: lidars, plugin: node/points/lidars }

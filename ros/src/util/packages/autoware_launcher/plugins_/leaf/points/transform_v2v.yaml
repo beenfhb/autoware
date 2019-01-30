@@ -1,4 +1,0 @@
-args:
-    - { type: str, title: Parent Frame, defs: {name: parent_frame, default: "velodyne"} }
-    - { type: str, title: Local Frame,  defs: local_frame }
-    - { type: tf,  title: Transform,    defs: [tx, ty, tz, rx, ry, rz] }

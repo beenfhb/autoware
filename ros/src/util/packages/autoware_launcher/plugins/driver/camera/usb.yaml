@@ -1,0 +1,15 @@
+format: Autoware Launcher Plugin Version 0.1
+args:
+- { name: width,  type: int }
+- { name: height, type: int }
+- { name: fps,    type: int }
+
+panel:
+  widget: node.panel
+  frames:
+  - target: args.width
+    widget: basic.text
+  - target: args.height
+    widget: basic.text
+  - target: args.fps
+    widget: basic.text

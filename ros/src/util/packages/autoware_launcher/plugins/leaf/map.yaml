@@ -21,6 +21,6 @@ panel:
   - target: args.transform_file
     widget: basic.file
   - target: args.point_cloud_files
-    widget: basic.text
+    widget: basic.filelist
   - target: args.vector_map_files
-    widget: basic.text
+    widget: basic.filelist

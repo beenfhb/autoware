@@ -1,4 +1,0 @@
-launch: $(find gnss_localizer)/launch/nmea2tfpose.launch
-
-args:
-    - { title: Plane, type: int, defs: {name: plane, default: "7"} }

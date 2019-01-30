@@ -22,10 +22,17 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
         super(AwDefaultNodePanel, self).setup_widget()
 
         # For Debug
-        self.debug = QtWidgets.QLabel(self.node.tostring())
-        self.debug.setVisible(False)
-        self.add_frame(self.debug)
+        self.debug1 = QtWidgets.QLabel(self.node.tostring())
+        self.debug1.setVisible(False)
+        self.add_frame(self.debug1)
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
+
+        # For Debug
+        self.debug2 = QtWidgets.QLabel(self.node.generate_launch())
+        self.debug2.setVisible(False)
+        self.add_frame(self.debug2)
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
+
 
         # data view
         for view in self.node.plugin().panel().frames:
@@ -72,7 +79,10 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
     # Debug
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_D:
-            self.debug.setVisible(not self.debug.isVisible())
+            self.debug1.setVisible(not self.debug1.isVisible())
+            event.accept()
+        elif event.key() == QtCore.Qt.Key_F:
+            self.debug2.setVisible(not self.debug2.isVisible())
             event.accept()
         else:
             super(AwDefaultNodePanel, self).keyPressEvent(event)
@@ -135,20 +145,16 @@ class AwNodeCreateButton(QtWidgets.QPushButton):
         if len(self.rule.plugins) == 1:
             self.node.addchild(self.newname(), self.rule.plugins[0])
         else:
-            self.open_window()
+            self.show_select_window()
 
     def onselected(self):
 
-        lname = self.ui_lname.text()
-        if not lname:
-            self.ui_error.setText("Node name is empty")
-            return
         items = self.ui_pname.selectedItems()
         if not items:
             self.ui_error.setText("Node type is not selected")
             return
 
-        error = self.node.addchild(lname, items[0].text())
+        error = self.node.addchild(self.newname(), items[0].text())
         if error:
             self.ui_error.setText(error)
             return
@@ -156,45 +162,34 @@ class AwNodeCreateButton(QtWidgets.QPushButton):
         self.ui_error.setText("")
         self.ui_window.close()
 
-    def open_window(self):
+    def show_select_window(self):
 
+        # window
         window = QtWidgets.QMainWindow(self)
         window.setCentralWidget(QtWidgets.QWidget())
         window.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
         window.setWindowModality(QtCore.Qt.ApplicationModal)
         window.setGeometry(self.window().geometry())
 
+        # widget
         window.setWindowTitle("Create Node")
         widget = window.centralWidget()
         widget.setLayout(QtWidgets.QVBoxLayout())
 
+        # plugin select
+        pname_select = QtWidgets.QListWidget()
+        for pname in self.rule.plugins:
+            pname_select.addItem(pname)
+        widget.layout().addWidget(QtWidgets.QLabel("Node Type"))
+        widget.layout().addWidget(pname_select)
+
+        # footer
         error_label = QtWidgets.QLabel()
         error_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
         cancel_button = QtWidgets.QPushButton("Cancel")
         select_button = QtWidgets.QPushButton("Select")
         cancel_button.clicked.connect(window.close)
         select_button.clicked.connect(self.onselected)
-
-        lname_edit = QtWidgets.QLineEdit() # ToDo: remove (set automatically)
-        if self.rule["type"] == "unit":
-            lname_edit.setText(self.rule["name"])
-            lname_edit.setReadOnly(True) 
-        else:
-            lname_edit.setText(self.rule["name"])
-            index = 0
-            while self.node.haschild(self.rule["name"] + str(index)):
-                index = index + 1
-            lname_edit.setText(self.rule["name"] + str(index))
-
-        widget.layout().addWidget(QtWidgets.QLabel("Node Name"))
-        widget.layout().addWidget(lname_edit)
-
-        pname_edit = QtWidgets.QListWidget()
-        for name in self.rule["plugin"]:
-            pname_edit.addItem(name)
-        widget.layout().addWidget(QtWidgets.QLabel("Node Type"))
-        widget.layout().addWidget(pname_edit)
-
         footer = QtWidgets.QHBoxLayout()
         footer.addWidget(error_label)
         footer.addWidget(cancel_button)
@@ -203,8 +198,7 @@ class AwNodeCreateButton(QtWidgets.QPushButton):
 
         self.ui_window = window
         self.ui_error  = error_label
-        self.ui_lname  = lname_edit
-        self.ui_pname  = pname_edit
+        self.ui_pname  = pname_select
         window.show()
 
 
