@@ -919,10 +919,6 @@ private:
 		TTransform T12;
 		Matcher::matchAny(*Frame1, *Frame2, validKpPairs, cvFeatMatcher, T12);
 
-		// We have a new position for Frame 2
-		Pose FP2 = Frame1->pose() * T12;
-		debug(dumpVector(FP2));
-
 		cv::Mat matchResult;
 		matchResult = Matcher::drawMatches(*Frame1, *Frame2, validKpPairs, drawmode, maxNum);
 
@@ -930,6 +926,15 @@ private:
 		cv::imwrite(matchFiledump, matchResult);
 		debug("Matching result written to "+matchFiledump);
 		debug("Got "+to_string(validKpPairs.size())+" pairs");
+
+		/*
+		 * Statistics
+		 */
+		debug("Camera transformation by E: ");
+		debug(dumpVector(T12));
+		debug("Camera metric transformation: ");
+		TTransform T12m = Frame1->pose().inverse() * Frame2->pose();
+		debug(dumpVector(T12m));
 	}
 
 

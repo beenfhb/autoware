@@ -370,9 +370,6 @@ Matcher::matchAny(
 	cv2eigen(R2cv, R2);
 	cv2eigen(tcv, t);
 
-	// Scale
-	float S = (Fr1.mPose.inverse() * Fr2.mPose).translation().norm() / t.norm();
-
 	float parallax1, parallax2, parallax3, parallax4;
 	vector<int> good(4);
 	vector<bool>
@@ -388,7 +385,6 @@ Matcher::matchAny(
 
 	// XXX: Untested
 	auto g = *std::max_element(good.begin(), good.end());
-	t *= S;
 	if (g==good[0]) {
 		T12 = Eigen::Translation3d(t) * R1;
 		goodFeaturePairs = &goodFeaturePairs1;
@@ -405,7 +401,6 @@ Matcher::matchAny(
 		T12 = Eigen::Translation3d(-t) * R2;
 		goodFeaturePairs = &goodFeaturePairs4;
 	}
-	cout << "Got " << g << " triangulated pairs\n";
 	featurePairsRet.clear();
 	for (int i=0; i<featurePairs.size(); ++i) {
 		if (goodFeaturePairs->at(i)==true)
