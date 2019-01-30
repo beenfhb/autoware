@@ -9,6 +9,7 @@
       start_angle: -180
       end_angle: 180
       step: 0.4137931
+    scan_direction: CW
 - name: HDL-64
   params:
     vertical_span:
@@ -19,6 +20,7 @@
       start_angle: -180
       end_angle: 180
       step: 0.4137931
+    scan_direction: CW
 - name: OS-1-16-0512
   params:
     vertical_span:
@@ -29,6 +31,7 @@
       start_angle: -180
       end_angle: 180
       step: 0.703125
+    scan_direction: CCW
 - name: OS-1-16-1024
   params:
     vertical_span:
@@ -39,6 +42,7 @@
       start_angle: -180
       end_angle: 180
       step: 0.3515625
+    scan_direction: CCW
 - name: OS-1-16-2048
   params:
     vertical_span:
@@ -49,6 +53,7 @@
       start_angle: -180
       end_angle: 180
       step: 0.1757812
+    scan_direction: CCW
 - name: OS-1-64-0512
   params:
     vertical_span:
@@ -59,6 +64,7 @@
       start_angle: -180
       end_angle: 180
       step: 0.703125
+    scan_direction: CCW
 - name: OS-1-64-1024
   params:
     vertical_span:
@@ -69,6 +75,7 @@
       start_angle: -180
       end_angle: 180
       step: 0.3515625
+    scan_direction: CCW
 - name: OS-1-64-2048
   params:
     vertical_span:
@@ -79,6 +86,7 @@
       start_angle: -180
       end_angle: 180
       step: 0.1757812
+    scan_direction: CCW
 - name: VLP-16
   params:
     vertical_span:
@@ -89,3 +97,4 @@
       start_angle: -180
       end_angle: 180
       step: 0.4137931
+    scan_direction: CW

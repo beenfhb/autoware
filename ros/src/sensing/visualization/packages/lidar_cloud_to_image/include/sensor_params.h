@@ -46,11 +46,13 @@ namespace cloud_to_image
 class SensorParams 
 {
   public:
+    enum class ScanDirection { CLOCK_WISE, COUNTER_CLOCK_WISE };
+
     using Ptr = shared_ptr<SensorParams>;
     using ConstPtr = const shared_ptr<const SensorParams>;
 
     enum class Set { COLS, ROWS };
-    SensorParams() {}
+    SensorParams(): _scan_direction(ScanDirection::COUNTER_CLOCK_WISE) {}
     ~SensorParams() {}
 
     /**
@@ -103,6 +105,8 @@ class SensorParams
 		out << YAML::Value << val.v_span_params();
 		out << YAML::Key << "horizontal_span";
 		out << YAML::Value << val.h_span_params();
+        out << YAML::Key << "scan_direction";
+        out << YAML::Value << val.getScanDirectionStr();
 		out << YAML::EndMap;
 		return out;
 	}
@@ -113,6 +117,8 @@ class SensorParams
 		out << val.v_span_params();
 		out << "horizontal_span: " << std::endl;
 		out << val.h_span_params();
+        out << "scan_direction: " << std::endl; 
+        out << val.getScanDirectionStr();
 		return out;
 	}
 
@@ -158,6 +164,28 @@ class SensorParams
 	const std::vector<float>& colAngleSines() const { return _col_angles_sines; }
 
     bool valid();
+
+    inline void setScanDirection(const ScanDirection& direction) { _scan_direction = direction; }
+    inline void setScanDirection(const std::string& direction) 
+    { 
+        if (direction == "CW") {
+            _scan_direction = ScanDirection::CLOCK_WISE;
+        } else {
+            _scan_direction = ScanDirection::COUNTER_CLOCK_WISE;
+        }
+    }
+
+    std::string getScanDirectionStr() const 
+    {
+        std::string dir = std::string("CCW");
+        if (_scan_direction == ScanDirection::CLOCK_WISE) {
+            dir = std::string("CW");
+        }
+        return dir;
+    }
+
+    const ScanDirection& getScanDirection() const { return _scan_direction; }
+
 
     /**
      * @brief      Default parameters for 16 beam Velodyne
@@ -240,6 +268,7 @@ class SensorParams
 
     AngularRange _v_span_params;
     AngularRange _h_span_params;
+    ScanDirection _scan_direction;
 
     std::vector<Angle> _col_angles;
     std::vector<Angle> _row_angles;
@@ -263,17 +292,19 @@ namespace YAML
 			Node node;
 			node["vertical_span"] = rhs.v_span_params();
 			node["horizontal_span"] = rhs.h_span_params();
+            node["scan_direction"] = rhs.getScanDirectionStr();
 			return node;
 		}
 
 		static bool decode(const Node& node, cloud_to_image::SensorParams& rhs)
 		{
-			if (!node.IsMap() || node.size() != 2) {
+			if (!node.IsMap() || node.size() != 3) {
 				return false;
 			}
 			rhs = cloud_to_image::SensorParams();
 			rhs.setSpan(node["vertical_span"].as<cloud_to_image::AngularRange>(), cloud_to_image::AngularRange::Direction::VERTICAL);
 			rhs.setSpan(node["horizontal_span"].as<cloud_to_image::AngularRange>(), cloud_to_image::AngularRange::Direction::HORIZONTAL);
+            rhs.setScanDirection(node["scan_direction"].as<std::string>());
 			return true;
 		}
 	};

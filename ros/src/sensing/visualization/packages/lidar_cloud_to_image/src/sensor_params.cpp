@@ -140,7 +140,12 @@ size_t SensorParams::rowFromAngle(const Angle& angle) const
 
 size_t SensorParams::colFromAngle(const Angle& angle) const 
 {
-  return findClosest(_col_angles, angle);
+  size_t col = findClosest(_col_angles, angle);
+  //handle CW or CCW direction
+  if (_scan_direction == ScanDirection::CLOCK_WISE) {
+    col = (_col_angles.size() - 1) - col; //flip the columns
+  }
+  return col;
 }
 
 size_t SensorParams::findClosest(const vector<Angle>& vec, const Angle& val) 
@@ -169,6 +174,7 @@ std::unique_ptr<SensorParams> SensorParams::VLP_16()
                  AngularRange::Direction::HORIZONTAL);
   params.setSpan(AngularRange(15_deg, -15_deg, 16),
                  AngularRange::Direction::VERTICAL);
+  params.setScanDirection("CW");
   params.fillCosSin();
   if (!params.valid()) {
     fprintf(stderr, "ERROR: params are not valid!\n");
@@ -184,6 +190,7 @@ std::unique_ptr<SensorParams> SensorParams::HDL_32()
                  AngularRange::Direction::HORIZONTAL);
   params.setSpan(AngularRange(10.0_deg, -30.0_deg, 32),
                  AngularRange::Direction::VERTICAL);
+  params.setScanDirection("CW");
   params.fillCosSin();
   if (!params.valid()) {
     fprintf(stderr, "ERROR: params are not valid!\n");
@@ -199,6 +206,7 @@ std::unique_ptr<SensorParams> SensorParams::HDL_64_EQUAL()
                  AngularRange::Direction::HORIZONTAL);
   params.setSpan(AngularRange(2.0_deg, -24.0_deg, 64),
                  AngularRange::Direction::VERTICAL);
+  params.setScanDirection("CW");
   params.fillCosSin();
   if (!params.valid()) {
     fprintf(stderr, "ERROR: params are not valid!\n");
@@ -216,6 +224,7 @@ std::unique_ptr<SensorParams> SensorParams::HDL_64()
   AngularRange span_bottom(-8.87_deg, -24.87_deg, 32);
   vector<AngularRange> spans = {{span_top, span_bottom}};
   params.setSpan(spans, AngularRange::Direction::VERTICAL);
+  params.setScanDirection("CW");
   params.fillCosSin();
   if (!params.valid()) {
     fprintf(stderr, "ERROR: params are not valid!\n");

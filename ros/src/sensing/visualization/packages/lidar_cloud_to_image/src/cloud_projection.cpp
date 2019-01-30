@@ -67,10 +67,10 @@ CloudProjection::CloudProjection(const SensorParams& params)
 void CloudProjection::clearData() 
 {
   _data = PointMatrix(_params.cols(), PointColumn(_params.rows()));
-  _depth_image = cv::Mat::zeros(_params.rows(), _params.cols(), CV_32FC1/*cv::DataType<float>::type*/);
-  _intensity_image = cv::Mat::zeros(_params.rows(), _params.cols(), CV_16UC1/*cv::DataType<uint16_t>::type*/);
-  _reflectance_image = cv::Mat::zeros(_params.rows(), _params.cols(), CV_16UC1/*cv::DataType<uint16_t>::type*/);
-  _noise_image = cv::Mat::zeros(_params.rows(), _params.cols(), CV_16UC1/*cv::DataType<uint16_t>::type*/);
+  _depth_image = cv::Mat::zeros(_params.rows(), _params.cols(), CV_32FC1);
+  _intensity_image = cv::Mat::zeros(_params.rows(), _params.cols(), CV_16UC1);
+  _reflectance_image = cv::Mat::zeros(_params.rows(), _params.cols(), CV_16UC1);
+  _noise_image = cv::Mat::zeros(_params.rows(), _params.cols(), CV_16UC1);
 }
 
 void CloudProjection::loadMossmanCorrections()
@@ -411,6 +411,18 @@ void CloudProjection::cvMatToDepthPNG(const cv::Mat& image, const std::string& f
   }
 }
 
+void CloudProjection::cvMatToColorPNG(const cv::Mat& image, const std::string& filename)
+{
+  if (image.rows < 1 || image.cols < 1) {
+    throw std::runtime_error("wrong image format, cannot save");;
+  }  
+  try {
+      cv::imwrite(filename, image);
+  }
+  catch (std::runtime_error& ex) {
+      fprintf(stderr, "Exception converting image to PNG format: %s\n", ex.what());
+  }
+}
 
 
 }  // namespace cloud_to_image

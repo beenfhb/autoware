@@ -159,6 +159,7 @@ class CloudProjection {
 
     static void cloudToPCDFile(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud, const std::string& filename);
     static void cvMatToDepthPNG(const cv::Mat& image, const std::string& filename);
+    static void cvMatToColorPNG(const cv::Mat& image, const std::string& filename);
 
     void loadMossmanCorrections();
     void clearCorrections();

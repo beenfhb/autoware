@@ -16,12 +16,15 @@ namespace cloud_to_image
 class CloudToImage
 {
 	public:
+		enum class ImageOutputMode { SINGLE, GROUP, STACK };
+
 		explicit CloudToImage();
 		~CloudToImage();
 
 		void init(int argc, char* argv[]);
 		void pointCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& input);
 		void publishImages(const std_msgs::Header& header);
+		void saveImages(const std::string& base_name = std::string("cloud2image"));
 
 	private:
 		//!
@@ -56,15 +59,26 @@ class CloudToImage
 		bool _has_reflectance_image;
 		bool _has_noise_image;
 
+		bool _save_images;
+
 		float _horizontal_scale;
 		float _vertical_scale;
 
+		ImageOutputMode _output_mode;
+
+		cv::Mat _depth_image;
+		cv::Mat _intensity_image;
+		cv::Mat _reflectance_image;
+		cv::Mat _noise_image;
+		cv::Mat _group_image;
+		cv::Mat _stack_image;
+		
 		ros::NodeHandle _nodehandle;
 		ros::Subscriber _sub_PointCloud;
-		/*image_transport::Publisher*/ ros::Publisher _pub_DepthImage;
-		/*image_transport::Publisher*/ ros::Publisher _pub_IntensityImage;
-		/*image_transport::Publisher*/ ros::Publisher _pub_ReflectanceImage;
-		/*image_transport::Publisher*/ ros::Publisher _pub_NoiseImage;
+		ros::Publisher _pub_DepthImage;
+		ros::Publisher _pub_IntensityImage;
+		ros::Publisher _pub_ReflectanceImage;
+		ros::Publisher _pub_NoiseImage;
 };
 }
 
