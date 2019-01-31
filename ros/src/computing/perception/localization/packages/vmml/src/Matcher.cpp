@@ -360,15 +360,9 @@ Matcher::matchAny(
 	cv::Mat Ecv, R1cv, R2cv, tcv;
 	eigen2cv(E12, Ecv);
 
-	/*
-	 * We are too lazy here and better use OpenCV 3 routine for decomposing E
-	 */
-	cv::decomposeEssentialMat(Ecv, R1cv, R2cv, tcv);
 	Matrix3d R1, R2;
 	Vector3d t;
-	cv2eigen(R1cv, R1);
-	cv2eigen(R2cv, R2);
-	cv2eigen(tcv, t);
+	decomposeE(E12, R1, R2, t);
 
 	float parallax1, parallax2, parallax3, parallax4;
 	vector<int> good(4);
@@ -383,22 +377,21 @@ Matcher::matchAny(
 	good[2] = Matcher::CheckRT(R2, t, Fr1, Fr2, featurePairs, goodFeaturePairs3, parallax3);
 	good[3] = Matcher::CheckRT(R2, -t, Fr1, Fr2, featurePairs, goodFeaturePairs4, parallax4);
 
-	// XXX: Untested
 	auto g = *std::max_element(good.begin(), good.end());
 	if (g==good[0]) {
-		T12 = Eigen::Translation3d(t) * R1;
+		T12 = TTransform::from_R_t(t, R1);
 		goodFeaturePairs = &goodFeaturePairs1;
 	}
 	else if (g==good[1]) {
-		T12 = Eigen::Translation3d(-t) * R1;
+		T12 = TTransform::from_R_t(-t, R1);
 		goodFeaturePairs = &goodFeaturePairs2;
 	}
 	else if (g==good[2]) {
-		T12 = Eigen::Translation3d(t) * R2;
+		T12 = TTransform::from_R_t(t, R2);
 		goodFeaturePairs = &goodFeaturePairs3;
 	}
 	else if (g==good[3]) {
-		T12 = Eigen::Translation3d(-t) * R2;
+		T12 = TTransform::from_R_t(-t, R2);
 		goodFeaturePairs = &goodFeaturePairs4;
 	}
 	featurePairsRet.clear();

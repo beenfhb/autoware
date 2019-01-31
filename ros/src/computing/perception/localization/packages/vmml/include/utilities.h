@@ -249,6 +249,9 @@ struct TTransform : public Eigen::Affine3d
 			const Eigen::Quaterniond &ori
 				=Eigen::Quaterniond::Identity());
 
+	static TTransform from_R_t
+		(const Eigen::Vector3d &t, const Eigen::Matrix3d &R);
+
 	inline const Vector3d position() const
 	{ return this->translation(); }
 

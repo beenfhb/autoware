@@ -337,19 +337,30 @@ MapBuilder2::visualOdometry
 	assert (0<stopPos and stopPos<sourceDs->size());
 
 	auto anchor = sourceDs->getAsFrame(startPos);
+	anchor->computeFeatures(cMap->getFeatureDetector());
 	voResult.clear();
 	Pose
-		anchorPose = Pose::Identity(),
+		anchorPose = anchor->pose(),
 		curFramePose;
+	voResult.push_back( PoseStamped(anchorPose, sourceDs->get(startPos)->getTimestamp()) );
 
 	for (dataItemId d=startPos+1; d<=stopPos; ++d) {
 		auto curFrame = sourceDs->getAsFrame(d);
+		curFrame->computeFeatures(cMap->getFeatureDetector());
 
-		// XXX: Unfinished
 		vector<Matcher::KpPair> validKpPair;
 		TTransform T12;
 		Matcher::matchAny(*anchor, *curFrame, validKpPair, cMap->getDescriptorMatcher(), T12);
+
+		double S = ( anchor->pose().inverse()*curFrame->pose() ).translation().norm();
+		T12.translation() = S*T12.translation();
+
 		curFramePose = anchorPose * T12;
 		PoseStamped curFrp(curFramePose, sourceDs->get(d)->getTimestamp());
+
+		voResult.push_back(curFrp);
+		anchor = curFrame;
+		anchorPose = curFramePose;
+		cerr << d << endl;
 	}
 }

@@ -114,6 +114,17 @@ TTransform::from_Pos_Quat(const Vector3d &pos, const Quaterniond &orient)
 }
 
 
+TTransform
+TTransform::from_R_t
+(const Eigen::Vector3d &t, const Eigen::Matrix3d &R)
+{
+	TTransform T;
+	T.m_matrix.block<3,3>(0,0) = R;
+	T.m_matrix.block<3,1>(0,3) = t;
+	return T;
+}
+
+
 #include <sstream>
 
 string
