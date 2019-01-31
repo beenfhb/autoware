@@ -98,7 +98,7 @@ public:
 	(GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos);
 
 	void visualOdometry
-	(GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos);
+	(GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos, Trajectory &voResult);
 
 	std::vector<kpid> dryRun () const;
 

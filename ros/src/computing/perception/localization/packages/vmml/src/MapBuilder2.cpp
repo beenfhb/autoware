@@ -7,6 +7,7 @@
 
 #include <exception>
 #include <thread>
+#include "Matcher.h"
 #include "MapBuilder2.h"
 #include "Optimizer.h"
 #include "ImageDatabase.h"
@@ -330,16 +331,25 @@ MapBuilder2::runFromDataset2
 
 void
 MapBuilder2::visualOdometry
-(GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos)
+(GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos, Trajectory &voResult)
 {
 	assert (0<=startPos and startPos<sourceDs->size()-1);
 	assert (0<stopPos and stopPos<sourceDs->size());
 
 	auto anchor = sourceDs->getAsFrame(startPos);
+	voResult.clear();
+	Pose
+		anchorPose = Pose::Identity(),
+		curFramePose;
 
 	for (dataItemId d=startPos+1; d<=stopPos; ++d) {
 		auto curFrame = sourceDs->getAsFrame(d);
 
 		// XXX: Unfinished
+		vector<Matcher::KpPair> validKpPair;
+		TTransform T12;
+		Matcher::matchAny(*anchor, *curFrame, validKpPair, cMap->getDescriptorMatcher(), T12);
+		curFramePose = anchorPose * T12;
+		PoseStamped curFrp(curFramePose, sourceDs->get(d)->getTimestamp());
 	}
 }

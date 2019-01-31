@@ -252,6 +252,9 @@ public:
 
 		else if (command[0]=="project")
 			projection_cmd(command);
+
+		else if (command[0]=="vo")
+			vo_cmd(command);
 	}
 
 
@@ -957,6 +960,22 @@ private:
 		const string projectionDump ("projection.png");
 		cv::imwrite(projectionDump, frameImageProjection);
 		debug("Projection result written to " + projectionDump);
+	}
+
+	// Visual Odometry test
+	void vo_cmd (const stringTokens &cmd)
+	{
+		int fn0 = stoi(cmd[1]),
+			fn1 = stoi(cmd[2]);
+
+		fs::path voDumpPath("/tmp/visual_odometry.csv");
+
+		Trajectory voTrajectory;
+		MapBuilder2 mpBuilder;
+
+		mpBuilder.visualOdometry(loadedDataset, fn0, fn1, voTrajectory);
+		voTrajectory.dump(voDumpPath.string());
+		debug("Visual odometry result dumped to "+voDumpPath.string());
 	}
 };
 
