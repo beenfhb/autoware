@@ -95,6 +95,7 @@ class AwLaunchTree(AwBaseTree):
         super(AwLaunchTree, self).__init__()
         self.server  = server
         self.plugins = plugins
+        #self.treedir = None
 
     def __str__(self):
         childnames = map(lambda child: child.nodename(), self.children())

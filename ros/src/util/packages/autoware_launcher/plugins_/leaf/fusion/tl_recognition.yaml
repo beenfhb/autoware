@@ -1,1 +1,0 @@
-launch: $(find trafficlight_recognizer)/launch/traffic_light_recognition.launch

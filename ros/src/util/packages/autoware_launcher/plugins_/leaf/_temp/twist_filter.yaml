@@ -1,2 +1,0 @@
-args: []
-launch: $(find waypoint_follower)/launch/twist_filter.launch

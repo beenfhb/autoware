@@ -1,7 +1,7 @@
 format: Autoware Launcher Plugin Version 0.1
 args:
-- { name: local_frame, type: int }
-- { name: device_addr, type: int }
+- { name: local_frame, type: str }
+- { name: device_addr, type: str }
 - { name: device_port, type: int }
 
 panel:

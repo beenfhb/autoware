@@ -84,7 +84,7 @@ class AwPluginNode(basetree.AwBaseNode):
         return self.__frame
 
     def default_config(self):
-        values = {"str":"", "int":"0"}
+        values = {"str":"", "int":"0", "bool":False}
         def default_value(data):
             value = data.rest.get("default")
             if value is None:
@@ -132,16 +132,6 @@ class AwPluginNode(basetree.AwBaseNode):
             self.__frame  = AwPluginFrameElement(ydata.get("frame", {}))
 
         """
-            self.__launch = ydata.get("launch", xmlpath)
-            self.__panel  = ydata.get("panel", {"view": "node.panel"})
-            self.__frame  = ydata.get("frame", {"view": "node.frame"})
-
-            self.__info = ydata.get("info", [])
-            self.__args = ydata.get("args", [])
-            self.__rule = collections.OrderedDict()
-
-
-
         # Validation
         view_type = ["text", "file", "filelist"]
         rule_type = ["unit", "list"]
@@ -180,10 +170,10 @@ class AwPluginNode(basetree.AwBaseNode):
 class AwPluginDataElement(object):
 
     def __init__(self, data):
-        self.name = data["name"]
-        self.type = data["type"]
-        self.list = data.get("list", None)
-        self.rest = data
+        self.name = data.pop("name")
+        self.type = data.pop("type")
+        self.list = data.pop("list", None)
+        self.rest = data # temporary, add default field
 
     def todict(self):
         return vars(self)
@@ -191,10 +181,11 @@ class AwPluginDataElement(object):
     def xmlstr(self, value):
         if self.list is None:
             return value
-        elif self.list == "space":
+        if self.list == "space":
             return " ".join(value)
-        else:
-            raise Error(__class__.__name__ + ".xmlstr")
+        if self.list == "yaml":
+            return "[{}]".format(",".join(value))
+        raise Error(__class__.__name__ + ".xmlstr")
 
 class AwPluginRuleElement(object):
 

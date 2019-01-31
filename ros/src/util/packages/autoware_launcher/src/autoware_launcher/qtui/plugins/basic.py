@@ -7,17 +7,20 @@ from autoware_launcher.qtui import widgets
 def plugin_widgets():
     return \
     {
-        "text"     : AwTextFrame,
-        "textlist" : AwTextListFrame,
-        "file"     : AwFileFrame,
-        "filelist" : AwFileListFrame,
+        "text"      : AwTextFrame,
+        "textlist"  : AwTextListFrame,
+        "file"      : AwFileFrame,
+        "filelist"  : AwFileListFrame,
+        "transform" : AwTransformFrame,
     }
 
 def frame_title(view, text):
     if view.title:
         return view.title
     else:
-        return "{} ({})".format(text, view.target)
+        target = view.target
+        if type(target) is list: target = ", ".join(target)
+        return "{} ({})".format(text, target)
 
 
 
@@ -28,9 +31,9 @@ class AwTextFrame(widgets.AwAbstructFrame):
         super(AwTextFrame, self).setup_widget()
         self.set_title(frame_title(self.view, "Text"))
 
-        self.input = AwTextInput(self.node.get_config(self.view.target))
-        self.input.value_updated.connect(self.apply)
-        self.add_widget(self.input)
+        self.field = AwTextField(self.node.get_config(self.view.target))
+        self.field.value_updated.connect(self.apply)
+        self.add_widget(self.field)
 
     def apply(self, value):
         self.node.update({"config": {self.view.target: value}})
@@ -44,9 +47,9 @@ class AwTextListFrame(widgets.AwAbstructFrame):
         super(AwTextListFrame, self).setup_widget()
         self.set_title(frame_title(self.view, "TextList"))
 
-        self.input = AwTextListInput(self.node.get_config(self.view.target))
-        self.input.value_updated.connect(self.apply)
-        self.add_widget(self.input)
+        self.field = AwTextListField(self.node.get_config(self.view.target))
+        self.field.value_updated.connect(self.apply)
+        self.add_widget(self.field)
 
     def apply(self, value):
         self.node.update({"config": {self.view.target: value}})
@@ -57,7 +60,7 @@ class AwFileFrame(AwTextFrame):
 
     def __init__(self, guimgr, node, view):
         super(AwFileFrame, self).__init__(guimgr, node, view)
-        self.add_button(AwFileBrowseButton(self.input))
+        self.add_button(AwFileBrowseButton(self.field))
 
 
 
@@ -65,7 +68,7 @@ class AwFileListFrame(AwTextListFrame):
 
     def __init__(self, guimgr, node, view):
         super(AwFileListFrame, self).__init__(guimgr, node, view)
-        self.add_button(AwFileListBrowseButton(self.input))
+        self.add_button(AwFileListBrowseButton(self.field))
 
 
 
@@ -76,15 +79,15 @@ class AwIntegerFrame(widgets.AwAbstructFrame):
         super(AwIntegerFrame, self).setup_widget()
         self.set_title(frame_title(self.view, "Integer"))
 
-        self.input = AwIntegerInput(self.node.get_config(self.view.target))
-        self.input.value_updated.connect(self.apply)
-        self.add_widget(self.input)
+        self.field = AwIntegerField(self.node.get_config(self.view.target))
+        self.field.value_updated.connect(self.apply)
+        self.add_widget(self.field)
 
     def apply(self, value):
         self.node.update({"config": {self.view.target: value}})
 
 
-"""
+
 class AwTransformFrame(widgets.AwAbstructFrame):
 
     def __init__(self, guimgr, node, view):
@@ -94,44 +97,29 @@ class AwTransformFrame(widgets.AwAbstructFrame):
 
         widget = QtWidgets.QWidget()
         widget.setLayout(QtWidgets.QHBoxLayout())
-
-        self.inputs = []
-
-        mapper = QtCore.QSignalMapper(widget)
         for idx, txt in enumerate(["Tx", "Ty", "Tz", "Rx", "Ry", "Rz"]):
-            field = QtWidgets.QLineEdit()
-            field.setText(self.node.get_config("args." + self.opts["defs"][idx]["name"]))
-            field.editingFinished.connect(mapper.map)
-            mapper.setMapping(field, idx)
+            field = AwTextField(self.node.get_config(self.view.target[idx]))
+            field.target = self.view.target[idx]
+            field.value_updated.connect(self.apply)
             widget.layout().addWidget(QtWidgets.QLabel(txt + ":"))
             widget.layout().addWidget(field)
-            self.fields.append(field)
-
-        mapper.mapped.connect(self.edited)
         self.add_widget(widget)
 
-    def edited(self, idx):
-        cfgkey = "args." + self.opts["defs"][idx]["name"]
-        self.node.update({"config": {cfgkey: self.fields[idx].text()}})
-
-    @staticmethod
-    def tostring(node, opts):
-        result = opts["title"] + ": "
-        for idx, txt in enumerate(["Tx", "Ty", "Tz", "Rx", "Ry", "Rz"]):
-            result += txt + "=" + node.get_config("args." + opts["defs"][idx]["name"]) + ", "
-        return result
-"""
+    def apply(self, value):
+        field = self.sender()
+        self.node.update({"config": {field.target: value}})
 
 
 
 
 
-class AwTextInput(QtWidgets.QLineEdit):
+
+class AwTextField(QtWidgets.QLineEdit):
 
     value_updated = QtCore.Signal(str)
 
     def __init__(self, value):
-        super(AwTextInput, self).__init__()
+        super(AwTextField, self).__init__()
         self.__value = value
         self.setText(str(self.__value))
 
@@ -142,16 +130,16 @@ class AwTextInput(QtWidgets.QLineEdit):
 
     def focusOutEvent(self, event):
         self.update_value(self.text())
-        super(AwTextInput, self).focusOutEvent(event)
+        super(AwTextField, self).focusOutEvent(event)
 
 
 
-class AwTextListInput(QtWidgets.QPlainTextEdit):
+class AwTextListField(QtWidgets.QPlainTextEdit):
 
     value_updated = QtCore.Signal(list)
 
     def __init__(self, value):
-        super(AwTextListInput, self).__init__()
+        super(AwTextListField, self).__init__()
         self.__value = [v for v in value if v]
         self.setPlainText("\n".join(self.__value))
 
@@ -163,16 +151,16 @@ class AwTextListInput(QtWidgets.QPlainTextEdit):
 
     def focusOutEvent(self, event):
         self.update_value(self.toPlainText().split("\n"))
-        super(AwTextListInput, self).focusOutEvent(event)
+        super(AwTextListField, self).focusOutEvent(event)
 
 
 
-class AwIntegerInput(QtWidgets.QLineEdit):
+class AwIntegerField(QtWidgets.QLineEdit):
 
     value_updated = QtCore.Signal(str)
 
     def __init__(self, value):
-        super(AwIntegerInput, self).__init__()
+        super(AwIntegerField, self).__init__()
         self.__value = value
         self.setText(str(self.__value))
 
@@ -183,7 +171,7 @@ class AwIntegerInput(QtWidgets.QLineEdit):
 
     def focusOutEvent(self, event):
         self.update_value(int(self.text()))
-        super(AwIntegerInput, self).focusOutEvent(event)
+        super(AwIntegerField, self).focusOutEvent(event)
 
 
 
@@ -192,28 +180,28 @@ class AwIntegerInput(QtWidgets.QLineEdit):
 
 class AwFileBrowseButton(QtWidgets.QPushButton):
 
-    def __init__(self, input, text = "Browse"):
+    def __init__(self, field, text = "Browse"):
         super(AwFileBrowseButton, self).__init__(text)
-        self.__input = input
+        self.__field = field
         self.clicked.connect(self.browsed)
 
     def browsed(self):
         filepath, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "Select File", myutils.userhome())
         if filepath:
             filepath = myutils.envpath(filepath)
-            self.__input.update_value(filepath)
+            self.__field.update_value(filepath)
 
 
 
 class AwFileListBrowseButton(QtWidgets.QPushButton):
 
-    def __init__(self, input, text = "Browse"):
+    def __init__(self, field, text = "Browse"):
         super(AwFileListBrowseButton, self).__init__(text)
-        self.__input = input
+        self.__field = field
         self.clicked.connect(self.browsed)
 
     def browsed(self):
         filepaths, filetype = QtWidgets.QFileDialog.getOpenFileNames(self, "Select Files", myutils.userhome())
         if filepaths:
             filepaths = [myutils.envpath(filepath) for filepath in filepaths]
-            self.__input.update_value(filepaths)
+            self.__field.update_value(filepaths)

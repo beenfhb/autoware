@@ -48,33 +48,12 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
                 else:
                     self.add_frame(AwNodeCreateButton(self.node, rule, "Create " + rule.name.capitalize()))
             else:
-                pass
-
-        """
-        for data in self.node.plugin().exts():
-            self.add_frame(self.guimgr.create_widget(self.node, data))
-
-        for data in self.node.plugin().args():
-            self.add_frame(self.guimgr.create_widget(self.node, data))
-
-        childnodes = {child.name(): child for child in self.node.children()}
-        for rule in self.node.plugin().rules():
-            if rule["type"] == "unit":
-                if self.node.haschild(rule["name"]):
-                    child = self.node.getchild(rule["name"])
-                    frame = child.plugin().frame()
-                    self.add_frame(self.guimgr.create_widget(child, frame))
-                    childnodes.pop(rule["name"])
-                else:
-                    self.add_frame(AwNodeCreateButton(self.node, rule, "Create " + rule["name"]))
-                    
-        for child in childnodes.values():
-            frame = child.plugin().frame()
-            self.add_frame(self.guimgr.create_widget(child, frame))
-        for rule in self.node.plugin().rules():
-            if rule["type"] == "list":
-                self.add_frame(AwNodeCreateButton(self.node, rule, "Add " + rule["name"]))
-        """
+                rule_names = [name for name in self.node.childnames() if name.startswith(rule.name)]
+                for rule_name in rule_names:
+                    child_node = self.node.getchild(rule_name)
+                    child_view = child_node.plugin().frame()
+                    self.add_frame(self.guimgr.create_widget(child_node, child_view))
+                self.add_frame(AwNodeCreateButton(self.node, rule, "Create " + rule.name.capitalize()))
 
     # Debug
     def keyPressEvent(self, event):
@@ -86,7 +65,7 @@ class AwDefaultNodePanel(widgets.AwAbstructPanel):
             event.accept()
         else:
             super(AwDefaultNodePanel, self).keyPressEvent(event)
-        
+
 
 
 class AwDefaultNodeFrame(widgets.AwAbstructFrame):
@@ -155,6 +134,7 @@ class AwNodeCreateButton(QtWidgets.QPushButton):
             return
 
         error = self.node.addchild(self.newname(), items[0].text())
+        print error
         if error:
             self.ui_error.setText(error)
             return

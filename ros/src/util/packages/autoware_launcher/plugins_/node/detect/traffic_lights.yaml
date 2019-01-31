@@ -1,3 +1,0 @@
-rules :
-  - { type: unit, name: projection,  plugin: leaf/fusion/tl_projection }
-  - { type: unit, name: recognition, plugin: leaf/fusion/tl_recognition }

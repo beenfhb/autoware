@@ -1,3 +1,0 @@
-rules :
-  - { type: unit, name: concat,    plugin: leaf/points/concat        }
-  - { type: unit, name: transform, plugin: leaf/points/transform_v2b }

@@ -1,4 +1,0 @@
-args:
-    - { title: Input Topics, type: strlist, defs: input_topics }
-    - { title: Output Topic, type: str,     defs: {name: output_topic, default: /points_raw} }
-    - { title: Output Frame, type: str,     defs: {name: output_frame, default: velodyne} }

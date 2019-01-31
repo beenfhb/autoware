@@ -1,3 +1,0 @@
-rules :
-  - { type: unit, name: object,         plugin : node/detect/object }
-  - { type: unit, name: traffic_lights, plugin : node/detect/traffic_lights }
