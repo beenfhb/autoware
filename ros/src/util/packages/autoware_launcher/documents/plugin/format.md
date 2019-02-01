@@ -1,22 +1,41 @@
 # Autoware Launcher Plugin File Format
 
 The plugin file is yaml file. Currently, there are the following versions.
-* Plugin Version 0.1
+* Plugin Version 0.1 (experimental)
 
 # Plugin Version 0.1
 
+## Plugin File
 The file is the following dictionary.
+
+#### Node Type
 
 | Key      | Type   | Value/Comment |
 |----------|--------|---------------|
 | format   | string | Fixed string: "Autoware Launcher Plugin Version 0.1" |
-| launch   | string | roslaunch xml file path |
-| args     | [Group Definition List](#group_definition) | Arguments |
-| exts     | [Group Definition List](#group_definition) | Extended Information |
-| children | [Node Rule List](#node_rule) | Children Rules |
+| exts     | [Extended Data List](#extended_data) | Extended Data Definitions |
+| rules    | [Children Rule List](#children_rule) | Children Rule Definitions |
+
+#### Leaf Type
+| Key      | Type   | Value/Comment |
+|----------|--------|---------------|
+| format   | string | Fixed string: "Autoware Launcher Plugin Version 0.1" |
+| rosxml   | string | roslaunch xml file path |
+| exts     | [Extended Data List](#extended_data) | Extended Data Definitions |
+| args     | [Argument Data List](#argument_data) | Argument Data Definitions |
 
 
-## <a id="group_definition">Group Definition</a>
+## <a id="argument_data">Argument Data</a> / <a id="extended_data">Extended Data</a>
+
+dictionary
+
+| Key    | Type          | Value/Comment |
+|--------|---------------|---------------|
+| name   | string        | Data Name (For args, roslaunch arg tag) |
+| type   | string        | GUI Frame Type |
+| list   | string / null | Data for GUI Frame |
+
+## =====
 
 Group Definition is dictionary.
 
