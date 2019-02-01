@@ -117,6 +117,11 @@ class Angle
 	      return _raw_angle > other._raw_angle + std::numeric_limits<float>::epsilon();
 	    }
 
+	    bool operator==(const Angle& other) const 
+	    {
+	      return std::fabs(_raw_angle - other._raw_angle) <= std::numeric_limits<float>::epsilon();
+	    }
+
 	    void normalize(const Angle& from = 0_deg, const Angle& to = 360_deg) 
 	    {
 	      float diff = (to - from).val();
@@ -151,6 +156,12 @@ class Angle
 			return out;
 		}
 
+		friend YAML::Emitter& operator <<(YAML::Emitter& out, const Angle& val)
+		{
+			out << val.toDegrees();
+			return out;
+		}
+
 	protected:
 	    float _raw_angle;
 	    bool _valid;
@@ -165,33 +176,41 @@ class AngularRange
 		enum class Direction { HORIZONTAL, VERTICAL };
 
 		AngularRange() {}
-		AngularRange(const Angle& start_angle, const Angle& end_angle, const Angle& step) {
+		AngularRange(const Angle& start_angle, const Angle& end_angle, const Angle& step, const std::vector<float>& correction_table = std::vector<float>()) {
 			_start_angle = start_angle;
 			_end_angle = end_angle;
 			_step = step;
 			_num_beams = std::round(std::fabs((_end_angle - _start_angle) / _step));
 			_span = Angle::abs(end_angle - start_angle);
+			if (correction_table.size()) {
+				setAngleCorrectionTable(correction_table);
+			}
 		}
-		AngularRange(const Angle& start_angle, const Angle& end_angle, int num_beams) {
+		AngularRange(const Angle& start_angle, const Angle& end_angle, int num_beams, const std::vector<float>& correction_table = std::vector<float>()) {
 			_start_angle = start_angle;
 			_end_angle = end_angle;
 			_num_beams = num_beams;
 			_step = Angle::abs((_end_angle - _start_angle) / _num_beams);
 			_span = Angle::abs(end_angle - start_angle);
+			if (correction_table.size()) {
+				setAngleCorrectionTable(correction_table);
+			}
 		}
-		AngularRange(const float start_angle, const float end_angle, const float step) {
-			_start_angle = Angle(Angle::IsAngle{}, start_angle);
-			_end_angle = Angle(Angle::IsAngle{}, end_angle);
-			_step = Angle(Angle::IsAngle{}, step);
-			_num_beams = std::round(std::fabs((_end_angle - _start_angle) / _step));
-			_span = Angle::abs(_end_angle - _start_angle);
+		AngularRange(const float start_angle, const float end_angle, const float step, const std::vector<float>& correction_table = std::vector<float>()) {
+			AngularRange(Angle(Angle::IsAngle{}, start_angle), Angle(Angle::IsAngle{}, end_angle), Angle(Angle::IsAngle{}, step), correction_table);
+			// _start_angle = Angle(Angle::IsAngle{}, start_angle);
+			// _end_angle = Angle(Angle::IsAngle{}, end_angle);
+			// _step = Angle(Angle::IsAngle{}, step);
+			// _num_beams = std::round(std::fabs((_end_angle - _start_angle) / _step));
+			// _span = Angle::abs(_end_angle - _start_angle);
 		}
-		AngularRange(const float start_angle, const float end_angle, int num_beams) {
-			_start_angle = Angle(Angle::IsAngle{}, start_angle);
-			_end_angle = Angle(Angle::IsAngle{}, end_angle);
-			_num_beams = num_beams;
-			_step = Angle::abs((_end_angle - _start_angle) / _num_beams);
-			_span = Angle::abs(_end_angle - _start_angle);
+		AngularRange(const float start_angle, const float end_angle, int num_beams, const std::vector<float>& correction_table = std::vector<float>()) {
+			AngularRange(Angle(Angle::IsAngle{}, start_angle), Angle(Angle::IsAngle{}, end_angle), num_beams, correction_table);
+			// _start_angle = Angle(Angle::IsAngle{}, start_angle);
+			// _end_angle = Angle(Angle::IsAngle{}, end_angle);
+			// _num_beams = num_beams;
+			// _step = Angle::abs((_end_angle - _start_angle) / _num_beams);
+			// _span = Angle::abs(_end_angle - _start_angle);
 		}
 
 		AngularRange(const AngularRange& other)
@@ -207,6 +226,25 @@ class AngularRange
 
 		bool valid() const { return _num_beams > 0 && _span > 0_deg; }
 
+		const std::vector<Angle>& getAngleCorrectionTable() const { return _angle_correction_table; }
+		const std::vector<float> getAngleCorrectionTableF() const 
+		{ 
+			std::vector<float> correction_table;
+			correction_table.clear();
+			for (auto& it : _angle_correction_table) {
+				correction_table.push_back(it.toDegrees());
+			}
+			return correction_table; 
+		}
+		void setAngleCorrectionTable(const std::vector<Angle>& correction_table) { _angle_correction_table = correction_table; }
+		void setAngleCorrectionTable(const std::vector<float>& correction_table) 
+		{ 
+			_angle_correction_table.clear();
+			for (auto& it : correction_table) {
+				_angle_correction_table.push_back(Angle::fromDegrees(it));
+			}
+		}
+
 		AngularRange& operator = (const AngularRange& other)
 		{
 			if (this != &other) {
@@ -215,6 +253,7 @@ class AngularRange
 				_step = other._step;
 				_span = other._span;
 				_num_beams = other._num_beams;
+				_angle_correction_table = other._angle_correction_table;
 			}
 			return *this;
 		}
@@ -227,7 +266,12 @@ class AngularRange
 			out << YAML::Key << "end_angle";
 			out << YAML::Value << val.end_angle().toDegrees();
 			out << YAML::Key << "step";
+			std::cout << "Emit angle table of size: " << val.getAngleCorrectionTable().size() << std::endl;
 			out << YAML::Value  << val.step().toDegrees();
+			if (val.getAngleCorrectionTable().size()) {
+				out << YAML::Key << "angle_correction_table";
+				out << YAML::Value << YAML::Flow << val.getAngleCorrectionTableF();
+			}
 			out << YAML::EndMap;
 			return out;
 		}
@@ -244,6 +288,16 @@ class AngularRange
 			out << val.num_beams() << std::endl;
 			out << "span: ";
 			out << val.span() << std::endl;
+			if (val.getAngleCorrectionTable().size()) {
+				out << "angle_correction_table: [";
+				for (auto it = val.getAngleCorrectionTable().begin(); it != val.getAngleCorrectionTable().end(); ++it) {
+					out << it->toDegrees();
+					if (it < val.getAngleCorrectionTable().end()) {
+						out << ",";
+					}
+				}
+				out << "]" << std::endl;
+			}
 			return out;
 		}
 
@@ -253,6 +307,7 @@ class AngularRange
 		Angle _step = 0_deg;
 		Angle _span = 0_deg;
 		int _num_beams = 0;
+		std::vector<Angle> _angle_correction_table;
 };
 
 
@@ -276,6 +331,23 @@ constexpr cloud_to_image::Angle operator"" _deg(long double Angle)
 namespace YAML
 {
 	template<>
+	struct convert<cloud_to_image::Angle> 
+	{
+		static Node encode(const cloud_to_image::Angle& rhs)
+		{
+			Node node;
+			node = rhs.toDegrees();
+			return node;
+		}
+
+		static bool decode(const Node& node, cloud_to_image::Angle& rhs)
+		{
+			rhs = cloud_to_image::Angle::fromDegrees(node.as<float>());
+			return true;
+		}
+	};
+
+	template<>
 	struct convert<cloud_to_image::AngularRange> 
 	{
 		static Node encode(const cloud_to_image::AngularRange& rhs)
@@ -284,17 +356,23 @@ namespace YAML
 			node["start_angle"] = rhs.start_angle().toDegrees();
 			node["end_angle"] = rhs.end_angle().toDegrees();
 			node["step"] = rhs.step().toDegrees();
+			if (rhs.getAngleCorrectionTable().size()) {
+				node["angle_correction_table"] = rhs.getAngleCorrectionTable();
+			}
 			return node;
 		}
 
 		static bool decode(const Node& node, cloud_to_image::AngularRange& rhs)
 		{
-			if (!node.IsMap() || node.size() != 3) {
+			if (!node.IsMap() || (node.size() != 3 && node.size() != 4)) {
 				return false;
 			}
 			rhs = cloud_to_image::AngularRange(cloud_to_image::Angle::fromDegrees(node["start_angle"].as<float>()), 
-				                                   cloud_to_image::Angle::fromDegrees(node["end_angle"].as<float>()), 
-				                                   cloud_to_image::Angle::fromDegrees(node["step"].as<float>()));
+				                               cloud_to_image::Angle::fromDegrees(node["end_angle"].as<float>()), 
+				                               cloud_to_image::Angle::fromDegrees(node["step"].as<float>()));
+			if (node["angle_correction_table"]) {
+				rhs.setAngleCorrectionTable(node["angle_correction_table"].as< std::vector<float> >());
+			}
 
 			return true;
 		}

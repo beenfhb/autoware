@@ -122,6 +122,7 @@ void CloudProjection::initFromPoints(const pcl::PointCloud<pcl::PointXYZI>::Cons
     auto angle_cols = Angle::fromRadians(atan2(point.y, point.x));
     size_t bin_rows = this->_params.rowFromAngle(angle_rows);
     size_t bin_cols = this->_params.colFromAngle(angle_cols);
+    //std::cout << point.x << "," << point.y << "," << point.z << "," << dist_to_sensor << "," << angle_rows.toDegrees() << "," << angle_cols.toDegrees() << "," << bin_rows << "," << bin_cols << "," << std::endl;
     // adding point pointer
     this->at(bin_rows, bin_cols).points().push_back(index);
     auto& current_written_depth = this->_depth_image.template at<float>(bin_rows, bin_cols);

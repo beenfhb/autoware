@@ -11,6 +11,8 @@
     <arg name="noise_image_topic" default="/c2i_noise_image" doc="Topic name for the noise ouput image" />
     <arg name="h_scale" default="1.0" doc="Horizontal scale factor" />
     <arg name="v_scale" default="1.0" doc="Vectical scale factor" />
+    <arg name="output_mode" default="SINGLE" doc="How output images are generated. SINGLE: each image is independent, GROUP: all images are grouped into one, STACK: all images are combined one per channel" />
+    <arg name="save_images" default="false" doc="Output also the PNG files for the generated images" />
 
     <node pkg="lidar_cloud_to_image" type="cloud2image" name="cloud2image" output="screen">
         <param name="proj_params" type="str" value="$(arg proj_params)"/>
@@ -23,5 +25,7 @@
         <param name="noise_image_topic" type="str" value="$(arg noise_image_topic)"/>
         <param name="h_scale" type="double" value="$(arg h_scale)"/>
         <param name="v_scale" type="double" value="$(arg v_scale)"/>
+        <param name="output_mode" type="str" value="$(arg output_mode)"/>
+        <param name="save_images" type="bool" value="$(arg save_images)"/>
     </node>
 </launch>

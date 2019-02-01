@@ -194,6 +194,12 @@ class SensorParams
      */
     static std::unique_ptr<SensorParams> VLP_16();
     /**
+     * @brief      Default parameters for 16 beam Velodyne
+     *
+     * @return     A pointer to parameters
+     */
+    static std::unique_ptr<SensorParams> VLP_32();
+    /**
      * @brief      Default parameters for 32 beam Velodyne
      *
      * @return     A pointer to parameters
@@ -204,7 +210,13 @@ class SensorParams
      *
      * @return     A pointer to parameters
      */
-    static std::unique_ptr<SensorParams> HDL_64();
+    static std::unique_ptr<SensorParams> HDL_64_S2();
+    /**
+     * @brief      Default parameters for 64 beam Velodyne
+     *
+     * @return     A pointer to parameters
+     */
+    static std::unique_ptr<SensorParams> HDL_64_S3();
     /**
      * @brief      Parameters for 64 beam velodyne assuming equal spacing between
      *             the lasers.
@@ -212,7 +224,13 @@ class SensorParams
      * @return     A pointer to parameters
      */
     static std::unique_ptr<SensorParams> HDL_64_EQUAL();
-
+    /**
+     * @brief      Parameters for 64 beam velodyne assuming equal spacing between
+     *             the lasers.
+     *
+     * @return     A pointer to parameters
+     */
+    static std::unique_ptr<SensorParams> HDL_64_GENERAL();
     /**
      * @brief      Parameters for 16 beam ouster
      *

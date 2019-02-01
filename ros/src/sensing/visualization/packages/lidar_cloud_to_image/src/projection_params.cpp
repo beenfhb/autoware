@@ -110,8 +110,10 @@ void ProjectionParams::genSampleSensors()
 
   //Velodyne
   _projection_params["VLP-16"] = SensorParams::VLP_16();
+  _projection_params["VLP-32"] = SensorParams::VLP_32();
   _projection_params["HDL-32"] = SensorParams::HDL_32();
-  _projection_params["HDL-64"] = SensorParams::HDL_64();
+  _projection_params["HDL-64-S2"] = SensorParams::HDL_64_S2();
+  _projection_params["HDL-64-S3"] = SensorParams::HDL_64_S3();
   //Ouster
   _projection_params["OS-1-16-0512"] = SensorParams::OS_1_16_0512();
   _projection_params["OS-1-16-1024"] = SensorParams::OS_1_16_1024();

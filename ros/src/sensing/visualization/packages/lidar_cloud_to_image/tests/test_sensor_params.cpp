@@ -17,7 +17,6 @@ int main(int argc, char* argv[])
                    AngularRange::Direction::HORIZONTAL);
   	params.setSpan(AngularRange(15_deg, -15_deg, 16),
                    AngularRange::Direction::VERTICAL);
-  	
   	if (!params.valid()) {
     	fprintf(stderr, "ERROR: params are not valid!\n");
     	return 1;
