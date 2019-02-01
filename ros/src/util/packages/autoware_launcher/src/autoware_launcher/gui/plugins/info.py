@@ -1,5 +1,5 @@
 from python_qt_binding import QtCore, QtWidgets
-from autoware_launcher.qtui import widgets
+from autoware_launcher.gui  import widgets
 
 
 

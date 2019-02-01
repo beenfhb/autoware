@@ -3,7 +3,7 @@
 import sys
 
 from autoware_launcher.core import AwLaunchServer
-from autoware_launcher.qtui import AwQtGuiClient
+from autoware_launcher.gui  import AwQtGuiClient
 
 server = AwLaunchServer(sys.argv)
 client = AwQtGuiClient(sys.argv, server)

@@ -8,8 +8,8 @@ from ..core import console
 from ..core import myutils
 
 # ToDo: move package
-#     core = client, mirror
-#     qtui = guimgr
+#     core : client, mirror
+#     gui  : guimgr
 
 class AwQtGuiManager(object):
 
@@ -17,11 +17,11 @@ class AwQtGuiManager(object):
         self.__client  = client
         self.__widgets = {}
 
-        for filepath in os.listdir(myutils.package("src/autoware_launcher/qtui/plugins")):
+        for filepath in os.listdir(myutils.package("src/autoware_launcher/gui/plugins")):
             fkey, fext = os.path.splitext(os.path.basename(filepath))
             if (fkey != "__init__") and (fext == ".py"):
                 console.info("load plugin module: " + fkey)
-                module = importlib.import_module("autoware_launcher.qtui.plugins." + fkey)
+                module = importlib.import_module("autoware_launcher.gui.plugins." + fkey)
                 for wkey, wcls in module.plugin_widgets().items():
                      self.__widgets[fkey + "." + wkey] = wcls
 

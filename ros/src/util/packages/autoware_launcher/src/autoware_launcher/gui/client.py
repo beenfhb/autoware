@@ -115,7 +115,7 @@ class AwQtGuiClient(object):
         window.addViewMenu("Develop Mode", switch_develop_mode)
 
         # Debug
-        mainwidget.setCurrentWidget(self.__develop)
+        #mainwidget.setCurrentWidget(self.__develop)
         simulations.hide()
         self.__sim_rosbag.rosbag_file.path.setText(myutils.userhome(".autoware/log/20150324.bag"))
 

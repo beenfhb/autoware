@@ -4,6 +4,7 @@
 
 1. Start the Autoware Launcher<br>`$ rosrun autoware_launcher main`
 1. Load a profile<br>File -> Load Profile
+1. Show simulation panel<br>View -> Simulation
 1. Play rosbag<br>Check "Simulation Mode", then, push "Play" button.
 1. Push launch buttons<br>Map, Vehicle, Sensing, Visualization 
 1. Push buttons on rviz plugin<br>localization
