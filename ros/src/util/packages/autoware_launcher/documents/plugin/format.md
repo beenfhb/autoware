@@ -8,19 +8,20 @@ The plugin file is yaml file. Currently, there are the following versions.
 ## Plugin File
 The file is the following dictionary.
 
-#### Node Type
+### Node Type
 
 | Key      | Type   | Value/Comment |
 |----------|--------|---------------|
-| format   | string | Fixed string: "Autoware Launcher Plugin Version 0.1" |
+| format   | string | Fixed value: Autoware Launcher Plugin Version 0.1 |
 | exts     | [Extended Data List](#extended_data) | Extended Data Definitions |
 | rules    | [Children Rule List](#children_rule) | Children Rule Definitions |
 
-#### Leaf Type
+### Leaf Type
+
 | Key      | Type   | Value/Comment |
 |----------|--------|---------------|
-| format   | string | Fixed string: "Autoware Launcher Plugin Version 0.1" |
-| rosxml   | string | roslaunch xml file path |
+| format   | string | Fixed value: Autoware Launcher Plugin Version 0.1 |
+| rosxml   | string | Path to roslaunch xml file  |
 | exts     | [Extended Data List](#extended_data) | Extended Data Definitions |
 | args     | [Argument Data List](#argument_data) | Argument Data Definitions |
 
@@ -29,40 +30,42 @@ The file is the following dictionary.
 
 dictionary
 
-| Key    | Type          | Value/Comment |
-|--------|---------------|---------------|
-| name   | string        | Data Name (For args, roslaunch arg tag) |
-| type   | string        | GUI Frame Type |
-| list   | string / null | Data for GUI Frame |
+| Key     | Type          | Value/Comment |
+|---------|---------------|---------------|
+| name    | string        | Data name     |
+| type    | string        | Data type (Enum: [str, int, real, bool]) |
+| list    | string / null | List format: (Enum: [null, space, yaml]) |
+| default |               | Default value |
 
-## =====
+## <a id="children_rule">Children Rule</a>
 
-Group Definition is dictionary.
+dictionary
 
-| Key    | Type   | Value/Comment |
-|--------|--------|---------------|
-| text   | string | GUI Frame Text (Optional) |
-| view   | string | GUI Frame Type |
-| data   | [Field Definition](#field_definition)<br>[Field Definition List](#field_definition) | Data for GUI Frame |
+| Key     | Type          | Value/Comment |
+|---------|---------------|---------------|
+| name    | string        | Child node name  |
+| list    | bool          | Is multiple node |
+| plugin  | [Reference Rule](#ref_rule) | Child type |
 
-## <a id="field_definition">Field Definition</a>
+## <a id="ref_rule">Reference Rule</a>
 
-Field Definition is dictionary.
+list (If a type other than the list is specified, it is converted to a list with 1 element.)
 
-| Key    | Type   | Value/Comment |
-|--------|--------|---------------|
-| type   | string | Enum (bool, str, int, real) |
-| list   | string | Enum (null, space, yaml) |
-| name   | string | Field Name (For args, set same value as roslaunch) |
-| cfgkey | string | Hidden Fields (Do not set in plufin file) |
+Each element of the list must be:
+* Path Type
+* Scan Type
 
-## <a id="node_rule">Node Rule</a>
+### Path Type
 
-T.B.D.
+Type is string. Specify the path to the plugin file.
 
-## <a id="child_definition">Plugin Reference</a>
+### Scan Type
 
-T.B.D.
+Type is dictionary. Scan all plugin files from the specified root path.
+
+| Key     | Type          | Value/Comment   |
+|---------|---------------|-----------------|
+| scan    | string        | Scan root path  |
 
 
 
