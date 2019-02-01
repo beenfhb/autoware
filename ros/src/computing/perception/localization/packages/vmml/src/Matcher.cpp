@@ -404,6 +404,59 @@ Matcher::matchAny(
 }
 
 
+void
+Matcher::rotationFinder
+(const BaseFrame &Fr1, const BaseFrame &Fr2,
+const std::vector<KpPair> &featurePairs,
+std::vector<double> &cs12)
+{
+	MatrixX4d M;
+	M.resize(featurePairs.size(), Eigen::NoChange);
+	for (int ip=0; ip<featurePairs.size(); ++ip) {
+		auto point_pair = featurePairs[ip];
+		Vector3d p1 = Fr1.cameraParam.toMatrix3().inverse() * Fr1.keypointh(point_pair.first);
+		Vector3d p2 = Fr2.cameraParam.toMatrix3().inverse() * Fr2.keypointh(point_pair.second);
+		M(ip, 0) = p1.x() * p2.y();
+		M(ip, 1) = p1.y() * p2.x();
+		M(ip, 2) = p1.z() * p2.y();
+		M(ip, 3) = p1.y() * p2.z();
+	}
+
+	// Solve for h
+	JacobiSVD <decltype(M)> svd(M, ComputeFullV);
+	Vector4d h = svd.matrixV().col(3);
+	double
+		c1 = -h[0],
+		s1 = h[1],
+		c2 = (h[0]*h[1] - h[2]*h[3]) / (h[2]*h[2] - h[1]*h[1]),
+		s2 = (h[1]*h[2] - h[0]*h[3]) / (h[2]*h[2] - h[0]*h[0]);
+
+	cs12.resize(4);
+	cs12[0] = c1;
+	cs12[1] = s1;
+	cs12[2] = c2;
+	cs12[3] = s2;
+}
+
+
+double
+Matcher::getCameraBaselinkOffset
+(const Pose &baselinkPose1, const Pose &baselinkPose2, const std::vector<double> &cs12)
+{
+	double
+		sin_c_2 = sqrt((1-cs12[2])/2),
+		cos_c_2 = sqrt((1+cs12[2])/2),
+		sin_c_2_1 = sin_c_2*cs12[0] - cos_c_2*cs12[1];
+	double
+		rho = (baselinkPose2.position()-baselinkPose1.position()).norm();
+/*
+	double
+		L = rho * (-sin_c_2_1) / (  );
+*/
+}
+
+
+
 cv::Mat
 Matcher::drawMatches(
 	const BaseFrame &F1,

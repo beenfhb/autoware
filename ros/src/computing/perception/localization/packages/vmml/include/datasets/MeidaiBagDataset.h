@@ -154,6 +154,10 @@ public:
 
 	Pose getPose() const;
 
+	Pose getBaselinkPose() const;
+
+	Pose getVelodynePose() const;
+
 	Eigen::Vector3d getPosition() const;
 
 	Eigen::Quaterniond getOrientation() const;

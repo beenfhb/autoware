@@ -70,6 +70,15 @@ public:
 	static void
 	decomposeE (const Eigen::Matrix3d &E, Eigen::Matrix3d &R1, Eigen::Matrix3d &R2, Eigen::Vector3d &t);
 
+	/*
+	 * Calculate sine & cosine 1 & 2 from rotation
+	 */
+	static void
+	rotationFinder (const BaseFrame &F1, const BaseFrame &F2, const std::vector<KpPair> &featurePairs, std::vector<double> &cs12);
+
+	static double
+	getCameraBaselinkOffset (const Pose &baselinkPose1, const Pose &baselinkPose2, const std::vector<double> &cs12);
+
 	static float
 	circleOfConfusionDiameter;
 

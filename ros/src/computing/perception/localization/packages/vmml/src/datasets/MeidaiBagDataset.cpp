@@ -48,6 +48,11 @@ const TTransform defaultGpsToCameraTransform
 	(2.1003, 0.3004, 1.3996,		// Translation
 	-0.496, 0.478, -0.510, 0.514);	// Quaternion
 
+const TTransform defaultLidarToBaselinkTransform =
+	TTransform::from_Pos_Quat(
+		Vector3d(1.2, 0, 2.0),
+		Quaterniond::Identity());
+
 
 class cache_error : public runtime_error
 {};
@@ -567,6 +572,19 @@ const
 {
 	auto &p = parent.cameraTrack.at(pId);
 	return p;
+}
+
+
+Pose
+MeidaiDataItem::getBaselinkPose() const
+{
+	return getVelodynePose() * defaultLidarToBaselinkTransform;
+}
+
+Pose
+MeidaiDataItem::getVelodynePose() const
+{
+	return parent.ndtTrack.interpolate(getTimestamp());
 }
 
 

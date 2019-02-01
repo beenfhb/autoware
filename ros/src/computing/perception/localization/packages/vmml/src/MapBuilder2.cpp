@@ -340,7 +340,7 @@ MapBuilder2::visualOdometry
 	anchor->computeFeatures(cMap->getFeatureDetector());
 	voResult.clear();
 	Pose
-		anchorPose = anchor->pose(),
+		anchorPose = Pose::Identity(),
 		curFramePose;
 	voResult.push_back( PoseStamped(anchorPose, sourceDs->get(startPos)->getTimestamp()) );
 
@@ -352,8 +352,10 @@ MapBuilder2::visualOdometry
 		TTransform T12;
 		Matcher::matchAny(*anchor, *curFrame, validKpPair, cMap->getDescriptorMatcher(), T12);
 
+/*
 		double S = ( anchor->pose().inverse()*curFrame->pose() ).translation().norm();
 		T12.translation() = S*T12.translation();
+*/
 
 		curFramePose = anchorPose * T12;
 		PoseStamped curFrp(curFramePose, sourceDs->get(d)->getTimestamp());
