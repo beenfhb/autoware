@@ -7,15 +7,15 @@
 #include <QPushButton>
 #include <QTcpSocket>
 
-namespace autoware_rviz_plugins {
+namespace autoware_launcher_rviz {
 
-class RvizController : public rviz::Panel
+class QuickStartPanel : public rviz::Panel
 {
     Q_OBJECT
 
     public:
 
-        RvizController(QWidget* parent = 0);
+        QuickStartPanel(QWidget* parent = 0);
 
     private Q_SLOTS:
 

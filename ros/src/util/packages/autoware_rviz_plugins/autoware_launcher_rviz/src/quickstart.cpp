@@ -1,4 +1,4 @@
-#include "rviz_controller.hpp"
+#include "quickstart.hpp"
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QGridLayout>
@@ -19,9 +19,9 @@ QPushButton* create_push_button(QString title)
 
 }
 
-namespace autoware_rviz_plugins {
+namespace autoware_launcher_rviz {
 
-RvizController::RvizController(QWidget* parent) : rviz::Panel(parent)
+QuickStartPanel::QuickStartPanel(QWidget* parent) : rviz::Panel(parent)
 {
     QRect screen = QApplication::desktop()->screenGeometry();
     int font_size = min(screen.width(), screen.height()) / 100;
@@ -37,18 +37,18 @@ RvizController::RvizController(QWidget* parent) : rviz::Panel(parent)
         auto button = create_push_button(nodenames[i]);
         buttons[rootpath + nodenames[i]] = button;
         layout->addWidget(button, i/3, i%3);
-        connect(button, &QPushButton::toggled, this, &RvizController::launch_button_toggled);
+        connect(button, &QPushButton::toggled, this, &QuickStartPanel::launch_button_toggled);
     }
 
     socket = new QTcpSocket(this);
-    connect(socket, &QTcpSocket::connected,    this, &RvizController::server_connected   );
-    connect(socket, &QTcpSocket::disconnected, this, &RvizController::server_disconnected);
-    connect(socket, &QTcpSocket::readyRead,    this, &RvizController::server_ready_read  );
-    connect(socket, static_cast<void(QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &RvizController::server_error);
+    connect(socket, &QTcpSocket::connected,    this, &QuickStartPanel::server_connected   );
+    connect(socket, &QTcpSocket::disconnected, this, &QuickStartPanel::server_disconnected);
+    connect(socket, &QTcpSocket::readyRead,    this, &QuickStartPanel::server_ready_read  );
+    connect(socket, static_cast<void(QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &QuickStartPanel::server_error);
     socket->connectToHost("localhost", 33136);
 }
 
-void RvizController::launch_button_toggled(bool checked)
+void QuickStartPanel::launch_button_toggled(bool checked)
 {
     auto button = static_cast<QPushButton*>(sender());
     QString json = R"({"command":"%1", "path":"root/%2"})";
@@ -57,7 +57,7 @@ void RvizController::launch_button_toggled(bool checked)
     socket->write(json.toUtf8().append('\0'));
 }
 
-void RvizController::server_connected()
+void QuickStartPanel::server_connected()
 {
     cout << "connected" << endl;
     for(const auto& pair : buttons)
@@ -66,7 +66,7 @@ void RvizController::server_connected()
     }
 }
 
-void RvizController::server_disconnected()
+void QuickStartPanel::server_disconnected()
 {
     cout << "disconnected" << endl;
     for(const auto& pair : buttons)
@@ -75,13 +75,13 @@ void RvizController::server_disconnected()
     }
 }
 
-void RvizController::server_error()
+void QuickStartPanel::server_error()
 {
     cout << "error" << endl;
     cout << socket->errorString().toStdString() << endl;
 }
 
-void RvizController::server_ready_read()
+void QuickStartPanel::server_ready_read()
 {
     cout << "ready_read" << endl;
     cout << socket->readAll().toStdString() << endl;
@@ -90,4 +90,4 @@ void RvizController::server_ready_read()
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(autoware_rviz_plugins::RvizController, rviz::Panel)
+PLUGINLIB_EXPORT_CLASS(autoware_launcher_rviz::QuickStartPanel, rviz::Panel)
