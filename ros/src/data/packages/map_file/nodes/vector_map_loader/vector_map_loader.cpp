@@ -912,12 +912,24 @@ void insertMarkerArray(visualization_msgs::MarkerArray& a1, const visualization_
 }
 } // namespace
 
+void split(const std::string from, std::vector<std::string> &to,const char delim = ','){
+  std::stringstream ss;
+  ss << from;
+  std::string splitted;
+  while (std::getline(ss, splitted, delim))
+  {
+    to.push_back(splitted);
+  }
+}
+
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "vector_map_loader");
   ros::NodeHandle nh;
+  ros::NodeHandle pnh("~");
+  std::string file_path_param;
 
-  if (argc < 2)
+  if (argc < 2 && !pnh.getParam("map_files", file_path_param))
   {
     printUsage();
     return EXIT_FAILURE;
@@ -1055,6 +1067,15 @@ int main(int argc, char **argv)
       std::string file_path(argv[i]);
       file_paths.push_back(file_path);
     }
+  }
+
+
+  //add file list from param
+  std::vector<std::string> splitted_param;
+  split(file_path_param, splitted_param);
+  for(auto file_name: splitted_param){
+     file_paths.push_back(file_name);
+     std::cout << file_name << std::endl;
   }
 
   vector_map::category_t category = Category::NONE;
