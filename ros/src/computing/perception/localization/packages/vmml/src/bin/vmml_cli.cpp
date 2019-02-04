@@ -257,7 +257,7 @@ public:
 			vo_cmd(command);
 
 		else if (command[0]=="camera_baselink_offset")
-			camera_baselink_offset_cmd(cmd);
+			camera_baselink_offset_cmd(command);
 	}
 
 
@@ -955,26 +955,6 @@ private:
 			frnum1 = stoi(cmd[1]),
 			frnum2 = stoi(cmd[2]);
 
-		Matcher::DrawMode drawmode;
-		if (cmd.size()==3)
-			drawmode = Matcher::DrawOpticalFlow;
-		else {
-			if (cmd[3][0]=='o')
-				drawmode = Matcher::DrawOpticalFlow;
-			else if (cmd[3][0]=='s')
-				drawmode = Matcher::DrawSideBySide;
-			else if (cmd[3][0]=='p')
-				drawmode = Matcher::DrawOnlyPoints;
-			else if (cmd[3][0]=='e')
-				drawmode = Matcher::DrawEpipolarIn2;
-		}
-
-		int maxNum = -1;
-		if (cmd.size()>4) {
-			maxNum = stoi(cmd[4]);
-			Matcher::__maxDraw = maxNum;
-		}
-
 		auto
 			Frame1 = loadedDataset->getAsFrame(frnum1),
 			Frame2 = loadedDataset->getAsFrame(frnum2);
@@ -996,6 +976,15 @@ private:
 		TTransform T12;
 		Matcher::matchAny(*Frame1, *Frame2, validKpPairs, cvFeatMatcher, T12);
 
+		vector<double> rotcs;
+		Matcher::rotationFinder(*Frame1, *Frame2, validKpPairs, rotcs);
+
+		Pose
+			baselink1 = static_pointer_cast<const MeidaiDataItem>(meidaiDsPtr->get(frnum1))->getBaselinkPose(),
+			baselink2 = static_pointer_cast<const MeidaiDataItem>(meidaiDsPtr->get(frnum2))->getBaselinkPose();
+		double L = Matcher::getCameraBaselinkOffset(baselink1, baselink2, rotcs);
+
+		debug("Got camera->baselink offset: " + to_string(L));
 	}
 
 

@@ -427,7 +427,7 @@ std::vector<double> &cs12)
 	Vector4d h = svd.matrixV().col(3);
 	double
 		c1 = -h[0],
-		s1 = h[1],
+		s1 = h[3],
 		c2 = (h[0]*h[1] - h[2]*h[3]) / (h[2]*h[2] - h[1]*h[1]),
 		s2 = (h[1]*h[2] - h[0]*h[3]) / (h[2]*h[2] - h[0]*h[0]);
 
@@ -449,10 +449,9 @@ Matcher::getCameraBaselinkOffset
 		sin_c_2_1 = sin_c_2*cs12[0] - cos_c_2*cs12[1];
 	double
 		rho = (baselinkPose2.position()-baselinkPose1.position()).norm();
-/*
 	double
-		L = rho * (-sin_c_2_1) / (  );
-*/
+		L = rho * (-sin_c_2_1) / ( cs12[1] + cs12[3]*cs12[0] - cs12[2]*cs12[1] );
+	return L;
 }
 
 
