@@ -49,7 +49,9 @@ include_directories(
 )
 
 add_executable(stop_area
-        nodes/stop_area/stop_area.cpp
+        nodes/stop_area/stop_area_node.cpp
+        nodes/stop_area/stop_area_core.cpp
+        nodes/stop_area/stop_area_util.cpp
         )
 target_link_libraries(stop_area
         ${catkin_LIBRARIES})

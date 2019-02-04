@@ -3,44 +3,54 @@
 	<arg name="input_point_topic" default="/points_raw"/>
 	<arg name="baselink_frame" default="/base_link"/>
 
-	<arg name="stop_area_front_min" default="0.5"/>
-	<arg name="stop_area_front_max" default="5.0"/>
-	<arg name="stop_area_front_ratio" default="1.0"/>
-	<arg name="stop_area_rear" default="0.1"/>
-	<arg name="stop_area_side" default="0.1"/>
-	<arg name="stop_area_height_min" default="0.3"/>
-	<arg name="stop_area_height_max" default="2.5"/>
+	<arg name="sim_time" default="1.0"/>
+	<arg name="sim_time_delta" default="0.1"/>
 
 	<arg name="filtering_radius" default="0.5"/>
 	<arg name="filtering_points_size" default="5"/>
 
+	<arg name="offset_front" default="0.1"/>
+	<arg name="offset_rear" default="0.1"/>
+	<arg name="offset_left" default="0.1"/>
+	<arg name="offset_right" default="0.1"/>
+	<arg name="offset_top" default="0.1"/>
+	<arg name="offset_bottom" default="-0.3"/>
+
 	<arg name="use_vehicle_info_param" default="True"/>
-	<arg name="vehicle_center_to_base" default="-1.0"/>
-	<arg name="vehicle_length" default="5.0"/>
-	<arg name="vehicle_width" default="2.0"/>
-	<arg name="vehicle_height" default="2.5"/>
+	<arg name="vehicle_info_length" default="5.0"/>
+	<arg name="vehicle_info_width" default="2.0"/>
+	<arg name="vehicle_info_height" default="2.0"/>
+	<arg name="vehicle_info_wheel_base" default="2.95"/>
+	<arg name="vehicle_info_tread_front" default="1.5"/>
+	<arg name="vehicle_info_tread_rear" default="1.5"/>
+	<arg name="vehicle_info_center_to_base" default="-1.5"/>
 
 	<node pkg="emergency_stop" type="stop_area" name="stop_area" output="screen">
 		<remap from="/points_raw" to="$(arg input_point_topic)"/>
 
 		<param name="baselink_frame" value="$(arg baselink_frame)"/>
 
-		<param name="stop_area_front_min" value="$(arg stop_area_front_min)"/>
-		<param name="stop_area_front_max" value="$(arg stop_area_front_max)"/>
-		<param name="stop_area_front_ratio" value="$(arg stop_area_front_ratio)"/>
-		<param name="stop_area_rear" value="$(arg stop_area_rear)"/>
-		<param name="stop_area_side" value="$(arg stop_area_side)"/>
-		<param name="stop_area_height_min" value="$(arg stop_area_height_min)"/>
-		<param name="stop_area_height_max" value="$(arg stop_area_height_max)"/>
+		<param name="sim_time" value="$(arg sim_time)"/>
+		<param name="sim_time_delta" value="$(arg sim_time_delta)"/>
 
 		<param name="filtering_radius" value="$(arg filtering_radius)"/>
 		<param name="filtering_points_size" value="$(arg filtering_points_size)"/>
 
+		<param name="offset_front" value="$(arg offset_front)"/>
+		<param name="offset_rear" value="$(arg offset_rear)"/>
+		<param name="offset_left" value="$(arg offset_left)"/>
+		<param name="offset_right" value="$(arg offset_right)"/>
+		<param name="offset_top" value="$(arg offset_top)"/>
+		<param name="offset_bottom" value="$(arg offset_bottom)"/>
+
 		<param name="use_vehicle_info_param" value="$(arg use_vehicle_info_param)"/>
-		<param name="vehicle_center_to_base" value="$(arg vehicle_center_to_base)"/>
-		<param name="vehicle_length" value="$(arg vehicle_length)"/>
-		<param name="vehicle_width" value="$(arg vehicle_width)"/>
-		<param name="vehicle_height" value="$(arg vehicle_height)"/>
+		<param name="vehicle_info_length" value="$(arg vehicle_info_length)"/>
+		<param name="vehicle_info_width" value="$(arg vehicle_info_width)"/>
+		<param name="vehicle_info_height" value="$(arg vehicle_info_height)"/>
+		<param name="vehicle_info_wheel_base" value="$(arg vehicle_info_wheel_base)"/>
+		<param name="vehicle_info_tread_front" value="$(arg vehicle_info_tread_front)"/>
+		<param name="vehicle_info_tread_rear" value="$(arg vehicle_info_tread_rear)"/>
+		<param name="vehicle_info_center_to_base" value="$(arg vehicle_info_center_to_base)"/>
 	</node>
 
 </launch>
