@@ -46,8 +46,8 @@ MapBuilder2::initialize (const InputFrame &f1, const InputFrame &f2)
 	kfid k1 = cMap->createKeyFrame(f1.image, f1.position, f1.orientation, f1.cameraId, NULL, f1.sourceId, f1.tm);
 	kfid k2 = cMap->createKeyFrame(f2.image, f2.position, f2.orientation, f2.cameraId, NULL, f2.sourceId, f2.tm);
 	cMap->estimateStructure(k1, k2);
-	kfAnchor = k1;
-	ifrAnchor = f1;
+	kfAnchor = k2;
+	ifrAnchor = f2;
 }
 
 
@@ -80,6 +80,7 @@ MapBuilder2::input(const InputFrame &f)
 
 		if (frame0.image.empty()) {
 			frame0 = f;
+			cerr << "Input#: " << f.sourceId << endl;
 			return;
 		}
 
@@ -90,6 +91,7 @@ MapBuilder2::input(const InputFrame &f)
 				inputCallback(f);
 				initialized = true;
 				cerr << "Initialized; # of map points: " << cMap->allMapPoints().size() << endl;
+				cerr << "Input#: " << f.sourceId << endl;
 				return;
 			}
 		}
@@ -100,6 +102,8 @@ MapBuilder2::input(const InputFrame &f)
 		if (runTrans>=translationThrs or runRot>=rotationThrs) {
 			kfid lastAnchor = kfAnchor;
 			track (f);
+
+			cerr << "Input#: " << f.sourceId << endl;
 
 			// Build connections
 			vector<kfid> kfInsToAnchor = cMap->getKeyFramesComeInto(lastAnchor);

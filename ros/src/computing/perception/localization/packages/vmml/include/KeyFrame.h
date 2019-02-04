@@ -24,6 +24,7 @@
 #include "triangulation.h"
 #include "utilities.h"
 #include "BaseFrame.h"
+#include "Matcher.h"
 #include "datasets/GenericDataset.h"
 
 
@@ -117,14 +118,22 @@ public:
 			std::vector<FeaturePair> &featurePairs,
 			cv::Ptr<cv::DescriptorMatcher> matcher);
 
-	static void triangulate (
+	/*static void triangulate (
 		const KeyFrame *kf1, const KeyFrame *kf2,
-		std::vector<kfid> &mapPointList,
+		std::vector<mpid> &mapPointList,
 		const std::vector<FeaturePair> &featurePairs,
 		std::map<mpid, kpid> &mapPointToKeyPointInKeyFrame1,
 		std::map<mpid, kpid> &mapPointToKeyPointInKeyFrame2,
 		VMap *parent
-	);
+	);*/
+
+	static void triangulate (
+		const KeyFrame &KF1, const KeyFrame &KF2,
+		const std::vector<Matcher::KpPair> &kpPair,
+		std::vector<mpid> &newMapPointList,
+		std::map<mpid, kpid> &mapPointToKeyPointInKeyFrame1,
+		std::map<mpid, kpid> &mapPointToKeyPointInKeyFrame2,
+		VMap &parent);
 
 	kfid getId () const
 	{ return id; }

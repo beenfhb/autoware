@@ -209,7 +209,7 @@ void KeyFrame::matchSubset (
 
 
 
-void KeyFrame::triangulate (
+/*void KeyFrame::triangulate (
 	const KeyFrame *kf1, const KeyFrame *kf2,
 	std::vector<mpid> &mapPointList,
 	const std::vector<FeaturePair> &featurePairs,
@@ -261,6 +261,61 @@ void KeyFrame::triangulate (
 		mapPointList.push_back(newMp);
 		mapPointToKeyPointInKeyFrame1[newMp] = fp.kpid1;
 		mapPointToKeyPointInKeyFrame2[newMp] = fp.kpid2;
+	}
+}*/
+
+
+void KeyFrame::triangulate (
+	const KeyFrame &KF1, const KeyFrame &KF2,
+	const std::vector<Matcher::KpPair> &featurePairs,
+	std::vector<mpid> &newMapPointList,
+	std::map<mpid, kpid> &mapPointToKeyPointInKeyFrame1,
+	std::map<mpid, kpid> &mapPointToKeyPointInKeyFrame2,
+	VMap &parent)
+{
+	const poseMatrix pm1 = KF1.projectionMatrix(),
+		pm2 = KF2.projectionMatrix();
+
+	newMapPointList.clear();
+
+	for (uint i=0; i<featurePairs.size(); i++) {
+		auto &fp = featurePairs[i];
+
+		Vector2d proj1 = KF1.keypointv(fp.first),
+			proj2 = KF2.keypointv(fp.second);
+
+		Vector4d triangulatedpt;
+		TriangulateDLT (pm1, pm2, proj1, proj2, triangulatedpt);
+		Vector3d pointm = triangulatedpt.head(3);
+
+		// Check for Reprojection Errors
+		float pj1 = (KF1.project(pointm) - proj1).norm(),
+			pj2 = (KF2.project(pointm) - proj2).norm();
+		if (pj1 > pixelReprojectionError or pj2 > pixelReprojectionError)
+			continue;
+
+		// checking for regularity of triangulation result
+		// 1: Point must be in front of camera
+		Vector3d v1 = pointm - KF1.position();
+		double cos1 = v1.dot(KF1.normal()) / v1.norm();
+		if (cos1 < 0)
+			continue;
+		double dist1 = v1.norm();
+		Vector3d v2 = pointm - KF2.position();
+		double cos2 = v2.dot(KF2.normal()) / v2.norm();
+		if (cos2 < 0)
+			continue;
+		double dist2 = v2.norm();
+
+		// 2: Must have enough parallax (ie. remove faraway points)
+		double cosParallax = (-v1).dot(-v2) / (dist1 * dist2);
+		if (cosParallax >= 0.999990481)
+			continue;
+
+		mpid newMp = parent.createMapPoint(pointm);
+		newMapPointList.push_back(newMp);
+		mapPointToKeyPointInKeyFrame1[newMp] = fp.first;
+		mapPointToKeyPointInKeyFrame2[newMp] = fp.second;
 	}
 }
 

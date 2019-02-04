@@ -7,10 +7,14 @@
 
 #include <algorithm>
 #include <Matcher.h>
+#include "KeyFrame.h"
 
 #include "utilities.h"
 #include "triangulation.h"
 
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/calib3d.hpp>
 #include <opencv2/core/eigen.hpp>
 
 
@@ -35,24 +39,6 @@ const int
 
 int
 	Matcher::__maxDraw = 1;
-
-cv::Mat
-Matcher::createMatcherMask(
-	const KeyFrame &kf1, const KeyFrame &kf2,
-	const std::vector<kpid> &kp1List, const std::vector<kpid> &kp2List)
-{
-	cv::Mat mask (kf2.numOfKeyPoints(), kf1.numOfKeyPoints(), CV_8UC1, 0);
-
-	for (int i=0; i<kp2List.size(); ++i) {
-		const kpid &i2 = kp2List[i];
-		for (int j=0; j<kp1List.size(); ++j) {
-			const kpid &i1 = kp1List[j];
-			mask.at<char>(i2, i1) = 1;
-		}
-	}
-
-	return mask;
-}
 
 
 void
@@ -80,27 +66,6 @@ Matcher::decomposeE (
 	R2 = U * W.transpose() * V.transpose();
 	if (R2.determinant() < 0)
 		R2 = -R2;
-}
-
-
-cv::Mat
-Matcher::createMatcherMask(
-	const BaseFrame &kf1, const BaseFrame &kf2,
-	const WhichKpId &map1to2)
-{
-//	cv::Mat mask (kf1.numOfKeyPoints(), kf2.numOfKeyPoints(), CV_8UC1, 0);
-	cv::Mat mask;
-	mask = cv::Mat::zeros(kf1.numOfKeyPoints(), kf2.numOfKeyPoints(), CV_8UC1);
-
-	for (auto &pr: map1to2) {
-		const kpid &k1 = pr.first;
-		const auto &kp2list = pr.second;
-		for (auto &k2: kp2list) {
-			mask.at<char>(k1, k2) = 0xff;
-		}
-	}
-
-	return mask;
 }
 
 
@@ -147,112 +112,6 @@ Matcher::isKeypointInEpipolarLine (const Line2 &epl2, const Eigen::Vector2d &kp2
 		return true;
 	}
 }
-
-
-void drawEpipolarLine (cv::Mat &image, const Line2 &l)
-{
-	cv::Point2f pt1, pt2;
-	Vector3d lc = l.coeffs();
-	lc /= lc[2];
-	float Xc = -1/lc[0], Yc = -1/lc[1];
-
-	if (Xc >= 0 and Yc >= 0) {
-		pt1 = cv::Point2f(Xc, 0);
-		pt2 = cv::Point2f(0, Yc);
-
-	}
-
-	else if (Xc < 0 and Yc >= 0) {
-		pt1 = cv::Point2f( image.cols-1, -(1+lc[0]*image.cols)/lc[1] );
-		pt2 = cv::Point2f(0, Yc);
-	}
-
-	else if (Xc >= 0 and Yc < 0) {
-		pt1 = cv::Point2f(Xc, 0);
-		pt2 = cv::Point2f( -(1+lc[1]*image.rows)/lc[0], image.rows-1 );
-	}
-
-	cv::line(image, pt1, pt2, colorRed);
-}
-
-
-/*
- * XXX: This function is subject to elimination
- */
-void
-Matcher::matchForInitialization(
-		const KeyFrame &kf1,
-		const KeyFrame &kf2,
-		std::vector<FeaturePair> &featurePairs,
-		cv::Ptr<cv::DescriptorMatcher> matcher)
-{
-	featurePairs.clear();
-	Matrix3d F12 = BaseFrame::FundamentalMatrix(kf1, kf2);
-
-	Line2 L1 = Line2::Through(Vector2d(0,0), Vector2d(kf2.cameraParam.width,0));
-	Line2 L2 = Line2::Through(Vector2d(0,0), Vector2d(0,kf2.cameraParam.height));
-
-	set<kpid> kf2targetList;
-	WhichKpId kpList1to2;
-
-	for (kpid i1=0; i1<kf1.fKeypoints.size(); i1++) {
-
-		Vector2d keypoint1 (kf1.fKeypoints[i1].pt.x, kf1.fKeypoints[i1].pt.y);
-
-		// Epipolar line in KF2 for this keypoint
-		Line2 epl2 = createEpipolarLine(F12, kf1.fKeypoints[i1]);
-
-		// Skip if this line is not intersecting with image rectangle in Frame 2
-		Vector2d
-			intersect1 = epl2.intersection(L1),
-			intersect2 = epl2.intersection(L2);
-
-		if (intersect1.x() < 0 and intersect2.y() > kf2.cameraParam.height)
-			continue;
-		if (intersect1.x() > kf2.cameraParam.width and intersect2.y() < 0)
-			continue;
-		if (intersect1.x() > kf2.cameraParam.width and intersect2.y() > kf2.cameraParam.height)
-			continue;
-		if (intersect1.x() < 0 and intersect2.y() < 0)
-			continue;
-
-		kf2targetList.clear();
-
-		for(kpid i2=0; i2<kf2.fKeypoints.size(); ++i2) {
-
-			Vector2d keypoint2 (kf2.fKeypoints[i2].pt.x, kf2.fKeypoints[i2].pt.y);
-
-			if (isKeypointInEpipolarLine(epl2, kf2.fKeypoints[i2]) == false)
-				continue;
-			kf2targetList.insert(i2);
-		}
-
-		if (kf2targetList.size() != 0)
-			kpList1to2.insert(make_pair(i1, kf2targetList));
-	}
-
-	cv::Mat matcherMask = createMatcherMask(kf1, kf2, kpList1to2);
-	vector<cv::DMatch> matchResult;
-	matcher->clear();
-	matcher->match(kf2.fDescriptors, kf1.fDescriptors, matchResult, matcherMask);
-
-	for (auto &match: matchResult) {
-		kpid
-			kp1 = match.queryIdx,
-			kp2 = match.trainIdx;
-
-		// XXX: Re-Check if kp2 is truly in kp1's epipolar line
-		Line2 epl = createEpipolarLine(F12, kf1.fKeypoints[kp1]);
-
-		if (isKeypointInEpipolarLine(epl, kf2.fKeypoints[kp2])==true) {
-			FeaturePair pair12 = {kp1, kf1.fKeypoints[kp1].pt, kp2, kf2.fKeypoints[kp2].pt};
-			featurePairs.push_back(pair12);
-		}
-	}
-}
-
-
-
 
 
 void
@@ -401,6 +260,57 @@ Matcher::matchAny(
 	}
 
 	return;
+}
+
+
+void
+Matcher::matchMapPoints(
+	const KeyFrame &KFsrc,
+	const BaseFrame &Ft,
+	std::vector<KpPair> &featurePairs,
+	cv::Ptr<cv::DescriptorMatcher> matcher)
+{
+	featurePairs.clear();
+
+	// Establish initial correspondences
+	vector<cv::DMatch> initialMatches;
+	matcher->match(KFsrc.fDescriptors, Ft.fDescriptors, initialMatches);
+
+	// Sort by `distance'
+	sort(initialMatches.begin(), initialMatches.end());
+	vector<int> inliersMatch;
+
+	const int MaxBestMatch = 500;
+	int howmany = std::min(MaxBestMatch, static_cast<int>(initialMatches.size()));
+
+	// Select N best matches
+	vector<cv::Point2f> pointsIn1(MaxBestMatch), pointsIn2(MaxBestMatch);
+	for (int i=0; i<howmany; ++i) {
+		auto &m = initialMatches[i];
+		pointsIn1[i] = KFsrc.fKeypoints[m.queryIdx].pt;
+		pointsIn2[i] = Ft.fKeypoints[m.trainIdx].pt;
+	}
+	cv::Mat Fcv = cv::findFundamentalMat(pointsIn1, pointsIn2, cv::FM_RANSAC, 3.84*Matcher::circleOfConfusionDiameter);
+	// Need Eigen Matrix of F
+
+	Matrix3d F12;
+	cv2eigen(Fcv, F12);
+
+	/*
+	 * Guided Match using new F
+	 */
+	// Prepare constraints
+	cv::Mat gdMask = cv::Mat::zeros(KFsrc.numOfKeyPoints(), Ft.numOfKeyPoints(), CV_8UC1);
+	float maxDistance = -1;
+	for (int i=0; i<initialMatches.size(); ++i) {
+		auto &m = initialMatches[i];
+		const Vector2d keypoint1v = KFsrc.keypointv(m.queryIdx);
+		const Line2 epl2 = createEpipolarLine(F12, KFsrc.fKeypoints[m.queryIdx]);
+		const Line2 epl1 = createEpipolarLine(F12.transpose(), Ft.fKeypoints[m.trainIdx]);
+		if (isKeypointInEpipolarLine(epl2, Ft.keypointv(m.trainIdx))==true and isKeypointInEpipolarLine(epl1, KFsrc.keypointv(m.queryIdx))==true) {
+			featurePairs.push_back(make_pair(m.queryIdx, m.trainIdx));
+		}
+	}
 }
 
 
