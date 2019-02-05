@@ -33,6 +33,7 @@ class AwPluginNode(basetree.AwBaseNode):
 
     def __init__(self, tree, path):
         super(AwPluginNode, self).__init__(tree, path)
+        self.__isleaf = None
         self.__rosxml = None
         self.__args   = None
         self.__exts   = None
@@ -60,19 +61,19 @@ class AwPluginNode(basetree.AwBaseNode):
         console.error("{}: {} ({})".format(self.__class__.__name__, text, self.__nodepath))
 
     def isnode(self):
-        return bool(self.__rules)
+        return not self.__isleaf
 
     def isleaf(self):
-        return not self.isnode()
+        return self.__isleaf
 
-    #def rosxml(self):
-    #    return self.__launch
+    def rosxml(self):
+        return self.__rosxml
 
-    #def exts(self):
-    #    return self.__exts
+    def exts(self):
+        return self.__exts
 
-    #def args(self):
-    #    return self.__args
+    def args(self):
+        return self.__args
 
     def rules(self):
         return self.__rules
@@ -124,6 +125,7 @@ class AwPluginNode(basetree.AwBaseNode):
             if ydata.get("format") != "Autoware Launcher Plugin Version 0.1":
                 raise Exception("unknown plugin format: " + filepath)
 
+            self.__isleaf = ydata.get("rules") is None
             self.__rosxml = ydata.get("rosxml", "$(find autoware_launcher)/plugins/{}.xml".format(self.path()))
             self.__exts   = [AwPluginDataElement(data) for data in ydata.get("exts", [])]
             self.__args   = [AwPluginDataElement(data) for data in ydata.get("args", [])]
@@ -150,18 +152,6 @@ class AwPluginNode(basetree.AwBaseNode):
                 field = group["data"]
                 field.setdefault("default", default_values[field["type"]])
         """
-
-    def generate_launch(self, config):
-        lines = []
-        lines.append('<launch>')
-        lines.append('  <include file="{}">'.format(self.__rosxml))
-        for data in self.__args:
-            argvalue = config.get("args." + data.name)
-            if argvalue is not None:
-                lines.append('    <arg name="{}" value="{}"/>'.format(data.name, data.xmlstr(argvalue)))
-        lines.append('  </include>')
-        lines.append('</launch>')
-        return "\n".join(lines)
 
 
 

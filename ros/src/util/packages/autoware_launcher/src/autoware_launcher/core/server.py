@@ -62,6 +62,10 @@ class AwLaunchServer(AwLaunchServerIF):
         console.info("save_profile: " + fpath)
         self.__profile.save(myutils.profile(fpath))
 
+    def export_profile(self, fpath):
+        console.info("export_profile: " + fpath)
+        self.__profile.export(fpath)
+
     def list_node(self):
         console.info("list_node: ")
         return map(lambda node: node.nodepath(), self.__profile.listnode(False))

@@ -80,7 +80,7 @@ class AwRosbagSimulatorWidget(QtWidgets.QWidget):
         self.rosbag_text.setText(stdout + stderr)
 
     def rosbag_started(self):
-        xml = myutils.package("launch/rosbagplay.xml")
+        xml = myutils.package("resources/rosbagplay.xml")
         arg = self.rosbag_file.path.text()
         self.rosbag_play_proc.start('roslaunch {} options:="{}" bagfile:={}'.format(xml, "--clock --start=0", arg))
         self.rosbag_play_proc.processId()

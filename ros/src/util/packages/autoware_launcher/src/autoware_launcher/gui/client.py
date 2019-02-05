@@ -181,13 +181,14 @@ class AwQtGuiClient(object):
         self.__treeview.status_ui_updated(lpath, state)
         self.__quickstart.status_ui_updated(lpath, state)
 
-
+    def load_profile(self, fpath):
+        self.__server.load_profile(fpath)
 
     def save_profile(self, fpath):
         self.__server.save_profile(fpath)
 
-    def load_profile(self, fpath):
-        self.__server.load_profile(fpath)
+    def export_profile(self, fpath):
+        self.__server.export_profile(fpath)
 
     def find_node(self, lpath):
         return self.__server.find_node(lpath)

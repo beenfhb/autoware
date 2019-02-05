@@ -56,10 +56,20 @@ class AwMainWindow(AwAbstructWindow):
         save_as_action.setShortcut("Ctrl+A")
         save_as_action.triggered.connect(self.save_profile_as)
 
+        export_action = QtWidgets.QAction("Export Profile", self)
+        export_action.setShortcut("Ctrl+E")
+        export_action.triggered.connect(self.export_profile)
+
         self.filemenu.addAction(load_action)
         self.filemenu.addAction(save_action)
         self.filemenu.addAction(save_as_action)
+        self.filemenu.addAction(export_action)
 
+    def addViewMenu(self, text, func):
+        action = QtWidgets.QAction(text, self)
+        action.setCheckable(True)
+        action.toggled.connect(func)
+        self.viewmenu.addAction(action)
 
     def load_profile(self):
         import os
@@ -79,9 +89,16 @@ class AwMainWindow(AwAbstructWindow):
             if filetype != ".launch":
                 filename = filename + filetype
             self.client.save_profile(filename)
-
-    def addViewMenu(self, text, func):
-        action = QtWidgets.QAction(text, self)
-        action.setCheckable(True)
-        action.toggled.connect(func)
-        self.viewmenu.addAction(action)
+    
+    def export_profile(self):
+        filename = "aaa"
+        """
+        import os
+        filename, filetype = QtWidgets.QFileDialog.getSaveFileName(self, "Export Profile", myutils.profile(), "Launch Profile (*.launch)")
+        filename, filetype = os.path.splitext(filename)
+        if filename:
+            if filetype != ".launch":
+                filename = filename + filetype
+            self.client.save_profile(filename)
+        """
+        self.client.export_profile(myutils.package("launch/test"))

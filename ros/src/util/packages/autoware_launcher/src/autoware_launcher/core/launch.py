@@ -19,29 +19,32 @@ class AwBaseNode(object):
         print((indent * " ") + str(self))
         for child in self.children(): child.dump(indent + 2)
 
-    #def setleaf(self):
-    #    self.__nodetype = False
-
-    #def isnode(self):
-    #    return self.__nodetype is True
-
-    #def isleaf(self):
-    #    return self.__nodetype is False
-
     def tree(self):
         return self.__parent.tree()
 
-    def nodename(self):
+    def nodename(self): # ToDo: remove
+        return self.__nodename
+    
+    def name(self):
         return self.__nodename
 
-    def nodepath(self):
+    def nodepath(self): # ToDo: remove
         return os.path.join(self.__parent.nodepath(), self.nodename())
+
+    def path(self):
+        return os.path.join(self.__parent.path(), self.name())
 
     def fullpath(self):
         return os.path.join(self.__parent.fullpath(), self.nodename())
 
-    def children(self):
+    def children(self): # ToDo: remove
         return self.__children
+    
+    def childnodes(self):
+        return self.__children
+
+    def childnames(self):
+        return [node.nodename() for node in self.__children]
 
     def getchild(self, name):
         return self.__childmap.get(name)
@@ -75,7 +78,10 @@ class AwBaseTree(AwBaseNode):
     def tree(self):
         return self
 
-    def nodepath(self):
+    def nodepath(self): # ToDo: remove
+        return ""
+
+    def path(self):
         return ""
     
     def fullpath(self):
@@ -129,6 +135,14 @@ class AwLaunchTree(AwBaseTree):
         launch.plugin = plugin
         launch.config = plugin.default_config()
         self.addchild(launch)
+    
+    def export(self, rootpath):
+        print rootpath
+        for node in self.listnode():
+            xtext = node.generate_launch()
+            xpath = node.nodepath().replace("/", "-") + ".xml"
+            xpath = os.path.join(rootpath, xpath)
+            with open(xpath, mode="w") as fp: fp.write(xtext)
 
     def create(self, lpath, ppath):
         print "Tree Create: " + lpath + ", " + ppath
@@ -221,7 +235,26 @@ class AwLaunchNode(AwBaseNode):
         return self.config.get(key, value)
 
     def generate_launch(self):
-        return self.plugin.generate_launch(self.config)
+        lines = []
+        if self.plugin.isleaf():
+            lines.append('<launch>')
+            lines.append('  <include file="{}">'.format(self.plugin.rosxml()))
+            for data in self.plugin.args():
+                argvalue = self.config.get("args." + data.name)
+                if argvalue is not None:
+                    lines.append('    <arg name="{}" value="{}"/>'.format(data.name, data.xmlstr(argvalue)))
+            lines.append('  </include>')
+            lines.append('</launch>')
+        else:
+            lines.append('<launch>')
+            for childname in self.childnames():
+                childpath = os.path.join(self.path(), childname)
+                childpath = childpath.replace("/", "-") + ".xml"
+                lines.append('  <include file="{}"/>'.format(childpath))
+            lines.append('</launch>')
+        return "\n".join(lines)
+
+
 
     def import_data(self, data, plugins):
         self.plugin = plugins.find(data["plugin"])

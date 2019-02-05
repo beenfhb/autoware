@@ -4,7 +4,7 @@ project(autoware_launcher)
 find_package(catkin REQUIRED COMPONENTS python_qt_binding)
 catkin_python_setup()
 
-install(PROGRAMS scripts/main
+catkin_install_python(PROGRAMS scripts/main
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
