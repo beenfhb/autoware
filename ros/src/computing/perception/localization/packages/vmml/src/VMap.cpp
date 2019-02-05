@@ -20,6 +20,7 @@
 #include "utilities.h"
 #include "INIReader.h"
 #include "Matcher.h"
+#include "Trajectory.h"
 
 
 
@@ -407,7 +408,6 @@ const
 }
 
 
-
 vector<pair<Vector3d,Quaterniond> >
 VMap::dumpCameraPoses () const
 {
@@ -421,6 +421,18 @@ VMap::dumpCameraPoses () const
 	}
 
 	return Retr;
+}
+
+
+void VMap::dumpCameraPoses(Trajectory &track) const
+{
+	track.clear();
+
+	for (auto &kptr: keyframeInvIdx) {
+		KeyFrame *kf = kptr.second;
+		PoseStamped kfpose (kf->pose(), kf->frCreationTime);
+		track.push_back(kfpose);
+	}
 }
 
 
@@ -540,6 +552,18 @@ VMap::createFeatureDetector(FeatureDetectorT fd)
 }
 
 
+cv::Ptr<cv::DescriptorMatcher>
+VMap::createDescriptorMatcher(DescriptorMatcherT dm)
+{
+	switch (dm) {
+	case DescriptorMatcherT::BruteForce:
+		// XXX: Should we activate cross-check for BFMatcher ?
+		return cv::BFMatcher::create(cv::NORM_HAMMING, false);
+		break;
+	}
+}
+
+
 CameraPinholeParams
 CameraPinholeParams::loadCameraParamsFromFile(const string &f)
 {
@@ -598,18 +622,6 @@ VMap::reset()
 	framePointsInv.clear();
 
 	// XXX: Unfinished
-}
-
-
-cv::Ptr<cv::DescriptorMatcher>
-VMap::createDescriptorMatcher(DescriptorMatcherT dm)
-{
-	switch (dm) {
-	case DescriptorMatcherT::BruteForce:
-		// XXX: Should we activate cross-check for BFMatcher ?
-		return cv::BFMatcher::create(cv::NORM_HAMMING, true);
-		break;
-	}
 }
 
 

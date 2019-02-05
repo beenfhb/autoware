@@ -42,31 +42,31 @@ public:
 	typedef std::shared_ptr<UDistT> UDistPtr;
 
 
-PoseDisturb(const Vector3d &means):
-	meanShift(means),
-	distributions(vector<UDistPtr>(3, nullptr))
-{
-	if (meanShift.x()!=0.0) {
-		distributions[0] = createUniformDistribution(meanShift.x());
+	PoseDisturb(const Vector3d &means):
+		meanShift(means),
+		distributions(vector<UDistPtr>(3, nullptr))
+	{
+		if (meanShift.x()!=0.0) {
+			distributions[0] = createUniformDistribution(meanShift.x());
+		}
+		if (meanShift.y()!=0.0) {
+			distributions[1] = createUniformDistribution(meanShift.y());
+		}
+		if (meanShift.z()!=0.0) {
+			distributions[2] = createUniformDistribution(meanShift.z());
+		}
 	}
-	if (meanShift.y()!=0.0) {
-		distributions[1] = createUniformDistribution(meanShift.y());
-	}
-	if (meanShift.z()!=0.0) {
-		distributions[2] = createUniformDistribution(meanShift.z());
-	}
-}
 
-Pose disturb(const Pose &p)
-{
-	Vector3d sh = getRandomShift();
-	return p.shift(sh);
-}
+	Pose disturb(const Pose &p)
+	{
+		Vector3d sh = getRandomShift();
+		return p.shift(sh);
+	}
 
-static UDistPtr createUniformDistribution(const double &m)
-{
-	return UDistPtr(new UDistT(-m, m));
-}
+	static UDistPtr createUniformDistribution(const double &m)
+	{
+		return UDistPtr(new UDistT(-m, m));
+	}
 
 protected:
 	Vector3d meanShift;
@@ -273,7 +273,7 @@ void bundle_adjustment_2 (VMap *orgMap)
 	 * For vertical, specify in Y
 	 */
 	//                            X    Y    Z
-	PoseDisturb poseDist(Vector3d(5,   0.1,   0));
+	PoseDisturb poseDist(Vector3d(3,   0.1,   0));
 
 	// Stage #1: Build vertices and edges from-KF-to-MP
 	for (kfid &kId: keyframeList) {
@@ -339,8 +339,8 @@ void bundle_adjustment_2 (VMap *orgMap)
 			edgeKf->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>( vertexKfMapInv[kId] ));
 
 			// Measurement
-			// P2 = T * P1 ==> T = P2 * inverse(P1)
-			TTransform T = orgMap->keyframe(kId)->pose() * orgMap->keyframe(kfriend)->pose().inverse();
+			// P2 = P1 * T ==> T = inverse(P1) * P2
+			TTransform T = orgMap->keyframe(kfriend)->pose().inverse() * orgMap->keyframe(kId)->pose();
 			edgeKf->setMeasurement(g2o::SE3Quat(T.orientation(), T.position()));
 
 			// Uncertainty
@@ -356,7 +356,6 @@ void bundle_adjustment_2 (VMap *orgMap)
 		}
 
 	}
-
 
 	optimizer.initializeOptimization();
 	// XXX: Determine number of iterations

@@ -272,9 +272,16 @@ Matcher::matchMapPoints(
 {
 	featurePairs.clear();
 
-	// Establish initial correspondences
+	// Establish initial correspondences, with mask
 	vector<cv::DMatch> initialMatches;
-	matcher->match(KFsrc.fDescriptors, Ft.fDescriptors, initialMatches);
+	cv::Mat mmask = cv::Mat::zeros(KFsrc.numOfKeyPoints(), Ft.numOfKeyPoints(), CV_8UC1);
+	auto mMapPt = KFsrc.parentMap->allMapPointsAtKeyFrame(KFsrc.id);
+	for (auto &p: mMapPt) {
+		for (int _=0; _<mmask.cols; ++_)
+			mmask.at<uchar>(p.second, _) = 0xff;
+	}
+
+	matcher->match(KFsrc.fDescriptors, Ft.fDescriptors, initialMatches, mmask);
 
 	// Sort by `distance'
 	sort(initialMatches.begin(), initialMatches.end());

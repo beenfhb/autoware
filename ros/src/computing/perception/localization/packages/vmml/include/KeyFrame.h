@@ -150,6 +150,9 @@ public:
 	(const ptime &t)
 	{ frCreationTime = t; }
 
+	ptime getTimestamp() const
+	{ return frCreationTime; }
+
 	std::vector<Eigen::Vector2d>
 	projectAllMapPoints () const;
 
@@ -171,6 +174,8 @@ protected:
     friend void boost::serialization::serialize (Archive & ar, KeyFrame &keyframe, const unsigned int version);
 
 	friend class VMap;
+
+	friend class Matcher;
 
 	kfid id;
 

@@ -32,6 +32,7 @@
 #include "datasets/OxfordDataset.h"
 #include "datasets/MeidaiBagDataset.h"
 #include "utilities.h"
+#include "Optimizer.h"
 
 
 using namespace std;
@@ -258,6 +259,9 @@ public:
 
 		else if (command[0]=="camera_baselink_offset")
 			camera_baselink_offset_cmd(command);
+
+		else if (command[0]=="map_ba")
+			map_ba_cmd();
 	}
 
 
@@ -521,6 +525,7 @@ private:
 	const string dumpMapTrajectoryPath = "/tmp/dump_map_trajectory.csv";
 	void map_trajectory_dump()
 	{
+/*
 		fstream mapTrFd (dumpMapTrajectoryPath, ios_base::out|ios_base::trunc);
 		if (!mapTrFd.is_open()) {
 			debug("Unable to create "+dumpMapTrajectoryPath);
@@ -536,6 +541,12 @@ private:
 		}
 
 		mapTrFd.close();
+*/
+
+		Trajectory mapTrack;
+		mapSrc->dumpCameraPoses(mapTrack);
+		mapTrack.dump(dumpMapTrajectoryPath);
+
 		debug("Map trajectory dumped to "+dumpMapTrajectoryPath);
 	}
 
@@ -606,7 +617,7 @@ private:
 			meidaiDsPtr = static_pointer_cast<MeidaiBagDataset>(loadedDataset);
 			slDatasourceType = MEIDAI_DATASET_TYPE;
 			meidaiDsPtr->addCameraParameter(meidaiCamera1Params);
-			meidaiDsPtr->isPreprocessed = false;
+			meidaiDsPtr->isPreprocessed = true;
 			debug ("Nagoya University Dataset Loaded");
 		}
 
@@ -743,15 +754,32 @@ private:
 			mapBuilder.getMap()->setInfo("originalPath", meidaiDsPtr->getPath());
 		}
 
-		if (cmd.size() >= 2) {
+		if (cmd.size() >= 1) {
 			start = InputOffsetPosition::parseString(cmd[0]);
-			stop = InputOffsetPosition::parseString(cmd[1]);
+			if (cmd.size()>=2)
+				stop = InputOffsetPosition::parseString(cmd[1]);
+			else
+				stop = InputOffsetPosition();
 
 			if (start.asPosition==-1 and stop.asPosition==-1) {
 				duration = stop.asSecondsFromStart - start.asSecondsFromStart;
 				loadedDataset->convertStartDurationToTime(start.asSecondsFromStart, duration, ptstart, ptstop);
 				numOfFrames = loadedDataset->size(ptstart, ptstop);
 				useIntPosition = false;
+			}
+
+			else if (start.asPosition!=-1 and stop.asPosition==-1) {
+				stop.asPosition = loadedDataset->size()-1;
+				try {
+					ptstart = loadedDataset->get(start.asPosition)->getTimestamp();
+					ptstop  = loadedDataset->last()->getTimestamp();
+					duration = toSeconds(ptstop-ptstart);
+					numOfFrames = (loadedDataset->size()-1) - start.asPosition;
+					useIntPosition = true;
+				} catch(exception &e) {
+					debug("Requested position(s) does not exist");
+					return;
+				}
 			}
 
 			else if(start.asSecondsFromStart==-1 and stop.asSecondsFromStart==-1) {
@@ -1023,6 +1051,17 @@ private:
 		mpBuilder.visualOdometry(loadedDataset, fn0, fn1, voTrajectory);
 		voTrajectory.dump(voDumpPath.string());
 		debug("Visual odometry result dumped to "+voDumpPath.string());
+	}
+
+	// Bundle Adjustment Test
+	void map_ba_cmd()
+	{
+		if (mapSrc==nullptr) {
+			debug("Map not loaded");
+			return;
+		}
+
+		bundle_adjustment_2(mapSrc);
 	}
 };
 

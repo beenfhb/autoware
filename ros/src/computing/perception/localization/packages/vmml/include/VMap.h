@@ -51,6 +51,7 @@ enum DescriptorMatcherT {
 
 class Frame;
 
+class Trajectory;
 
 struct kpidField : std::vector<bool>
 {
@@ -167,6 +168,8 @@ public:
 
 	std::vector<std::pair<Eigen::Vector3d,Eigen::Quaterniond> >
 		dumpCameraPoses () const;
+
+	void dumpCameraPoses (Trajectory &track) const;
 
 	kpidField makeField (const kfid &kf);
 	kpidField visibleField (const kfid &kf);
