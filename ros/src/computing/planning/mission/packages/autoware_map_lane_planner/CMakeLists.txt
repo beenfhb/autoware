@@ -7,6 +7,9 @@ find_package(catkin REQUIRED COMPONENTS
   autoware_map
   autoware_map_msgs
   autoware_msgs
+  std_msgs
+  geometry_msgs
+  tf2_ros
   roscpp
 )
 

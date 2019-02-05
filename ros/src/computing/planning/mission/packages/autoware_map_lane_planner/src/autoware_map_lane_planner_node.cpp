@@ -6,6 +6,7 @@ int main(int argc, char *argv[])
     ros::init(argc, argv, "autoware_map_lane_planner_node");
     ros::NodeHandle nh;
     ros::NodeHandle pnh("~");
+    AutowareMapLanePlanner planner(nh,pnh);
     ros::spin();
     return 0;
 }
