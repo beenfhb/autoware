@@ -124,9 +124,6 @@ class CloudProjection {
     template <typename T>
     void checkCloudAndStorage(const T& points);
 
-    //void checkCloudAndStorage(const pcl::PointCloud<pcl::PointXYZIF>::ConstPtr& points);
-    //void checkCloudAndStorage(const pcl::PointCloud<pcl::PointXYZIFN>::ConstPtr& points);
-
     /**
      * @brief      Unproject a point from depth image coordinate
      *
@@ -136,7 +133,12 @@ class CloudProjection {
      *
      * @return     { description_of_the_return_value }
      */
-    pcl::PointXYZI unprojectPoint(const cv::Mat& image, const int row, const int col) const;
+    void unprojectPoint(const cv::Mat& depth_image, const int row, const int col, pcl::PointXYZ& point) const;
+    void unprojectPoint(const cv::Mat& depth_image, const cv::Mat& intensity_image, const int row, const int col, pcl::PointXYZI& point) const;
+    void unprojectPoint(const cv::Mat& depth_image, const cv::Mat& intensity_image, const int row, const int col, pcl::PointXYZIR& point) const;
+    void unprojectPoint(const cv::Mat& depth_image, const cv::Mat& intensity_image, const cv::Mat& reflectance_image, const int row, const int col, pcl::PointXYZIF& point) const;
+    void unprojectPoint(const cv::Mat& depth_image, const cv::Mat& intensity_image, const cv::Mat& reflectance_image, const cv::Mat& noise_image, const int row, const int col, pcl::PointXYZIFN& point) const;
+
 
     /**
      * @brief      Set corrections for systematic error in a dataset (see

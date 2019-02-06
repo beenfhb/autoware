@@ -24,7 +24,8 @@ CloudToImage::CloudToImage():
 	_has_reflectance_image(false),
 	_has_noise_image(false),
 	_save_images(false),
-	_output_mode(ImageOutputMode::SINGLE)
+	_output_mode(ImageOutputMode::SINGLE),
+	_overlapping(0)
 {
   _depth_image = cv::Mat::zeros(1, 1, CV_32FC1);
   _intensity_image = cv::Mat::zeros(1, 1, CV_16UC1);
@@ -90,6 +91,7 @@ void CloudToImage::init(int argc, char* argv[])
 	std::string output_mode = getParam(_nodehandle, "/cloud2image/output_mode", std::string("SINGLE"));
 
 	_save_images = getParam(_nodehandle, "/cloud2image/save_images", false);
+	_overlapping = getParam(_nodehandle, "/cloud2image/overlapping", 0);
 
 	if (boost::iequals(output_mode, "SINGLE")) {
 		_output_mode = ImageOutputMode::SINGLE;
@@ -97,6 +99,8 @@ void CloudToImage::init(int argc, char* argv[])
 		_output_mode = ImageOutputMode::GROUP;
 	} else if (boost::iequals(output_mode, "STACK")) {
 		_output_mode = ImageOutputMode::STACK;
+	} else if (boost::iequals(output_mode, "ALL")) {
+		_output_mode = ImageOutputMode::ALL;
 	} else {
 		throw std::runtime_error("image output mode \"" + output_mode + "\" not supported");
 	}
@@ -150,16 +154,18 @@ void CloudToImage::init(int argc, char* argv[])
 	_sub_PointCloud = _nodehandle.subscribe(_cloud_topic, 10, &CloudToImage::pointCloudCallback, this);
 	
 	//publishers
-	if (_output_mode == ImageOutputMode::GROUP) {
-		_pub_DepthImage = _nodehandle.advertise<sensor_msgs::Image>(_depth_image_topic + "_group", 10);
-	} else if (_output_mode == ImageOutputMode::STACK) {
-		_pub_DepthImage = _nodehandle.advertise<sensor_msgs::Image>(_depth_image_topic + "_stack", 10);
-	} else {
+	if (_output_mode == ImageOutputMode::GROUP || _output_mode == ImageOutputMode::ALL) {
+		_pub_GroupImage = _nodehandle.advertise<sensor_msgs::Image>(std::string("/c2i_group_image"), 10);
+	} 
+	if (_output_mode == ImageOutputMode::STACK || _output_mode == ImageOutputMode::ALL) {
+		_pub_StackImage = _nodehandle.advertise<sensor_msgs::Image>(std::string("/c2i_stack_image"), 10);
+	} 
+	if (_output_mode == ImageOutputMode::SINGLE || _output_mode == ImageOutputMode::ALL) {
 		_pub_DepthImage = _nodehandle.advertise<sensor_msgs::Image>(_depth_image_topic, 10);
 		_pub_IntensityImage = _nodehandle.advertise<sensor_msgs::Image>(_intensity_image_topic, 10);
 		_pub_ReflectanceImage = _nodehandle.advertise<sensor_msgs::Image>(_reflectance_image_topic, 10);
 		_pub_NoiseImage = _nodehandle.advertise<sensor_msgs::Image>(_noise_image_topic, 10);
-	}
+	} 
 }
 
 void CloudToImage::pointCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& input)
@@ -200,13 +206,24 @@ void CloudToImage::pointCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& 
 	_reflectance_image = _cloud_proj->reflectance_image();
 	_noise_image = _cloud_proj->noise_image();
 
+	if (_overlapping) {
+		cv::Mat left_roi = _depth_image.colRange(cv::Range(0,_overlapping));
+		cv::hconcat(_depth_image, left_roi, _depth_image);
+		left_roi = _intensity_image.colRange(cv::Range(0,_overlapping));
+		cv::hconcat(_intensity_image, left_roi, _intensity_image);
+		left_roi = _reflectance_image.colRange(cv::Range(0,_overlapping));
+		cv::hconcat(_reflectance_image, left_roi, _reflectance_image);
+		left_roi = _noise_image.colRange(cv::Range(0,_overlapping));
+		cv::hconcat(_noise_image, left_roi, _noise_image);
+	}
+
 	publishImages(input->header);
 }
 
 
 void CloudToImage::publishImages(const std_msgs::Header& header)
 {
-	if (_output_mode == ImageOutputMode::SINGLE) {
+	if (_output_mode == ImageOutputMode::SINGLE || _output_mode == ImageOutputMode::ALL) {
 		if (_has_depth_image && _pub_DepthImage.getNumSubscribers() > 0) {
 			//depth image is float, normalize it for 16 bits
 			cv::Mat mono16_img = cv::Mat(_depth_image.size(), CV_16UC1);
@@ -236,7 +253,8 @@ void CloudToImage::publishImages(const std_msgs::Header& header)
 			sensor_msgs::ImagePtr noise_img = cv_bridge::CvImage(header, sensor_msgs::image_encodings::MONO16, mono16_img).toImageMsg();
 			_pub_NoiseImage.publish(noise_img);
 		}
-	} else if (_output_mode == ImageOutputMode::GROUP || _output_mode == ImageOutputMode::STACK) {
+	} 
+	if (_output_mode == ImageOutputMode::GROUP || _output_mode == ImageOutputMode::STACK || _output_mode == ImageOutputMode::ALL) {
 		//depth
 		cv::Mat mono16_img_depth = cv::Mat(_depth_image.size(), CV_16UC1);
 		cv::normalize(_depth_image, mono16_img_depth, 0.0, 65535.0, cv::NORM_MINMAX, CV_16UC1);
@@ -261,7 +279,7 @@ void CloudToImage::publishImages(const std_msgs::Header& header)
 		img_count += _has_reflectance_image;
 		img_count += _has_noise_image;
 
-		if (_output_mode == ImageOutputMode::GROUP) {
+		if (_output_mode == ImageOutputMode::GROUP || _output_mode == ImageOutputMode::ALL) {
 			//prerequisite: all above images have same width and height
 			auto group_size = mono16_img_depth.size();
 			group_size.height = group_size.height * img_count; 
@@ -295,9 +313,10 @@ void CloudToImage::publishImages(const std_msgs::Header& header)
 
 			//publish
 			sensor_msgs::ImagePtr output_img = cv_bridge::CvImage(header, sensor_msgs::image_encodings::MONO16, mono16_img_group).toImageMsg();
-			_pub_DepthImage.publish(output_img);
+			_pub_GroupImage.publish(output_img);
 
-		} else {
+		} 
+		if (_output_mode == ImageOutputMode::STACK || _output_mode == ImageOutputMode::ALL) {
 			//prerequisite: all above images have same width and height
 			auto format = CV_16UC1;
 			auto encoding = sensor_msgs::image_encodings::MONO16;
@@ -346,7 +365,7 @@ void CloudToImage::publishImages(const std_msgs::Header& header)
 
 			//publish
 			sensor_msgs::ImagePtr output_img = cv_bridge::CvImage(header, encoding, mono16_img_stack).toImageMsg();
-			_pub_DepthImage.publish(output_img);
+			_pub_StackImage.publish(output_img);
 		}
 	}
 
@@ -371,7 +390,7 @@ std::string CloudToImage::timeToStr(T ros_t)
 void CloudToImage::saveImages(const std::string& base_name)
 {
 	std::string filename;
-	if (_output_mode == ImageOutputMode::SINGLE) {
+	if (_output_mode == ImageOutputMode::SINGLE || _output_mode == ImageOutputMode::ALL) {
 		if (_has_depth_image) {
 			//save the generated depth image
 			filename = std::string(base_name + "_depth");
@@ -398,12 +417,14 @@ void CloudToImage::saveImages(const std::string& base_name)
 			filename += std::string("_") + timeToStr(ros::WallTime::now()) + std::string(".png");
 			CloudProjection::cvMatToDepthPNG(_noise_image, filename);
 		}
-	} else if (_output_mode == ImageOutputMode::GROUP) {
+	} 
+	if (_output_mode == ImageOutputMode::GROUP || _output_mode == ImageOutputMode::ALL) {
 		//save the generated group image
 		filename = std::string(base_name + "_group");
 		filename += std::string("_") + timeToStr(ros::WallTime::now()) + std::string(".png");
 		CloudProjection::cvMatToDepthPNG(_group_image, filename);
-	} else if (_output_mode == ImageOutputMode::STACK) {
+	} 
+	if (_output_mode == ImageOutputMode::STACK || _output_mode == ImageOutputMode::ALL) {
 		//save the generated group image
 		filename = std::string(base_name + "_stack");
 		filename += std::string("_") + timeToStr(ros::WallTime::now()) + std::string(".png");

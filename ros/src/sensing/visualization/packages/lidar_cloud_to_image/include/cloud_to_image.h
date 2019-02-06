@@ -16,7 +16,7 @@ namespace cloud_to_image
 class CloudToImage
 {
 	public:
-		enum class ImageOutputMode { SINGLE, GROUP, STACK };
+		enum class ImageOutputMode { SINGLE, GROUP, STACK, ALL };
 
 		explicit CloudToImage();
 		~CloudToImage();
@@ -64,6 +64,8 @@ class CloudToImage
 		float _horizontal_scale;
 		float _vertical_scale;
 
+		unsigned int _overlapping;
+
 		ImageOutputMode _output_mode;
 
 		cv::Mat _depth_image;
@@ -79,6 +81,8 @@ class CloudToImage
 		ros::Publisher _pub_IntensityImage;
 		ros::Publisher _pub_ReflectanceImage;
 		ros::Publisher _pub_NoiseImage;
+		ros::Publisher _pub_GroupImage;
+		ros::Publisher _pub_StackImage;
 };
 }
 

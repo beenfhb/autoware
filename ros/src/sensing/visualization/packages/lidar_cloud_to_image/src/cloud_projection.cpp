@@ -238,8 +238,14 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr CloudProjection::fromImage(const cv::Mat& d
       if (depth_image.at<float>(r, c) < 0.0001f) {
         continue;
       }
-      pcl::PointXYZI point = unprojectPoint(depth_image, r, c);
-      cloud->points.push_back(point);
+      pcl::PointXYZ point;
+      unprojectPoint(depth_image, r, c, point);
+      pcl::PointXYZI point2;
+      point2.x = point.x;
+      point2.y = point.y;
+      point2.z = point.z;
+      point2.intensity = 0;
+      cloud->points.push_back(point2);
       this->at(r, c).points().push_back(cloud->points.size() - 1);
     }
   }
@@ -247,7 +253,8 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr CloudProjection::fromImage(const cv::Mat& d
 }
 
 
-pcl::PointCloud<pcl::PointXYZI>::Ptr CloudProjection::fromImage(const cv::Mat& depth_image, const cv::Mat& intensity_image) {
+pcl::PointCloud<pcl::PointXYZI>::Ptr CloudProjection::fromImage(const cv::Mat& depth_image, const cv::Mat& intensity_image) 
+{
   checkImageAndStorage(depth_image);
   cloneDepthImage(depth_image);
   checkImageAndStorage(intensity_image);
@@ -258,8 +265,8 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr CloudProjection::fromImage(const cv::Mat& d
       if (depth_image.at<float>(r, c) < 0.0001f) {
         continue;
       }
-      pcl::PointXYZI point = unprojectPoint(depth_image, r, c);
-      point.intensity = intensity_image.at<uint16_t>(r, c);
+      pcl::PointXYZI point;
+      unprojectPoint(depth_image, intensity_image, r, c, point);
       cloud->points.push_back(point);
       this->at(r, c).points().push_back(cloud->points.size() - 1);
     }
@@ -267,17 +274,69 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr CloudProjection::fromImage(const cv::Mat& d
   return cloud;
 }
 
-pcl::PointXYZI CloudProjection::unprojectPoint(const cv::Mat& image, const int row, const int col) const {
-  float depth = image.at<float>(row, col);
+void CloudProjection::unprojectPoint(const cv::Mat& depth_image, const int row, const int col, pcl::PointXYZ& point) const 
+{
+  float depth = depth_image.at<float>(row, col);
   Angle angle_z = this->_params.angleFromRow(row);
   Angle angle_xy = this->_params.angleFromCol(col);
-  pcl::PointXYZI point;
+  
   point.x = depth * cosf(angle_z.val()) * cosf(angle_xy.val());
   point.y = depth * cosf(angle_z.val()) * sinf(angle_xy.val());
   point.z = depth * sinf(angle_z.val());
-  point.intensity = 0;
-  return point;
 }
+
+void CloudProjection::unprojectPoint(const cv::Mat& depth_image, const cv::Mat& intensity_image, const int row, const int col, pcl::PointXYZI& point) const 
+{
+  float depth = depth_image.at<float>(row, col);
+  Angle angle_z = this->_params.angleFromRow(row);
+  Angle angle_xy = this->_params.angleFromCol(col);
+  
+  point.x = depth * cosf(angle_z.val()) * cosf(angle_xy.val());
+  point.y = depth * cosf(angle_z.val()) * sinf(angle_xy.val());
+  point.z = depth * sinf(angle_z.val());
+  point.intensity =  intensity_image.at<uint16_t>(row, col);
+}
+
+void CloudProjection::unprojectPoint(const cv::Mat& depth_image, const cv::Mat& intensity_image, const int row, const int col, pcl::PointXYZIR& point) const 
+{
+  float depth = depth_image.at<float>(row, col);
+  Angle angle_z = this->_params.angleFromRow(row);
+  Angle angle_xy = this->_params.angleFromCol(col);
+  
+  point.x = depth * cosf(angle_z.val()) * cosf(angle_xy.val());
+  point.y = depth * cosf(angle_z.val()) * sinf(angle_xy.val());
+  point.z = depth * sinf(angle_z.val());
+  point.intensity =  intensity_image.at<uint16_t>(row, col);
+  point.ring = row; //ring is handled same as row number
+}
+
+void CloudProjection::unprojectPoint(const cv::Mat& depth_image, const cv::Mat& intensity_image, const cv::Mat& reflectance_image, const int row, const int col, pcl::PointXYZIF& point) const
+{
+  float depth = depth_image.at<float>(row, col);
+  Angle angle_z = this->_params.angleFromRow(row);
+  Angle angle_xy = this->_params.angleFromCol(col);
+  
+  point.x = depth * cosf(angle_z.val()) * cosf(angle_xy.val());
+  point.y = depth * cosf(angle_z.val()) * sinf(angle_xy.val());
+  point.z = depth * sinf(angle_z.val());
+  point.intensity =  intensity_image.at<uint16_t>(row, col);
+  point.reflectivity =  reflectance_image.at<uint16_t>(row, col);
+}
+
+void CloudProjection::unprojectPoint(const cv::Mat& depth_image, const cv::Mat& intensity_image, const cv::Mat& reflectance_image, const cv::Mat& noise_image, const int row, const int col, pcl::PointXYZIFN& point) const
+{
+  float depth = depth_image.at<float>(row, col);
+  Angle angle_z = this->_params.angleFromRow(row);
+  Angle angle_xy = this->_params.angleFromCol(col);
+  
+  point.x = depth * cosf(angle_z.val()) * cosf(angle_xy.val());
+  point.y = depth * cosf(angle_z.val()) * sinf(angle_xy.val());
+  point.z = depth * sinf(angle_z.val());
+  point.intensity =  intensity_image.at<uint16_t>(row, col);
+  point.reflectivity =  reflectance_image.at<uint16_t>(row, col);
+  point.noise =  noise_image.at<uint16_t>(row, col);
+}
+
 
 template <typename T>
 void CloudProjection::checkCloudAndStorage(const T& cloud) {
@@ -304,23 +363,23 @@ void CloudProjection::checkImageAndStorage(const cv::Mat& image) {
 
 void CloudProjection::fixDepthSystematicErrorIfNeeded() {
   if (_depth_image.rows < 1) {
-    fprintf(stderr, "[INFO]: depth image of wrong size, not correcting depth\n");
+    //fprintf(stderr, "[INFO]: depth image of wrong size, not correcting depth\n");
     return;
   }
   if (_intensity_image.rows < 1) {
-    fprintf(stderr, "[INFO]: intensity image of wrong size, not correcting depth\n");
+    //fprintf(stderr, "[INFO]: intensity image of wrong size, not correcting depth\n");
     return;
   }
   if (_reflectance_image.rows < 1) {
-    fprintf(stderr, "[INFO]: reflectance image of wrong size, not correcting depth\n");
+    //fprintf(stderr, "[INFO]: reflectance image of wrong size, not correcting depth\n");
     return;
   }
   if (_noise_image.rows < 1) {
-    fprintf(stderr, "[INFO]: noise image of wrong size, not correcting depth\n");
+    //fprintf(stderr, "[INFO]: noise image of wrong size, not correcting depth\n");
     return;
   }  
   if (_corrections.size() != static_cast<size_t>(_depth_image.rows)) {
-    fprintf(stderr, "[INFO]: Not correcting depth data.\n");
+    //fprintf(stderr, "[INFO]: Not correcting depth data.\n");
     return;
   }
   for (int r = 0; r < _depth_image.rows; ++r) {
