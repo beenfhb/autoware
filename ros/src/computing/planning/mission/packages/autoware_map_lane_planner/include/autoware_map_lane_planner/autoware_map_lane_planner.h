@@ -30,8 +30,6 @@
 #include <autoware_msgs/Lane.h>
 #include <autoware_msgs/LaneArray.h>
 
-#include <autoware_map_lane_planner/autoware_map_lane_planner_goal.h>
-
 //headers in Boost
 #include <boost/optional.hpp>
 
@@ -45,7 +43,6 @@ private:
     /* ROS related members */
     void goalPoseCallback(const geometry_msgs::PoseStampedConstPtr msg);
     void currentPoseCallback(const geometry_msgs::PoseStampedConstPtr msg);
-    void laneWaypointsArrayCallback(const autoware_msgs::LaneArrayConstPtr msg);
     ros::Subscriber goal_pose_sub_;
     ros::Subscriber current_pose_sub_;
     ros::Subscriber lane_lane_waypoints_array_sub_;
@@ -56,13 +53,14 @@ private:
     std::string goal_pose_topic_;
     /* values used in Autoware Map Lane Planner */
     geometry_msgs::PoseStamped current_pose_;
-    AutowareMapLanePlannerGoal goal_;
+    boost::optional<geometry_msgs::PoseStamped> goal_pose_;
     /* parameters for Autoware Map Lane Planner*/
-    bool disable_map_planner_;
     double search_radius_;
     /* functions */
     bool findClosestWaypointCandidates(autoware_map_msgs::Waypoint waypoint);
     boost::optional<autoware_map_msgs::Waypoint> findClosestWaypoint();
+    bool findGoalWaypointCandidates(autoware_map_msgs::Waypoint waypoint);
+    boost::optional<autoware_map_msgs::Waypoint> findGoalWaypoint();
     double getDiffAngle(double from,double to);
     void getRPY(geometry_msgs::Quaternion q, double &roll, double &pitch, double &yaw);
     void plan(geometry_msgs::PoseStamped goal);

@@ -23,7 +23,6 @@ AutowareMapLanePlanner::AutowareMapLanePlanner(ros::NodeHandle nh,ros::NodeHandl
     nh_ = nh;
     pnh_ = pnh;
     pnh_.param<double>("search_radius", search_radius_, 10.0);
-    pnh_.param<bool>("disable_map_planner",disable_map_planner_,false);
     pnh_.param<std::string>("goal_pose_topic",goal_pose_topic_,"/move_base_simple/goal");
     closest_waypoint_pub_ = nh_.advertise<std_msgs::Int32>("/closest_waypoint",10);
     base_waypoints_pub_ = nh_.advertise<autoware_msgs::Lane>("/base_waypoints",10);
@@ -37,22 +36,11 @@ AutowareMapLanePlanner::~AutowareMapLanePlanner()
 
 void AutowareMapLanePlanner::goalPoseCallback(const geometry_msgs::PoseStampedConstPtr msg)
 {
-    goal_.setCommand(*msg);
-    return;
-}
-
-void AutowareMapLanePlanner::laneWaypointsArrayCallback(const autoware_msgs::LaneArrayConstPtr msg)
-{
-    goal_.setCommand(*msg);
+    goal_pose_ = *msg;
     return;
 }
 
 void AutowareMapLanePlanner::plan(geometry_msgs::PoseStamped goal)
-{
-
-}
-
-void AutowareMapLanePlanner::plan(autoware_msgs::LaneArray goal)
 {
 
 }
@@ -75,38 +63,61 @@ void AutowareMapLanePlanner::currentPoseCallback(const geometry_msgs::PoseStampe
         closest_waypoint_pub_.publish(data);
         return;
     }
-    int command_type = goal_.getCommandType();
-    if(command_type == AutowareMapLanePlannerGoal::COMMAND_TYPE::WAYPOINT)
+}
+
+boost::optional<autoware_map_msgs::Waypoint> AutowareMapLanePlanner::findGoalWaypoint()
+{
+    // if there are no goal waypoint, return boost::none
+    if(!goal_pose_)
     {
-        geometry_msgs::PoseStamped cmd;
-        if(goal_.getCommand(cmd))
-        {
-            plan(cmd);
-        }
-        else
-        {
-            ROS_ERROR_STREAM("failed to get command.");
-            return;   
-        }
+        return boost::none;
     }
-    else if(command_type == AutowareMapLanePlannerGoal::COMMAND_TYPE::POSE)
+    std::function<bool(autoware_map_msgs::Waypoint)> filter_func_ 
+        = std::bind(&AutowareMapLanePlanner::findClosestWaypointCandidates,this,std::placeholders::_1);
+    std::vector<autoware_map_msgs::Waypoint> candidates = autoware_map_.findByFilter(filter_func_);
+    std::vector<double> dists;
+    // if there are no points in search_radius, return booost::none;
+    if(candidates.size() == 0)
     {
-        autoware_msgs::LaneArray cmd;
-        if(goal_.getCommand(cmd))
-        {
-            plan(cmd);
-        }
-        else
-        {
-            ROS_ERROR_STREAM("failed to get command.");
-            return;   
-        }
+        ROS_ERROR_STREAM("Closest waypoint does not found.");
+        return boost::none;
     }
-    else
+    // if there are some points in search_radius return closest waypoint
+    for(auto waypoint_itr = candidates.begin(); waypoint_itr != candidates.end(); waypoint_itr++)
     {
-        ROS_ERROR_STREAM("failed to get command.");
-        return;
+        autoware_map::Key<autoware_map_msgs::Point> point_key(waypoint_itr->point_id);
+        autoware_map::Key<autoware_map_msgs::WaypointRelation> waypoint_relation_key(waypoint_itr->waypoint_id);
+        autoware_map_msgs::Point point = autoware_map_.findByKey(point_key);
+        autoware_map_msgs::WaypointRelation relation = autoware_map_.findByKey(waypoint_relation_key);
+        double dist = std::sqrt(std::pow(point.x-goal_pose_->pose.position.x,2)
+            +std::pow(point.y-goal_pose_->pose.position.y,2)+std::pow(point.z-goal_pose_->pose.position.z,2));
+        dists.push_back(dist);
     }
+    std::vector<double>::iterator min_itr = std::min_element(dists.begin(), dists.end());
+    return candidates[std::distance(dists.begin(), min_itr)];
+}
+
+bool AutowareMapLanePlanner::findGoalWaypointCandidates(autoware_map_msgs::Waypoint waypoint)
+{
+    // if there are no goal waypoint, return false
+    if(!goal_pose_)
+    {
+        return false;
+    }
+    autoware_map::Key<autoware_map_msgs::Point> point_key(waypoint.point_id);
+    autoware_map::Key<autoware_map_msgs::WaypointRelation> waypoint_relation_key(waypoint.waypoint_id);
+    autoware_map_msgs::Point point = autoware_map_.findByKey(point_key);
+    autoware_map_msgs::WaypointRelation relation = autoware_map_.findByKey(waypoint_relation_key);
+    double dist = std::sqrt(std::pow(point.x-goal_pose_->pose.position.x,2)
+        +std::pow(point.y-goal_pose_->pose.position.y,2)+std::pow(point.z-goal_pose_->pose.position.z,2));
+    double r,p,y;
+    getRPY(goal_pose_->pose.orientation,r,p,y);
+    double diff_angle = getDiffAngle(y,relation.yaw);
+    if(dist < search_radius_ && std::fabs(diff_angle) < (M_PI/2))
+    {
+        return true;
+    }
+    return false;
 }
 
 boost::optional<autoware_map_msgs::Waypoint> AutowareMapLanePlanner::findClosestWaypoint()
