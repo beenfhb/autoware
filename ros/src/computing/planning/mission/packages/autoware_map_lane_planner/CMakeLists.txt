@@ -22,7 +22,10 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(autoware_map_lane_planner_node src/autoware_map_lane_planner_node.cpp src/autoware_map_lane_planner.cpp)
+add_executable(autoware_map_lane_planner_node 
+  src/autoware_map_lane_planner_node.cpp 
+  src/autoware_map_lane_planner.cpp
+  src/lane_network.cpp)
 target_link_libraries(autoware_map_lane_planner_node ${catkin_LIBRARIES})
 add_dependencies(autoware_map_lane_planner_node ${catkin_EXPORTED_TARGETS})
 

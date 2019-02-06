@@ -27,7 +27,6 @@
 //headers in Autoware
 #include <autoware_map/autoware_map.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <autoware_msgs/Lane.h>
 #include <autoware_msgs/LaneArray.h>
 
 //headers in Boost
@@ -54,6 +53,7 @@ private:
     /* values used in Autoware Map Lane Planner */
     geometry_msgs::PoseStamped current_pose_;
     boost::optional<geometry_msgs::PoseStamped> goal_pose_;
+    boost::optional<autoware_map_msgs::Waypoint> goal_waypoint_;
     /* parameters for Autoware Map Lane Planner*/
     double search_radius_;
     /* functions */
