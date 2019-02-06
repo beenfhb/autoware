@@ -110,6 +110,7 @@ add_library(
 		src/utilities.cpp
 		src/SequenceSLAM.cpp
 		src/Trajectory.cpp
+		src/Tracklet.cpp
 		src/ImagePreprocessor.cpp
 		src/datasets/GenericDataset.cpp
 		src/datasets/OxfordDataset.cpp

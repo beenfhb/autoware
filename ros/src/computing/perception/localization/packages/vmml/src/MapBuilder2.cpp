@@ -7,12 +7,16 @@
 
 #include <exception>
 #include <thread>
+#include <list>
+
 #include "Matcher.h"
 #include "MapBuilder2.h"
 #include "Optimizer.h"
 #include "ImageDatabase.h"
 #include "Viewer.h"
+#include "Tracklet.h"
 #include "utilities.h"
+
 
 
 
@@ -340,33 +344,69 @@ MapBuilder2::visualOdometry
 	assert (0<=startPos and startPos<sourceDs->size()-1);
 	assert (0<stopPos and stopPos<sourceDs->size());
 
+	cv::Mat mask = sourceDs->getMask();
+
+	VisualOdometryViewer voViewer;
+
+	list<Tracklet> currentTrackedPoints;
+	list<BaseFrame::Ptr> currentActiveFrame;
+	list<BaseFrame::Ptr> wallFrame;
+
 	auto anchor = sourceDs->getAsFrame(startPos);
-	anchor->computeFeatures(cMap->getFeatureDetector());
+	anchor->computeFeatures(cMap->getFeatureDetector(), mask);
 	voResult.clear();
 	Pose
 		anchorPose = Pose::Identity(),
 		curFramePose;
 	voResult.push_back( PoseStamped(anchorPose, sourceDs->get(startPos)->getTimestamp()) );
+	voViewer.update(anchor);
+	currentActiveFrame.push_back(anchor);
 
 	for (dataItemId d=startPos+1; d<=stopPos; ++d) {
 		auto curFrame = sourceDs->getAsFrame(d);
-		curFrame->computeFeatures(cMap->getFeatureDetector());
+		curFrame->setPose(Pose::Identity());
+		curFrame->computeFeatures(cMap->getFeatureDetector(), mask);
 
 		vector<Matcher::KpPair> validKpPair;
 		TTransform T12;
 		Matcher::matchAny(*anchor, *curFrame, validKpPair, cMap->getDescriptorMatcher(), T12);
 
-/*
-		double S = ( anchor->pose().inverse()*curFrame->pose() ).translation().norm();
-		T12.translation() = S*T12.translation();
-*/
-
 		curFramePose = anchorPose * T12;
 		PoseStamped curFrp(curFramePose, sourceDs->get(d)->getTimestamp());
+
+		voViewer.update(curFrame, anchor, validKpPair);
 
 		voResult.push_back(curFrp);
 		anchor = curFrame;
 		anchorPose = curFramePose;
 		cerr << d << endl;
+
 	}
+}
+
+
+VisualOdometryViewer::VisualOdometryViewer()
+{
+	cv::namedWindow("VO");
+}
+
+
+VisualOdometryViewer::~VisualOdometryViewer()
+{
+	cv::destroyWindow("VO");
+}
+
+
+void
+VisualOdometryViewer::update
+	(BaseFrame::ConstPtr currentFrame, BaseFrame::ConstPtr prevFrame,
+	const std::vector<Matcher::KpPair> &matchPairs)
+{
+	if (prevFrame==nullptr)
+		cv::imshow("VO", currentFrame->getImage());
+	else {
+		cv::Mat matchingImg = Matcher::drawMatches(*prevFrame, *currentFrame, matchPairs, Matcher::DrawOpticalFlow);
+		cv::imshow("VO", matchingImg);
+	}
+	cv::waitKey(1);
 }

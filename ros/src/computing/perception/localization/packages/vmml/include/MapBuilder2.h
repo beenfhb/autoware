@@ -148,4 +148,22 @@ private:
 
 };
 
+
+class VisualOdometryViewer
+{
+public:
+	VisualOdometryViewer();
+
+	virtual ~VisualOdometryViewer();
+
+	void update(
+		const BaseFrame::ConstPtr currentFrame, BaseFrame::ConstPtr prevFrame=nullptr,
+		const std::vector<Matcher::KpPair> &matchPairs=
+			std::vector<Matcher::KpPair>()
+	);
+
+protected:
+};
+
+
 #endif /* MAPBUILDER2_H_ */
