@@ -1,3 +1,21 @@
+/*
+ * Copyright 2019 Autoware Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ * ver 1.0 Masaya Kataoka
+ */
+
 #include <autoware_map_lane_planner/autoware_map_lane_planner.h>
 
 AutowareMapLanePlanner::AutowareMapLanePlanner(ros::NodeHandle nh,ros::NodeHandle pnh)
@@ -5,13 +23,90 @@ AutowareMapLanePlanner::AutowareMapLanePlanner(ros::NodeHandle nh,ros::NodeHandl
     nh_ = nh;
     pnh_ = pnh;
     pnh_.param<double>("search_radius", search_radius_, 10.0);
+    pnh_.param<bool>("disable_map_planner",disable_map_planner_,false);
+    pnh_.param<std::string>("goal_pose_topic",goal_pose_topic_,"/move_base_simple/goal");
     closest_waypoint_pub_ = nh_.advertise<std_msgs::Int32>("/closest_waypoint",10);
+    base_waypoints_pub_ = nh_.advertise<autoware_msgs::Lane>("/base_waypoints",10);
     current_pose_sub_ = nh_.subscribe("/current_pose",10,&AutowareMapLanePlanner::currentPoseCallback,this);
 }
 
 AutowareMapLanePlanner::~AutowareMapLanePlanner()
 {
     
+}
+
+void AutowareMapLanePlanner::goalPoseCallback(const geometry_msgs::PoseStampedConstPtr msg)
+{
+    goal_.setCommand(*msg);
+    return;
+}
+
+void AutowareMapLanePlanner::laneWaypointsArrayCallback(const autoware_msgs::LaneArrayConstPtr msg)
+{
+    goal_.setCommand(*msg);
+    return;
+}
+
+void AutowareMapLanePlanner::plan(geometry_msgs::PoseStamped goal)
+{
+
+}
+
+void AutowareMapLanePlanner::plan(autoware_msgs::LaneArray goal)
+{
+
+}
+
+void AutowareMapLanePlanner::currentPoseCallback(const geometry_msgs::PoseStampedConstPtr msg)
+{
+    current_pose_ = *msg;
+    boost::optional<autoware_map_msgs::Waypoint> closest_waypoint = findClosestWaypoint();
+    if(closest_waypoint)
+    {
+        std_msgs::Int32 data;
+        data.data = closest_waypoint->waypoint_id;
+        closest_waypoint_pub_.publish(data);
+    }
+    // failed to find closest waypoint
+    else
+    {
+        std_msgs::Int32 data;
+        data.data = -1;
+        closest_waypoint_pub_.publish(data);
+        return;
+    }
+    int command_type = goal_.getCommandType();
+    if(command_type == AutowareMapLanePlannerGoal::COMMAND_TYPE::WAYPOINT)
+    {
+        geometry_msgs::PoseStamped cmd;
+        if(goal_.getCommand(cmd))
+        {
+            plan(cmd);
+        }
+        else
+        {
+            ROS_ERROR_STREAM("failed to get command.");
+            return;   
+        }
+    }
+    else if(command_type == AutowareMapLanePlannerGoal::COMMAND_TYPE::POSE)
+    {
+        autoware_msgs::LaneArray cmd;
+        if(goal_.getCommand(cmd))
+        {
+            plan(cmd);
+        }
+        else
+        {
+            ROS_ERROR_STREAM("failed to get command.");
+            return;   
+        }
+    }
+    else
+    {
+        ROS_ERROR_STREAM("failed to get command.");
+        return;
+    }
 }
 
 boost::optional<autoware_map_msgs::Waypoint> AutowareMapLanePlanner::findClosestWaypoint()
@@ -39,12 +134,6 @@ boost::optional<autoware_map_msgs::Waypoint> AutowareMapLanePlanner::findClosest
     }
     std::vector<double>::iterator min_itr = std::min_element(dists.begin(), dists.end());
     return candidates[std::distance(dists.begin(), min_itr)];
-}
-
-void AutowareMapLanePlanner::currentPoseCallback(const geometry_msgs::PoseStampedConstPtr msg)
-{
-    current_pose_ = *msg;
-    boost::optional<autoware_map_msgs::Waypoint> closest_waypoint = findClosestWaypoint();
 }
 
 bool AutowareMapLanePlanner::findClosestWaypointCandidates(autoware_map_msgs::Waypoint waypoint)
