@@ -1,7 +1,9 @@
+from logging import getLogger
+logger = getLogger(__name__)
+
 from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 
-from ..core  import console
 from ..core  import myutils
 from .guimgr import AwQtGuiManager
 from .mirror import AwLaunchTreeMirror
@@ -156,13 +158,13 @@ class AwQtGuiClient(object):
         #self.__treeview.expandToDepth(0)
 
     def node_created(self, lpath):
-        print "node_created: " + lpath
+        logger.debug("node_created: " + lpath)
         lnode = self.__mirror.create(lpath)
         for panel in self.__panels: panel.node_ui_created(lnode)
 
         lpath = myutils.parentpath(lpath)
         while lpath:
-            print "node_updated: " + lpath
+            logger.debug("node_updated: " + lpath)
             self.__mirror.clear(lpath)
             lnode = self.__mirror.create(lpath)
             for panel in self.__panels: panel.node_ui_updated(lnode)
@@ -170,14 +172,14 @@ class AwQtGuiClient(object):
 
     def node_updated(self, lpath):
         while lpath:
-            print "node_updated: " + lpath
+            logger.debug("node_updated: " + lpath)
             self.__mirror.clear(lpath)
             lnode = self.__mirror.create(lpath)
             for panel in self.__panels: panel.node_ui_updated(lnode)
             lpath = myutils.parentpath(lpath)
 
     def status_updated(self, lpath, state):
-        print "status_updated:" + lpath + " " + str(state)
+        logger.debug("status_updated:" + lpath + " " + str(state))
         self.__treeview.status_ui_updated(lpath, state)
         self.__quickstart.status_ui_updated(lpath, state)
 

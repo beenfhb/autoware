@@ -1,7 +1,6 @@
 from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 
-from ..core import console
 from ..core import myutils
 
 
@@ -91,14 +90,7 @@ class AwMainWindow(AwAbstructWindow):
             self.client.save_profile(filename)
     
     def export_profile(self):
-        filename = "aaa"
-        """
         import os
-        filename, filetype = QtWidgets.QFileDialog.getSaveFileName(self, "Export Profile", myutils.profile(), "Launch Profile (*.launch)")
-        filename, filetype = os.path.splitext(filename)
-        if filename:
-            if filetype != ".launch":
-                filename = filename + filetype
-            self.client.save_profile(filename)
-        """
-        self.client.export_profile(myutils.package("launch/test"))
+        dirname = QtWidgets.QFileDialog.getExistingDirectory(self, "Export Profile", myutils.package("launch"))
+        if dirname:
+            self.client.export_profile(dirname)

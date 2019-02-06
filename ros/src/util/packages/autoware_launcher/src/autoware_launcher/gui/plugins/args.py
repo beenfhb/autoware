@@ -90,7 +90,6 @@ class AwBoolEdit(widgets.AwAbstructFrame):
         self.set_title(self.opts["title"])
 
     def edited(self, state):
-        print "edited" + str(state)
         cfgkey = "args." + self.opts["defs"]["name"]
         if state == QtCore.Qt.Checked:
             self.node.update({"config": {cfgkey: "True"}})

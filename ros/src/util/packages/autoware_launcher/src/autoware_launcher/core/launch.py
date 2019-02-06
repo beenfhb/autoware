@@ -1,8 +1,10 @@
+from logging import getLogger
+logger = getLogger(__name__)
+
 import os
 import yaml
 
 from . import basetree
-from . import console
 from . import myutils
 
 
@@ -137,7 +139,6 @@ class AwLaunchTree(AwBaseTree):
         self.addchild(launch)
     
     def export(self, rootpath):
-        print rootpath
         for node in self.listnode():
             xtext = node.generate_launch()
             xpath = node.nodepath().replace("/", "-") + ".xml"
@@ -145,7 +146,7 @@ class AwLaunchTree(AwBaseTree):
             with open(xpath, mode="w") as fp: fp.write(xtext)
 
     def create(self, lpath, ppath):
-        print "Tree Create: " + lpath + ", " + ppath
+        logger.info("Tree Create: " + lpath + ", " + ppath)
         parent = self.find(os.path.dirname(lpath))
         if not parent:
             return "parent is not found"
@@ -274,11 +275,11 @@ class AwLaunchNode(AwBaseNode):
 
     # ToDo: remove function
     def bind_listener(self, listener):
-        console.warning("bind_listener: " + listener.__class__.__name__)
+        logger.warning("bind_listener: " + listener.__class__.__name__)
 
     # ToDo: remove function
     def unbind_listener(self, listener):
-        console.warning("unbind_listener: " + listener.__class__.__name__)
+        logger.warning("unbind_listener: " + listener.__class__.__name__)
 
 
 

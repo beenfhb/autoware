@@ -2,7 +2,6 @@ from python_qt_binding import QtCore
 from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
-from ..core import console
 from ..core import myutils
 from ..core import AwLaunchClientIF
 
@@ -25,11 +24,9 @@ class AwQuickStartPanel(QtWidgets.QWidget):
         self.guimgr.panel_setup(self, self.awlogo)
 
     def node_ui_created(self, lnode):
-        print "Quick Created: " + lnode.path()
         if lnode.path() == "root": self.setup_widget(lnode)
 
     def node_ui_updated(self, lnode):
-        print "Quick Updated: " + lnode.path()
         if lnode.path() == "root": self.setup_widget(lnode)
 
     def status_ui_updated(self, lpath, state):

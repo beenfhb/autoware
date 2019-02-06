@@ -1,6 +1,4 @@
-from ..core import console
 from ..core import myutils
-
 
 
 class AwLaunchTreeMirror(object):
@@ -103,8 +101,6 @@ class AwLaunchNodeMirror(object):
     def generate_launch(self):
         return self.__find().generate_launch()
 
-    def send_term_completed(self):
-        print "send_term_completed:" + self.__path
 
 
 

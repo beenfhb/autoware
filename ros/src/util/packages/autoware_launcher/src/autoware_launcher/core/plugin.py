@@ -1,10 +1,12 @@
+from logging import getLogger
+logger = getLogger(__name__)
+
 import collections
 import os
 import xml.etree.ElementTree as xmltree
 import yaml
 
 from . import basetree
-from . import console
 from . import myutils
 
 
@@ -22,7 +24,7 @@ class AwPluginTree(basetree.AwBaseTree):
                 if fkey not in self.nodes:
                     self.nodes[fkey] = AwPluginNode(self, fkey)
             else:
-                console.warning("plugin ignored: unknown extension ({})".format(filepath))
+                logger.warning("plugin ignored: unknown extension ({})".format(filepath))
 
         for plugin in self.nodes.values():
             plugin.load(myutils.plugins())
@@ -56,9 +58,6 @@ class AwPluginNode(basetree.AwBaseNode):
             "7.panel": self.__panel.todict(),
             "8.frame": self.__frame.todict()
         }
-
-    def error(self, text):
-        console.error("{}: {} ({})".format(self.__class__.__name__, text, self.__nodepath))
 
     def isnode(self):
         return not self.__isleaf
@@ -198,9 +197,9 @@ class AwPluginRuleElement(object):
                 if ptree.find(pdata):
                     plugins.append(pdata)
                 else:
-                    console.warning("plugin is not found: {} in {}".format(pdata, pnode.path()))
+                    logger.warning("plugin is not found: {} in {}".format(pdata, pnode.path()))
             else:
-                console.warning("unknown plugin rule: {} in {}".format(pdata, pnode.path()))
+                logger.warning("unknown plugin rule: {} in {}".format(pdata, pnode.path()))
         return plugins
 
 class AwPluginFrameElement(object):

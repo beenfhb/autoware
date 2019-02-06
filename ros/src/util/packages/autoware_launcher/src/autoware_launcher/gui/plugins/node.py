@@ -1,3 +1,6 @@
+from logging import getLogger
+logger = getLogger(__name__)
+
 from python_qt_binding import QtCore, QtWidgets
 from autoware_launcher.gui import widgets
 
@@ -134,7 +137,6 @@ class AwNodeCreateButton(QtWidgets.QPushButton):
             return
 
         error = self.node.addchild(self.newname(), items[0].text())
-        print error
         if error:
             self.ui_error.setText(error)
             return
@@ -222,10 +224,10 @@ class AwPluginRemoveWindow(QtWidgets.QMainWindow):
     def remove_launch_node(self):
         items = self.nodelist.selectedItems()
         if len(items) != 1:
-            print "node is not selected"
+            logger.error("node is not selected")
         else:
             error = self.node.remove_child(items[0].text())
             if error:
-                print error
+                logger.error(error)
             else:
                 self.close()

@@ -1,10 +1,12 @@
+from logging import getLogger
+logger = getLogger(__name__)
+
 import importlib
 import os
 
 from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 
-from ..core import console
 from ..core import myutils
 
 # ToDo: move package
@@ -20,7 +22,7 @@ class AwQtGuiManager(object):
         for filepath in os.listdir(myutils.package("src/autoware_launcher/gui/plugins")):
             fkey, fext = os.path.splitext(os.path.basename(filepath))
             if (fkey != "__init__") and (fext == ".py"):
-                console.info("load plugin module: " + fkey)
+                logger.info("load plugin module: " + fkey)
                 module = importlib.import_module("autoware_launcher.gui.plugins." + fkey)
                 for wkey, wcls in module.plugin_widgets().items():
                      self.__widgets[fkey + "." + wkey] = wcls
@@ -36,14 +38,14 @@ class AwQtGuiManager(object):
         return widget(self, node, view)
 
     def create_frame(self, mirror, guikey = None, guicls = None):
-        #print "Create Frame: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls)
+        #logger.debug("Create Frame: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls))
         if not guicls:
             guikey = guikey or mirror.plugin().frame()
             guicls = self.__widgets[guikey + "_frame"]
         return guicls(self, mirror)
 
     def create_panel(self, mirror, guikey = None, guicls = None):
-        #print "Create Panel: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls)
+        #logger.debug(reate Panel: {:<7} Key: {} Class: {}".format(mirror.nodename(), guikey, guicls))
         if not guicls:
             guikey = guikey or mirror.plugin().panel()
             guicls = self.__widgets[guikey + "_panel"]

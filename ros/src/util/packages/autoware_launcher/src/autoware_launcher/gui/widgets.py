@@ -1,7 +1,6 @@
 from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 
-from ..core import console
 from ..core import myutils
 
 

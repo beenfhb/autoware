@@ -1,10 +1,12 @@
+from logging import getLogger
+logger = getLogger(__name__)
+
 import requests
 import yaml
 from python_qt_binding import QtCore
 from python_qt_binding import QtNetwork
 from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
-from autoware_launcher.core import console
 from autoware_launcher.core import myutils
 
 
@@ -55,14 +57,14 @@ class AwLgsvlSimulatorWidget(QtWidgets.QWidget):
             param["vehicles"][0]["address"] = self.client_addr.text()
             param["vehicles"][0]["port"]    = self.client_port.text()
             responce = requests.post(server_address + "launch", json=param)
-            print responce.status_code
-            print responce.json()
+            logger.debug(responce.status_code)
+            logger.debug(responce.json())
             self.instance = responce.json()["instance_id"]
         else:
             self.process.terminate()
             responce = requests.post(server_address + "terminate", json={"instance_id": self.instance})
-            print responce.status_code
-            print responce.json()
+            logger.debug(responce.status_code)
+            logger.debug(responce.json())
 
 
 

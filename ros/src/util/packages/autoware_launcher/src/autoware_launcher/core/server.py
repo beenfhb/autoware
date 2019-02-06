@@ -1,11 +1,11 @@
-from .       import console
+from logging import getLogger
+logger = getLogger(__name__)
+
+import yaml
 from .       import myutils
 from .plugin import AwPluginTree
 from .launch import AwLaunchTree
 from .launch import AwLaunchNode
-
-import yaml
-
 
 
 class AwLaunchServerIF(object):
@@ -25,11 +25,11 @@ class AwLaunchServerIF(object):
     #def runner_stderred
 
 class AwLaunchClientIF(object):
-    def profile_updated(self):               console.error("Not implemented: profile_updated in " + self.__class__.__name__)
-    def node_updated   (self, lpath):        console.error("Not implemented: node_updated in " + self.__class__.__name__)
-    def node_created   (self, lpath):        console.error("Not implemented: node_created in " + self.__class__.__name__) 
-    def node_removed   (self, lpath):        console.error("Not implemented: node_removed in " + self.__class__.__name__)
-    def status_updated (self, lpath, state): console.error("Not implemented: status_updated in " + self.__class__.__name__)
+    def profile_updated(self):               logger.error("Not implemented: profile_updated in " + self.__class__.__name__)
+    def node_updated   (self, lpath):        logger.error("Not implemented: node_updated in " + self.__class__.__name__)
+    def node_created   (self, lpath):        logger.error("Not implemented: node_created in " + self.__class__.__name__) 
+    def node_removed   (self, lpath):        logger.error("Not implemented: node_removed in " + self.__class__.__name__)
+    def status_updated (self, lpath, state): logger.error("Not implemented: status_updated in " + self.__class__.__name__)
 
 
 class AwLaunchServer(AwLaunchServerIF):
@@ -47,31 +47,31 @@ class AwLaunchServer(AwLaunchServerIF):
         self.__clients.append(client)
 
     def make_profile(self, ppath):
-        console.info("make_profile: " + ppath)
+        logger.info("make_profile: " + ppath)
         self.__profile = AwLaunchTree(self, self.__plugins)
         self.__profile.make(ppath, self.__plugins)
         for client in self.__clients: client.profile_updated()
 
     def load_profile(self, fpath):
-        console.info("load_profile: " + fpath)
+        logger.info("load_profile: " + fpath)
         self.__profile = AwLaunchTree(self, self.__plugins)
         self.__profile.load(myutils.profile(fpath), self.__plugins)
         for client in self.__clients: client.profile_updated()
 
     def save_profile(self, fpath):
-        console.info("save_profile: " + fpath)
+        logger.info("save_profile: " + fpath)
         self.__profile.save(myutils.profile(fpath))
 
     def export_profile(self, fpath):
-        console.info("export_profile: " + fpath)
+        logger.info("export_profile: " + fpath)
         self.__profile.export(fpath)
 
     def list_node(self):
-        console.info("list_node: ")
+        logger.info("list_node: ")
         return map(lambda node: node.nodepath(), self.__profile.listnode(False))
 
     def find_node(self, lpath):
-        console.info("find_node: " + lpath)
+        logger.info("find_node: " + lpath)
         return self.__profile.find(lpath)
 
     def update_node(self, lpath, ldata):
@@ -90,7 +90,7 @@ class AwLaunchServer(AwLaunchServerIF):
         pass
 
     def launch_node(self, lpath, xmode): # ToDo: update ancestors status
-        console.info("launch_node: " + lpath + " " + str(xmode))
+        logger.info("launch_node: " + lpath + " " + str(xmode))
         difflist = []
         execlist = []
         nodelist = self.__profile.find(lpath).listnode(True)
@@ -99,8 +99,8 @@ class AwLaunchServer(AwLaunchServerIF):
             isdiff, isexec = node.launch(xmode)
             if isdiff: difflist.append(node.nodepath())
             if isexec: execlist.append(node.nodepath())
-        console.warning("Update:" + str(difflist))
-        console.warning("Launch:" + str(execlist))
+        logger.info("Update:" + str(difflist))
+        logger.info("Launch:" + str(execlist))
         for lpath in difflist:
             state = self.__profile.find(lpath).status
             for client in self.__clients: client.status_updated(lpath, state)
@@ -121,7 +121,7 @@ class AwLaunchServer(AwLaunchServerIF):
         except:
             return yaml.safe_dump({"error": "failed to load json"})
 
-        print request
+        logger.info(request)
         if request["command"] == "launch":
             self.launch_node(request["path"], True)
             return yaml.safe_dump({"error": None})

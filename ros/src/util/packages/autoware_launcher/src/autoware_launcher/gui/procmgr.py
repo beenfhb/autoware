@@ -2,7 +2,6 @@ from python_qt_binding import QtCore
 from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
-from ..core import console
 from ..core import myutils
 
 
@@ -42,7 +41,6 @@ class AwProcessPanel(QtWidgets.QStackedWidget):
         xpath = myutils.package() + "/runner/" + lpath.replace("/", "-") + ".xml"
         with open(xpath, mode="w") as fp:
             fp.write(xtext)
-        print "roslaunch {}".format(xpath)
         self.__items[lpath].proc.start("roslaunch {}".format(xpath))
 
     def terminate(self, lpath):
