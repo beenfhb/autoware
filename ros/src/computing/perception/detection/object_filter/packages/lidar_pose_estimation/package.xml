@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package format="2">
+
+  <name>lidar_pose_estimation</name>
+  <version>0.0.0</version>
+  <description>The lidar_pose_estimation package</description>
+
+  <maintainer email="isamu.takagi@tier4.jp">Isamu Takagi</maintainer>
+  <license>Apache 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>autoware_build_flags</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>tf2</build_depend>
+  <build_depend>tf2_geometry_msgs</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>autoware_msgs</build_depend>
+  <exec_depend>autoware_build_flags</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>tf2</exec_depend>
+  <exec_depend>tf2_geometry_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>autoware_msgs</exec_depend>
+
+  <export></export>
+
+</package>

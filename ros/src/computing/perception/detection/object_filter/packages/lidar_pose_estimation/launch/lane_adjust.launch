@@ -1,0 +1,8 @@
+<launch>
+    <arg name="object_topic_input"  default="/detection/lidar_detector/objects"/>
+    <arg name="object_topic_output" default="/detection/object_filter/lane_adjust/objects"/>
+    <node pkg="lidar_pose_estimation" type="lane_adjust" name="lidar_object_filter_lane_adjust" output="screen" >
+        <param name="object_topic_input"  value="$(arg object_topic_input)"/>
+        <param name="object_topic_output" value="$(arg object_topic_output)"/>
+    </node>
+</launch>
