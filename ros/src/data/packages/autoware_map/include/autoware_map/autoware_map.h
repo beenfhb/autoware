@@ -179,6 +179,17 @@ public:
   {
   }
 
+  void getAllKeys(std::vector<Key<T> >& keys)
+  {
+    keys = std::vector<Key<T> >(map_.size());
+    int i = 0;
+    for(auto it = map_.begin(); it != map_.end(); ++it)
+    {
+      keys[i] = it->first;
+      i++;
+    }
+  }
+
   void registerSubscriber(ros::NodeHandle& nh, const std::string& topic_name)
   {
     if(topic_name != std::string(sub_.getTopic()) )
@@ -256,6 +267,23 @@ public:
 
     template<typename T>
     T findById(const int id) const;
+
+    void getAllKeys(std::vector<autoware_map::Key<Lane> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<LaneAttrRelation> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<LaneRelation> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<LaneSignalLightRelation> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<LaneChangeRelation> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<OppositeLaneRelation> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<Point> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<Area> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<Route> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<Signal> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<SignalLight> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<Wayarea> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<Waypoint> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<WaypointLaneRelation> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<WaypointRelation> > &keys);
+    void getAllKeys(std::vector<autoware_map::Key<WaypointSignalRelation> > &keys);
 
     Lane findByKey(const autoware_map::Key<Lane>& key) const;
     LaneAttrRelation findByKey(const autoware_map::Key<LaneAttrRelation>& key) const;

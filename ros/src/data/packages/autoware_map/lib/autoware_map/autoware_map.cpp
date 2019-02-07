@@ -615,6 +615,23 @@ std::vector<WaypointSignalRelation> AutowareMap::findByFilter(const Filter<Waypo
     return waypoint_signal_relation_.findByFilter(filter);
 }
 
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<Lane> > &keys){lane_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<LaneAttrRelation> > &keys){lane_attr_relation_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<LaneRelation> > &keys){lane_relation_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<LaneSignalLightRelation> > &keys){lane_signal_light_relation_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<LaneChangeRelation> > &keys){lane_change_relation_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<OppositeLaneRelation> > &keys){opposite_lane_relation_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<Point> > &keys){point_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<Area> > &keys){area_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<Route> > &keys){route_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<Signal> > &keys){signal_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<SignalLight> > &keys){signal_light_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<Wayarea> > &keys){wayarea_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<Waypoint> > &keys){waypoint_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<WaypointLaneRelation> > &keys){waypoint_lane_relation_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<WaypointRelation> > &keys){waypoint_relation_.getAllKeys(keys);}
+void AutowareMap::getAllKeys(std::vector<autoware_map::Key<WaypointSignalRelation> > &keys){waypoint_signal_relation_.getAllKeys(keys);}
+
 void AutowareMap::clear()
 {
     lane_.clear();

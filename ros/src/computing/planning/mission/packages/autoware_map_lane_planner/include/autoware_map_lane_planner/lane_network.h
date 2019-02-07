@@ -31,9 +31,12 @@
 //headers in Autoware
 #include <autoware_map/autoware_map.h>
 
+//Lane Network Graph
 typedef boost::adjacency_list<boost::listS, boost::vecS, boost::directedS,
     boost::no_property, boost::property<boost::edge_weight_t, int> > Graph;
+//Edge : lane_id -> lane_id
 typedef std::pair<int, int> Edge;
+//Vertex : lane_id
 typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
 
 class LaneNetwork
@@ -41,6 +44,7 @@ class LaneNetwork
 public:
     LaneNetwork(ros::NodeHandle nh,ros::NodeHandle pnh);
     ~LaneNetwork();
+    void updateLane(autoware_map_msgs::Lane lane);
     void updateLaneRelation(autoware_map_msgs::LaneRelation relations);
     void updateLaneChangeRelation(autoware_map_msgs::LaneChangeRelation relations);
     void generateLaneNetwork();
@@ -48,8 +52,13 @@ private:
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
     autoware_map::AutowareMap map_;
+    boost::optional<autoware_map_msgs::Lane> lane_;
     boost::optional<autoware_map_msgs::LaneRelation> lane_relation_;
     boost::optional<autoware_map_msgs::LaneChangeRelation> lane_change_relation_;
+    //Edge : lane_id -> lane_id
+    std::vector<Edge> edges_;
+    //distance (number of waypoints in the each lane)
+    std::vector<int> distance_;
 };
 
 #endif  //LANE_NETWORK_H_INCLUDED
