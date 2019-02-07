@@ -23,8 +23,9 @@
 class Viewer;
 
 const double
-	translationThrs = 1.0,	// meter
-	rotationThrs = 0.0175;	// == 1 degrees
+	translationThrs = 0.75,			// meter
+	rotationThrs = 0.0175,			// == 1 degrees
+	translationThrsInit = 0.5; 		// meter
 
 
 

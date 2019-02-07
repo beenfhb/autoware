@@ -38,108 +38,6 @@
 extern const TTransform defaultLidarToCameraTransform;
 
 
-/*
-struct PoseTimestamp : public Pose
-{
-	PoseTimestamp():
-		Pose()
-	{ timestamp = ros::Time(0); }
-
-	PoseTimestamp(const Pose &p, const ros::Time &t=ros::Time(0))
-	{
-		m_matrix = p.matrix();
-		timestamp = t;
-	}
-
-	PoseTimestamp (const Eigen::Vector3d &p, const Quaterniond &q, const ros::Time &t=ros::Time(0))
-	{
-		m_matrix = Pose::from_Pos_Quat(p, q).matrix();
-		timestamp = t;
-	}
-
-	PoseTimestamp operator* (const Pose &t);
-
-	double timeSecond () const
-	{ return timestamp.toSec(); }
-
-	static PoseTimestamp interpolate(
-		const PoseTimestamp &p1,
-		const PoseTimestamp &p2,
-		const ros::Time &t);
-
-	ros::Time timestamp;
-
-	static
-	Quaterniond
-	extrapolate(const PoseTimestamp &p1, const PoseTimestamp &p2, const decltype(PoseTimestamp::timestamp) &tx);
-
-	template<class Archive>
-	inline void save(Archive &ar, const unsigned int v) const
-	{
-		// Eigen matrix
-		ar << boost::serialization::base_object<Pose>(*this);
-
-		// Ros timestamp
-		ptime tx = timestamp.toBoost();
-		ar << tx;
-	}
-
-	template<class Archive>
-	inline void load(Archive &ar, const unsigned int v)
-	{
-		// Eigen matrix
-		ar >> boost::serialization::base_object<Pose>(*this);
-
-		// Ros timestamp
-		ptime tx;
-		ar >> tx;
-		timestamp = ros::Time::fromBoost(tx);
-	}
-
-	BOOST_SERIALIZATION_SPLIT_MEMBER()
-};
-*/
-
-
-/*
-class Trajectory : public std::vector<PoseTimestamp>
-{
-public:
-
-	friend class boost::serialization::access;
-
-	void push_back(const PoseTimestamp &);
-
-	// Return nearest element of provided time
-	PoseTimestamp at(const ros::Time&) const;
-
-	PoseTimestamp at(const ptime &t) const;
-
-	PoseTimestamp at(const int idx) const
-	{ return std::vector<PoseTimestamp>::at(idx); }
-
-	PoseTimestamp interpolate (const ros::Time&) const;
-
-	PoseTimestamp extrapolate (const ros::Time&) const;
-
-	Trajectory subset(const ros::Time &start, const ros::Time &stop) const;
-
-private:
-	uint32_t
-	find_lower_bound(const ros::Time&) const;
-
-	uint32_t
-	find_lower_bound(const ptime&) const;
-
-	typedef std::vector<PoseTimestamp> Parent;
-
-	template<class Archive>
-	inline void serialize(Archive &ar, const unsigned int version)
-	{ ar & boost::serialization::base_object<Parent>(*this);}
-
-};
-*/
-
 
 class MeidaiBagDataset;
 class MeidaiDataItem : public GenericDataItem
@@ -175,7 +73,6 @@ protected:
 	dataItemId pId;
 
 	sensor_msgs::Image::ConstPtr bImageMsg;
-//	cv_bridge::CvImagePtr imgPtr;
 	void init();
 };
 
@@ -203,25 +100,12 @@ public:
 
 	MeidaiBagDataset(
 		const std::string &filePath,
-//		double startTimeOffsetSecond=0,
-//		double mappingDurationSecond=-1,
-//		const std::string &calibrationPath=std::string(),
 		bool loadPositions=true
 	);
 
-/*
-	MeidaiBagDataset::Ptr
-	subset(const ros::Time &startTime, const ros::Duration &lengthInSecond) const;
-
-	MeidaiBagDataset::Ptr
-	subset(const double startTimeOffsetSecond, const double endOffsetFromBeginning) const;
-*/
 
 	static MeidaiBagDataset::Ptr load (
 		const std::string &filePath,
-//		double startTimeOffsetSecond=0,
-//		double mappingDurationSecond=-1,
-//		const std::string &calibrationPath=std::string(),
 		bool loadPositions=true
 	);
 
@@ -263,8 +147,6 @@ public:
 	bool hasPositioning() const
 	{ return !gnssTrack.empty(); }
 
-//	void forceCreateCache (bool resetSubset=false, bool useNdt=true);
-
 	void forceCreateCache (bool useLidar=true, const double startOffset=-1, const double stopOffset=-1);
 	void forceCreateCache (bool useLidar=true, const ptime &t1=MIN_TIME, const ptime &t2=MAX_TIME);
 
@@ -290,14 +172,6 @@ public:
 	*/
 	inline ptime timeFromStart(const double seconds) const
 	{ return cameraRawBag->timeFromStart(seconds).toBoost(); }
-
-/*
-	bool isSubset() const
-	{ return isSubset_; }
-
-	inline void getSubsetRange (ptime &beg_, ptime &end_) const
-	{ beg_ = subsetBeginTime.toBoost(); end_ = subsetEndTime.toBoost(); }
-*/
 
 	virtual
 	dataItemId getLowerBound (const ptime &t) const;
@@ -329,13 +203,6 @@ protected:
 
 	const boost::filesystem::path bagPath;
 
-/*
-	bool isSubset_ = false;
-
-	ros::Time subsetBeginTime = ros::TIME_MIN,
-		subsetEndTime = ros::TIME_MIN;
-*/
-
 	CameraPinholeParams cameraParams;
 
 	// Masks for mapping and exposure adjustment
@@ -354,7 +221,6 @@ private:
 
 	Trajectory gnssTrack;
 	Trajectory ndtTrack;
-//	Trajectory cameraTrack;
 	MeidaiTrajectoryMap cameraTrack;
 
 	float zoomRatio = 1.0;
@@ -381,9 +247,7 @@ void createTrajectoryFromGnssBag (
 
 void createTrajectoryFromNDT (
 	LidarScanBag &bagsrc,
-//	RandomAccessBag &bagsrc,
 	Trajectory &resultTrack, const Trajectory &gnssTrack,
-//	const std::string &velodyneParamFile,
 	const std::string &pcdMapFile);
 
 void createTrajectoryFromNDT2 (

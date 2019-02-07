@@ -81,51 +81,46 @@ public:
 	inline std::vector<cv::KeyPoint> getKeypoints() const
 	{ return fKeypoints; }
 
-	static void match (const KeyFrame &k1, const KeyFrame &k2,
+	/*static void match (const KeyFrame &k1, const KeyFrame &k2,
 		cv::Ptr<cv::DescriptorMatcher> matcher,
 		std::vector<FeaturePair> &featurePairs
-	);
+	);*/
 
+/*
 	static void matchSubset (
 		const KeyFrame &k1, const KeyFrame &k2,
 		cv::Ptr<cv::DescriptorMatcher> matcher,
 		std::vector<FeaturePair> &featurePairs,
 		const kpidField &kp1list, const kpidField &kp2list
 	);
+*/
 
 	/*
 	 * Match map points visible in this keyframe
 	 */
-	void matchMapPoints (
+	/*void matchMapPoints (
 		const BaseFrame &frame,
 		cv::Ptr<cv::DescriptorMatcher> matcher,
 		std::map<mpid, kpid> &featurePairs)
-	const;
+	const;*/
 
 	/*
 	 * Inverse of the above function: match all keypoints in this keyframe
 	 * (excluding map points)
 	 */
-	void matchExcludeMapPoints (
+	/*void matchExcludeMapPoints (
 		const BaseFrame &frame,
 		cv::Ptr<cv::DescriptorMatcher> matcher,
 		std::map<mpid, kpid> &featurePairs)
-	const;
+	const;*/
 
+/*
 	static void
 	match (const KeyFrame &k1,
 			const Frame &frame,
 			std::vector<FeaturePair> &featurePairs,
 			cv::Ptr<cv::DescriptorMatcher> matcher);
-
-	/*static void triangulate (
-		const KeyFrame *kf1, const KeyFrame *kf2,
-		std::vector<mpid> &mapPointList,
-		const std::vector<FeaturePair> &featurePairs,
-		std::map<mpid, kpid> &mapPointToKeyPointInKeyFrame1,
-		std::map<mpid, kpid> &mapPointToKeyPointInKeyFrame2,
-		VMap *parent
-	);*/
+*/
 
 	static void triangulate (
 		const KeyFrame &KF1, const KeyFrame &KF2,

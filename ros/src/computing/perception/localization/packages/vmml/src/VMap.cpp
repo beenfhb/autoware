@@ -189,7 +189,7 @@ double distance (const Vector2d &p1, const Vector2d &p2)
 void
 VMap::estimateAndTrack (const kfid &kfid1, const kfid &kfid2)
 {
-	const KeyFrame
+	KeyFrame
 		&KF1 = *getKeyFrameById(kfid1),
 		&KF2 = *getKeyFrameById(kfid2);
 
@@ -201,28 +201,35 @@ VMap::estimateAndTrack (const kfid &kfid1, const kfid &kfid2)
 	set<kpid> kp1InMap;
 	for (auto &p: framePoints[kfid1])
 		kp1InMap.insert(p.second);
-	vector<Matcher::KpPair> newMapPointPairs;
+	vector<Matcher::KpPair> newMapPointPairs, oldMapPointPairs;
 
 	for (auto &kpPair: featurePairs_1_2) {
 		if (kp1InMap.find(kpPair.first) != kp1InMap.end()) {
-			const mpid ptId = framePointsInv.at(kfid1).at(kpPair.first);
-			auto proj1 = KF2.project(*getMapPointById(ptId));
-			double d = (proj1 - KF2.keypointv(kpPair.second)).norm();
-
-			// XXX: Should we skip this point ?
-			if (d >= 4.0)
-				continue;
-
-			// This particular mappoint is visible in KF2
-			pointAppearances[ptId].insert(kfid2);
-			framePoints[kfid2][ptId] = kpPair.second;
-			framePointsInv[kfid2][kpPair.second] = ptId;
-
+			oldMapPointPairs.push_back(kpPair);
 		}
 
 		else {
 			newMapPointPairs.push_back(kpPair);
 		}
+	}
+
+	// XXX: Find solution for insufficient pairs !
+	if (oldMapPointPairs.size() < 4) {
+		cerr << "Insufficient points!\n";
+		exit(1);
+	}
+
+	// Estimate pose for KF2
+	Pose PF2;
+	Matcher::solvePose(KF1, KF2, oldMapPointPairs, descriptorMatcher, PF2);
+	KF2.setPose(PF2);
+
+	// Put point appearances
+	for (int i=0; i<oldMapPointPairs.size(); ++i) {
+		mpid ptId = framePointsInv.at(kfid1).at(oldMapPointPairs[i].first);
+		pointAppearances[ptId].insert(kfid2);
+		framePoints[kfid2][ptId] = oldMapPointPairs[i].second;
+		framePointsInv[kfid2][oldMapPointPairs[i].second] = ptId;
 	}
 
 	// Estimate new mappoints that are visible in KF1 & KF2

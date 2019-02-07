@@ -38,6 +38,18 @@ public:
 		std::vector<KpPair> &featurePairs,
 		cv::Ptr<cv::DescriptorMatcher> matcher);
 
+	/*
+	 * Solve pose from matched keypoints in KFsrc to Ft
+	 * keypoints in KFsrc must be related to a mappoint
+	 */
+	static void
+	solvePose(
+		const KeyFrame &KFsrc,
+		const BaseFrame &Ft,
+		std::vector<KpPair> &featurePairs,
+		cv::Ptr<cv::DescriptorMatcher> matcher,
+		Pose &newFramePose);
+
 	enum DrawMode {
 		DrawOpticalFlow,
 		DrawSideBySide,

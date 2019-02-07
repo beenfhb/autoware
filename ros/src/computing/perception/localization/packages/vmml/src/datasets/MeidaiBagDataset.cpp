@@ -61,11 +61,6 @@ class cache_error : public runtime_error
 MeidaiBagDataset::MeidaiBagDataset(
 
 	const string &path,
-/*
-	double startTimeOffsetSecond,
-	double mappingDurationSecond,
-	const std::string &calibrationPath,
-*/
 	bool loadPositions) :
 
 		bagPath(path),
@@ -99,19 +94,11 @@ MeidaiBagDataset::MeidaiBagDataset(
 MeidaiBagDataset::Ptr
 MeidaiBagDataset::load (
 		const string &path,
-/*
-		double startTimeOffsetSecond,
-		double mappingDurationSecond,
-		const std::string &calibrationPath,
-*/
 		bool loadPositions
 )
 {
 	MeidaiBagDataset::Ptr nuDatasetMem(new MeidaiBagDataset(
 		path,
-//		startTimeOffsetSecond,
-//		mappingDurationSecond,
-//		calibrationPath,
 		loadPositions));
 	return nuDatasetMem;
 }
@@ -129,55 +116,9 @@ MeidaiBagDataset::MeidaiBagDataset
 {}
 
 
-/*
-MeidaiBagDataset::Ptr
-MeidaiBagDataset::subset(const ros::Time &startTime, const ros::Duration &lengthInSecond) const
-{
-	MeidaiBagDataset *rsubset = new MeidaiBagDataset( *this );
-	rsubset->isSubset_ = true;
-
-	ros::Time tlast = startTime + lengthInSecond;
-	rsubset->subsetBeginTime = startTime;
-	rsubset->subsetEndTime = tlast;
-	rsubset->prepareBag(startTime, tlast);
-
-	// Load positions, if they are complete in this time range
-	if (cameraTrack.empty())
-		goto finish;
-
-	if (cameraTrack.front().timestamp > startTime or cameraTrack.back().timestamp < tlast)
-		goto finish;
-
-	rsubset->cameraTrack = cameraTrack.subset(startTime, tlast);
-
-finish:
-	return MeidaiBagDataset::Ptr(rsubset);
-}
-
-
-MeidaiBagDataset::Ptr
-MeidaiBagDataset::subset(const double startTimeOffsetSecond, const double endOffsetFromBeginning) const
-{
-	assert (endOffsetFromBeginning >= startTimeOffsetSecond);
-
-	ros::Duration
-		d0(startTimeOffsetSecond),
-		d1(endOffsetFromBeginning-startTimeOffsetSecond);
-	ros::Time t1 = cameraRawBag->timeAt(0) + d0;
-
-	return subset(t1, d1);
-}
-*/
-
-
 void
 MeidaiBagDataset::prepareBag (const ros::Time &beginTime, const ros::Time &stopTime)
 {
-/*
-	cameraRawBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagImageTopic, beginTime, stopTime));
-	gnssBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagGnssTopic, beginTime, stopTime));
-	velodyneBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagVelodyne, beginTime, stopTime));
-*/
 	cameraRawBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagImageTopic));
 	numOfFrames = cameraRawBag->size();
 
@@ -301,28 +242,6 @@ MeidaiBagDataset::setLidarParameters (
 }
 
 
-/*
-void
-MeidaiBagDataset::forceCreateCache (bool resetSubset, bool useNdt)
-{
-	bfs::path bagCachePath = bagPath;
-	bagCachePath += ".cache";
-
-	if (resetSubset==true) {
-		isSubset_ = false;
-		subsetBeginTime = ros::TIME_MIN;
-		subsetEndTime = ros::TIME_MIN;
-	}
-
-	gnssTrack.clear();
-	ndtTrack.clear();
-	cameraTrack.clear();
-	createTrajectories(useNdt);
-	writeCache(bagCachePath.string());
-}
-*/
-
-
 void
 MeidaiBagDataset::forceCreateCache (bool useLidar, const double startOffset, const double stopOffset)
 {
@@ -357,19 +276,6 @@ MeidaiBagDataset::doLoadCache(const string &path)
 		throw runtime_error(string("Unable to open cache file: ") + path);
 
 	boost::archive::binary_iarchive cacheIArc (cacheFd);
-
-/*
-	cacheIArc >> isSubset_;
-	ptime tx;
-	cacheIArc >> tx;
-	subsetBeginTime = ros::Time::fromBoost(tx);
-	cacheIArc >> tx;
-	subsetEndTime = ros::Time::fromBoost(tx);
-
-	if (isSubset_) {
-		prepareBag(subsetBeginTime, subsetEndTime);
-	}
-*/
 
 	cacheIArc >> gnssTrack;
 	cacheIArc >> ndtTrack;
@@ -471,14 +377,6 @@ void MeidaiBagDataset::writeCache(const string &path)
 
 	boost::archive::binary_oarchive cacheOArc (cacheFd);
 
-/*
-	cacheOArc << isSubset_;
-	ptime tx = subsetBeginTime.toBoost();
-	cacheOArc << tx;
-	tx = subsetEndTime.toBoost();
-	cacheOArc << tx;
-*/
-
 	cacheOArc << gnssTrack;
 	cacheOArc << ndtTrack;
 	cacheOArc << cameraTrack;
@@ -501,9 +399,7 @@ const
 dataItemId
 MeidaiBagDataset::getLowerBound (const ptime &t) const
 {
-//	auto tms1 = (t - unixTime0).total_nanoseconds();
 	auto rt = ros::Time::fromBoost(t);
-//	auto tms2 = rt.toNSec();
 	return (dataItemId)cameraRawBag->getPositionAtTime(rt);
 }
 
@@ -518,12 +414,6 @@ MeidaiBagDataset::getLidarScanBag ()
 	ros::Time
 		tstart = ros::TIME_MIN,
 		tstop = ros::TIME_MAX;
-/*
-	if (isSubset()) {
-		tstart = subsetBeginTime;
-		tstart = subsetEndTime;
-	}
-*/
 
 	return LidarScanBag::Ptr (new LidarScanBag(*bagfd, meidaiBagVelodyne, velodyneCalibrationFilePath, tstart, tstop));
 }

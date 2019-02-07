@@ -322,6 +322,62 @@ Matcher::matchMapPoints(
 
 
 void
+Matcher::solvePose(
+	const KeyFrame &KFsrc,
+	const BaseFrame &Ft,
+	std::vector<KpPair> &featurePairs,
+	cv::Ptr<cv::DescriptorMatcher> matcher,
+	Pose &newFramePose)
+{
+	Eigen::Matrix4d eKfExt = KFsrc.externalParamMatrix4();
+	Matrix3d KfRotation = eKfExt.block<3,3>(0,0);
+	cv::Mat cKfRotMat, cRVec;
+	cv::eigen2cv(KfRotation, cKfRotMat);
+	cv::Rodrigues(cKfRotMat, cRVec);
+
+	Eigen::Vector3d eKfTransVec = eKfExt.block<3,1>(0,3);
+	cv::Mat cKfTransVec;
+	cv::eigen2cv(eKfTransVec, cKfTransVec);
+
+	cv::Mat
+		objectPoints (featurePairs.size(), 3, CV_32F),
+		imagePoints (featurePairs.size(), 2, CV_32F);
+	for (int r=0; r<featurePairs.size(); ++r) {
+		mpid mp = KFsrc.parentMap->getMapPointByKeypoint(KFsrc.id, featurePairs[r].first);
+		const MapPoint &P = *KFsrc.parentMap->mappoint(mp);
+		objectPoints.at<float>(r, 0) = P.X();
+		objectPoints.at<float>(r, 1) = P.Y();
+		objectPoints.at<float>(r, 2) = P.Z();
+		imagePoints.at<float>(r, 0) = Ft.keypoint(featurePairs[r].second).pt.x;
+		imagePoints.at<float>(r, 1) = Ft.keypoint(featurePairs[r].second).pt.y;
+	}
+
+	cv::Mat cameraMatrix = KFsrc.getCameraParameters().toCvMat();
+
+	cv::Mat inlierIdx;
+
+	bool hasSolution = cv::solvePnPRansac(objectPoints, imagePoints, cameraMatrix, cv::Mat(), cRVec, cKfTransVec, true, 100, 4.0, 0.99, inlierIdx, cv::SOLVEPNP_EPNP);
+	if (hasSolution==false)
+		throw runtime_error("No solutions found");
+
+	cv::Rodrigues(cRVec, cKfRotMat);
+	cv::cv2eigen(cKfRotMat, KfRotation);
+	Eigen::Quaterniond Q;
+	Q = KfRotation;
+	cv::cv2eigen(cKfTransVec, eKfTransVec);
+
+	newFramePose = Pose::from_Pos_Quat(eKfTransVec, Q).inverse();
+
+	vector<KpPair> inliers(inlierIdx.rows);
+	for (int r=0; r<inlierIdx.rows; ++r) {
+		inliers[r] = featurePairs.at(inlierIdx.at<int>(r,0));
+	}
+
+	featurePairs = inliers;
+}
+
+
+void
 Matcher::rotationFinder
 (const BaseFrame &Fr1, const BaseFrame &Fr2,
 const std::vector<KpPair> &featurePairs,

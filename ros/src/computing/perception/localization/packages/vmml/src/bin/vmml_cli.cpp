@@ -617,7 +617,7 @@ private:
 			meidaiDsPtr = static_pointer_cast<MeidaiBagDataset>(loadedDataset);
 			slDatasourceType = MEIDAI_DATASET_TYPE;
 			meidaiDsPtr->addCameraParameter(meidaiCamera1Params);
-			meidaiDsPtr->isPreprocessed = true;
+			meidaiDsPtr->isPreprocessed = false;
 			debug ("Nagoya University Dataset Loaded");
 		}
 

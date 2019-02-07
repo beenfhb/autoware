@@ -90,7 +90,7 @@ MapBuilder2::input(const InputFrame &f)
 
 		else {
 			f.getPose().displacement(frame0.getPose(), runTrans, runRot);
-			if (runTrans>=translationThrs or runRot>=rotationThrs) {
+			if (runTrans>=translationThrsInit or runRot>=rotationThrs) {
 				initialize(frame0, f);
 				inputCallback(f);
 				initialized = true;
@@ -290,9 +290,6 @@ MapBuilder2::mapPointCulling()
 
 	cout << "Detected " << mpToRemove.size() << " points\n" << flush;
 
-//	for (auto mp: mpToRemove) {
-//		cMap->removeMapPoint(mp);
-//	}
 	cMap->removeMapPointsBatch(mpToRemove);
 
 	cout << "Removed " << mpToRemove.size() << " out of " << N << " points" << flush;

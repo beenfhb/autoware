@@ -17,6 +17,10 @@ Tracklet::Tracklet()
 {}
 
 
+Tracklet::~Tracklet()
+{}
+
+
 void
 Tracklet::insert (BaseFrame::Ptr frame, kpid k)
 {
