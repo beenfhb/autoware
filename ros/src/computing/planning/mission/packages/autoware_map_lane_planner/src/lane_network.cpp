@@ -38,6 +38,7 @@ LaneNetwork::~LaneNetwork()
 void LaneNetwork::updateLane(autoware_map_msgs::Lane lane)
 {
     lane_ = lane;
+    map_.getAllKeys(lane_keys_);
     if(lane_relation_ && lane_change_relation_ && lane_)
     {
         generateLaneNetwork();
@@ -47,6 +48,7 @@ void LaneNetwork::updateLane(autoware_map_msgs::Lane lane)
 void LaneNetwork::updateLaneRelation(autoware_map_msgs::LaneRelation relations)
 {
     lane_relation_ = relations;
+    map_.getAllKeys(lane_relation_keys_);
     if(lane_relation_ && lane_change_relation_ && lane_)
     {
         generateLaneNetwork();
@@ -56,6 +58,7 @@ void LaneNetwork::updateLaneRelation(autoware_map_msgs::LaneRelation relations)
 void LaneNetwork::updateLaneChangeRelation(autoware_map_msgs::LaneChangeRelation relations)
 {
     lane_change_relation_ = relations;
+    map_.getAllKeys(lane_change_relation_keys_);
     if(lane_relation_ && lane_change_relation_ && lane_)
     {
         generateLaneNetwork();

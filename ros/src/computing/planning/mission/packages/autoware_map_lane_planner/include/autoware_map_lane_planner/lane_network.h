@@ -53,8 +53,11 @@ private:
     ros::NodeHandle pnh_;
     autoware_map::AutowareMap map_;
     boost::optional<autoware_map_msgs::Lane> lane_;
+    std::vector<autoware_map::Key<autoware_map_msgs::Lane> > lane_keys_;
     boost::optional<autoware_map_msgs::LaneRelation> lane_relation_;
+    std::vector<autoware_map::Key<autoware_map_msgs::LaneRelation> > lane_relation_keys_;
     boost::optional<autoware_map_msgs::LaneChangeRelation> lane_change_relation_;
+    std::vector<autoware_map::Key<autoware_map_msgs::LaneChangeRelation> > lane_change_relation_keys_;
     //Edge : lane_id -> lane_id
     std::vector<Edge> edges_;
     //distance (number of waypoints in the each lane)
