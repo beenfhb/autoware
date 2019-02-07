@@ -22,11 +22,14 @@ LaneNetwork::LaneNetwork(ros::NodeHandle nh,ros::NodeHandle pnh)
 {
     nh_ = nh;
     pnh_ = pnh;
+    allow_lane_change_ = false;
     std::function<void(const autoware_map_msgs::LaneRelation&)> relation_func_
         = std::bind(&LaneNetwork::updateLaneRelation,this,std::placeholders::_1);
     map_.subscribe(nh_, autoware_map::Category::LANE);
     map_.subscribe(nh_, autoware_map::Category::LANE_RELATION);
     map_.subscribe(nh_, autoware_map::Category::LANE_CHANGE_RELATION);
+    /*
+    */
     //map_.registerCallback(relation_func_);
 }
 
@@ -39,32 +42,38 @@ void LaneNetwork::updateLane(autoware_map_msgs::Lane lane)
 {
     lane_ = lane;
     map_.getAllKeys(lane_keys_);
-    if(lane_relation_ && lane_change_relation_ && lane_)
-    {
-        generateLaneNetwork();
-    }
+    generateLaneNetwork();
 }
 
 void LaneNetwork::updateLaneRelation(autoware_map_msgs::LaneRelation relations)
 {
     lane_relation_ = relations;
     map_.getAllKeys(lane_relation_keys_);
-    if(lane_relation_ && lane_change_relation_ && lane_)
-    {
-        generateLaneNetwork();
-    }
+    generateLaneNetwork();
 }
 
 void LaneNetwork::updateLaneChangeRelation(autoware_map_msgs::LaneChangeRelation relations)
 {
     lane_change_relation_ = relations;
     map_.getAllKeys(lane_change_relation_keys_);
-    if(lane_relation_ && lane_change_relation_ && lane_)
-    {
-        generateLaneNetwork();
-    }
+    generateLaneNetwork();
+}
+
+void LaneNetwork::enableLaneChange()
+{
+    allow_lane_change_ = true;
+    generateLaneNetwork();
+}
+
+void LaneNetwork::disableLaneChange()
+{
+    allow_lane_change_ = false;
+    generateLaneNetwork();
 }
 
 void LaneNetwork::generateLaneNetwork()
 {
+    if(lane_relation_ && lane_change_relation_ && lane_)
+    {
+    }
 }

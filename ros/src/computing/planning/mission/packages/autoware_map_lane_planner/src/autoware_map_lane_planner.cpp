@@ -24,6 +24,16 @@ AutowareMapLanePlanner::AutowareMapLanePlanner(ros::NodeHandle nh,ros::NodeHandl
     pnh_ = pnh;
     pnh_.param<double>("search_radius", search_radius_, 10.0);
     pnh_.param<std::string>("goal_pose_topic",goal_pose_topic_,"/move_base_simple/goal");
+    pnh_.param<bool>("allow_lane_change",allow_lane_change_,false);
+    lane_network_ptr_ = boost::make_shared<LaneNetwork>(nh_,pnh_);
+    if(allow_lane_change_)
+    {
+        lane_network_ptr_->enableLaneChange();
+    }
+    else
+    {
+        lane_network_ptr_->disableLaneChange();
+    }
     closest_waypoint_pub_ = nh_.advertise<std_msgs::Int32>("/closest_waypoint",10);
     base_waypoints_pub_ = nh_.advertise<autoware_msgs::Lane>("/base_waypoints",10);
     autoware_map_.subscribe(nh_, autoware_map::Category::LANE);

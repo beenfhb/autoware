@@ -26,11 +26,13 @@
 
 //headers in Autoware
 #include <autoware_map/autoware_map.h>
+#include <autoware_map_lane_planner/lane_network.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <autoware_msgs/LaneArray.h>
 
 //headers in Boost
 #include <boost/optional.hpp>
+#include <boost/shared_ptr.hpp>
 
 class AutowareMapLanePlanner
 {
@@ -54,8 +56,10 @@ private:
     geometry_msgs::PoseStamped current_pose_;
     boost::optional<geometry_msgs::PoseStamped> goal_pose_;
     boost::optional<autoware_map_msgs::Waypoint> goal_waypoint_;
+    boost::shared_ptr<LaneNetwork> lane_network_ptr_;
     /* parameters for Autoware Map Lane Planner*/
     double search_radius_;
+    bool allow_lane_change_;
     /* functions */
     bool findClosestWaypointCandidates(autoware_map_msgs::Waypoint waypoint);
     boost::optional<autoware_map_msgs::Waypoint> findClosestWaypoint();

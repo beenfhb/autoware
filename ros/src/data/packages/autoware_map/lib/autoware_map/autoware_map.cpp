@@ -632,6 +632,23 @@ void AutowareMap::getAllKeys(std::vector<autoware_map::Key<WaypointLaneRelation>
 void AutowareMap::getAllKeys(std::vector<autoware_map::Key<WaypointRelation> > &keys){waypoint_relation_.getAllKeys(keys);}
 void AutowareMap::getAllKeys(std::vector<autoware_map::Key<WaypointSignalRelation> > &keys){waypoint_signal_relation_.getAllKeys(keys);}
 
+void AutowareMap::registerCallback(const Callback<LaneArray>& cb){lane_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<LaneAttrRelationArray>& cb){lane_attr_relation_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<LaneRelationArray>& cb){lane_relation_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<LaneSignalLightRelationArray>& cb){lane_signal_light_relation_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<LaneChangeRelationArray>& cb){lane_change_relation_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<OppositeLaneRelationArray>& cb){opposite_lane_relation_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<PointArray>& cb){point_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<AreaArray>& cb){area_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<RouteArray>& cb){route_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<SignalArray>& cb){signal_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<SignalLightArray>& cb){signal_light_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<WayareaArray>& cb){wayarea_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<WaypointArray>& cb){waypoint_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<WaypointLaneRelationArray>& cb){waypoint_lane_relation_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<WaypointRelationArray>& cb){waypoint_relation_.registerCallback(cb);}
+void AutowareMap::registerCallback(const Callback<WaypointSignalRelationArray>& cb){waypoint_signal_relation_.registerCallback(cb);}
+
 void AutowareMap::clear()
 {
     lane_.clear();

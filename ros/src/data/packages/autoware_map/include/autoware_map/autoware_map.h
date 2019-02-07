@@ -322,22 +322,22 @@ public:
     bool hasSubscribed(category_t category) const;
     category_t hasSubscribed() const;
 
-    void registerCallback(const Callback<Lane>& cb);
-    void registerCallback(const Callback<LaneAttrRelation>& cb);
-    void registerCallback(const Callback<LaneRelation>& cb);
-    void registerCallback(const Callback<LaneSignalLightRelation>& cb);
-    void registerCallback(const Callback<LaneChangeRelation>& cb);
-    void registerCallback(const Callback<OppositeLaneRelation>& cb);
-    void registerCallback(const Callback<Point>& cb);
-    void registerCallback(const Callback<Area>& cb);
-    void registerCallback(const Callback<Route>& cb);
-    void registerCallback(const Callback<Signal>& cb);
-    void registerCallback(const Callback<SignalLight>& cb);
-    void registerCallback(const Callback<Wayarea>& cb);
-    void registerCallback(const Callback<Waypoint>& cb);
-    void registerCallback(const Callback<WaypointLaneRelation>& cb);
-    void registerCallback(const Callback<WaypointRelation>& cb);
-    void registerCallback(const Callback<WaypointSignalRelation>& cb);
+    void registerCallback(const Callback<LaneArray>& cb);
+    void registerCallback(const Callback<LaneAttrRelationArray>& cb);
+    void registerCallback(const Callback<LaneRelationArray>& cb);
+    void registerCallback(const Callback<LaneSignalLightRelationArray>& cb);
+    void registerCallback(const Callback<LaneChangeRelationArray>& cb);
+    void registerCallback(const Callback<OppositeLaneRelationArray>& cb);
+    void registerCallback(const Callback<PointArray>& cb);
+    void registerCallback(const Callback<AreaArray>& cb);
+    void registerCallback(const Callback<RouteArray>& cb);
+    void registerCallback(const Callback<SignalArray>& cb);
+    void registerCallback(const Callback<SignalLightArray>& cb);
+    void registerCallback(const Callback<WayareaArray>& cb);
+    void registerCallback(const Callback<WaypointArray>& cb);
+    void registerCallback(const Callback<WaypointLaneRelationArray>& cb);
+    void registerCallback(const Callback<WaypointRelationArray>& cb);
+    void registerCallback(const Callback<WaypointSignalRelationArray>& cb);
 
     void clear();
 };
