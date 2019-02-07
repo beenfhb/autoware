@@ -36,11 +36,8 @@ AutowareMapLanePlanner::AutowareMapLanePlanner(ros::NodeHandle nh,ros::NodeHandl
     }
     closest_waypoint_pub_ = nh_.advertise<std_msgs::Int32>("/closest_waypoint",10);
     base_waypoints_pub_ = nh_.advertise<autoware_msgs::Lane>("/base_waypoints",10);
-    autoware_map_.subscribe(nh_, autoware_map::Category::LANE);
     autoware_map_.subscribe(nh_, autoware_map::Category::POINT);
     autoware_map_.subscribe(nh_, autoware_map::Category::WAYPOINT);
-    autoware_map_.subscribe(nh_, autoware_map::Category::WAYPOINT_RELATION);
-    autoware_map_.subscribe(nh_, autoware_map::Category::WAYPOINT_LANE_RELATION);
     current_pose_sub_ = nh_.subscribe("/current_pose",10,&AutowareMapLanePlanner::currentPoseCallback,this);
 }
 

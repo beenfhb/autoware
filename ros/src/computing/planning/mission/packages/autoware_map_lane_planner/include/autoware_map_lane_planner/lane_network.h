@@ -44,9 +44,9 @@ class LaneNetwork
 public:
     LaneNetwork(ros::NodeHandle nh,ros::NodeHandle pnh);
     ~LaneNetwork();
-    void updateLane(autoware_map_msgs::Lane lane);
-    void updateLaneRelation(autoware_map_msgs::LaneRelation relations);
-    void updateLaneChangeRelation(autoware_map_msgs::LaneChangeRelation relations);
+    void updateLane(autoware_map_msgs::LaneArray lane);
+    void updateLaneRelation(autoware_map_msgs::LaneRelationArray relations);
+    void updateLaneChangeRelation(autoware_map_msgs::LaneChangeRelationArray relations);
     void generateLaneNetwork();
     void enableLaneChange();
     void disableLaneChange();
@@ -54,18 +54,15 @@ private:
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
     autoware_map::AutowareMap map_;
-    boost::optional<autoware_map_msgs::Lane> lane_;
+    boost::optional<autoware_map_msgs::LaneArray> lane_;
     std::vector<autoware_map::Key<autoware_map_msgs::Lane> > lane_keys_;
-    boost::optional<autoware_map_msgs::LaneRelation> lane_relation_;
+    boost::optional<autoware_map_msgs::LaneRelationArray> lane_relation_;
     std::vector<autoware_map::Key<autoware_map_msgs::LaneRelation> > lane_relation_keys_;
-    boost::optional<autoware_map_msgs::LaneChangeRelation> lane_change_relation_;
+    boost::optional<autoware_map_msgs::LaneChangeRelationArray> lane_change_relation_;
     std::vector<autoware_map::Key<autoware_map_msgs::LaneChangeRelation> > lane_change_relation_keys_;
     //flags
     bool allow_lane_change_;
-    //Edge : lane_id -> lane_id
-    std::vector<Edge> edges_;
-    //distance (number of waypoints in the each lane)
-    std::vector<int> distance_;
+    Graph graph_;
 };
 
 #endif  //LANE_NETWORK_H_INCLUDED
