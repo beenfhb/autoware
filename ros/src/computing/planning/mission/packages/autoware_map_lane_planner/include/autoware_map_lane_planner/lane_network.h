@@ -55,9 +55,9 @@ public:
     void generateLaneNetwork();
     void enableLaneChange();
     void disableLaneChange();
-    boost::optional<std::vector<autoware_map_msgs::Waypoint> > plan(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to);
+    boost::optional<std::vector<autoware_map_msgs::Lane> > plan(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to);
+    //boost::optional<std::vector<autoware_map_msgs::Waypoint> > plan(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to);
 private:
-    boost::optional<std::vector<autoware_map_msgs::Lane> > planLane(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to);
     std::mutex mtx_;
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;

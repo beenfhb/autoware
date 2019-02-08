@@ -53,11 +53,6 @@ void AutowareMapLanePlanner::goalPoseCallback(const geometry_msgs::PoseStampedCo
     return;
 }
 
-void AutowareMapLanePlanner::plan(geometry_msgs::PoseStamped goal)
-{
-
-}
-
 void AutowareMapLanePlanner::currentPoseCallback(const geometry_msgs::PoseStampedConstPtr msg)
 {
     current_pose_ = *msg;
@@ -75,6 +70,11 @@ void AutowareMapLanePlanner::currentPoseCallback(const geometry_msgs::PoseStampe
         data.data = -1;
         closest_waypoint_pub_.publish(data);
         return;
+    }
+    if(closest_waypoint && goal_waypoint_)
+    {
+        boost::optional<std::vector<autoware_map_msgs::Lane> > lanes = 
+            lane_network_ptr_->plan(closest_waypoint.get(),goal_waypoint_.get());
     }
 }
 

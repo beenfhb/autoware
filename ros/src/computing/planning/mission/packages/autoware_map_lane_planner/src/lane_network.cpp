@@ -44,6 +44,7 @@ LaneNetwork::~LaneNetwork()
 
 }
 
+/*
 boost::optional<std::vector<autoware_map_msgs::Waypoint> > LaneNetwork::plan(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to)
 {
     boost::optional<std::vector<autoware_map_msgs::Lane> > lanes = planLane(from, to);
@@ -81,8 +82,9 @@ boost::optional<std::vector<autoware_map_msgs::Waypoint> > LaneNetwork::plan(aut
     }
     return waypoints;
 }
+*/
 
-boost::optional<std::vector<autoware_map_msgs::Lane> > LaneNetwork::planLane(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to)
+boost::optional<std::vector<autoware_map_msgs::Lane> > LaneNetwork::plan(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to)
 {
     std::lock_guard<std::mutex> lock(mtx_);
     std::vector<autoware_map_msgs::Lane> lanes;

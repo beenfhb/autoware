@@ -67,8 +67,6 @@ private:
     boost::optional<autoware_map_msgs::Waypoint> findGoalWaypoint();
     double getDiffAngle(double from,double to);
     void getRPY(geometry_msgs::Quaternion q, double &roll, double &pitch, double &yaw);
-    void plan(geometry_msgs::PoseStamped goal);
-    void plan(autoware_msgs::LaneArray goal);
 };
 
 #endif
