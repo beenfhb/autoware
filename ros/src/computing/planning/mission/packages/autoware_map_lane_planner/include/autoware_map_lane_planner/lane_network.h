@@ -27,9 +27,14 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/assign/list_of.hpp>
 
 //headers in Autoware
 #include <autoware_map/autoware_map.h>
+
+//headers in STL
+#include <mutex>
 
 //Lane Network Graph
 typedef boost::adjacency_list<boost::listS, boost::vecS, boost::directedS,
@@ -50,7 +55,9 @@ public:
     void generateLaneNetwork();
     void enableLaneChange();
     void disableLaneChange();
+    boost::optional<std::vector<autoware_map_msgs::Lane> > plan(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to);
 private:
+    std::mutex mtx_;
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
     autoware_map::AutowareMap map_;

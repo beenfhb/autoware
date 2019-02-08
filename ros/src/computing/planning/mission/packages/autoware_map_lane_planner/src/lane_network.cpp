@@ -35,6 +35,8 @@ LaneNetwork::LaneNetwork(ros::NodeHandle nh,ros::NodeHandle pnh)
     map_.subscribe(nh_, autoware_map::Category::LANE);
     map_.subscribe(nh_, autoware_map::Category::LANE_RELATION);
     map_.subscribe(nh_, autoware_map::Category::LANE_CHANGE_RELATION);
+    map_.subscribe(nh_, autoware_map::Category::WAYPOINT);
+    map_.subscribe(nh_, autoware_map::Category::WAYPOINT_LANE_RELATION);
 }
 
 LaneNetwork::~LaneNetwork()
@@ -42,8 +44,65 @@ LaneNetwork::~LaneNetwork()
 
 }
 
+boost::optional<std::vector<autoware_map_msgs::Lane> > LaneNetwork::plan(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to)
+{
+    std::lock_guard<std::mutex> lock(mtx_);
+    if(lane_relation_ && lane_change_relation_ && lane_)
+    {
+        return boost::none;
+    }
+    std::vector<autoware_map_msgs::Lane> lanes;
+    std::vector<autoware_map::Key<autoware_map_msgs::WaypointLaneRelation> > waypoint_lane_relation_keys;
+    map_.getAllKeys(waypoint_lane_relation_keys);
+    bool from_found = false;
+    bool to_found = false;
+    Vertex from_vertex;
+    Vertex to_vertex;
+    //iterate waypoint relation and search lanes in the from and to waypoint
+    for(auto itr = waypoint_lane_relation_keys.begin(); itr != waypoint_lane_relation_keys.end(); itr++)
+    {
+        autoware_map_msgs::WaypointLaneRelation relation = map_.findByKey(*itr);
+        if(relation.waypoint_id == from.waypoint_id)
+        {
+            from_vertex = from.waypoint_id;
+            from_found = true;
+        }
+        if(relation.waypoint_id == to.waypoint_id)
+        {
+            to_vertex = to.waypoint_id;
+            to_found = true;
+        }
+    }
+    if(from_found && to_found)
+    {
+        std::vector<Vertex> parents(boost::num_vertices(graph_));
+        std::vector<std::size_t> distance(boost::num_vertices(graph_));
+        boost::dijkstra_shortest_paths(graph_, from_vertex, boost::predecessor_map(&parents[0]).distance_map(&distance[0]));
+        if(parents[to_vertex] == to_vertex)
+        {
+            ROS_ERROR_STREAM("failed to find path.");
+            return boost::none;
+        }
+        std::deque<Vertex> route;
+        for (Vertex v = to_vertex; v != from_vertex; v = parents[v]) 
+        {
+            route.push_front(v);
+        }
+        route.push_front(from_vertex);
+        for (const Vertex v : route)
+        {
+            autoware_map::Key<autoware_map_msgs::Lane> key(v);
+            lanes.push_back(map_.findByKey(key));
+        }
+        return lanes;
+    }
+    ROS_ERROR_STREAM("failed to find start or goal waypoint from lane/waypoint relation");
+    return boost::none;
+}
+
 void LaneNetwork::updateLane(autoware_map_msgs::LaneArray lane)
 {
+    std::lock_guard<std::mutex> lock(mtx_);
     lane_ = lane;
     map_.getAllKeys(lane_keys_);
     generateLaneNetwork();
@@ -52,6 +111,7 @@ void LaneNetwork::updateLane(autoware_map_msgs::LaneArray lane)
 
 void LaneNetwork::updateLaneRelation(autoware_map_msgs::LaneRelationArray relations)
 {
+    std::lock_guard<std::mutex> lock(mtx_);
     lane_relation_ = relations;
     map_.getAllKeys(lane_relation_keys_);
     generateLaneNetwork();
@@ -60,6 +120,7 @@ void LaneNetwork::updateLaneRelation(autoware_map_msgs::LaneRelationArray relati
 
 void LaneNetwork::updateLaneChangeRelation(autoware_map_msgs::LaneChangeRelationArray relations)
 {
+    std::lock_guard<std::mutex> lock(mtx_);
     lane_change_relation_ = relations;
     map_.getAllKeys(lane_change_relation_keys_);
     generateLaneNetwork();
@@ -68,6 +129,7 @@ void LaneNetwork::updateLaneChangeRelation(autoware_map_msgs::LaneChangeRelation
 
 void LaneNetwork::enableLaneChange()
 {
+    std::lock_guard<std::mutex> lock(mtx_);
     allow_lane_change_ = true;
     generateLaneNetwork();
     return;
@@ -75,6 +137,7 @@ void LaneNetwork::enableLaneChange()
 
 void LaneNetwork::disableLaneChange()
 {
+    std::lock_guard<std::mutex> lock(mtx_);
     allow_lane_change_ = false;
     generateLaneNetwork();
     return;
