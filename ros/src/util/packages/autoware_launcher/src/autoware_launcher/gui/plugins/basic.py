@@ -11,6 +11,9 @@ def plugin_widgets():
         "textlist"  : AwTextListFrame,
         "file"      : AwFileFrame,
         "filelist"  : AwFileListFrame,
+        "bool"      : AwBooleanFrame,
+        "int"       : AwIntegerFrame,
+        "real"      : AwRealFrame,
         "transform" : AwTransformFrame,
     }
 
@@ -72,6 +75,22 @@ class AwFileListFrame(AwTextListFrame):
 
 
 
+class AwBooleanFrame(widgets.AwAbstructFrame):
+
+    def __init__(self, guimgr, node, view):
+        super(AwBooleanFrame, self).__init__(guimgr, node, view)
+        super(AwBooleanFrame, self).setup_widget()
+        self.set_title(frame_title(self.view, "Boolean"))
+
+        self.field = AwBooleanField(self.node.get_config(self.view.target))
+        self.field.value_updated.connect(self.apply)
+        self.add_widget(self.field)
+
+    def apply(self, value):
+        self.node.update({"config": {self.view.target: value}})
+
+
+
 class AwIntegerFrame(widgets.AwAbstructFrame):
 
     def __init__(self, guimgr, node, view):
@@ -80,6 +99,22 @@ class AwIntegerFrame(widgets.AwAbstructFrame):
         self.set_title(frame_title(self.view, "Integer"))
 
         self.field = AwIntegerField(self.node.get_config(self.view.target))
+        self.field.value_updated.connect(self.apply)
+        self.add_widget(self.field)
+
+    def apply(self, value):
+        self.node.update({"config": {self.view.target: value}})
+
+
+
+class AwRealFrame(widgets.AwAbstructFrame):
+
+    def __init__(self, guimgr, node, view):
+        super(AwRealFrame, self).__init__(guimgr, node, view)
+        super(AwRealFrame, self).setup_widget()
+        self.set_title(frame_title(self.view, "Float"))
+
+        self.field = AwRealField(self.node.get_config(self.view.target))
         self.field.value_updated.connect(self.apply)
         self.add_widget(self.field)
 
@@ -121,7 +156,7 @@ class AwTextField(QtWidgets.QLineEdit):
     def __init__(self, value):
         super(AwTextField, self).__init__()
         self.__value = value
-        self.setText(str(self.__value))
+        self.setText(self.__value)
 
     def update_value(self, value):
         if self.__value != value:
@@ -155,9 +190,33 @@ class AwTextListField(QtWidgets.QPlainTextEdit):
 
 
 
+class AwBooleanField(QtWidgets.QCheckBox):
+
+    value_updated = QtCore.Signal(bool)
+
+    def __init__(self, value):
+        super(AwBooleanField, self).__init__()
+        self.__value = value
+        self.setText(str(value))
+        self.setCheckState(QtCore.Qt.Checked if value is True else QtCore.Qt.Unchecked)
+        self.stateChanged.connect(self.update_event)
+        self.setStyleSheet("width: 20px; height: 20px;")
+
+    def update_value(self, value):
+        if self.__value != value:
+            self.__value = value
+            self.value_updated.emit(value)
+
+    def update_event(self, state):
+        value = True if state == QtCore.Qt.Checked else False;
+        self.setText(str(value))
+        self.update_value(value)
+
+
+
 class AwIntegerField(QtWidgets.QLineEdit):
 
-    value_updated = QtCore.Signal(str)
+    value_updated = QtCore.Signal(int)
 
     def __init__(self, value):
         super(AwIntegerField, self).__init__()
@@ -169,12 +228,45 @@ class AwIntegerField(QtWidgets.QLineEdit):
             self.__value = value
             self.value_updated.emit(value)
 
+    def to_int(self, value):
+        try:
+            return int(value)
+        except:
+            return None
+
     def focusOutEvent(self, event):
-        self.update_value(int(self.text()))
+        value = self.to_int(self.text())
+        if value is not None:
+            self.update_value(value)
         super(AwIntegerField, self).focusOutEvent(event)
 
 
 
+class AwRealField(QtWidgets.QLineEdit):
+
+    value_updated = QtCore.Signal(float)
+
+    def __init__(self, value):
+        super(AwRealField, self).__init__()
+        self.__value = value
+        self.setText(str(self.__value))
+
+    def update_value(self, value):
+        if self.__value != value:
+            self.__value = value
+            self.value_updated.emit(value)
+
+    def to_real(self, value):
+        try:
+            return float(value)
+        except:
+            return None
+
+    def focusOutEvent(self, event):
+        value = self.to_real(self.text())
+        if value is not None:
+            self.update_value(value)
+        super(AwRealField, self).focusOutEvent(event)
 
 
 

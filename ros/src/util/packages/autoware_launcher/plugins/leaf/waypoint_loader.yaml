@@ -9,4 +9,4 @@ panel:
   - target: args.multi_lane_csv
     widget: basic.file
   - target: args.disable_decision_maker
-    widget: basic.text
+    widget: basic.bool

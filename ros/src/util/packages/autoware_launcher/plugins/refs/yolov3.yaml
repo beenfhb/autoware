@@ -14,15 +14,15 @@ panel:
   widget: node.panel
   frames:
   - target: args.score_threshold
-    widget: basic.text
+    widget: basic.real
   - target: args.nms_threshold
-    widget: basic.text
+    widget: basic.real
   - target: args.image_src
     widget: basic.text
   - target: args.camera_id
     widget: basic.text
   - target: args.gpu_device_id
-    widget: basic.text
+    widget: basic.int
   - target: args.network_definition_file
     widget: basic.text
   - target: args.pretrained_model_file
