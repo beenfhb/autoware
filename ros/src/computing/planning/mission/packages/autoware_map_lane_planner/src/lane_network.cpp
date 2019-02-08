@@ -98,17 +98,24 @@ boost::optional<std::vector<autoware_map_msgs::Lane> > LaneNetwork::planLane(aut
         autoware_map_msgs::WaypointLaneRelation relation = map_.findByKey(*itr);
         if(relation.waypoint_id == from.waypoint_id)
         {
-            from_vertex = from.waypoint_id;
+            from_vertex = relation.lane_id;
             from_found = true;
         }
         if(relation.waypoint_id == to.waypoint_id)
         {
-            to_vertex = to.waypoint_id;
+            to_vertex = relation.lane_id;
             to_found = true;
         }
     }
     if(from_found && to_found)
     {
+        if(previous_to_lane_id_ && previous_from_lane_id_)
+        {
+            if(previous_to_lane_id_.get() == to_vertex && previous_from_lane_id_.get() == from_vertex)
+            {
+                return previous_lane_plan_;
+            }
+        }
         std::vector<Vertex> parents(boost::num_vertices(graph_));
         std::vector<std::size_t> distance(boost::num_vertices(graph_));
         boost::dijkstra_shortest_paths(graph_, from_vertex, boost::predecessor_map(&parents[0]).distance_map(&distance[0]));
@@ -128,6 +135,9 @@ boost::optional<std::vector<autoware_map_msgs::Lane> > LaneNetwork::planLane(aut
             autoware_map::Key<autoware_map_msgs::Lane> key(v);
             lanes.push_back(map_.findByKey(key));
         }
+        previous_from_lane_id_ = from_vertex;
+        previous_to_lane_id_ = to_vertex;
+        previous_lane_plan_ = lanes;
         return lanes;
     }
     ROS_ERROR_STREAM("failed to find start or goal waypoint from lane/waypoint relation");

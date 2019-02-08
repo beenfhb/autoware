@@ -68,6 +68,9 @@ private:
     std::vector<autoware_map::Key<autoware_map_msgs::LaneRelation> > lane_relation_keys_;
     autoware_map_msgs::LaneChangeRelationArray lane_change_relation_;
     std::vector<autoware_map::Key<autoware_map_msgs::LaneChangeRelation> > lane_change_relation_keys_;
+    boost::optional<int> previous_from_lane_id_;
+    boost::optional<int> previous_to_lane_id_;
+    std::vector<autoware_map_msgs::Lane> previous_lane_plan_;
     //flags
     bool allow_lane_change_;
     Graph graph_;
