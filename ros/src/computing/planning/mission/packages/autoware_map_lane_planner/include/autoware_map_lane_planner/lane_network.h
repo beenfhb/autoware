@@ -55,17 +55,18 @@ public:
     void generateLaneNetwork();
     void enableLaneChange();
     void disableLaneChange();
-    boost::optional<std::vector<autoware_map_msgs::Lane> > plan(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to);
+    boost::optional<std::vector<autoware_map_msgs::Waypoint> > plan(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to);
 private:
+    boost::optional<std::vector<autoware_map_msgs::Lane> > planLane(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to);
     std::mutex mtx_;
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
     autoware_map::AutowareMap map_;
-    boost::optional<autoware_map_msgs::LaneArray> lane_;
+    autoware_map_msgs::LaneArray lane_;
     std::vector<autoware_map::Key<autoware_map_msgs::Lane> > lane_keys_;
-    boost::optional<autoware_map_msgs::LaneRelationArray> lane_relation_;
+    autoware_map_msgs::LaneRelationArray lane_relation_;
     std::vector<autoware_map::Key<autoware_map_msgs::LaneRelation> > lane_relation_keys_;
-    boost::optional<autoware_map_msgs::LaneChangeRelationArray> lane_change_relation_;
+    autoware_map_msgs::LaneChangeRelationArray lane_change_relation_;
     std::vector<autoware_map::Key<autoware_map_msgs::LaneChangeRelation> > lane_change_relation_keys_;
     //flags
     bool allow_lane_change_;

@@ -44,13 +44,47 @@ LaneNetwork::~LaneNetwork()
 
 }
 
-boost::optional<std::vector<autoware_map_msgs::Lane> > LaneNetwork::plan(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to)
+boost::optional<std::vector<autoware_map_msgs::Waypoint> > LaneNetwork::plan(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to)
 {
-    std::lock_guard<std::mutex> lock(mtx_);
-    if(lane_relation_ && lane_change_relation_ && lane_)
+    boost::optional<std::vector<autoware_map_msgs::Lane> > lanes = planLane(from, to);
+    if(!lanes)
     {
         return boost::none;
     }
+    std::vector<autoware_map_msgs::Waypoint> waypoints;
+    for(int i=0; i<lanes->size(); i++)
+    {
+        if(i == 0)
+        {
+            for(int waypoint_id=from.waypoint_id; waypoint_id<=lanes.get()[i].end_waypoint_id; waypoint_id++)
+            {
+                autoware_map::Key<autoware_map_msgs::Waypoint> key(waypoint_id);
+                waypoints.push_back(map_.findByKey(key));
+            }
+        }
+        else if(i == (lanes->size()-1))
+        {
+            for(int waypoint_id=lanes.get()[i].start_waypoint_id; waypoint_id<=to.waypoint_id; waypoint_id++)
+            {
+                autoware_map::Key<autoware_map_msgs::Waypoint> key(waypoint_id);
+                waypoints.push_back(map_.findByKey(key));
+            }
+        }
+        else
+        {
+            for(int waypoint_id=lanes.get()[i].start_waypoint_id; waypoint_id<=lanes.get()[i].end_waypoint_id; waypoint_id++)
+            {
+                autoware_map::Key<autoware_map_msgs::Waypoint> key(waypoint_id);
+                waypoints.push_back(map_.findByKey(key));
+            }
+        }
+    }
+    return waypoints;
+}
+
+boost::optional<std::vector<autoware_map_msgs::Lane> > LaneNetwork::planLane(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to)
+{
+    std::lock_guard<std::mutex> lock(mtx_);
     std::vector<autoware_map_msgs::Lane> lanes;
     std::vector<autoware_map::Key<autoware_map_msgs::WaypointLaneRelation> > waypoint_lane_relation_keys;
     map_.getAllKeys(waypoint_lane_relation_keys);
@@ -146,33 +180,30 @@ void LaneNetwork::disableLaneChange()
 void LaneNetwork::generateLaneNetwork()
 {
     graph_.clear();
-    if(lane_relation_ && lane_change_relation_ && lane_)
+    //Edge : lane_id -> lane_id
+    std::vector<Edge> edges;
+    //distance (number of waypoints in the each lane)
+    std::vector<int> distance;
+    for(auto itr = lane_relation_keys_.begin(); itr != lane_relation_keys_.end(); itr++)
     {
-        //Edge : lane_id -> lane_id
-        std::vector<Edge> edges;
-        //distance (number of waypoints in the each lane)
-        std::vector<int> distance;
-        for(auto itr = lane_relation_keys_.begin(); itr != lane_relation_keys_.end(); itr++)
+        autoware_map_msgs::LaneRelation relation = map_.findByKey(*itr);
+        Edge edge(relation.lane_id,relation.next_lane_id);
+        edges.push_back(edge);
+        autoware_map::Key<autoware_map_msgs::Lane> lane_key(relation.lane_id);
+        autoware_map_msgs::Lane lane = map_.findByKey(lane_key);
+        distance.push_back(std::abs(lane.end_waypoint_id-lane.start_waypoint_id));
+    }
+    if(allow_lane_change_)
+    {
+        for(auto itr = lane_change_relation_keys_.begin(); itr != lane_change_relation_keys_.end(); itr++)
         {
-            autoware_map_msgs::LaneRelation relation = map_.findByKey(*itr);
+            autoware_map_msgs::LaneChangeRelation relation = map_.findByKey(*itr);
             Edge edge(relation.lane_id,relation.next_lane_id);
             edges.push_back(edge);
             autoware_map::Key<autoware_map_msgs::Lane> lane_key(relation.lane_id);
             autoware_map_msgs::Lane lane = map_.findByKey(lane_key);
             distance.push_back(std::abs(lane.end_waypoint_id-lane.start_waypoint_id));
         }
-        if(allow_lane_change_)
-        {
-            for(auto itr = lane_change_relation_keys_.begin(); itr != lane_change_relation_keys_.end(); itr++)
-            {
-                autoware_map_msgs::LaneChangeRelation relation = map_.findByKey(*itr);
-                Edge edge(relation.lane_id,relation.next_lane_id);
-                edges.push_back(edge);
-                autoware_map::Key<autoware_map_msgs::Lane> lane_key(relation.lane_id);
-                autoware_map_msgs::Lane lane = map_.findByKey(lane_key);
-                distance.push_back(std::abs(lane.end_waypoint_id-lane.start_waypoint_id));
-            }
-        }
-        graph_ = Graph(edges.begin(), edges.end(), distance.begin(), distance.size());
     }
+    graph_ = Graph(edges.begin(), edges.end(), distance.begin(), distance.size());
 }
