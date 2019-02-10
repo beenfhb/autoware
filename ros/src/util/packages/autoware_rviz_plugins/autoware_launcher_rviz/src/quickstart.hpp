@@ -17,6 +17,10 @@ class QuickStartPanel : public rviz::Panel
 
         QuickStartPanel(QWidget* parent = 0);
 
+    protected:
+
+        void paintEvent(QPaintEvent* event) override;
+
     private Q_SLOTS:
 
         void launch_button_toggled(bool checked);
@@ -29,7 +33,7 @@ class QuickStartPanel : public rviz::Panel
     private:
 
         QTcpSocket* socket;
-        std::unordered_map<std::string, QPushButton*> buttons;
+        std::unordered_map<QPushButton*, std::string> buttons;
 };
 
 }

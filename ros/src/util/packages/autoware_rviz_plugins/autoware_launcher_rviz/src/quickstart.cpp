@@ -2,6 +2,9 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QGridLayout>
+#include <QStyle>
+#include <QStyleOption>
+#include <QPainter>
 
 #include <iostream>
 using namespace std;
@@ -24,18 +27,19 @@ namespace autoware_launcher_rviz {
 QuickStartPanel::QuickStartPanel(QWidget* parent) : rviz::Panel(parent)
 {
     QRect screen = QApplication::desktop()->screenGeometry();
-    int font_size = min(screen.width(), screen.height()) / 100;
-    setStyleSheet(QString("font-size: %1px;").arg(font_size));
+    int font_size = min(screen.width(), screen.height()) / 50;
+    setStyleSheet(QString("* {font-size: %1px; background-color: #FFFFFF;} QPushButton{color: #FFFFFF; background-color: #223A70;}").arg(font_size));
 
     auto layout = new QGridLayout();
     setLayout(layout);
 
     std::string rootpath = "root/";
+    std::vector<const char*> nodetexts = {"Localization", "Detection", "Prediction", "Decision", "Mission", "Motion"};
     std::vector<const char*> nodenames = {"localization", "detection", "prediction", "decision", "mission", "motion"};
     for(size_t i = 0; i < nodenames.size(); ++i)
     {
-        auto button = create_push_button(nodenames[i]);
-        buttons[rootpath + nodenames[i]] = button;
+        auto button = create_push_button(nodetexts[i]);
+        buttons[button] = rootpath + nodenames[i];
         layout->addWidget(button, i/3, i%3);
         connect(button, &QPushButton::toggled, this, &QuickStartPanel::launch_button_toggled);
     }
@@ -48,11 +52,20 @@ QuickStartPanel::QuickStartPanel(QWidget* parent) : rviz::Panel(parent)
     socket->connectToHost("localhost", 33136);
 }
 
+void QuickStartPanel::paintEvent(QPaintEvent* event)
+{
+    QStyleOption option;
+    option.init(this);
+    QPainter painter(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &option, &painter, this);
+}
+
+
 void QuickStartPanel::launch_button_toggled(bool checked)
 {
     auto button = static_cast<QPushButton*>(sender());
-    QString json = R"({"command":"%1", "path":"root/%2"})";
-    json = json.arg(checked ? "launch" : "terminate").arg(button->text());
+    QString json = R"({"command":"%1", "path":"%2"})";
+    json = json.arg(checked ? "launch" : "terminate").arg(QString::fromStdString(buttons[button]));
     cout << json.toStdString() << endl;
     socket->write(json.toUtf8().append('\0'));
 }
@@ -62,7 +75,7 @@ void QuickStartPanel::server_connected()
     cout << "connected" << endl;
     for(const auto& pair : buttons)
     {
-        pair.second->setEnabled(true);
+        pair.first->setEnabled(true);
     }
 }
 
@@ -71,7 +84,7 @@ void QuickStartPanel::server_disconnected()
     cout << "disconnected" << endl;
     for(const auto& pair : buttons)
     {
-        pair.second->setEnabled(false);
+        pair.first->setEnabled(false);
     }
 }
 
