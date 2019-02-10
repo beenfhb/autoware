@@ -23,7 +23,12 @@
 #include <ros/ros.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
-#include <std_msgs/Int32.h>
+#include <autoware_map_msgs/SignalLightArray.h>
+#include <autoware_msgs/Signals.h>
+#include <autoware_msgs/ProjectionMatrix.h>
+
+//headers in boost
+#include <boost/optional.hpp>
 
 class AutowareMapSignalProjector
 {
@@ -33,7 +38,12 @@ public:
 private:
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
-    void targetSignalIndexCallback(const std_msgs::Int32::ConstPtr msg);
+    ros::Subscriber signal_light_sub_;
+    ros::Subscriber projection_matrix_sub_;
+    ros::Publisher roi_signal_pub_;
+    boost::optional<autoware_msgs::ProjectionMatrix> proj_matrix_;
+    void targetSignalLightCallback(const autoware_map_msgs::SignalLightArray::ConstPtr msg);
+    void projectionMatrixCallback(const autoware_msgs::ProjectionMatrix::ConstPtr msg);
 };
 
 #endif  //AUTOWARE_MAP_SIGNAL_PROJECTOR_H_INCLUDED
