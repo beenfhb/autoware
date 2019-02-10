@@ -8,8 +8,8 @@ panel:
   widget: node.panel
   frames:
   - target: args.width
-    widget: basic.text
+    widget: basic.int
   - target: args.height
-    widget: basic.text
+    widget: basic.int
   - target: args.fps
-    widget: basic.text
+    widget: basic.int

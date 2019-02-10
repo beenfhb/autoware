@@ -37,6 +37,7 @@ class AwPluginNode(basetree.AwBaseNode):
         super(AwPluginNode, self).__init__(tree, path)
         self.__isleaf = None
         self.__rosxml = None
+        self.__fields = None
         self.__args   = None
         self.__exts   = None
         self.__rules  = None
@@ -131,26 +132,13 @@ class AwPluginNode(basetree.AwBaseNode):
             self.__rules  = [AwPluginRuleElement(data, self) for data in ydata.get("rules", [])]
             self.__panel  = AwPluginPanelElement(ydata.get("panel", {}))
             self.__frame  = AwPluginFrameElement(ydata.get("frame", {}))
+            fields = {}
+            fields.update({"exts."+data.name: data for data in self.__exts})
+            fields.update({"args."+data.name: data for data in self.__args})
 
-        """
-        # Validation
-        view_type = ["text", "file", "filelist"]
-        rule_type = ["unit", "list"]
-        for data in self.__args:
-            if data["view"] not in view_type: raise Exception("Plugin Args Type: " + filepath)
-        for name, data in self.__rule.items():
-            if data["type"] not in rule_type: raise TypeError("Plugin Rule Type: " + filepath)
-
-        # Auto complete
-        default_values = {"bool": "False", "str": "", "int": 0, "real": 0.0}
-        for group in self.__args:
-            if type(group["data"]) == list:
-                for field in group["data"]:
-                    field.setdefault("default", default_values[field["type"]])
-            else:
-                field = group["data"]
-                field.setdefault("default", default_values[field["type"]])
-        """
+            # Validation
+            for frame in self.__panel.frames:
+                frame.debug(fields)
 
 
 
@@ -211,6 +199,30 @@ class AwPluginFrameElement(object):
 
     def todict(self):
         return vars(self)
+
+    # ToDo: Move to guimgr
+    def debug(self, fields):
+        if self.widget in ["basic.textlist", "basic.filelist"]:
+            if fields[self.target].list is None:
+                raise TypeError(fields[self.target].name + ": " + self.widget + " " + fields[self.target].type)
+        elif self.widget in ["basic.text", "basic.file"]:
+            if fields[self.target].type not in ["str"]:
+                raise TypeError(fields[self.target].name + ": " + self.widget + " " + fields[self.target].type)
+        elif self.widget in ["basic.bool"]:
+            if fields[self.target].type not in ["bool"]:
+                raise TypeError(fields[self.target].name + ": " + self.widget + " " + fields[self.target].type)
+        elif self.widget in ["basic.int"]:
+            if fields[self.target].type not in ["int"]:
+                raise TypeError(fields[self.target].name + ": " + self.widget + " " + fields[self.target].type)
+        elif self.widget in ["basic.real"]:
+            if fields[self.target].type not in ["real"]:
+                raise TypeError(fields[self.target].name + ": " + self.widget + " " + fields[self.target].type)
+        elif self.widget in ["basic.transform"]:
+            if type(self.target) is not list:
+                raise TypeError(fields[self.target].name + ": transform")
+        else:
+            raise TypeError("unknown widget: " + self.widget + " " + self.target)
+
 
 class AwPluginPanelElement(object):
 

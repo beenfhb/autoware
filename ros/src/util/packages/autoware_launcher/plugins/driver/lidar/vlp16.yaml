@@ -12,4 +12,4 @@ panel:
   - target: args.device_addr
     widget: basic.text
   - target: args.device_port
-    widget: basic.text
+    widget: basic.int

@@ -50,6 +50,7 @@ class AwQtGuiClient(object):
         stylesheet = []
         stylesheet.append("#FrameHeader { border-top: 1px solid; } #FrameHeader, #FrameWidget { padding: 5px; border-bottom: 1px solid; border-left: 1px solid; border-right: 1px solid; }")
         stylesheet.append("* { font-size: " + str(resolution/100) + "px; }")
+        stylesheet.append("QCheckBox::indicator { width: 20px; height: 20px; }")
         application.setStyleSheet(" ".join(stylesheet))
 
         self.__treeview   = AwTreeViewPanel(self) # ToDo: consider moving to guimgr

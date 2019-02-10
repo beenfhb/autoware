@@ -9,4 +9,4 @@ panel:
   widget: node.panel
   frames:
   - target: args.plane
-    widget: basic.text
+    widget: basic.int

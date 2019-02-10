@@ -13,4 +13,4 @@ panel:
   - target: args.topic_twist_stamped
     widget: basic.text
   - target: args.sim_mode
-    widget: basic.text
+    widget: basic.bool
