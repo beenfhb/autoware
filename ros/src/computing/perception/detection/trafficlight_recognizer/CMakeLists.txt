@@ -28,6 +28,8 @@ find_package(catkin REQUIRED COMPONENTS
         waypoint_follower
         autoware_msgs
         vector_map
+        message_filters
+        autoware_map
         )
 
 find_package(OpenCV REQUIRED)
@@ -81,7 +83,8 @@ catkin_package(
         vector_map_server
         visualization_msgs
         waypoint_follower
-
+        message_filters
+        autoware_map
         LIBRARIES libcontext
 )
 
@@ -143,6 +146,21 @@ target_link_libraries(feat_proj
         )
 
 add_dependencies(feat_proj
+        ${catkin_EXPORTED_TARGETS}
+        )
+
+### autoware_map_signal_projector ###
+add_executable(autoware_map_signal_projector
+        nodes/autoware_map_signal_projector/autoware_map_signal_projector_node.cpp
+        nodes/autoware_map_signal_projector/autoware_map_signal_projector.cpp
+        )
+
+target_link_libraries(autoware_map_signal_projector
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        )
+
+add_dependencies(autoware_map_signal_projector
         ${catkin_EXPORTED_TARGETS}
         )
 
@@ -299,7 +317,7 @@ else ()                          # if(EXISTS "${SSD_CAFFE_PATH}")
 endif ()                         # if(EXISTS "${SSD_CAFFE_PATH}")
 
 
-install(TARGETS region_tlr feat_proj tlr_tuner roi_extractor label_maker
+install(TARGETS region_tlr feat_proj tlr_tuner roi_extractor label_maker autoware_map_signal_projector
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

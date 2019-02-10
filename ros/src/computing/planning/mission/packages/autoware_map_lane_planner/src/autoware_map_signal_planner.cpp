@@ -23,6 +23,7 @@ AutowareMapSignalPlanner::AutowareMapSignalPlanner(ros::NodeHandle nh,ros::NodeH
     nh_ = nh;
     pnh_ = pnh;
     pnh_.param<double>("deceleration", deceleration_, 5.0);
+    target_signal_light_index_pub_ = nh_.advertise<std_msgs::Int32>("/target_signal_light_index",1);
     traffic_light_.traffic_light = traffic_light_.COLOR_UNKNOWN;
     autoware_map_.subscribe(nh_, autoware_map::Category::LANE);
     autoware_map_.subscribe(nh_, autoware_map::Category::WAYPOINT);
@@ -64,7 +65,15 @@ std::vector<autoware_map_msgs::Waypoint> AutowareMapSignalPlanner::planRedSignal
                 {
                     stop_waypoint_found = true;
                     stop_relation = *relation_itr;
+                    std_msgs::Int32 target_signal_light_index;
+                    target_signal_light_index.data = stop_relation.signal_id;
+                    target_signal_light_index_pub_.publish(target_signal_light_index);
+                    break;
                 }
+            }
+            if(stop_waypoint_found)
+            {
+                break;
             }
         }
     }
