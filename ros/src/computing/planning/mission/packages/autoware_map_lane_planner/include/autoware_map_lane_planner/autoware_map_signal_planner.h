@@ -30,11 +30,14 @@ public:
     ~AutowareMapSignalPlanner();
     std::vector<autoware_map_msgs::Waypoint> plan(std::vector<autoware_map_msgs::Lane> lanes,autoware_map_msgs::Waypoint from ,autoware_map_msgs::Waypoint to);
 private:
+    std::vector<autoware_map_msgs::Waypoint> planRedSignalWaypoints(std::vector<autoware_map_msgs::Waypoint> base_waypoints);
+    std::vector<autoware_map_msgs::Waypoint> planBaseWaypoints(std::vector<autoware_map_msgs::Lane> lanes,autoware_map_msgs::Waypoint from ,autoware_map_msgs::Waypoint to);
     autoware_map::AutowareMap autoware_map_;
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
     void trafficLightCallback(const autoware_msgs::TrafficLight::ConstPtr msg);
     autoware_msgs::TrafficLight traffic_light_;
+    double deceleration_;
 };
 
 #endif

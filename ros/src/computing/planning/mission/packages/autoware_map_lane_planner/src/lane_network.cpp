@@ -44,46 +44,6 @@ LaneNetwork::~LaneNetwork()
 
 }
 
-/*
-boost::optional<std::vector<autoware_map_msgs::Waypoint> > LaneNetwork::plan(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to)
-{
-    boost::optional<std::vector<autoware_map_msgs::Lane> > lanes = planLane(from, to);
-    if(!lanes)
-    {
-        return boost::none;
-    }
-    std::vector<autoware_map_msgs::Waypoint> waypoints;
-    for(int i=0; i<lanes->size(); i++)
-    {
-        if(i == 0)
-        {
-            for(int waypoint_id=from.waypoint_id; waypoint_id<=lanes.get()[i].end_waypoint_id; waypoint_id++)
-            {
-                autoware_map::Key<autoware_map_msgs::Waypoint> key(waypoint_id);
-                waypoints.push_back(map_.findByKey(key));
-            }
-        }
-        else if(i == (lanes->size()-1))
-        {
-            for(int waypoint_id=lanes.get()[i].start_waypoint_id; waypoint_id<=to.waypoint_id; waypoint_id++)
-            {
-                autoware_map::Key<autoware_map_msgs::Waypoint> key(waypoint_id);
-                waypoints.push_back(map_.findByKey(key));
-            }
-        }
-        else
-        {
-            for(int waypoint_id=lanes.get()[i].start_waypoint_id; waypoint_id<=lanes.get()[i].end_waypoint_id; waypoint_id++)
-            {
-                autoware_map::Key<autoware_map_msgs::Waypoint> key(waypoint_id);
-                waypoints.push_back(map_.findByKey(key));
-            }
-        }
-    }
-    return waypoints;
-}
-*/
-
 boost::optional<std::vector<autoware_map_msgs::Lane> > LaneNetwork::plan(autoware_map_msgs::Waypoint from, autoware_map_msgs::Waypoint to)
 {
     std::lock_guard<std::mutex> lock(mtx_);
