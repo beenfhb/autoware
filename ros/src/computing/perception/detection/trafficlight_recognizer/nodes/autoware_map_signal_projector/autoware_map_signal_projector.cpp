@@ -29,3 +29,8 @@ AutowareMapSignalProjector::~AutowareMapSignalProjector()
 {
 
 }
+
+void AutowareMapSignalProjector::targetSignalIndexCallback(const std_msgs::Int32::ConstPtr msg)
+{
+    return;
+}

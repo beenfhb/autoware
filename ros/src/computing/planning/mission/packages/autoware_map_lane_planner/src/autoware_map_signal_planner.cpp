@@ -23,10 +23,12 @@ AutowareMapSignalPlanner::AutowareMapSignalPlanner(ros::NodeHandle nh,ros::NodeH
     nh_ = nh;
     pnh_ = pnh;
     pnh_.param<double>("deceleration", deceleration_, 5.0);
-    target_signal_light_index_pub_ = nh_.advertise<std_msgs::Int32>("/target_signal_light_index",1);
+    target_signal_light_pub_ = nh_.advertise<autoware_map_msgs::SignalLightArray>("/target_signal_light",1);
     traffic_light_.traffic_light = traffic_light_.COLOR_UNKNOWN;
     autoware_map_.subscribe(nh_, autoware_map::Category::LANE);
     autoware_map_.subscribe(nh_, autoware_map::Category::WAYPOINT);
+    autoware_map_.subscribe(nh_, autoware_map::Category::SIGNAL);
+    autoware_map_.subscribe(nh_, autoware_map::Category::SIGNAL_LIGHT);
     autoware_map_.subscribe(nh_, autoware_map::Category::LANE_SIGNAL_LIGHT_RELATION);
     autoware_map_.subscribe(nh_, autoware_map::Category::WAYPOINT_LANE_RELATION);
     autoware_map_.subscribe(nh_, autoware_map::Category::WAYPOINT_SIGNAL_RELATION);
@@ -48,35 +50,59 @@ std::vector<autoware_map_msgs::Waypoint> AutowareMapSignalPlanner::planRedSignal
     std::vector<autoware_map_msgs::Waypoint> waypoints;
     bool stop_waypoint_found = false;
     autoware_map::WaypointSignalRelation stop_relation;
-    if(traffic_light_.traffic_light == traffic_light_.COLOR_RED)
+    autoware_map_msgs::SignalLightArray target_signal_light;
+    target_signal_light.header.stamp = ros::Time::now();
+    std::vector<autoware_map::Key<autoware_map::WaypointSignalRelation> > relation_keys;
+    autoware_map_.getAllKeys(relation_keys);
+    std::vector<autoware_map::WaypointSignalRelation> relations;
+    for(auto itr = relation_keys.begin(); itr != relation_keys.end(); itr++)
     {
-        std::vector<autoware_map::Key<autoware_map::WaypointSignalRelation> > relation_keys;
-        autoware_map_.getAllKeys(relation_keys);
-        std::vector<autoware_map::WaypointSignalRelation> relations;
-        for(auto itr = relation_keys.begin(); itr != relation_keys.end(); itr++)
+        relations.push_back(autoware_map_.findByKey(*itr));
+    }
+    for(auto waypoint_itr = base_waypoints.begin(); waypoint_itr != base_waypoints.end(); waypoint_itr++)
+    {
+        for(auto relation_itr = relations.end(); relation_itr != relations.end(); relation_itr++)
         {
-            relations.push_back(autoware_map_.findByKey(*itr));
-        }
-        for(auto waypoint_itr = base_waypoints.begin(); waypoint_itr != base_waypoints.end(); waypoint_itr++)
-        {
-            for(auto relation_itr = relations.end(); relation_itr != relations.end(); relation_itr++)
+            if(relation_itr->waypoint_id == waypoint_itr->waypoint_id)
             {
-                if(relation_itr->waypoint_id == waypoint_itr->waypoint_id)
-                {
-                    stop_waypoint_found = true;
-                    stop_relation = *relation_itr;
-                    std_msgs::Int32 target_signal_light_index;
-                    target_signal_light_index.data = stop_relation.signal_id;
-                    target_signal_light_index_pub_.publish(target_signal_light_index);
-                    break;
-                }
-            }
-            if(stop_waypoint_found)
-            {
+                stop_waypoint_found = true;
+                stop_relation = *relation_itr;
                 break;
             }
         }
+        if(stop_waypoint_found)
+        {
+            break;
+        }
     }
+    // reset flags if the traffic light color is GREEN or UNKOWN
+    if(traffic_light_.traffic_light != traffic_light_.COLOR_RED)
+    {
+        stop_waypoint_found = false;
+        target_signal_light.data.clear();
+    }
+    else
+    {
+        std::vector<autoware_map::Key<autoware_map::SignalLight> > keys;
+        autoware_map_.getAllKeys(keys);
+        for(auto itr = keys.begin(); itr != keys.end(); itr++)
+        {
+            autoware_map::SignalLight signal_light = autoware_map_.findByKey(*itr);
+            if(signal_light.signal_id == stop_relation.signal_id)
+            {
+                autoware_map_msgs::SignalLight signal_light_msg;
+                signal_light_msg.signal_light_id = signal_light.signal_light_id;
+                signal_light_msg.signal_id = signal_light.signal_id;
+                signal_light_msg.point_id = signal_light.point_id;
+                signal_light_msg.horizontal_angle = signal_light.horizontal_angle;
+                signal_light_msg.vertical_angle = signal_light.vertical_angle;
+                signal_light_msg.color_type = signal_light.color_type;
+                signal_light_msg.arrow_type = signal_light.arrow_type;
+                target_signal_light.data.push_back(signal_light_msg);
+            }
+        }
+    }
+    target_signal_light_pub_.publish(target_signal_light);
     if(stop_waypoint_found)
     {
         waypoints = base_waypoints;

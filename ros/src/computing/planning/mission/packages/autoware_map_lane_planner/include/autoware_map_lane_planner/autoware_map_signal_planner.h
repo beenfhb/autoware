@@ -23,9 +23,6 @@
 #include <autoware_map/autoware_map.h>
 #include <autoware_msgs/TrafficLight.h>
 
-//headers in ROS
-#include <std_msgs/Int32.h>
-
 class AutowareMapSignalPlanner
 {
 public:
@@ -41,7 +38,7 @@ private:
     void trafficLightCallback(const autoware_msgs::TrafficLight::ConstPtr msg);
     autoware_msgs::TrafficLight traffic_light_;
     double deceleration_;
-    ros::Publisher target_signal_light_index_pub_;
+    ros::Publisher target_signal_light_pub_;
 };
 
 #endif

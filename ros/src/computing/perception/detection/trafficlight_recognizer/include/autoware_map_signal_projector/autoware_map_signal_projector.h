@@ -23,6 +23,7 @@
 #include <ros/ros.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
+#include <std_msgs/Int32.h>
 
 class AutowareMapSignalProjector
 {
@@ -32,6 +33,7 @@ public:
 private:
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
+    void targetSignalIndexCallback(const std_msgs::Int32::ConstPtr msg);
 };
 
 #endif  //AUTOWARE_MAP_SIGNAL_PROJECTOR_H_INCLUDED
