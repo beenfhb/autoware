@@ -909,6 +909,35 @@ TiXmlElement* MappingHelpers::GetDataFolder(const string& folderName, TiXmlEleme
 	return nullptr;
 }
 
+void MappingHelpers::FindElements(const std::string& name, TiXmlElement* parent_element, std::vector<TiXmlElement*>& element_list)
+{
+	if(parent_element == nullptr)
+		return;
+	else if(name.compare(parent_element->Value()) == 0)
+		element_list.push_back(parent_element);
+
+	std::cout << "Num:" << element_list.size() << ", main element: " <<  parent_element->Value() << std::endl;
+
+	FindElements(name, parent_element->FirstChildElement(), element_list);
+	FindElements(name, parent_element->NextSiblingElement(), element_list);
+}
+
+void MappingHelpers::FindFirstElement(const std::string& name, TiXmlElement* parent_element, std::vector<TiXmlElement*>& element_list)
+{
+	if(parent_element == nullptr || element_list.size() > 0)
+		return;
+	else if(name.compare(parent_element->Value()) == 0)
+	{
+		element_list.push_back(parent_element);
+		return;
+	}
+
+	std::cout << "Num:" << element_list.size() << ", main element: " <<  parent_element->Value() << std::endl;
+
+	FindFirstElement(name, parent_element->FirstChildElement(), element_list);
+	FindFirstElement(name, parent_element->NextSiblingElement(), element_list);
+}
+
 WayPoint* MappingHelpers::GetClosestWaypointFromMap(const WayPoint& pos, RoadNetwork& map, const bool bDirectionBased)
 {
 	double distance_to_nearest_lane = 1;
