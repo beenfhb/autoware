@@ -23,10 +23,19 @@ public:
 
 	typedef std::pair<kpid,kpid> KpPair;
 
+	// Match with epipolar constraints
 	static void
 	matchAny(
 		const BaseFrame &F1,
 		const BaseFrame &F2,
+		std::vector<KpPair> &featurePairs,
+		cv::Ptr<cv::DescriptorMatcher> matcher,
+		TTransform &T12);
+
+	// Match with homography constraints
+	static void
+	matchH(
+		const BaseFrame &F1, const BaseFrame &F2,
 		std::vector<KpPair> &featurePairs,
 		cv::Ptr<cv::DescriptorMatcher> matcher,
 		TTransform &T12);
