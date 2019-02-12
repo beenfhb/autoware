@@ -167,6 +167,9 @@ public:
 		const std::string &pmeidaiPCDMapFile,
 		const TTransform &plidarToCameraTransform=TTransform::Identity());
 
+	inline cv::Mat getGroundPlaneMask () const
+	{ return groundPlanePatch.clone(); }
+
 	/*
 	* Convert time as represented by seconds from start of bag
 	*/
@@ -208,6 +211,7 @@ protected:
 	// Masks for mapping and exposure adjustment
 	cv::Mat dashBoardMask;
 	cv::Mat exposureMask;
+	cv::Mat groundPlanePatch;
 	ImagePreprocessor mPreprocessor;
 
 	// Number of all images in the bag

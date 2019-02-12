@@ -31,6 +31,7 @@ string MeidaiBagDataset::dSetName = "Nagoya University";
 
 #define _DashboardMask "conf/meidai_mask.png"
 #define _ExposureAdjustmentMask "conf/meidai_exposure_adjust.png"
+#define _GroundPlanePatchMask "conf/meidai_ground_plane_patch.png"
 
 
 const string
@@ -85,6 +86,8 @@ MeidaiBagDataset::MeidaiBagDataset(
 	if (exposureMask.empty())
 		throw runtime_error("Unable to load Meidai exposure mask");
 */
+	auto mask3Path = myPath / _GroundPlanePatchMask;
+	groundPlanePatch = cv::imread(mask3Path.string(), cv::IMREAD_GRAYSCALE);
 
 	mPreprocessor.setMode(ImagePreprocessor::ProcessMode::AGC);
 	mPreprocessor.setMask(exposureMask);
