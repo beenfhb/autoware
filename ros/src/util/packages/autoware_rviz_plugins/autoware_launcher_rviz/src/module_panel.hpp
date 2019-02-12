@@ -9,13 +9,13 @@
 
 namespace autoware_launcher_rviz {
 
-class QuickStartPanel : public rviz::Panel
+class ModulePanel : public rviz::Panel
 {
     Q_OBJECT
 
     public:
 
-        QuickStartPanel(QWidget* parent = 0);
+        ModulePanel(QWidget* parent = 0);
 
     protected:
 

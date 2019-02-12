@@ -1,4 +1,4 @@
-#include "quickstart.hpp"
+#include "module_panel.hpp"
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QGridLayout>
@@ -24,7 +24,7 @@ QPushButton* create_push_button(QString title)
 
 namespace autoware_launcher_rviz {
 
-QuickStartPanel::QuickStartPanel(QWidget* parent) : rviz::Panel(parent)
+ModulePanel::ModulePanel(QWidget* parent) : rviz::Panel(parent)
 {
     QRect screen = QApplication::desktop()->screenGeometry();
     int font_size = min(screen.width(), screen.height()) / 50;
@@ -41,18 +41,18 @@ QuickStartPanel::QuickStartPanel(QWidget* parent) : rviz::Panel(parent)
         auto button = create_push_button(nodetexts[i]);
         buttons[button] = rootpath + nodenames[i];
         layout->addWidget(button, i/3, i%3);
-        connect(button, &QPushButton::toggled, this, &QuickStartPanel::launch_button_toggled);
+        connect(button, &QPushButton::toggled, this, &ModulePanel::launch_button_toggled);
     }
 
     socket = new QTcpSocket(this);
-    connect(socket, &QTcpSocket::connected,    this, &QuickStartPanel::server_connected   );
-    connect(socket, &QTcpSocket::disconnected, this, &QuickStartPanel::server_disconnected);
-    connect(socket, &QTcpSocket::readyRead,    this, &QuickStartPanel::server_ready_read  );
-    connect(socket, static_cast<void(QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &QuickStartPanel::server_error);
+    connect(socket, &QTcpSocket::connected,    this, &ModulePanel::server_connected   );
+    connect(socket, &QTcpSocket::disconnected, this, &ModulePanel::server_disconnected);
+    connect(socket, &QTcpSocket::readyRead,    this, &ModulePanel::server_ready_read  );
+    connect(socket, static_cast<void(QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &ModulePanel::server_error);
     socket->connectToHost("localhost", 33136);
 }
 
-void QuickStartPanel::paintEvent(QPaintEvent* event)
+void ModulePanel::paintEvent(QPaintEvent* event)
 {
     QStyleOption option;
     option.init(this);
@@ -61,7 +61,7 @@ void QuickStartPanel::paintEvent(QPaintEvent* event)
 }
 
 
-void QuickStartPanel::launch_button_toggled(bool checked)
+void ModulePanel::launch_button_toggled(bool checked)
 {
     auto button = static_cast<QPushButton*>(sender());
     QString json = R"({"command":"%1", "path":"%2"})";
@@ -70,7 +70,7 @@ void QuickStartPanel::launch_button_toggled(bool checked)
     socket->write(json.toUtf8().append('\0'));
 }
 
-void QuickStartPanel::server_connected()
+void ModulePanel::server_connected()
 {
     cout << "connected" << endl;
     for(const auto& pair : buttons)
@@ -79,7 +79,7 @@ void QuickStartPanel::server_connected()
     }
 }
 
-void QuickStartPanel::server_disconnected()
+void ModulePanel::server_disconnected()
 {
     cout << "disconnected" << endl;
     for(const auto& pair : buttons)
@@ -88,13 +88,13 @@ void QuickStartPanel::server_disconnected()
     }
 }
 
-void QuickStartPanel::server_error()
+void ModulePanel::server_error()
 {
     cout << "error" << endl;
     cout << socket->errorString().toStdString() << endl;
 }
 
-void QuickStartPanel::server_ready_read()
+void ModulePanel::server_ready_read()
 {
     cout << "ready_read" << endl;
     cout << socket->readAll().toStdString() << endl;
@@ -103,4 +103,4 @@ void QuickStartPanel::server_ready_read()
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(autoware_launcher_rviz::QuickStartPanel, rviz::Panel)
+PLUGINLIB_EXPORT_CLASS(autoware_launcher_rviz::ModulePanel, rviz::Panel)
