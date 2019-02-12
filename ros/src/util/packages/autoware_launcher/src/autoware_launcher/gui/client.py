@@ -33,6 +33,8 @@ class AwQtGuiClient(object):
         self.__server = server
         self.__server.register_client(self)
 
+
+
     def guimgr(self):
         return self.__guimgr
 
@@ -47,11 +49,10 @@ class AwQtGuiClient(object):
         resolution = application.desktop().screenGeometry()
         resolution = min(resolution.width(), resolution.height())
 
-        stylesheet = []
-        stylesheet.append("#FrameHeader { border-top: 1px solid; } #FrameHeader, #FrameWidget { padding: 5px; border-bottom: 1px solid; border-left: 1px solid; border-right: 1px solid; }")
-        stylesheet.append("* { font-size: " + str(resolution/100) + "px; }")
-        stylesheet.append("QCheckBox::indicator { width: 20px; height: 20px; }")
-        application.setStyleSheet(" ".join(stylesheet))
+        with open(myutils.package("resources/skins/autoware.css")) as fp:
+            stylesheet = fp.read()
+        stylesheet += "* { font-size: " + str(resolution/100) + "px; }"
+        application.setStyleSheet(stylesheet)
 
         self.__treeview   = AwTreeViewPanel(self) # ToDo: consider moving to guimgr
         self.__control    = AwControlPanel(self)  # ToDo: consider moving to guimgr
