@@ -21,14 +21,19 @@
 
 //headers in ROS
 #include <ros/ros.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/sync_policies/approximate_time.h>
 #include <autoware_map_msgs/SignalLightArray.h>
-#include <autoware_msgs/Signals.h>
+#include <sensor_msgs/RegionOfInterest.h>
 #include <autoware_msgs/ProjectionMatrix.h>
+#include <sensor_msgs/CameraInfo.h>
 
 //headers in boost
 #include <boost/optional.hpp>
+
+//headers in Autoware
+#include <autoware_map/autoware_map.h>
+
+//headers in Eigen
+#include <Eigen/Core>
 
 class AutowareMapSignalProjector
 {
@@ -38,12 +43,18 @@ public:
 private:
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
+    ros::Subscriber camera_info_sub_;
     ros::Subscriber signal_light_sub_;
     ros::Subscriber projection_matrix_sub_;
     ros::Publisher roi_signal_pub_;
-    boost::optional<autoware_msgs::ProjectionMatrix> proj_matrix_;
+    std::string camera_info_topic_;
+    std::string proj_matrix_topic_;
+    boost::optional<Eigen::MatrixXd> proj_matrix_;
+    boost::optional<Eigen::MatrixXd> p_matrix_;
     void targetSignalLightCallback(const autoware_map_msgs::SignalLightArray::ConstPtr msg);
     void projectionMatrixCallback(const autoware_msgs::ProjectionMatrix::ConstPtr msg);
+    void cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr msg);
+    autoware_map::AutowareMap autoware_map_;
 };
 
 #endif  //AUTOWARE_MAP_SIGNAL_PROJECTOR_H_INCLUDED

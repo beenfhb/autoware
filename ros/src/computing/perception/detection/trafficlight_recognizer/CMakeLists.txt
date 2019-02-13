@@ -23,12 +23,13 @@ find_package(catkin REQUIRED COMPONENTS
         sensor_msgs
         std_msgs
         tf
+        tf2_ros
+        tf2_geometry_msgs
         vector_map_server
         visualization_msgs
         waypoint_follower
         autoware_msgs
         vector_map
-        message_filters
         autoware_map
         )
 
@@ -79,11 +80,12 @@ catkin_package(
         sensor_msgs
         std_msgs
         tf
+        tf2_ros
+        tf2_geometry_msgs
         vector_map
         vector_map_server
         visualization_msgs
         waypoint_follower
-        message_filters
         autoware_map
         LIBRARIES libcontext
 )
