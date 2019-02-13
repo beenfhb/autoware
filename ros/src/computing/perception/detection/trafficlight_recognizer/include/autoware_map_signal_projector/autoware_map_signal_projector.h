@@ -21,16 +21,25 @@
 
 //headers in ROS
 #include <ros/ros.h>
-#include <autoware_map_msgs/SignalLightArray.h>
-#include <sensor_msgs/RegionOfInterest.h>
-#include <autoware_msgs/ProjectionMatrix.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 //headers in boost
 #include <boost/optional.hpp>
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
+
+//headers in STL
+#include <mutex>
 
 //headers in Autoware
 #include <autoware_map/autoware_map.h>
+#include <autoware_map_msgs/SignalLightArray.h>
+#include <autoware_msgs/SignalRoi.h>
+#include <autoware_msgs/ProjectionMatrix.h>
 
 //headers in Eigen
 #include <Eigen/Core>
@@ -46,15 +55,24 @@ private:
     ros::Subscriber camera_info_sub_;
     ros::Subscriber signal_light_sub_;
     ros::Subscriber projection_matrix_sub_;
+    ros::Subscriber current_pose_sub_;
     ros::Publisher roi_signal_pub_;
     std::string camera_info_topic_;
     std::string proj_matrix_topic_;
     boost::optional<Eigen::MatrixXd> proj_matrix_;
     boost::optional<Eigen::MatrixXd> p_matrix_;
+    boost::optional<autoware_map_msgs::SignalLightArray> target_roi_;
+    double publish_rate_;
+    std::string camera_frame_;
+    std::string map_frame_;
+    int signal_light_radius_;
     void targetSignalLightCallback(const autoware_map_msgs::SignalLightArray::ConstPtr msg);
     void projectionMatrixCallback(const autoware_msgs::ProjectionMatrix::ConstPtr msg);
     void cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr msg);
+    void currentPoseCallback(const geometry_msgs::PoseStampedConstPtr msg);
     autoware_map::AutowareMap autoware_map_;
+    tf2_ros::Buffer tf_buffer_;
+    tf2_ros::TransformListener tf_listener_;
 };
 
 #endif  //AUTOWARE_MAP_SIGNAL_PROJECTOR_H_INCLUDED
