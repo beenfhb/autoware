@@ -353,3 +353,11 @@ BaseFrame::projectPointCloud(
 
 	return frameImage;
 }
+
+
+Eigen::Vector3d
+BaseFrame::keypointn (kpid k) const
+{
+	Vector3d v = keypointh(k);
+	return cameraParam.toMatrix3().inverse() * v;
+}

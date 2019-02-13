@@ -167,8 +167,7 @@ public:
 		const std::string &pmeidaiPCDMapFile,
 		const TTransform &plidarToCameraTransform=TTransform::Identity());
 
-	inline cv::Mat getGroundPlaneMask () const
-	{ return groundPlanePatch.clone(); }
+	cv::Mat getGroundPlaneMask () const;
 
 	/*
 	* Convert time as represented by seconds from start of bag

@@ -383,6 +383,7 @@ Matcher::rotationFinder
 const std::vector<KpPair> &featurePairs,
 std::vector<double> &cs12)
 {
+/*
 	MatrixX4d M;
 	M.resize(featurePairs.size(), Eigen::NoChange);
 	for (int ip=0; ip<featurePairs.size(); ++ip) {
@@ -409,6 +410,35 @@ std::vector<double> &cs12)
 	cs12[1] = s1;
 	cs12[2] = c2;
 	cs12[3] = s2;
+*/
+	double
+		theta = 0.0,
+		phi = 0.0;
+
+	const Vector3d
+		P0 = Fr1.keypointn(featurePairs[0].first),
+		P0w = Fr2.keypointn(featurePairs[0].second),
+		P1 = Fr1.keypointn(featurePairs[1].first),
+		P1w = Fr2.keypointn(featurePairs[1].second);
+
+	for (int i=0; i<10; ++i) {
+		// the function
+		Vector2d F;
+		F[0] = -P0.x()*P0w.y()*cos(phi) + P0.y()*P0w.x()*cos(theta-phi) + P0.z()*P0w.y()*sin(phi) + P0.y()*P0w.z()*sin(theta-phi);
+		F[1] = -P1.x()*P1w.y()*cos(phi) + P1.y()*P1w.x()*cos(theta-phi) + P1.z()*P1w.y()*sin(phi) + P1.y()*P1w.z()*sin(theta-phi);
+
+		Matrix2d J;
+		J(0,0) = -P0.y()*P0w.x()*sin(theta-phi) + P0.y()*P0w.z()*cos(theta-phi);
+		J(0,1) = P0.x()*P0w.y()*sin(phi) + P0.y()*P0w.x()*sin(theta-phi) - P0.y()*P0w.z()*cos(theta-phi) + P0.z()*P0w.y()*cos(phi);
+		J(1,0) = -P1.y()*P1w.x()*sin(theta-phi) + P1.y()*P1w.z()*cos(theta-phi);
+		J(1,1) = P1.x()*P1w.y()*sin(phi) + P1.y()*P1w.x()*sin(theta-phi) - P1.y()*P1w.z()*cos(theta-phi) + P1.z()*P1w.y()*cos(phi);
+
+		Vector2d X = J.inverse() * F;
+		theta = theta - X[0];
+		phi = phi - X[1];
+	}
+
+	return;
 }
 
 

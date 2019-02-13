@@ -139,6 +139,11 @@ public:
 		return keypointv(k).homogeneous();
 	}
 
+	/*
+	 * Keypoint in normalized image coordinate
+	 */
+	Eigen::Vector3d keypointn (kpid k) const;
+
 	cv::Mat allDescriptors() const
 	{ return fDescriptors; }
 

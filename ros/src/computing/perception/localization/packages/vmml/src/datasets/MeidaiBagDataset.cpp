@@ -190,6 +190,15 @@ MeidaiBagDataset::getMask()
 }
 
 
+cv::Mat
+MeidaiBagDataset::getGroundPlaneMask() const
+{
+	cv::Mat groundPatchM;
+	cv::resize(groundPlanePatch, groundPatchM, cv::Size(), zoomRatio, zoomRatio, cv::INTER_CUBIC);
+	return groundPatchM;
+}
+
+
 MeidaiDataItem&
 MeidaiBagDataset::at(dataItemId i) const
 {
