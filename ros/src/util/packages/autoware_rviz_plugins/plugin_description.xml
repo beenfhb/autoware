@@ -7,6 +7,14 @@
             State Panel on rviz
         </description>
     </class>
+
+    <class name="autoware_rviz_plugins/SystemMonitorPanel"
+           type="autoware_rviz_plugins::SystemMonitorPanel"
+           base_class_type="rviz::Panel">
+      <description>
+        A panel widget displaying simple system monitor
+      </description>
+    </class>
     
     <class name="autoware_sim_object/OpFlag"
 	    type="autoware_sim_object::AutowareSimObjTool"

@@ -55,6 +55,11 @@ set(CMAKE_AUTOMOC ON)
 set(SOURCE_FILES
   src/state_panel/state_panel.cpp
   src/sim_object/autoware_flag_tool.cpp
+  src/system_monitor_panel/system_monitor_panel.cpp
+  src/system_monitor_panel/process_monitor.cpp
+  src/system_monitor_panel/cpu_monitor.cpp
+  src/system_monitor_panel/memory_monitor.cpp
+
   )
 
 add_library(autoware_rviz_plugins ${SOURCE_FILES} ${UIC_FILES})
