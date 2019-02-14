@@ -1,0 +1,123 @@
+() "LiDAR Data" as lidar_data
+() "Camera Data" as camera_data
+() "GNSS Data" as gnss_data
+() "Wheel Data" as wheel_data
+() "IMU Data" as imu_data
+() "Radar Data" as radar_data
+
+folder Sensing {
+    [LiDAR]
+    LiDAR --> lidar_data
+
+    [Camera]
+    Camera --> camera_data
+
+    [GNSS]
+    GNSS --> gnss_data
+
+    [Wheel Encoder] as wheel_encoder
+    wheel_encoder --> wheel_data
+
+    [IMU]
+    IMU --> imu_data
+
+    [Radar]
+    Radar --> radar_data
+}
+
+() "Object Detection Results" as object_detection_results
+() "Localization Results" as localization_results
+
+folder PerceptionObjectDetection {
+    () "Detection Results" as detection_results
+    () "Tracking Results" as tracking_results
+
+    [Detection]
+    lidar_data --> Detection
+    camera_data --> Detection
+    Detection --> detection_results
+
+    [Tracking]
+    detection_results --> Tracking
+    Tracking --> tracking_results
+
+    [Radar Fusion (Optional)] as radar_fusion
+    tracking_results --> radar_fusion
+    radar_data --> radar_fusion
+    radar_fusion --> object_detection_results
+}
+
+() "Object Prediction Results" as object_prediction_results
+
+folder PerceptionObjectPrediction {
+    [Prediction]
+    object_detection_results --> Prediction
+    Prediction --> object_prediction_results
+}
+
+() "Localization Results" as localization_results
+
+folder PerceptionLocalization {
+    () "Latlan2Map Results" as latlan2map_results
+    () "Dead Reckoning Results" as dead_reckoning_results
+    () "Map Matching Results" as map_matching_results
+
+    [Latlan2Map]
+    gnss_data --> Latlan2Map
+    Latlan2Map --> latlan2map_results
+
+    [Dead Reckoner] as dead_reckoner
+    wheel_data --> dead_reckoner
+    imu_data --> dead_reckoner
+    dead_reckoner --> dead_reckoning_results
+
+    [Map Matcher] as map_matcher
+    lidar_data --> map_matcher
+    camera_data --> map_matcher
+    map_matcher --> map_matching_results
+
+    [Estimator]
+    dead_reckoning_results --> Estimator
+    latlan2map_results --> Estimator
+    map_matching_results --> Estimator
+    Estimator --> localization_results
+}
+
+() "Decision Results" as decision_results
+
+folder Intelligence {
+    [Decision Maker] as decision_maker
+    object_prediction_results --> decision_maker
+    localization_results --> decision_maker
+    decision_maker --> decision_results
+}
+
+() "Control Results" as control_results
+
+folder Planning {
+    () "Local Planning Results" as local_planning_results
+
+    [Global Planning] as global_planning
+
+    [Vehavior Planning] as behavior_planning
+
+    [Local Planning] as local_planning
+    decision_results --> local_planning
+    object_prediction_results --> local_planning
+    localization_results --> local_planning
+    local_planning --> local_planning_results
+
+    [Control]
+    local_planning_results --> Control
+    Control --> control_results
+}
+
+folder Actuation {
+    [Vehicle Interface] as vehicle_interface
+    control_results --> vehicle_interface
+}
+
+folder Vehicle {
+    [Speed Steer Controller] as speed_steer_controller
+    vehicle_interface --> speed_steer_controller
+}
