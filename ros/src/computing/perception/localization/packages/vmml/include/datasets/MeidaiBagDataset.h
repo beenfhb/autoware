@@ -40,11 +40,14 @@ extern const TTransform defaultLidarToCameraTransform;
 
 
 class MeidaiBagDataset;
+
+class BaseFrame;
+
 class MeidaiDataItem : public GenericDataItem
 {
 public:
 
-	MeidaiDataItem (const MeidaiBagDataset &p, uint64_t idx):
+	MeidaiDataItem (const MeidaiBagDataset &p, dataItemId idx):
 		parent(p), pId(idx)
 	{ init(); }
 
@@ -128,7 +131,7 @@ public:
 	std::string getPath() const
 	{ return bagfd->getFileName(); }
 
-	MeidaiDataItem& at(dataItemId i) const;
+	MeidaiDataItem::Ptr getNative(dataItemId i) const;
 
 	const Trajectory& getGnssTrajectory() const
 	{ return gnssTrack; }

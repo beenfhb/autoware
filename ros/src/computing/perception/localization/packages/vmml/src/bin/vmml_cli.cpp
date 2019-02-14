@@ -984,8 +984,12 @@ private:
 			frnum2 = stoi(cmd[2]);
 
 		auto
-			Frame1 = loadedDataset->getAsFrame(frnum1),
-			Frame2 = loadedDataset->getAsFrame(frnum2);
+			Frame1n = meidaiDsPtr->getNative(frnum1),
+			Frame2n = meidaiDsPtr->getNative(frnum2);
+
+		auto
+			Frame1 = BaseFrame::create(Frame1n->getImage(), Frame1n->getPose(), meidaiDsPtr->getCameraParameter()),
+			Frame2 = BaseFrame::create(Frame2n->getImage(), Frame2n->getPose(), meidaiDsPtr->getCameraParameter());
 		/*
 		 * Set circle of confusion as uncertainty of 2D points
 		 */
@@ -1004,13 +1008,13 @@ private:
 		TTransform T12;
 		Matcher::matchAny(*Frame1, *Frame2, validKpPairs, cvFeatMatcher, T12);
 
-		vector<double> rotcs;
-		Matcher::rotationFinder(*Frame1, *Frame2, validKpPairs, rotcs);
+		double theta, phi;
+		Matcher::rotationFinder(*Frame1, *Frame2, validKpPairs, theta, phi);
 
 		Pose
-			baselink1 = static_pointer_cast<const MeidaiDataItem>(meidaiDsPtr->get(frnum1))->getBaselinkPose(),
-			baselink2 = static_pointer_cast<const MeidaiDataItem>(meidaiDsPtr->get(frnum2))->getBaselinkPose();
-		double L = Matcher::getCameraBaselinkOffset(baselink1, baselink2, rotcs);
+			baselink1 = Frame1n->getBaselinkPose(),
+			baselink2 = Frame2n->getBaselinkPose();
+		double L = Matcher::getCameraBaselinkOffset(baselink1, baselink2, theta, phi);
 
 		debug("Got camera->baselink offset: " + to_string(L));
 	}

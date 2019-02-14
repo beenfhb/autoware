@@ -81,10 +81,10 @@ public:
 	 * Calculate sine & cosine 1 & 2 from rotation
 	 */
 	static void
-	rotationFinder (const BaseFrame &F1, const BaseFrame &F2, const std::vector<KpPair> &featurePairs, std::vector<double> &cs12);
+	rotationFinder (const BaseFrame &F1, const BaseFrame &F2, const std::vector<KpPair> &featurePairs, double &theta, double &phi);
 
 	static double
-	getCameraBaselinkOffset (const Pose &baselinkPose1, const Pose &baselinkPose2, const std::vector<double> &cs12);
+	getCameraBaselinkOffset (const Pose &baselinkPose1, const Pose &baselinkPose2, const double &theta, const double &phi);
 
 	static float
 	circleOfConfusionDiameter;

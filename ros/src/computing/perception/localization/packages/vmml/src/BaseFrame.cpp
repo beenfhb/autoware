@@ -135,29 +135,6 @@ BaseFrame::perturb (PerturbationMode mode,
 }
 
 
-// For computing pseudo inverse
-#include <Eigen/SVD>
-
-template<typename Scalar, int r, int c>
-Eigen::Matrix<Scalar,c,r>
-pseudoInverse(const Eigen::Matrix<Scalar,r,c> &M)
-{
-	Eigen::Matrix<Scalar,c,r> pinv;
-
-	JacobiSVD <Matrix<Scalar,r,c>> svd(M, ComputeFullU|ComputeFullV);
-	auto U = svd.matrixU();
-	auto V = svd.matrixV();
-//	auto Sx = svd.singularValues();
-	Matrix<Scalar,c,r> Sx = Matrix<Scalar,c,r>::Zero();
-	for (auto i=0; i<r; ++i) {
-		Sx(i,i) = 1/svd.singularValues()[i];
-	}
-	pinv = V * Sx * U.transpose();
-
-	return pinv;
-}
-
-
 std::vector<BaseFrame::PointXYI>
 BaseFrame::projectLidarScan
 (pcl::PointCloud<pcl::PointXYZ>::ConstPtr lidarScan, const TTransform &lidarToCameraTransform, const CameraPinholeParams &cameraParams)

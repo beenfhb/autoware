@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
+#include <Eigen/SVD>
 
 #include <boost/filesystem.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -360,5 +361,31 @@ void debugMsg(const std::string &s, double is_error=false);
 
 inline boost::filesystem::path getMyPath()
 { return boost::filesystem::path(ros::package::getPath("vmml")); }
+
+
+/*
+ * Our own pseudo-inverse routine, in case Eigen does not provide it
+ */
+template<typename Scalar, int r, int c>
+Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>
+pseudoInverse(const Eigen::Matrix<Scalar,r,c> &M, const Scalar cutoff=1e-10)
+{
+	Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> pinv;
+
+	Eigen::JacobiSVD <Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>> svd(M, Eigen::ComputeFullU|Eigen::ComputeFullV);
+	auto U = svd.matrixU();
+	auto V = svd.matrixV();
+	Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Sx = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>::Zero(M.cols(), M.rows());
+	for (auto i=0; i<M.cols(); ++i) {
+		Scalar s = svd.singularValues()[i];
+		if (fabs(s)<=cutoff)
+			Sx(i,i) = 0;
+		else Sx(i,i) = 1/s;
+	}
+	pinv = V * Sx * U.transpose();
+
+	return pinv;
+}
+
 
 #endif /* UTILITIES_H_ */

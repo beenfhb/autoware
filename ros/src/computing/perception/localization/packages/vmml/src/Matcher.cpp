@@ -381,59 +381,40 @@ void
 Matcher::rotationFinder
 (const BaseFrame &Fr1, const BaseFrame &Fr2,
 const std::vector<KpPair> &featurePairs,
-std::vector<double> &cs12)
+double &theta, double &phi)
 {
-/*
-	MatrixX4d M;
-	M.resize(featurePairs.size(), Eigen::NoChange);
-	for (int ip=0; ip<featurePairs.size(); ++ip) {
-		auto point_pair = featurePairs[ip];
-		Vector3d p1 = Fr1.cameraParam.toMatrix3().inverse() * Fr1.keypointh(point_pair.first);
-		Vector3d p2 = Fr2.cameraParam.toMatrix3().inverse() * Fr2.keypointh(point_pair.second);
-		M(ip, 0) = p1.x() * p2.y();
-		M(ip, 1) = p1.y() * p2.x();
-		M(ip, 2) = p1.z() * p2.y();
-		M(ip, 3) = p1.y() * p2.z();
+	theta = 0.0;
+	phi = 0.0;
+
+	const int numPairs = min(50, static_cast<int>(featurePairs.size()));
+
+	MatrixX3d PF1, PF2;
+	PF1.resize(numPairs, Eigen::NoChange);
+	PF2.resize(numPairs, Eigen::NoChange);
+	for (int i=0; i<numPairs; ++i) {
+		Vector3d P1 = Fr1.keypointn(featurePairs[i].first);
+		Vector3d P2 = Fr2.keypointn(featurePairs[i].second);
+		PF1.row(i) = P1;
+		PF2.row(i) = P2;
 	}
 
-	// Solve for h
-	JacobiSVD <decltype(M)> svd(M, ComputeFullV);
-	Vector4d h = svd.matrixV().col(3);
-	double
-		c1 = -h[0],
-		s1 = h[3],
-		c2 = (h[0]*h[1] - h[2]*h[3]) / (h[2]*h[2] - h[1]*h[1]),
-		s2 = (h[1]*h[2] - h[0]*h[3]) / (h[2]*h[2] - h[0]*h[0]);
-
-	cs12.resize(4);
-	cs12[0] = c1;
-	cs12[1] = s1;
-	cs12[2] = c2;
-	cs12[3] = s2;
-*/
-	double
-		theta = 0.0,
-		phi = 0.0;
-
-	const Vector3d
-		P0 = Fr1.keypointn(featurePairs[0].first),
-		P0w = Fr2.keypointn(featurePairs[0].second),
-		P1 = Fr1.keypointn(featurePairs[1].first),
-		P1w = Fr2.keypointn(featurePairs[1].second);
+	VectorXd F;
+	F.resize(numPairs);
+	MatrixX2d J;
+	J.resize(numPairs, Eigen::NoChange);
 
 	for (int i=0; i<10; ++i) {
 		// the function
-		Vector2d F;
-		F[0] = -P0.x()*P0w.y()*cos(phi) + P0.y()*P0w.x()*cos(theta-phi) + P0.z()*P0w.y()*sin(phi) + P0.y()*P0w.z()*sin(theta-phi);
-		F[1] = -P1.x()*P1w.y()*cos(phi) + P1.y()*P1w.x()*cos(theta-phi) + P1.z()*P1w.y()*sin(phi) + P1.y()*P1w.z()*sin(theta-phi);
+		for (int j=0; j<numPairs; ++j) {
+			Vector3d P1 = PF1.row(j), P2 = PF2.row(j);
+			F[j] = -P1.x()*P2.y()* cos(phi) + P1.y()*P2.x()*cos(theta-phi) + P1.z()*P2.y()*sin(phi) + P1.y()*P2.z()*sin(theta-phi);
 
-		Matrix2d J;
-		J(0,0) = -P0.y()*P0w.x()*sin(theta-phi) + P0.y()*P0w.z()*cos(theta-phi);
-		J(0,1) = P0.x()*P0w.y()*sin(phi) + P0.y()*P0w.x()*sin(theta-phi) - P0.y()*P0w.z()*cos(theta-phi) + P0.z()*P0w.y()*cos(phi);
-		J(1,0) = -P1.y()*P1w.x()*sin(theta-phi) + P1.y()*P1w.z()*cos(theta-phi);
-		J(1,1) = P1.x()*P1w.y()*sin(phi) + P1.y()*P1w.x()*sin(theta-phi) - P1.y()*P1w.z()*cos(theta-phi) + P1.z()*P1w.y()*cos(phi);
+			J(j, 0) = -P1.y()*P2.x()*sin(theta-phi) + P1.y()*P2.z()*cos(theta-phi);
+			J(j, 1) = P1.x()*P2.y()*sin(phi) + P1.y()*P2.x()*sin(theta-phi) - P1.y()*P2.z()*cos(theta-phi) + P1.z()*P2.y()*cos(phi);
+		}
 
-		Vector2d X = J.inverse() * F;
+		MatrixXd Jinv = pseudoInverse(J);
+		Vector2d X = Jinv * F;
 		theta = theta - X[0];
 		phi = phi - X[1];
 	}
@@ -444,16 +425,12 @@ std::vector<double> &cs12)
 
 double
 Matcher::getCameraBaselinkOffset
-(const Pose &baselinkPose1, const Pose &baselinkPose2, const std::vector<double> &cs12)
+(const Pose &baselinkPose1, const Pose &baselinkPose2, const double &theta, const double &phi)
 {
-	double
-		sin_c_2 = sqrt((1-cs12[2])/2),
-		cos_c_2 = sqrt((1+cs12[2])/2),
-		sin_c_2_1 = sin_c_2*cs12[0] - cos_c_2*cs12[1];
 	double
 		rho = (baselinkPose2.position()-baselinkPose1.position()).norm();
 	double
-		L = rho * (-sin_c_2_1) / ( cs12[1] + cs12[3]*cs12[0] - cs12[2]*cs12[1] );
+		L = rho * (-sin(theta/2 - phi) / ( sin(phi) + sin(theta-phi) ));
 	return L;
 }
 

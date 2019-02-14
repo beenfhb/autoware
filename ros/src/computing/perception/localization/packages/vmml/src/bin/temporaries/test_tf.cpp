@@ -23,14 +23,15 @@ namespace bfs = boost::filesystem;
 
 int main (int argc, char *argv[])
 {
-	Line2 AB = Line2::Through(Vector2d(-3,0), Vector2d(0,2));
+	Matrix<double, 4, 2> X;
+	X << 	0.3501104 , 0.02194434,
+			0.15401266, 0.87935743,
+			0.47155552, 0.67694619,
+			0.34460845, 0.17656619;
 
-	Line2 L1 = Line2::Through(Vector2d(0,0), Vector2d(4,0));
-	Line2 L2 = Line2::Through(Vector2d(0,3), Vector2d(4,3));
+	Matrix<double,2,4> X1 = pseudoInverse(X);
+	cout << X1 << endl;
 
-	Vector2d ints1 = AB.intersection(L1);
-
-	cout << ints1 << endl;
-
-	return 0;
+	auto I = X1 * X;
+	cout << I << endl;
 }

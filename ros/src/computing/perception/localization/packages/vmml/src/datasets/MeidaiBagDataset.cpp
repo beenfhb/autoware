@@ -19,6 +19,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 
+#include "BaseFrame.h"
 #include "datasets/MeidaiBagDataset.h"
 
 
@@ -199,11 +200,11 @@ MeidaiBagDataset::getGroundPlaneMask() const
 }
 
 
-MeidaiDataItem&
-MeidaiBagDataset::at(dataItemId i) const
+MeidaiDataItem::Ptr
+MeidaiBagDataset::getNative(dataItemId i) const
 {
-	// XXX: Stub
-	throw runtime_error("Not implemented");
+	MeidaiDataItem::Ptr Id(new MeidaiDataItem(*this, i));
+	return Id;
 }
 
 
@@ -480,13 +481,15 @@ const
 Pose
 MeidaiDataItem::getBaselinkPose() const
 {
-	return getVelodynePose() * defaultLidarToBaselinkTransform;
+//	return getVelodynePose() * defaultLidarToBaselinkTransform;
+	return getPose() * defaultLidarToCameraTransform.inverse() * defaultLidarToBaselinkTransform;
 }
 
 Pose
 MeidaiDataItem::getVelodynePose() const
 {
-	return parent.ndtTrack.interpolate(getTimestamp());
+//	return parent.ndtTrack.interpolate(getTimestamp());
+	return getPose() * defaultLidarToCameraTransform.inverse();
 }
 
 
