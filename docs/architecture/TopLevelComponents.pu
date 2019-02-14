@@ -25,17 +25,22 @@ folder Sensing {
     Radar --> radar_data
 }
 
-() "Object Detection Results" as object_detection_results
+() "Traffic Light Results" as traffic_light_results
 () "Localization Results" as localization_results
+() "Object Prediction Results" as object_prediction_results
 
-folder PerceptionObjectDetection {
+folder Perception {
+
+() "Object Detection Results" as object_detection_results
+
+folder Detection {
     () "Detection Results" as detection_results
     () "Tracking Results" as tracking_results
 
-    [Detection]
-    lidar_data --> Detection
-    camera_data --> Detection
-    Detection --> detection_results
+    [ObjectDetection]
+    lidar_data --> ObjectDetection
+    camera_data --> ObjectDetection
+    ObjectDetection --> detection_results
 
     [Tracking]
     detection_results --> Tracking
@@ -45,19 +50,19 @@ folder PerceptionObjectDetection {
     tracking_results --> radar_fusion
     radar_data --> radar_fusion
     radar_fusion --> object_detection_results
+
+    [Traffic Light Recognizer] as traffic_light_recognizer
+    camera_data --> traffic_light_recognizer
+    traffic_light_recognizer --> traffic_light_results
 }
 
-() "Object Prediction Results" as object_prediction_results
-
-folder PerceptionObjectPrediction {
+folder ObjectPrediction {
     [Prediction]
     object_detection_results --> Prediction
     Prediction --> object_prediction_results
 }
 
-() "Localization Results" as localization_results
-
-folder PerceptionLocalization {
+folder Localization {
     () "Latlan2Map Results" as latlan2map_results
     () "Dead Reckoning Results" as dead_reckoning_results
     () "Map Matching Results" as map_matching_results
@@ -83,11 +88,14 @@ folder PerceptionLocalization {
     Estimator --> localization_results
 }
 
+}
+
 () "Decision Results" as decision_results
 
 folder Intelligence {
     [Decision Maker] as decision_maker
     object_prediction_results --> decision_maker
+    traffic_light_results --> decision_maker
     localization_results --> decision_maker
     decision_maker --> decision_results
 }
