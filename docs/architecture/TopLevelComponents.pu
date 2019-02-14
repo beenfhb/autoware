@@ -5,7 +5,7 @@
 () "IMU Data" as imu_data
 () "Radar Data" as radar_data
 
-folder Sensing {
+folder SensingModule {
     [LiDAR]
     LiDAR --> lidar_data
 
@@ -29,18 +29,18 @@ folder Sensing {
 () "Localization Results" as localization_results
 () "Object Prediction Results" as object_prediction_results
 
-folder Perception {
+folder PerceptionModule {
 
 () "Object Detection Results" as object_detection_results
 
-folder Detection {
+folder DetectionModule {
     () "Detection Results" as detection_results
     () "Tracking Results" as tracking_results
 
-    [ObjectDetection]
-    lidar_data --> ObjectDetection
-    camera_data --> ObjectDetection
-    ObjectDetection --> detection_results
+    [Detection]
+    lidar_data --> Detection
+    camera_data --> Detection
+    Detection --> detection_results
 
     [Tracking]
     detection_results --> Tracking
@@ -56,13 +56,13 @@ folder Detection {
     traffic_light_recognizer --> traffic_light_results
 }
 
-folder ObjectPrediction {
+folder PredictionModule {
     [Prediction]
     object_detection_results --> Prediction
     Prediction --> object_prediction_results
 }
 
-folder Localization {
+folder LocalizationModule {
     () "Latlan2Map Results" as latlan2map_results
     () "Dead Reckoning Results" as dead_reckoning_results
     () "Map Matching Results" as map_matching_results
@@ -91,18 +91,20 @@ folder Localization {
 }
 
 () "Decision Results" as decision_results
+() "State" as state
 
-folder Intelligence {
+folder IntelligenceModule {
     [Decision Maker] as decision_maker
     object_prediction_results --> decision_maker
     traffic_light_results --> decision_maker
     localization_results --> decision_maker
     decision_maker --> decision_results
+    decision_maker --> state
 }
 
 () "Control Results" as control_results
 
-folder Planning {
+folder PlanningModule {
     () "Local Planning Results" as local_planning_results
 
     [Global Planning] as global_planning
@@ -117,10 +119,12 @@ folder Planning {
 
     [Control]
     local_planning_results --> Control
+    decision_results --> Control
+    state --> Control
     Control --> control_results
 }
 
-folder Actuation {
+folder ActuationModule {
     [Vehicle Interface] as vehicle_interface
     control_results --> vehicle_interface
 }
