@@ -117,7 +117,7 @@ int main(int argc, char** argv)
 
   // ROS publishers
   ros::Publisher path_pub = n.advertise<nav_msgs::Path>("astar_path", 1, true);
-  ros::Publisher waypoints_pub = n.advertise<autoware_msgs::Lane>("safety_waypoints", 1, true);
+  ros::Publisher waypoints_pub = n.advertise<autoware_msgs::Lane>("/in_bypass_waypoints", 1, true);
 
   ros::Rate loop_rate(10);
 
