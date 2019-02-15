@@ -431,6 +431,11 @@ Matcher::getCameraBaselinkOffset
 		rho = (baselinkPose2.position()-baselinkPose1.position()).norm();
 	double
 		L = rho * (-sin(theta/2 - phi) / ( sin(phi) + sin(theta-phi) ));
+
+	// XXX: Get L from somewhere else
+	double
+		lambda = -2 * L * sin(theta/2) / sin(theta/2 - phi);
+
 	return L;
 }
 
