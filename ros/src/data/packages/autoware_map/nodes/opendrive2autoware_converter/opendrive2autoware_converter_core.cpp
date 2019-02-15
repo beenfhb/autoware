@@ -8,6 +8,10 @@
 #include "opendrive2autoware_converter/opendrive2autoware_converter_core.h"
 #include <fstream>
 
+namespace autoware_map
+{
+
+
 OpenDrive2AutoConv::OpenDrive2AutoConv()
 {
 }
@@ -22,6 +26,7 @@ void OpenDrive2AutoConv::loadOpenDRIVE(const std::string& xodr_file,
 	//First, Get the main element
 	TiXmlElement* p_head_element = nullptr;
 	TiXmlElement* p_element = nullptr;
+	std::vector<TiXmlElement*> elements;
 
 	std::ifstream f(xodr_file.c_str());
 	if(!f.good())
@@ -45,14 +50,24 @@ void OpenDrive2AutoConv::loadOpenDRIVE(const std::string& xodr_file,
 	}
 
 
-	std::cout << " >> Reading Data from OpenDRIVE map file ... " << std::endl;
-	std::vector<TiXmlElement*> elements;
-	PlannerHNS::MappingHelpers::FindFirstElement("header", doc.FirstChildElement(), elements);
-	if(elements.size() > 0)
+	std::cout << " >> Reading Header Data from OpenDRIVE map file ... " << std::endl;
+	p_element = nullptr;
+	PlannerHNS::MappingHelpers::FindFirstElement("header", doc.FirstChildElement(), p_element);
+	if(p_element != nullptr)
 	{
-		p_element = elements.at(0);
-		od_header header(p_element);
-
-		std::cout << "Final Results, Num:" << elements.size() << ", main element: " <<  p_element->Value() << std::endl;
+		OpenDriveHeader header(p_element);
+		std::cout << "Final Results, Num:" << p_element << ", main element: " <<  p_element->Value() << std::endl;
 	}
+
+	std::cout << " >> Reading Data from OpenDRIVE map file ... " << std::endl;
+	elements.clear();
+	PlannerHNS::MappingHelpers::FindElements("road", doc.FirstChildElement(), elements);
+	std::cout << "Final Results, Num:" << elements.size() << std::endl;
+	for(unsigned int i=0; i < elements.size(); i++)
+	{
+		OpenDriveRoad road(elements.at(i));
+	}
+}
+
+
 }

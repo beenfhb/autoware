@@ -17,7 +17,11 @@
 namespace autoware_map
 {
 
-enum ACTION_TYPE {F_ACTION, L_ACTION, R_ACTION, S_ACTION, U_ACTION, NO_ACTION};
+enum ACTION_TYPE {F_ACTION, L_ACTION, R_ACTION, S_ACTION, U_ACTION, NO_ACTION };
+
+enum LANE_TYPE {PLANE_LANE, INTERSECTION_LANE, CROSSWALK_LANE, LANE_CHANGE_PROHIBITION_LANE, PARKING_PROHIBITION_LANE,
+	RAILROAD_LANE, SIDEWALK_LANE, PARKING_AREA_LANE, UNKNOWN_LANE
+};
 
 class Lane;
 class Point;
@@ -78,8 +82,8 @@ public:
 	int left_lane_id;
 	int right_lane_id;
 	std::shared_ptr<Lane> p_lane;
-	std::shared_ptr<WayPoint> p_left;
-	std::shared_ptr<WayPoint> p_right;
+	std::shared_ptr<WayPoint> p_left_wp;
+	std::shared_ptr<WayPoint> p_right_wp;
 	std::vector<int> 	to_wps;
 	std::vector<int> 	from_wps;
 	std::vector<std::shared_ptr<WayPoint> > p_to_wps;
@@ -124,12 +128,57 @@ public:
 
 class Lane
 {
+public:
+	int id;
+	int start_wp_id;
+	int end_wp_id;
+	int road_id;
+	int map_area_id;
+	std::vector<int> from_lanes;
+	std::vector<int> to_lanes;
+	int number; //lane number in the road segment from left to right
+	double speed_limit;
+	double width_limit;
+	double height_limit;
+	double weight_limit;
+	double length;
+	ACTION_TYPE direction;
+	LANE_TYPE type;
+	double width;
+
+	std::vector<WayPoint> points;
+
+	std::vector<std::shared_ptr<Lane> > p_to_lanes;
+	std::vector<std::shared_ptr<Lane> > p_from_lanes;
+
+	std::shared_ptr<Lane> p_left_lane;
+	std::shared_ptr<Lane> p_right_lane;
+
+	Lane()
+	{
+		id = 0;
+		start_wp_id = 0;
+		end_wp_id = 0;
+		road_id	= 0;
+		map_area_id = 0;
+		number 	= 0;
+		speed_limit = 0;
+		width_limit = 0;
+		height_limit = 0;
+		weight_limit = 0;
+		length = 0;
+		direction = F_ACTION;
+		type = PLANE_LANE;
+		width = 0;
+	}
 
 };
 
 class InternalRoadNet
 {
 public:
+
+	std::vector<Lane> lanes;
 
 };
 

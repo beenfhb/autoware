@@ -36,11 +36,19 @@
 #include "tinyxml.h"
 #include "time.h"
 
-class od_header
+
+namespace autoware_map
+{
+
+enum LINK_TYPE {PREDECESSOR_LINK, SUCCESSOR_LINK, EMPTY_LINK };
+enum ELEMENT_TYPE{ROAD_ELEMENT, EMPTY_ELEMENT};
+enum CONTACT_POINT{START_POINT, END_POINT, EMPTY_POINT };
+
+class OpenDriveHeader
 {
 
 public:
-	od_header()
+	OpenDriveHeader()
 	{
 		rev_major_ = 0;
 		rev_minor_ = 0;
@@ -53,7 +61,7 @@ public:
 		max_prg_ = 0;
 		date_ = time(0);
 	}
-	od_header(TiXmlElement* main_element)
+	OpenDriveHeader(TiXmlElement* main_element)
 	{
 		if(main_element != nullptr)
 		{
@@ -135,6 +143,87 @@ public:
     std::string vendor_;
 };
 
+class Link
+{
+public:
+	LINK_TYPE link_type;
+	ELEMENT_TYPE element_type;
+	int element_id;
+	CONTACT_POINT contact_point;
+
+	Link(TiXmlElement* main_element)
+	{
+		if(PlannerHNS::MappingHelpers::GetStringValue(main_element, "").compare("predecessor") == 0)
+			link_type = PREDECESSOR_LINK;
+		else if(PlannerHNS::MappingHelpers::GetStringValue(main_element, "").compare("successor") == 0)
+			link_type = SUCCESSOR_LINK;
+		else
+			link_type = EMPTY_LINK;
+
+		if(PlannerHNS::MappingHelpers::GetStringAttribute(main_element, "elementType", "").compare("road") == 0)
+			element_type = ROAD_ELEMENT;
+		else
+			element_type = EMPTY_ELEMENT;
+
+		element_id = PlannerHNS::MappingHelpers::GetIntAttribute(main_element, "elementId", 0);
+
+		if(PlannerHNS::MappingHelpers::GetStringAttribute(main_element, "contactPoint", "").compare("start") == 0)
+			contact_point = START_POINT;
+		else if(PlannerHNS::MappingHelpers::GetStringAttribute(main_element, "contactPoint", "").compare("end") == 0)
+			contact_point = END_POINT;
+		else
+			contact_point = EMPTY_POINT;
+	}
+};
+
+class OpenDriveRoad
+{
+public:
+	OpenDriveRoad()
+	{
+		id_ = 0;
+		junction_id_ = 0;
+		length_ = 0;
+	}
+
+	OpenDriveRoad(TiXmlElement* main_element)
+	{
+		name_ = PlannerHNS::MappingHelpers::GetStringAttribute(main_element, "name", "");
+		id_ = PlannerHNS::MappingHelpers::GetIntAttribute(main_element, "id", 0);
+		junction_id_ = PlannerHNS::MappingHelpers::GetIntAttribute(main_element, "junction", -1);
+		length_ = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "length", 0.0);
+
+		std::vector<TiXmlElement*> link_elements;
+		PlannerHNS::MappingHelpers::FindElements("link", main_element, link_elements);
+		for(unsigned int i=0; i < link_elements.size(); i++)
+		{
+			std::vector<TiXmlElement*> pred_elements, succ_elements;
+
+			PlannerHNS::MappingHelpers::FindElements("predecessor", link_elements.at(i), pred_elements);
+			for(unsigned int j=0; j < pred_elements.size(); j++)
+			{
+				predecessor_links_.push_back(Link(pred_elements.at(j)));
+			}
+
+			PlannerHNS::MappingHelpers::FindElements("successor", link_elements.at(i), succ_elements);
+			for(unsigned int j=0; j < succ_elements.size(); j++)
+			{
+				successor_links_.push_back(Link(succ_elements.at(j)));
+			}
+		}
+
+		std::cout << "Road Loaded With ID: " << id_ << " , Length: " << length_ << std::endl;
+	}
+
+	std::string name_;
+	int id_;
+	int junction_id_;
+	double length_;
+	std::vector<Link> predecessor_links_;
+	std::vector<Link> successor_links_;
+
+};
+
 
 class OpenDrive2AutoConv
 {
@@ -145,5 +234,7 @@ public:
     void loadOpenDRIVE(const std::string& xodr_file, autoware_map::InternalRoadNet& map);
 
 };
+
+}
 
 #endif // OPENDRIVE2AUTOWARE_CONVERTER
