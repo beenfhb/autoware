@@ -118,14 +118,10 @@ void
 Matcher::matchAny(
 	const BaseFrame &Fr1,
 	const BaseFrame &Fr2,
-	std::vector<KpPair> &featurePairsRet,
-	cv::Ptr<cv::DescriptorMatcher> matcher,
-	TTransform &T12)
+	std::vector<KpPair> &featurePairs,
+	cv::Ptr<cv::DescriptorMatcher> matcher)
 {
-	vector<KpPair> featurePairs;
 	featurePairs.clear();
-	// debug variable. set this inside debugger
-	int __debugMatch__ = -1;
 
 	// Establish initial correspondences
 	vector<cv::DMatch> initialMatches;
@@ -134,16 +130,6 @@ Matcher::matchAny(
 	// Sort by `distance'
 	sort(initialMatches.begin(), initialMatches.end());
 	vector<int> inliersMatch;
-
-	// Debug brute force matching
-	if (__debugMatch__==1) {
-		featurePairs.reserve(initialMatches.size());
-		for (int i=0; i<initialMatches.size(); ++i) {
-			auto pr = initialMatches[i];
-			featurePairs.push_back( make_pair(static_cast<kpid>(pr.queryIdx), static_cast<kpid>(pr.trainIdx)) );
-		}
-		return;
-	}
 
 	const int MaxBestMatch = 500;
 
@@ -177,45 +163,36 @@ Matcher::matchAny(
 			featurePairs.push_back(make_pair(m.queryIdx, m.trainIdx));
 			if (m.distance > maxDistance)
 				maxDistance = m.distance;
-
-		}
-		else {
-			kpid1NeedMatch.push_back(static_cast<kpid>(m.queryIdx));
-			kpid2NeedMatch.insert(static_cast<kpid>(m.trainIdx));
 		}
 	}
+}
 
-	/*
-	 * Unfortunately, this piece of code for guided matching is still buggy at this time.
-	 */
-	/*
-	for (int i1=0; i1<kpid1NeedMatch.size(); ++i1) {
-		kpid kp1 = kpid1NeedMatch[i1];
-		gdMask.setTo(cv::Scalar(0));
-		const Line2 epl2 = createEpipolarLine(F12, Fr1.fKeypoints[kp1]);
-		vector<kpid> listkp2;
-		for (auto kp2: kpid2NeedMatch) {
-			if (isKeypointInEpipolarLine(epl2, Fr2.keypointv(kp2))==true) {
-				gdMask.at<uint8_t>(kp1, kp2) = 0xff;
-				listkp2.push_back(kp2);
-			}
-		}
-		vector<cv::DMatch> currentMatches;
-		matcher->match(Fr1.fDescriptors, Fr2.fDescriptors, currentMatches, gdMask);
-		if (currentMatches.size()<=0)
-			continue;
-		cv::DMatch bestMatch = *std::min_element(currentMatches.begin(), currentMatches.end());
-		if (bestMatch.distance <= maxDistance) {
-			cerr << "Distance: " << bestMatch.distance << "; #Candidates: " << currentMatches.size();
-			featurePairs.push_back(make_pair(kp1, bestMatch.trainIdx));
-			kpid2NeedMatch.erase(bestMatch.trainIdx);
-		}
+
+/*
+ * Calculate Essential Matrix from F1 & F2, using featurePairs selected by matchAny().
+ * We assume that those pairs obey epipolar geometry principle.
+ */
+TTransform
+Matcher::calculateMovement (
+	const BaseFrame &F1, const BaseFrame &F2,
+	const std::vector<KpPair> &featurePairs,
+	vector<KpPair> &validPairsByTriangulation)
+{
+	vector<cv::Point2f> pointsIn1(featurePairs.size()), pointsIn2(featurePairs.size());
+	for (int i=0; i<featurePairs.size(); ++i) {
+		auto &m = featurePairs[i];
+		pointsIn1[i] = F1.fKeypoints[m.first].pt;
+		pointsIn2[i] = F2.fKeypoints[m.second].pt;
 	}
-	*/
+	cv::Mat Fcv = cv::findFundamentalMat(pointsIn1, pointsIn2, cv::FM_RANSAC, 3.84*Matcher::circleOfConfusionDiameter);
+	// Need Eigen Matrix of F
 
-	Matrix3d E12 = Fr2.cameraParam.toMatrix3().transpose() *
+	Matrix3d F12;
+	cv2eigen(Fcv, F12);
+
+	Matrix3d E12 = F2.cameraParam.toMatrix3().transpose() *
 		F12 *
-		Fr1.cameraParam.toMatrix3();
+		F1.cameraParam.toMatrix3();
 	cv::Mat Ecv, R1cv, R2cv, tcv;
 	eigen2cv(E12, Ecv);
 
@@ -231,10 +208,12 @@ Matcher::matchAny(
 		goodFeaturePairs3(featurePairs.size()),
 		goodFeaturePairs4(featurePairs.size()),
 		*goodFeaturePairs;
-	good[0] = Matcher::CheckRT(R1, t, Fr1, Fr2, featurePairs, goodFeaturePairs1, parallax1);
-	good[1] = Matcher::CheckRT(R1, -t, Fr1, Fr2, featurePairs, goodFeaturePairs2, parallax2);
-	good[2] = Matcher::CheckRT(R2, t, Fr1, Fr2, featurePairs, goodFeaturePairs3, parallax3);
-	good[3] = Matcher::CheckRT(R2, -t, Fr1, Fr2, featurePairs, goodFeaturePairs4, parallax4);
+	good[0] = Matcher::CheckRT(R1, t, F1, F2, featurePairs, goodFeaturePairs1, parallax1);
+	good[1] = Matcher::CheckRT(R1, -t, F1, F2, featurePairs, goodFeaturePairs2, parallax2);
+	good[2] = Matcher::CheckRT(R2, t, F1, F2, featurePairs, goodFeaturePairs3, parallax3);
+	good[3] = Matcher::CheckRT(R2, -t, F1, F2, featurePairs, goodFeaturePairs4, parallax4);
+
+	TTransform T12;
 
 	auto g = *std::max_element(good.begin(), good.end());
 	if (g==good[0]) {
@@ -253,13 +232,14 @@ Matcher::matchAny(
 		T12 = TTransform::from_R_t(-t, R2);
 		goodFeaturePairs = &goodFeaturePairs4;
 	}
-	featurePairsRet.clear();
+
+	validPairsByTriangulation.clear();
 	for (int i=0; i<featurePairs.size(); ++i) {
 		if (goodFeaturePairs->at(i)==true)
-			featurePairsRet.push_back(featurePairs.at(i));
+			validPairsByTriangulation.push_back(featurePairs.at(i));
 	}
 
-	return;
+	return T12;
 }
 
 
@@ -545,7 +525,7 @@ Matcher::CheckRT (
 		TriangulateDLT(P1, P2, pt1, pt2, point3D_);
 		Vector3d point3D = (point3D_ / point3D_[3]).hnormalized();
 
-		if (!isfinite(point3D[2]) or !isfinite(point3D[1]) or !isfinite(point3D[2]) )
+		if (!isfinite(point3D[0]) or !isfinite(point3D[1]) or !isfinite(point3D[2]) )
 			continue;
 
 		Vector3d

@@ -364,9 +364,20 @@ MapBuilder2::visualOdometry
 		curFrame->setPose(Pose::Identity());
 		curFrame->computeFeatures(cMap->getFeatureDetector(), mask);
 
-		vector<Matcher::KpPair> validKpPair;
+		vector<Matcher::KpPair> featurePairs12, validKpPair;
 		TTransform T12;
-		Matcher::matchAny(*anchor, *curFrame, validKpPair, cMap->getDescriptorMatcher(), T12);
+		Matcher::matchAny(*anchor, *curFrame, featurePairs12, cMap->getDescriptorMatcher());
+		T12 = Matcher::calculateMovement(*anchor, *curFrame, featurePairs12, validKpPair);
+
+		cerr << "Found " << validKpPair.size() << " pairs\n";
+
+		// Find translation scale
+		double theta, phi;
+		Matcher::rotationFinder(*anchor, *curFrame, featurePairs12, theta, phi);
+		const double __L__ = 2.1;
+		double lambda =  -2*__L__*sin(theta/2) / sin(theta/2 - phi);
+
+		T12.translation() *= lambda;
 
 		curFramePose = anchorPose * T12;
 		PoseStamped curFrp(curFramePose, sourceDs->get(d)->getTimestamp());

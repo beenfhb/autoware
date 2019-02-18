@@ -949,9 +949,10 @@ private:
 		Frame1->computeFeatures(cvFeatDetector, mask);
 		Frame2->computeFeatures(cvFeatDetector, mask);
 
-		vector<Matcher::KpPair> validKpPairs;
+		vector<Matcher::KpPair> featurePairs, validKpPairs;
 		TTransform T12;
-		Matcher::matchAny(*Frame1, *Frame2, validKpPairs, cvFeatMatcher, T12);
+		Matcher::matchAny(*Frame1, *Frame2, featurePairs, cvFeatMatcher);
+		T12 = Matcher::calculateMovement(*Frame1, *Frame2, featurePairs, validKpPairs);
 
 		cv::Mat matchResult;
 		matchResult = Matcher::drawMatches(*Frame1, *Frame2, validKpPairs, drawmode, maxNum);
@@ -1005,8 +1006,7 @@ private:
 		Frame2->computeFeatures(cvFeatDetector, mask);
 
 		vector<Matcher::KpPair> validKpPairs;
-		TTransform T12;
-		Matcher::matchAny(*Frame1, *Frame2, validKpPairs, cvFeatMatcher, T12);
+		Matcher::matchAny(*Frame1, *Frame2, validKpPairs, cvFeatMatcher);
 
 		double theta, phi;
 		Matcher::rotationFinder(*Frame1, *Frame2, validKpPairs, theta, phi);

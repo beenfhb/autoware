@@ -29,8 +29,13 @@ public:
 		const BaseFrame &F1,
 		const BaseFrame &F2,
 		std::vector<KpPair> &featurePairs,
-		cv::Ptr<cv::DescriptorMatcher> matcher,
-		TTransform &T12);
+		cv::Ptr<cv::DescriptorMatcher> matcher);
+
+	static TTransform
+	calculateMovement (
+		const BaseFrame &F1, const BaseFrame &F2,
+		const std::vector<KpPair> &featurePairs,
+		std::vector<KpPair> &validPairsByTriangulation);
 
 	// Match with homography constraints
 	static void
