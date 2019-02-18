@@ -43,6 +43,11 @@ namespace autoware_map
 enum LINK_TYPE {PREDECESSOR_LINK, SUCCESSOR_LINK, EMPTY_LINK };
 enum ELEMENT_TYPE{ROAD_ELEMENT, EMPTY_ELEMENT};
 enum CONTACT_POINT{START_POINT, END_POINT, EMPTY_POINT };
+enum GEOMETRY_TYPE {LINE_GEOMETRY, SPIRAL_GEOMETRY, ARC_GEOMETRY, POLY3_GEOMETRY,
+	PARAM_POLY3_GEOMETRY, UNKNOWN_GEOMETRY };
+enum ELEVATION_TYPE {ELEVATION_PROFILE, LATERAL_PROFILE};
+enum LANE_DIRECTION {LEFT_LANE, RIGHT_LANE, CENTER_LANE };
+enum MARKING_TYPE {BROKEN_MARK, SOLID_MARK, NONE_MARK, UNKNOWN_MARK};
 
 class OpenDriveHeader
 {
@@ -143,7 +148,132 @@ public:
     std::string vendor_;
 };
 
-class Link
+//from <width> from <lane> from <left,right,center> from <laneSection> from <road>
+class LaneWidth
+{
+public:
+	double sOffset, a, b, c, d;
+	LaneWidth(TiXmlElement* main_element)
+	{
+		sOffset = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "sOffset", 0);
+		a = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "a", 0);
+		b = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "b", 0);
+		c = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "c", 0);
+		d = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "d", 0);
+	}
+};
+
+//from <width> from <lane> from <left,right,center> from <laneSection> from <road>
+class RoadMark
+{
+public:
+	double sOffset, width;
+	MARKING_TYPE type;
+	std::string weight;
+	std::string color;
+
+	RoadMark(TiXmlElement* main_element)
+	{
+		sOffset = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "sOffset", 0);
+		width = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "width", 0);
+		weight = PlannerHNS::MappingHelpers::GetStringAttribute(main_element, "weight", "");
+		color = PlannerHNS::MappingHelpers::GetStringAttribute(main_element, "color", "");
+		std::string str_type = PlannerHNS::MappingHelpers::GetStringAttribute(main_element, "type", "");
+
+		if(str_type.compare("broken")==0)
+		{
+			type = BROKEN_MARK;
+		}
+		else if(str_type.compare("solid")==0)
+		{
+			type = SOLID_MARK;
+		}
+		else if(str_type.compare("none")==0)
+		{
+			type = NONE_MARK;
+		}
+		else
+		{
+			type = UNKNOWN_MARK;
+		}
+	}
+};
+
+//from <elevation> from <elevationProfile> from <road>
+//from <superelevation> from <lateralProfile> from <road>
+class Elevation
+{
+public:
+	double s, a, b, c, d;
+	ELEVATION_TYPE type;
+	Elevation(TiXmlElement* main_element)
+	{
+		std::string val = PlannerHNS::MappingHelpers::GetStringValue(main_element, "");
+		if(val.compare("elevation") == 0)
+		{
+			type = ELEVATION_PROFILE;
+		}
+		else if(val.compare("superelevation") == 0)
+		{
+			type = LATERAL_PROFILE;
+		}
+
+		s = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "s", 0);
+		a = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "a", 0);
+		b = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "b", 0);
+		c = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "c", 0);
+		d = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "d", 0);
+	}
+};
+
+//from  <planView> from <road>
+class Goemetry
+{
+public:
+	double s,x, y, hdg, length; //genral use 'line'
+	double curveStart, curveEnd; // for spiral
+	double curvature; //for arc
+
+	GEOMETRY_TYPE type;
+
+	Goemetry(TiXmlElement* main_element)
+	{
+		type = UNKNOWN_GEOMETRY;
+		curvature = 0;
+		curveStart = 0;
+		curveEnd = 0;
+		s = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "s", 0);
+		x = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "x", 0);
+		y = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "y", 0);
+		hdg = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "hdg", 0);
+		length = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "length", 0);
+
+		if(main_element != nullptr)
+		{
+			TiXmlElement* type_element = main_element->FirstChildElement();
+			std::string val = PlannerHNS::MappingHelpers::GetStringValue(type_element, "");
+			if(val.compare("line") == 0)
+			{
+
+			}
+			else if(val.compare("arc") == 0)
+			{
+				curvature = PlannerHNS::MappingHelpers::GetDoubleAttribute(type_element, "curvature", 0);
+			}
+			else if(val.compare("spiral") == 0)
+			{
+				curveStart = PlannerHNS::MappingHelpers::GetDoubleAttribute(type_element, "curveStart", 0);
+				curveEnd = PlannerHNS::MappingHelpers::GetDoubleAttribute(type_element, "curveEnd", 0);
+			}
+			else if(val.compare("poly3") == 0)
+			{
+
+			}
+		}
+	}
+};
+
+class RoadLink
 {
 public:
 	LINK_TYPE link_type;
@@ -151,7 +281,7 @@ public:
 	int element_id;
 	CONTACT_POINT contact_point;
 
-	Link(TiXmlElement* main_element)
+	RoadLink(TiXmlElement* main_element)
 	{
 		if(PlannerHNS::MappingHelpers::GetStringValue(main_element, "").compare("predecessor") == 0)
 			link_type = PREDECESSOR_LINK;
@@ -176,6 +306,92 @@ public:
 	}
 };
 
+class LaneLink
+{
+public:
+	LINK_TYPE link_type;
+	int id;
+
+	LaneLink(TiXmlElement* main_element)
+	{
+		if(PlannerHNS::MappingHelpers::GetStringValue(main_element, "").compare("predecessor") == 0)
+			link_type = PREDECESSOR_LINK;
+		else if(PlannerHNS::MappingHelpers::GetStringValue(main_element, "").compare("successor") == 0)
+			link_type = SUCCESSOR_LINK;
+		else
+			link_type = EMPTY_LINK;
+
+		id = PlannerHNS::MappingHelpers::GetIntAttribute(main_element, "id", 0);
+	}
+};
+
+//from <lanes> from <road>
+class OpenDriveLane
+{
+public:
+	int id;
+	int level;
+	LANE_DIRECTION dir;
+	LANE_TYPE type;
+	std::vector<int> fromIds;
+	std::vector<int> toIds;
+	std::vector<LaneWidth> width_list;
+	std::vector<RoadMark> mark_list;
+	std::vector<LaneLink> predecessor_lane_;
+	std::vector<LaneLink> successor_lane_;
+
+	OpenDriveLane(TiXmlElement* main_element, LANE_DIRECTION _dir)
+	{
+		dir = _dir;
+		id = PlannerHNS::MappingHelpers::GetIntAttribute(main_element, "id", 0);
+		level = PlannerHNS::MappingHelpers::GetIntAttribute(main_element, "level", 0);
+		std::string str_type = PlannerHNS::MappingHelpers::GetStringAttribute(main_element, "type", "");
+		if(str_type.compare("driving")==0)
+		{
+			type = DRIVING_LANE;
+		}
+		else if(str_type.compare("border")==0)
+		{
+			type = BORDER_LANE;
+		}
+		else
+		{
+			type = DRIVING_LANE;
+		}
+//		else if(str_type.compare("driving")==0)
+//		{
+//			type = DRIVING_LANE;
+//		}
+//		else if(str_type.compare("driving")==0)
+//		{
+//			type = DRIVING_LANE;
+//		}
+//		else if(str_type.compare("driving")==0)
+//		{
+//			type = DRIVING_LANE;
+//		}
+
+		TiXmlElement* link_element = nullptr;
+		PlannerHNS::MappingHelpers::FindFirstElement("link", main_element, link_element);
+		if(link_element != nullptr)
+		{
+			std::vector<TiXmlElement*> pred_elements, succ_elements;
+
+			PlannerHNS::MappingHelpers::FindElements("predecessor", link_element, pred_elements);
+			for(unsigned int j=0; j < pred_elements.size(); j++)
+			{
+				predecessor_lane_.push_back(LaneLink(pred_elements.at(j)));
+			}
+
+			PlannerHNS::MappingHelpers::FindElements("successor", link_element, succ_elements);
+			for(unsigned int j=0; j < succ_elements.size(); j++)
+			{
+				successor_lane_.push_back(LaneLink(succ_elements.at(j)));
+			}
+		}
+	}
+};
+
 class OpenDriveRoad
 {
 public:
@@ -184,6 +400,7 @@ public:
 		id_ = 0;
 		junction_id_ = 0;
 		length_ = 0;
+
 	}
 
 	OpenDriveRoad(TiXmlElement* main_element)
@@ -193,23 +410,56 @@ public:
 		junction_id_ = PlannerHNS::MappingHelpers::GetIntAttribute(main_element, "junction", -1);
 		length_ = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "length", 0.0);
 
-		std::vector<TiXmlElement*> link_elements;
-		PlannerHNS::MappingHelpers::FindElements("link", main_element, link_elements);
-		for(unsigned int i=0; i < link_elements.size(); i++)
+		//Read Links
+		TiXmlElement* link_element = nullptr;
+		PlannerHNS::MappingHelpers::FindFirstElement("link", main_element, link_element);
+		if(link_element != nullptr)
 		{
 			std::vector<TiXmlElement*> pred_elements, succ_elements;
 
-			PlannerHNS::MappingHelpers::FindElements("predecessor", link_elements.at(i), pred_elements);
+			PlannerHNS::MappingHelpers::FindElements("predecessor", link_element, pred_elements);
 			for(unsigned int j=0; j < pred_elements.size(); j++)
 			{
-				predecessor_links_.push_back(Link(pred_elements.at(j)));
+				predecessor_road_.push_back(RoadLink(pred_elements.at(j)));
 			}
 
-			PlannerHNS::MappingHelpers::FindElements("successor", link_elements.at(i), succ_elements);
+			PlannerHNS::MappingHelpers::FindElements("successor", link_element, succ_elements);
 			for(unsigned int j=0; j < succ_elements.size(); j++)
 			{
-				successor_links_.push_back(Link(succ_elements.at(j)));
+				successor_road_.push_back(RoadLink(succ_elements.at(j)));
 			}
+		}
+
+		//Read Links
+		TiXmlElement* planView = nullptr;
+		PlannerHNS::MappingHelpers::FindFirstElement("planView", main_element, planView);
+		if(planView != nullptr)
+		{
+			//Get Geometries
+			std::vector<TiXmlElement*> geom_elements;
+			PlannerHNS::MappingHelpers::FindElements("geometry", link_element, geom_elements);
+			for(unsigned int j=0; j < geom_elements.size(); j++)
+			{
+				geometries_.push_back(Goemetry(geom_elements.at(j)));
+			}
+		}
+
+		//laneSections and lanes
+		std::vector<TiXmlElement*> sections;
+		PlannerHNS::MappingHelpers::FindElements("laneSecrion", main_element, sections);
+		for(unsigned int j=0; j < sections.size(); j++)
+		{
+			TiXmlElement* left_element = nullptr;
+			PlannerHNS::MappingHelpers::FindFirstElement("left", sections.at(j), left_element);
+			lanes_.push_back(OpenDriveLane(left_element, LEFT_LANE));
+
+			TiXmlElement* center_element = nullptr;
+			PlannerHNS::MappingHelpers::FindFirstElement("center", sections.at(j), center_element);
+			lanes_.push_back(OpenDriveLane(center_element, CENTER_LANE));
+
+			TiXmlElement* right_element = nullptr;
+			PlannerHNS::MappingHelpers::FindFirstElement("right", sections.at(j), right_element);
+			lanes_.push_back(OpenDriveLane(right_element, RIGHT_LANE));
 		}
 
 		std::cout << "Road Loaded With ID: " << id_ << " , Length: " << length_ << std::endl;
@@ -219,8 +469,10 @@ public:
 	int id_;
 	int junction_id_;
 	double length_;
-	std::vector<Link> predecessor_links_;
-	std::vector<Link> successor_links_;
+	std::vector<RoadLink> predecessor_road_;
+	std::vector<RoadLink> successor_road_;
+	std::vector<Goemetry> geometries_;
+	std::vector<OpenDriveLane> lanes_;
 
 };
 
