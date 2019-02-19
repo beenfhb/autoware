@@ -962,6 +962,12 @@ private:
 		debug("Matching result written to "+matchFiledump);
 		debug("Got "+to_string(validKpPairs.size())+" valid pairs");
 
+		double theta, phi;
+		Matcher::rotationFinder(*Frame1, *Frame2, validKpPairs, theta, phi);
+		const double __L__ = 2.1;
+		double lambda =  -2*__L__*sin(theta/2) / sin(theta/2 - phi);
+		T12.translation() *= lambda;
+
 		/*
 		 * Statistics
 		 */

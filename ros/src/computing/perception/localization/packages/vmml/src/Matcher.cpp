@@ -326,8 +326,9 @@ Matcher::rotationFinder
 const std::vector<KpPair> &featurePairs,
 double &theta, double &phi)
 {
-	theta = 0.0;
-	phi = 0.0;
+	// estimate phi using normal
+	phi = acos(Fr1.normal().dot(Fr2.normal()));
+	theta = phi*2;
 
 	const int numPairs = min(50, static_cast<int>(featurePairs.size()));
 

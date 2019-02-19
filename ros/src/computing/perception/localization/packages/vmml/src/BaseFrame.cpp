@@ -90,7 +90,7 @@ BaseFrame::projectionMatrix () const
 Vector3d
 BaseFrame::normal() const
 {
-	return externalParamMatrix4().block(0,0,3,3).transpose().col(2);
+	return externalParamMatrix4().block(0,0,3,3).transpose().col(2).normalized();
 }
 
 
