@@ -94,25 +94,31 @@ LaneBypassPlanner::LaneBypassPlanner() : nh_(""), pnh_("~"), tf_listener_(tf_buf
     pnh_.param<bool>("enable_force_lane_select", enable_force_lane_select_, bool(false));
     pnh_.param<int>("sub_lane_num", sub_lane_num_odd_, int(9));
     pnh_.param<double>("sub_lane_width", sub_lane_width_, double(0.8));
-    sub_lane_num_odd_ = (sub_lane_num_odd_ % 2 == 0) ? sub_lane_num_odd_ + 1 : sub_lane_num_odd_; // should be odd number
-    best_lane_num_ = (int)((sub_lane_num_odd_ - 1) / 2);                                          // initialize as center
-    force_lane_change_num_ = best_lane_num_;
     pnh_.param<int>("cost_check_num_max", cost_check_num_max_, int(30));
     pnh_.param<double>("smooth_transit_dist", smooth_transit_dist_, double(10.0));
-
     pnh_.param<double>("cost_weight_be_center", cost_weight_.be_center, double(0.1));
     pnh_.param<double>("cost_weight_stay_there", cost_weight_.stay_there, double(0.1));
     pnh_.param<double>("cost_weight_stay_there_while", cost_weight_.stay_there_while, double(0.5));
 
-    cost_map_sub_ = nh_.subscribe("/semantics/costmap_generator/occupancy_grid", 1, &LaneBypassPlanner::costmapCallback, this);
-    lane_sub_ = nh_.subscribe("/in_bypass_waypoints", 1, &LaneBypassPlanner::laneCallback, this);
-    selfpose_sub_ = nh_.subscribe("/current_pose", 1, &LaneBypassPlanner::selfposeCallback, this);
+    std::string input_path_name, output_path_name, input_selfpose_name, input_costmap_name;
+    pnh_.param<std::string>("input_path_name", input_path_name, std::string("in_path"));
+    pnh_.param<std::string>("output_path_name", output_path_name, std::string("out_path"));
+    pnh_.param<std::string>("input_selfpose_name", input_selfpose_name, std::string("/current_pose"));
+    pnh_.param<std::string>("input_costmap_name", input_costmap_name, std::string("/semantics/costmap_generator/occupancy_grid"));
+
+    cost_map_sub_ = nh_.subscribe(input_costmap_name, 1, &LaneBypassPlanner::costmapCallback, this);
+    lane_sub_ = nh_.subscribe(input_path_name, 1, &LaneBypassPlanner::laneCallback, this);
+    selfpose_sub_ = nh_.subscribe(input_selfpose_name, 1, &LaneBypassPlanner::selfposeCallback, this);
     lane_num_sub_ = pnh_.subscribe("/force_lane_change_number", 1, &LaneBypassPlanner::lanemunCallback, this);
-    lane_pub_ = nh_.advertise<autoware_msgs::Lane>("/safety_waypoints", 1, true);
+    lane_pub_ = nh_.advertise<autoware_msgs::Lane>(output_path_name, 1, true);
 
     double exec_rate;
     pnh_.param<double>("exec_rate", exec_rate, double(10));
     timer_ = nh_.createTimer(ros::Duration(1.0 / exec_rate), &LaneBypassPlanner::timerCallback, this);
+
+    sub_lane_num_odd_ = (sub_lane_num_odd_ % 2 == 0) ? sub_lane_num_odd_ + 1 : sub_lane_num_odd_; // should be odd number
+    best_lane_num_ = (int)((sub_lane_num_odd_ - 1) / 2);                                          // initialize as center
+    force_lane_change_num_ = best_lane_num_;
 
     /* debug */
     debug_sublane_pub_ = pnh_.advertise<visualization_msgs::MarkerArray>("debug/sublane", 1, true);

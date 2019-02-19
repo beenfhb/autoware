@@ -1,0 +1,38 @@
+#---------------------------------------------------------------------
+# for lane generation
+#---------------------------------------------------------------------
+
+# Generate lane from nearest waypoint (not recommended for lower following performance).
+enable_smooth_transition: false
+
+# The length you want to make a transition smoothly
+smooth_transit_dist: 10.0
+
+# An arbitrary path can be selected from the outside through topic
+enable_force_lane_select: false
+
+# must be odd number (you can put even, but changed to odd)
+sub_lane_num: 9 
+
+# width between sub lanes.
+sub_lane_width: 0.8 
+
+# maximum number of waypoints to check cost. This number times waypoints distance is the length for cost calculation.
+cost_check_num_max: 30 
+
+#---------------------------------------------------------------------
+# for cost functions
+#---------------------------------------------------------------------
+
+# The coefficient of cost which increase as going away from the central lane
+cost_weight_be_center: 0.1
+
+# The coefficient of cost which increases as going away from the lane selected last time
+cost_weight_stay_there: 0.1
+
+# Same as "cost_weight_stay_there", but this decreases with time.
+# I want the planner to pick the same one as the lane chosen last time, 
+# but after a while, I want the planner to choose back to the central lane .
+# This is to prevent from selecting the center lane when the obstacle is too close to the vehicle to visible.
+# Note: This parameter should be cared in the cost map, such as potential field.
+cost_weight_stay_there_while: 0.5
