@@ -30,4 +30,161 @@ $Id$
     <param name="max_range" value="$(arg max_range)"/>
     <remap from="velodyne_points" to="$(arg topic_name)"/>
   </node>
+
+  <arg name="detect_invalid_near_points" default="False"/>
+  <arg name="method_type" default="0"/> <!--0:UseValidIntensity, 1:UseBottomRing -->
+  <arg name="num_points_thresthold" default="300"/>
+  <arg name="invalid_intensity" default="[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"/>
+  <include file="$(find packets_preprocessor)/launch/detect_invalid_near_points_vlp16.launch" if="$(arg detect_invalid_near_points)">
+    <arg name="calibration" value="$(arg calibration)"/>
+    <arg name="method_type" value="$(arg method_type)"/>
+    <arg name="num_points_thresthold" value="$(arg num_points_thresthold)"/>
+    <arg name="invalid_intensity" value="$(arg invalid_intensity)"/>
+  </include>
+
+  <node pkg="rostopic" type="rostopic" name="velodyne_model"
+        args="pub -l /velodyne_model visualization_msgs/MarkerArray
+        '{ markers: [
+          {
+             header: {
+               seq: 0,
+               stamp: now,
+               frame_id: 'velodyne'
+             },
+             ns: 'velodyne_model',
+             id: 0,
+             type: 3,
+             action: 0,
+             pose: {
+              position: {
+                x: 0.0,
+                y: 0.0,
+                z: -0.0285
+              },
+              orientation: {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+                w: 1.0
+              }
+             },
+             scale: {
+               x: 0.1,
+               y: 0.1,
+               z: 0.02
+             },
+             color: {
+             r: 0.8,
+             g: 0.8,
+             b: 0.8,
+             a: 0.8
+            }
+          },
+          {
+            header: {
+              seq: 0,
+              stamp: now,
+              frame_id: 'velodyne'
+            },
+            ns: 'velodyne_model',
+            id: 1,
+            type: 3,
+            action: 0,
+            pose: {
+             position: {
+               x: 0.0,
+               y: 0.0,
+               z: 0.0
+             },
+             orientation: {
+               x: 0.0,
+               y: 0.0,
+               z: 0.0,
+               w: 1.0
+             }
+            },
+            scale: {
+              x: 0.1,
+              y: 0.1,
+              z: 0.037
+            },
+            color: {
+            r: 0.1,
+            g: 0.1,
+            b: 0.1,
+            a: 0.8
+           }
+         },
+        {
+          header: {
+            seq: 0,
+            stamp: now,
+            frame_id: 'velodyne'
+          },
+          ns: 'velodyne_model',
+          id: 2,
+          type: 3,
+          action: 0,
+          pose: {
+           position: {
+             x: 0.0,
+             y: 0.0,
+             z: 0.0255
+           },
+           orientation: {
+             x: 0.0,
+             y: 0.0,
+             z: 0.0,
+             w: 1.0
+           }
+          },
+          scale: {
+            x: 0.1,
+            y: 0.1,
+            z: 0.015
+          },
+          color: {
+          r: 0.8,
+          g: 0.8,
+          b: 0.8,
+          a: 0.8
+         }
+       },
+       {
+         header: {
+           seq: 0,
+           stamp: now,
+           frame_id: 'velodyne'
+         },
+         ns: 'velodyne_model',
+         id: 3,
+         type: 3,
+         action: 0,
+         pose: {
+          position: {
+            x: -0.0575,
+            y: 0.0,
+            z: -0.03
+          },
+          orientation: {
+            x: 0.0,
+            y: 0.707107,
+            z: 0.0,
+            w: 0.707107
+          }
+         },
+         scale: {
+           x: 0.012,
+           y: 0.012,
+           z: 0.015
+         },
+         color: {
+         r: 0.2,
+         g: 0.2,
+         b: 0.2,
+         a: 0.8
+        }
+      },
+      ]}' "/>
+
 </launch>

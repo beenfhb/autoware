@@ -181,12 +181,28 @@ subs :
         desc : Launches the driver for the selected Velodyne sensor and publishes the pointcloud in points_raw. To select a custom calibration file press the [config] button.
         probe:
         run  : roslaunch runtime_manager velodyne_vlp16.launch
-        param: calibration_path
+        param: velodyne_vlp16
         gui  :
           flags : [ SIGTERM, kill_children ]
           calibration :
             prop  : 0
             flags : [ center_v ]
+          detect_invalid_near_points :
+            flags : [ nl ]
+          method_type :
+            depend : detect_invalid_near_points
+            depend_bool : 'lambda v : v == 1'
+            flags : [ nl ]
+          num_points_thresthold :
+            depend : detect_invalid_near_points
+            depend_bool : 'lambda v : v == 1'
+            flags : [ nl ]
+          invalid_intensity :
+            depend : detect_invalid_near_points
+            depend_bool : 'lambda v : v == 1'
+            flags : [ nl ]
+
+
       - name : Velodyne VLP-16 Hi-Res
         desc : Launches the driver for the selected Velodyne sensor and publishes the pointcloud in points_raw. To select a custom calibration file press the [config] button.
         probe:
@@ -238,30 +254,30 @@ subs :
         gui  :
           dialog_height : 400
           flags : [ SIGTERM, kill_children ]
-          lidar_address : 
+          lidar_address :
              user_category : 'Address'
              flags: [ expand ]
-          pc_address  : 
+          pc_address  :
              flags: [ expand, nl ]
-          lidar_frame_name  : 
+          lidar_frame_name  :
              user_category : 'PointCloud'
              flags: [ expand ]
-          lidar_topic_name  : 
+          lidar_topic_name  :
              flags: [ expand, nl ]
-          imu_frame_name  : 
+          imu_frame_name  :
              user_category : 'IMU'
              flags: [ expand ]
-          imu_topic_name  : 
+          imu_topic_name  :
              flags: [ expand, nl ]
           operation_mode :
              user_category : 'Advanced'
           pulse_mode : { prop: 0 }
           window_rejection : { flags: [ nl ] }
-          mode_xyzir : 
+          mode_xyzir :
              prop  : 0
              user_category : 'Misc.'
           replay : { prop  : 0 }
-          
+
   - name : Other Sensors
     desc : Other Sensors desc sample
     subs :
@@ -450,6 +466,56 @@ params :
         delim: ':='
         must : False
 
+  - name  : velodyne_vlp16
+    vars  :
+    - name  : calibration
+      desc  : calibration desc sample
+      kind  : path
+      v     : ''
+      cmd_param :
+        dash : ''
+        delim: ':='
+        must : False
+    - name  : detect_invalid_near_points
+      desc  : detect_invalid_near_points
+      label : detect_invalid_near_points
+      kind  : checkbox
+      v     : False
+      cmd_param :
+        dash : ''
+        delim: ':='
+    - name  : method_type
+      desc  : Method Type
+      label : Method Type
+      kind  : radio_box
+      choices:
+      - UseValidIntensity
+      - UseBottomRing
+      descs :
+      - UseValidIntensity
+      - UseBottomRing
+      v     : 0
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name  : num_points_thresthold
+      desc  : num_points_thresthold
+      label : num_points_thresthold
+      min   : 1
+      max   : 10000
+      v     : 300
+      cmd_param :
+        dash : ''
+        delim: ':='
+    - name  : invalid_intensity
+      desc  : List of invalid intensity(dont put a white space)
+      label : invalid_intensity
+      kind  : str
+      v     : '[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]'
+      cmd_param :
+        dash  : ''
+        delim : ':='
+
   - name  : sick_lms511
     vars  :
     - name  : ip
@@ -484,7 +550,7 @@ params :
         dash : ''
         delim: ':='
         must : true
-        
+
   - name  : ouster_ros
     vars  :
     - name : lidar_address
