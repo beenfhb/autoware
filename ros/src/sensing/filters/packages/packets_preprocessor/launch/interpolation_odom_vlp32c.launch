@@ -1,0 +1,16 @@
+<launch>
+  <arg name="vlp32_calibration" default="$(find velodyne_pointcloud)/params/VeloView-VLP-32C.yaml"/>
+  <arg name="view_direction" default="0.0" />
+  <arg name="view_width" default="6.28318530718" />
+
+  <node pkg="packets_preprocessor" type="interpolation_odom" name="interpolation_odom" output="screen">
+    <!-- <remap from="/velodyne_packets" to="/velodyne_packets"/> -->
+    <param name="calibration" value="$(arg vlp32_calibration)"/>
+    <param name="view_direction" value="$(arg view_direction)"/>
+    <param name="view_width" value="$(arg view_width)"/>
+  </node>
+
+
+
+
+</launch>
