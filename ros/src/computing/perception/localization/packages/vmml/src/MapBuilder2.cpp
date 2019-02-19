@@ -338,7 +338,7 @@ void
 MapBuilder2::visualOdometry
 (GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos, Trajectory &voResult)
 {
-	assert (0<=startPos and startPos<sourceDs->size()-1);
+	assert (startPos<sourceDs->size()-1);
 	assert (0<stopPos and stopPos<sourceDs->size());
 
 	cv::Mat mask = sourceDs->getMask();

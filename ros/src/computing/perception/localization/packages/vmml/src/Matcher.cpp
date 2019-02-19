@@ -184,62 +184,25 @@ Matcher::calculateMovement (
 		pointsIn1[i] = F1.fKeypoints[m.first].pt;
 		pointsIn2[i] = F2.fKeypoints[m.second].pt;
 	}
-	cv::Mat Fcv = cv::findFundamentalMat(pointsIn1, pointsIn2, cv::FM_RANSAC, 3.84*Matcher::circleOfConfusionDiameter);
-	// Need Eigen Matrix of F
 
-	Matrix3d F12;
-	cv2eigen(Fcv, F12);
+	cv::Mat E12, R12e, te, mask;
+	E12 = cv::findEssentialMat(pointsIn1, pointsIn2, F1.cameraParam.toCvMat(), cv::RANSAC, 0.999, 3.84*Matcher::circleOfConfusionDiameter);
 
-	Matrix3d E12 = F2.cameraParam.toMatrix3().transpose() *
-		F12 *
-		F1.cameraParam.toMatrix3();
-	cv::Mat Ecv, R1cv, R2cv, tcv;
-	eigen2cv(E12, Ecv);
+	int inliers;
+	inliers = cv::recoverPose(E12, pointsIn1, pointsIn2, F1.cameraParam.toCvMat(), R12e, te, mask);
 
-	Matrix3d R1, R2;
-	Vector3d t;
-	decomposeE(E12, R1, R2, t);
-
-	float parallax1, parallax2, parallax3, parallax4;
-	vector<int> good(4);
-	vector<bool>
-		goodFeaturePairs1(featurePairs.size()),
-		goodFeaturePairs2(featurePairs.size()),
-		goodFeaturePairs3(featurePairs.size()),
-		goodFeaturePairs4(featurePairs.size()),
-		*goodFeaturePairs;
-	good[0] = Matcher::CheckRT(R1, t, F1, F2, featurePairs, goodFeaturePairs1, parallax1);
-	good[1] = Matcher::CheckRT(R1, -t, F1, F2, featurePairs, goodFeaturePairs2, parallax2);
-	good[2] = Matcher::CheckRT(R2, t, F1, F2, featurePairs, goodFeaturePairs3, parallax3);
-	good[3] = Matcher::CheckRT(R2, -t, F1, F2, featurePairs, goodFeaturePairs4, parallax4);
-
-	TTransform T12;
-
-	auto g = *std::max_element(good.begin(), good.end());
-	if (g==good[0]) {
-		T12 = TTransform::from_R_t(t, R1);
-		goodFeaturePairs = &goodFeaturePairs1;
-	}
-	else if (g==good[1]) {
-		T12 = TTransform::from_R_t(-t, R1);
-		goodFeaturePairs = &goodFeaturePairs2;
-	}
-	else if (g==good[2]) {
-		T12 = TTransform::from_R_t(t, R2);
-		goodFeaturePairs = &goodFeaturePairs3;
-	}
-	else if (g==good[3]) {
-		T12 = TTransform::from_R_t(-t, R2);
-		goodFeaturePairs = &goodFeaturePairs4;
-	}
-
-	validPairsByTriangulation.clear();
 	for (int i=0; i<featurePairs.size(); ++i) {
-		if (goodFeaturePairs->at(i)==true)
+		if (mask.at<int>(i,0)!=0)
 			validPairsByTriangulation.push_back(featurePairs.at(i));
 	}
 
-	return T12;
+	Matrix3d R12;
+	Vector3d t;
+	cv2eigen(R12e, R12);
+	cv2eigen(te, t);
+
+//	return T12;
+	return TTransform::from_R_t(t, R12);
 }
 
 
