@@ -199,6 +199,21 @@ public:
 	}
 };
 
+//from <laneOffset> from <lanes> from <road>
+class LaneOffset
+{
+public:
+	double s, a, b, c, d;
+	LaneOffset(TiXmlElement* main_element)
+	{
+		s = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "s", 0);
+		a = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "a", 0);
+		b = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "b", 0);
+		c = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "c", 0);
+		d = PlannerHNS::MappingHelpers::GetDoubleAttribute(main_element, "d", 0);
+	}
+};
+
 //from <elevation> from <elevationProfile> from <road>
 //from <superelevation> from <lateralProfile> from <road>
 class Elevation
@@ -444,22 +459,35 @@ public:
 			}
 		}
 
-		//laneSections and lanes
-		std::vector<TiXmlElement*> sections;
-		PlannerHNS::MappingHelpers::FindElements("laneSecrion", main_element, sections);
-		for(unsigned int j=0; j < sections.size(); j++)
+		TiXmlElement* lanes = nullptr;
+		PlannerHNS::MappingHelpers::FindFirstElement("lanes", main_element, lanes);
+		if(lanes != nullptr)
 		{
-			TiXmlElement* left_element = nullptr;
-			PlannerHNS::MappingHelpers::FindFirstElement("left", sections.at(j), left_element);
-			lanes_.push_back(OpenDriveLane(left_element, LEFT_LANE));
+			//laneOffsets
+			std::vector<TiXmlElement*> offsets;
+			PlannerHNS::MappingHelpers::FindElements("laneSecrion", lanes, offsets);
+			for(unsigned int j=0; j < offsets.size(); j++)
+			{
+				laneOffsets_.push_back(LaneOffset(offsets.at(j)));
+			}
 
-			TiXmlElement* center_element = nullptr;
-			PlannerHNS::MappingHelpers::FindFirstElement("center", sections.at(j), center_element);
-			lanes_.push_back(OpenDriveLane(center_element, CENTER_LANE));
+			//laneSections and lanes
+			std::vector<TiXmlElement*> sections;
+			PlannerHNS::MappingHelpers::FindElements("laneSecrion", lanes, sections);
+			for(unsigned int j=0; j < sections.size(); j++)
+			{
+				TiXmlElement* left_element = nullptr;
+				PlannerHNS::MappingHelpers::FindFirstElement("left", sections.at(j), left_element);
+				lanes_.push_back(OpenDriveLane(left_element, LEFT_LANE));
 
-			TiXmlElement* right_element = nullptr;
-			PlannerHNS::MappingHelpers::FindFirstElement("right", sections.at(j), right_element);
-			lanes_.push_back(OpenDriveLane(right_element, RIGHT_LANE));
+				TiXmlElement* center_element = nullptr;
+				PlannerHNS::MappingHelpers::FindFirstElement("center", sections.at(j), center_element);
+				lanes_.push_back(OpenDriveLane(center_element, CENTER_LANE));
+
+				TiXmlElement* right_element = nullptr;
+				PlannerHNS::MappingHelpers::FindFirstElement("right", sections.at(j), right_element);
+				lanes_.push_back(OpenDriveLane(right_element, RIGHT_LANE));
+			}
 		}
 
 		std::cout << "Road Loaded With ID: " << id_ << " , Length: " << length_ << std::endl;
@@ -473,9 +501,9 @@ public:
 	std::vector<RoadLink> successor_road_;
 	std::vector<Goemetry> geometries_;
 	std::vector<OpenDriveLane> lanes_;
+	std::vector<LaneOffset> laneOffsets_;
 
 };
-
 
 class OpenDrive2AutoConv
 {
