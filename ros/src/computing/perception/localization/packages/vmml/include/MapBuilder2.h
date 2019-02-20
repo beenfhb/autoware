@@ -163,6 +163,8 @@ public:
 			std::vector<Matcher::KpPair>()
 	);
 
+	void updateOnlyFeatures(const BaseFrame::ConstPtr frame);
+
 protected:
 };
 

@@ -418,3 +418,13 @@ VisualOdometryViewer::update
 	}
 	cv::waitKey(1);
 }
+
+
+void
+VisualOdometryViewer::updateOnlyFeatures(const BaseFrame::ConstPtr frame)
+{
+	cv::Mat curImgWithFeats;
+	cv::drawKeypoints(frame->getImage(), frame->allKeypoints(), curImgWithFeats, cv::Scalar(0,255,0));
+	cv::imshow("VO", curImgWithFeats);
+	cv::waitKey(1);
+}

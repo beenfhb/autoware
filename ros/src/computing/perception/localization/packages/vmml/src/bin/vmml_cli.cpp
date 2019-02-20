@@ -213,9 +213,6 @@ public:
 		else if (command[0]=="zoom")
 			dataset_set_zoom(command[1]);
 
-//			else if (command[0]=="dataset_simulate_seqslam")
-//				dataset_simulate_seqslam(command[1]);
-
 		else if (command[0]=="dataset_view")
 			dataset_view(command[1]);
 
@@ -262,6 +259,9 @@ public:
 
 		else if (command[0]=="map_ba")
 			map_ba_cmd();
+
+		else if (command[0]=="simulate_features")
+			simulate_features_cmd(command);
 	}
 
 
@@ -525,24 +525,6 @@ private:
 	const string dumpMapTrajectoryPath = "/tmp/dump_map_trajectory.csv";
 	void map_trajectory_dump()
 	{
-/*
-		fstream mapTrFd (dumpMapTrajectoryPath, ios_base::out|ios_base::trunc);
-		if (!mapTrFd.is_open()) {
-			debug("Unable to create "+dumpMapTrajectoryPath);
-			return;
-		}
-
-		auto mapPoses = mapSrc->dumpCameraPoses();
-		uint32_t ix = 0;
-		for (auto ps: mapPoses) {
-			mapTrFd << ix << " ";
-			mapTrFd << dumpVector(ps.first) << " " << dumpVector(ps.second) << endl;
-			ix += 1;
-		}
-
-		mapTrFd.close();
-*/
-
 		Trajectory mapTrack;
 		mapSrc->dumpCameraPoses(mapTrack);
 		mapTrack.dump(dumpMapTrajectoryPath);
@@ -858,14 +840,13 @@ private:
 			debug("Unable to fetch mask image file");
 			return;
 		}
-		else
-			debug("Mask read; size is "+to_string(mask.cols)+'x'+to_string(mask.rows));
 
 		if (loadedDataset) {
-			cv::Mat localizerMask;
 			float zr = loadedDataset->getZoomRatio();
-			cv::resize(mask, localizerMask, cv::Size(), zr, zr, cv::INTER_CUBIC);
+			cv::resize(mask, mask, cv::Size(), zr, zr, cv::INTER_CUBIC);
 		}
+
+		debug("Mask read; size set to "+to_string(mask.cols)+'x'+to_string(mask.rows));
 	}
 
 
@@ -1072,6 +1053,27 @@ private:
 		}
 
 		bundle_adjustment_2(mapSrc);
+	}
+
+	// Simulate Feature Detection across frames
+	void simulate_features_cmd(const stringTokens &cmd)
+	{
+		int fn0 = stoi(cmd[1]),
+			fn1 = stoi(cmd[2]);
+
+		if (mask.empty()==true)
+			mask = loadedDataset->getMask();
+
+		VisualOdometryViewer featureViewer;
+		MapBuilder2 mpBuilder;
+		auto cvFeatDetector = mpBuilder.getMap()->getFeatureDetector();
+		auto cvFeatMatcher = mpBuilder.getMap()->getDescriptorMatcher();
+
+		for (int i=fn0; i<=fn1; ++i) {
+			auto framePtr = loadedDataset->getAsFrame(i);
+			framePtr->computeFeatures(cvFeatDetector, mask);
+			featureViewer.updateOnlyFeatures(framePtr);
+		}
 	}
 };
 

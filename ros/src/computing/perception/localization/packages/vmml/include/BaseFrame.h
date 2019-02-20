@@ -147,6 +147,9 @@ public:
 	cv::Mat allDescriptors() const
 	{ return fDescriptors; }
 
+	const std::vector<cv::KeyPoint>& allKeypoints() const
+	{ return fKeypoints; }
+
 	int numOfKeypoints() const
 	{ return fKeypoints.size(); }
 
