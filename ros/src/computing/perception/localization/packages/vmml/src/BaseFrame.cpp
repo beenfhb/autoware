@@ -97,7 +97,18 @@ BaseFrame::normal() const
 void
 BaseFrame::computeFeatures (cv::Ptr<cv::FeatureDetector> fd, const cv::Mat &mask)
 {
+	computeFeatures(fd, fKeypoints, fDescriptors, mask);
+}
+
+
+void
+BaseFrame::computeFeatures (cv::Ptr<cv::FeatureDetector> fd, std::vector<cv::KeyPoint> &kpList, cv::Mat &descriptors, const cv::Mat &mask) const
+{
 	assert (image.empty() == false);
+
+	// Clear all previous features, to be safe
+	kpList.clear();
+	descriptors.release();
 
 	// Enforce gray image before computing features
 	cv::Mat grayImg;
@@ -109,8 +120,8 @@ BaseFrame::computeFeatures (cv::Ptr<cv::FeatureDetector> fd, const cv::Mat &mask
 	fd->detectAndCompute(
 		grayImg,
 		mask,
-		fKeypoints,
-		fDescriptors,
+		kpList,
+		descriptors,
 		false);
 }
 
@@ -337,4 +348,34 @@ BaseFrame::keypointn (kpid k) const
 {
 	Vector3d v = keypointh(k);
 	return cameraParam.toMatrix3().inverse() * v;
+}
+
+
+void
+BaseFrame::extractKeypointsAndFeatures (const cv::Mat &mask, std::vector<cv::KeyPoint> &keypointsInMask, cv::Mat &descriptorsInMask) const
+{
+	vector<uint32_t> kpIds;
+
+	extractKeypointsAndFeatures(mask, kpIds);
+	keypointsInMask.resize(kpIds.size());
+	descriptorsInMask = cv::Mat(kpIds.size(), fDescriptors.cols, fDescriptors.type());
+
+	for (int i=0; i<kpIds.size(); ++i) {
+		auto id = kpIds[i];
+		keypointsInMask[i] = fKeypoints.at(id);
+		descriptorsInMask.row(i) = fDescriptors.row(id);
+	}
+}
+
+
+void
+BaseFrame::extractKeypointsAndFeatures (const cv::Mat &mask, std::vector<uint32_t> &keypointIds) const
+{
+	keypointIds.clear();
+	for (int i=0; i<numOfKeyPoints(); ++i) {
+		cv::Point2i kp = fKeypoints.at(i).pt;
+		if (mask.at<int>(kp)==0)
+			continue;
+		keypointIds.push_back(static_cast<uint32_t>(i));
+	}
 }

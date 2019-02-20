@@ -421,10 +421,15 @@ VisualOdometryViewer::update
 
 
 void
-VisualOdometryViewer::updateOnlyFeatures(const BaseFrame::ConstPtr frame)
+VisualOdometryViewer::updateOnlyFeatures(const BaseFrame::ConstPtr frame, const std::vector<cv::KeyPoint> &desiredKeypoints)
 {
 	cv::Mat curImgWithFeats;
-	cv::drawKeypoints(frame->getImage(), frame->allKeypoints(), curImgWithFeats, cv::Scalar(0,255,0));
+
+	if (desiredKeypoints.size()==0)
+		cv::drawKeypoints(frame->getImage(), frame->allKeypoints(), curImgWithFeats, cv::Scalar(0,255,0));
+	else
+		cv::drawKeypoints(frame->getImage(), desiredKeypoints, curImgWithFeats, cv::Scalar(0,255,0));
+
 	cv::imshow("VO", curImgWithFeats);
 	cv::waitKey(1);
 }

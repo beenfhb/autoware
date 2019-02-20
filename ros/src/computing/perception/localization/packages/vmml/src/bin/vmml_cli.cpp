@@ -1061,9 +1061,6 @@ private:
 		int fn0 = stoi(cmd[1]),
 			fn1 = stoi(cmd[2]);
 
-		if (mask.empty()==true)
-			mask = loadedDataset->getMask();
-
 		VisualOdometryViewer featureViewer;
 		MapBuilder2 mpBuilder;
 		auto cvFeatDetector = mpBuilder.getMap()->getFeatureDetector();
@@ -1071,8 +1068,20 @@ private:
 
 		for (int i=fn0; i<=fn1; ++i) {
 			auto framePtr = loadedDataset->getAsFrame(i);
-			framePtr->computeFeatures(cvFeatDetector, mask);
-			featureViewer.updateOnlyFeatures(framePtr);
+
+			cv::Mat frameDescriptors;
+			vector<cv::KeyPoint> desiredKeypoints;
+
+			if (mask.empty()==false) {
+				framePtr->computeFeatures(cvFeatDetector, desiredKeypoints, frameDescriptors, mask);
+				cerr << "Found " << desiredKeypoints.size() << " #features\n";
+				featureViewer.updateOnlyFeatures(framePtr, desiredKeypoints);
+			}
+			else {
+				framePtr->computeFeatures(cvFeatDetector, loadedDataset->getMask());
+				cerr << "Found " << framePtr->numOfKeyPoints() << " #features\n";
+				featureViewer.updateOnlyFeatures(framePtr);
+			}
 		}
 	}
 };

@@ -163,7 +163,7 @@ public:
 			std::vector<Matcher::KpPair>()
 	);
 
-	void updateOnlyFeatures(const BaseFrame::ConstPtr frame);
+	void updateOnlyFeatures(const BaseFrame::ConstPtr frame, const std::vector<cv::KeyPoint> &desiredKeypoints=std::vector<cv::KeyPoint>());
 
 protected:
 };

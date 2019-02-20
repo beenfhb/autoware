@@ -37,13 +37,16 @@ public:
 		const std::vector<KpPair> &featurePairs,
 		std::vector<KpPair> &validPairsByTriangulation);
 
-	// Match with homography constraints
+	// Match with homography constraints.
+	// We have to compute new features based on custom mask
 	static void
 	matchH(
 		const BaseFrame &F1, const BaseFrame &F2,
-		std::vector<KpPair> &featurePairs,
-		cv::Ptr<cv::DescriptorMatcher> matcher,
-		TTransform &T12);
+		cv::Mat planeMask,
+		std::vector<KpPair> &inlineFeaturePairs,
+		cv::Ptr<cv::FeatureDetector> fdetector,
+		cv::Ptr<cv::DescriptorMatcher> fmatcher,
+		Eigen::Matrix3d &H);
 
 	static void
 	matchMapPoints(

@@ -41,6 +41,27 @@ int
 	Matcher::__maxDraw = 1;
 
 
+struct FrameKeyPointFeatures
+{
+	vector<cv::KeyPoint> keypointList;
+	cv::Mat fFeatures;
+
+	FrameKeyPointFeatures(
+		const BaseFrame &frame,
+		cv::Ptr<cv::FeatureDetector> fdetector,
+		cv::Mat mask)
+	{
+		frame.computeFeatures(fdetector, keypointList, fFeatures, mask);
+	}
+
+	const cv::KeyPoint& keypoint(const int i) const
+	{ return keypointList.at(i); }
+
+	Vector2d keypointv(const int i) const
+	{ return Vector2d(keypointList[i].pt.x, keypointList[i].pt.y); }
+};
+
+
 void
 Matcher::decomposeE (
 	const Eigen::Matrix3d &E,
@@ -541,10 +562,35 @@ Matcher::CheckRT (
 // Match with homography constraints
 void
 Matcher::matchH(
-	const BaseFrame &F1, const BaseFrame &F2,
-	std::vector<KpPair> &featurePairs,
-	cv::Ptr<cv::DescriptorMatcher> matcher,
-	TTransform &T12)
+	const BaseFrame &Fs1, const BaseFrame &Fs2,
+	cv::Mat planeMask,
+	std::vector<KpPair> &inlineFeaturePairs,
+	cv::Ptr<cv::FeatureDetector> fdetector,
+	cv::Ptr<cv::DescriptorMatcher> fmatcher,
+	Eigen::Matrix3d &H)
 {
+	FrameKeyPointFeatures
+		F1(Fs1, fdetector, planeMask),
+		F2(Fs2, fdetector, planeMask);
 
+	// Establish initial correspondences
+	vector<cv::DMatch> initialMatches;
+	fmatcher->match(F1.fFeatures, F2.fFeatures, initialMatches);
+
+	// Sort by `distance'
+	sort(initialMatches.begin(), initialMatches.end());
+
+	const int MaxBestMatch = 500;
+	int howmany = std::min(MaxBestMatch, static_cast<int>(initialMatches.size()));
+
+	// Select N best matches
+	vector<cv::Point2f> pointsIn1(MaxBestMatch), pointsIn2(MaxBestMatch);
+	for (int i=0; i<howmany; ++i) {
+		auto &m = initialMatches[i];
+		pointsIn1[i] = F1.keypoint(m.queryIdx).pt;
+		pointsIn2[i] = F2.keypoint(m.trainIdx).pt;
+	}
+	cv::Mat inlierMask;
+	cv::Mat Hcv = cv::findHomography(pointsIn1, pointsIn2, cv::RANSAC, 3, inlierMask);
+	cv2eigen(Hcv, H);
 }

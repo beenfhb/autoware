@@ -122,7 +122,16 @@ public:
 
 	void computeFeatures (cv::Ptr<cv::FeatureDetector> fd, const cv::Mat &mask=cv::Mat());
 
-	const cv::Mat descriptor(kpid r) const
+	void computeFeatures (cv::Ptr<cv::FeatureDetector> fd, std::vector<cv::KeyPoint> &kpList, cv::Mat &descriptors, const cv::Mat &mask) const;
+
+	/*
+	 * Extract keypoints (and their descriptors) according to mask.
+	 * A keypoint is included when the color in the mask is not zero
+	 */
+	void extractKeypointsAndFeatures (const cv::Mat &mask, std::vector<uint32_t> &keypointIds) const;
+	void extractKeypointsAndFeatures (const cv::Mat &mask, std::vector<cv::KeyPoint> &keypointsInMask, cv::Mat &descriptorsInMask) const;
+
+	inline const cv::Mat descriptor(kpid r) const
 	{ return fDescriptors.row(r).clone(); }
 
 	const cv::KeyPoint keypoint(kpid k) const
