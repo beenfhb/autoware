@@ -90,7 +90,10 @@ void DecisionMakerNode::updateMissionCheckState(cstring_t& state_name, int statu
 {
   if (isEventFlagTrue("received_finalwaypoints") && current_status_.closest_waypoint != -1)
   {
-    tryNextState("mission_is_compatible");
+    if (current_status_.finalwaypoints.waypoints.size() < 5)
+      publishOperatorHelpMessage("Finalwaypoints is too short.\nIf you wont to Engage, please publish mission_is_compatible key by state_cmd.");
+    else
+      tryNextState("mission_is_compatible");
   }
 }
 
