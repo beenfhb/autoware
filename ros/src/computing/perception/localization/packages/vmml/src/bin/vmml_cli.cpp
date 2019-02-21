@@ -262,6 +262,9 @@ public:
 
 		else if (command[0]=="simulate_features")
 			simulate_features_cmd(command);
+
+		else if (command[0]=="homography")
+			homography_cmd(command);
 	}
 
 
@@ -936,7 +939,7 @@ private:
 		T12 = Matcher::calculateMovement(*Frame1, *Frame2, featurePairs, validKpPairs);
 
 		cv::Mat matchResult;
-		matchResult = Matcher::drawMatches(*Frame1, *Frame2, validKpPairs, drawmode, maxNum);
+		matchResult = Matcher::drawMatches(*Frame1, *Frame2, featurePairs, drawmode, maxNum);
 
 		const string matchFiledump("match.png");
 		cv::imwrite(matchFiledump, matchResult);
@@ -945,8 +948,9 @@ private:
 
 		double theta, phi;
 		Matcher::rotationFinder(*Frame1, *Frame2, validKpPairs, theta, phi);
-		const double __L__ = 2.1;
-		double lambda =  -2*__L__*sin(theta/2) / sin(theta/2 - phi);
+		const double L = 2.1;
+		double lambda =  -2*L*sin(theta/2) / sin(theta/2 - phi);
+		debug("lambda: " + to_string(lambda));
 		T12.translation() *= lambda;
 
 		/*
@@ -957,6 +961,28 @@ private:
 		debug("Camera metric transformation: ");
 		TTransform T12m = Frame1->pose().inverse() * Frame2->pose();
 		debug(dumpVector(T12m));
+	}
+
+
+	void homography_cmd(const stringTokens &cmd)
+	{
+		int
+			frnum1 = stoi(cmd[1]),
+			frnum2 = stoi(cmd[2]);
+
+		auto
+			Frame1 = loadedDataset->getAsFrame(frnum1),
+			Frame2 = loadedDataset->getAsFrame(frnum2);
+
+		// Need map's feature detector and matcher
+		MapBuilder2 mpBuilder;
+		auto cvFeatDetector = mpBuilder.getMap()->getFeatureDetector();
+		auto cvFeatMatcher = mpBuilder.getMap()->getDescriptorMatcher();
+
+		Eigen::Matrix3d hMat;
+		Matcher::matchH(*Frame1, *Frame2, mask, cvFeatDetector, cvFeatMatcher, hMat);
+
+		cout << "Done homography test" << endl;
 	}
 
 

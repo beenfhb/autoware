@@ -43,7 +43,6 @@ public:
 	matchH(
 		const BaseFrame &F1, const BaseFrame &F2,
 		cv::Mat planeMask,
-		std::vector<KpPair> &inlineFeaturePairs,
 		cv::Ptr<cv::FeatureDetector> fdetector,
 		cv::Ptr<cv::DescriptorMatcher> fmatcher,
 		Eigen::Matrix3d &H);

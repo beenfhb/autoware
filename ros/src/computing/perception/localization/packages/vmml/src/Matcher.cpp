@@ -150,9 +150,8 @@ Matcher::matchAny(
 
 	// Sort by `distance'
 	sort(initialMatches.begin(), initialMatches.end());
-	vector<int> inliersMatch;
 
-	const int MaxBestMatch = 500;
+	const int MaxBestMatch = initialMatches.size();
 
 	// Select N best matches
 	vector<cv::Point2f> pointsIn1(MaxBestMatch), pointsIn2(MaxBestMatch);
@@ -161,8 +160,16 @@ Matcher::matchAny(
 		pointsIn1[i] = Fr1.fKeypoints[m.queryIdx].pt;
 		pointsIn2[i] = Fr2.fKeypoints[m.trainIdx].pt;
 	}
-	cv::Mat Fcv = cv::findFundamentalMat(pointsIn1, pointsIn2, cv::FM_RANSAC, 3.84*Matcher::circleOfConfusionDiameter);
+	cv::Mat mask;
+	cv::Mat Fcv = cv::findFundamentalMat(pointsIn1, pointsIn2, cv::FM_RANSAC, 3.84*Matcher::circleOfConfusionDiameter, 0.99, mask);
 	// Need Eigen Matrix of F
+
+	for (int i=0; i<MaxBestMatch; ++i) {
+		auto &m = initialMatches[i];
+		if (mask.at<char>(i,0)!=0)
+			featurePairs.push_back(make_pair(m.queryIdx, m.trainIdx));
+	}
+	return;
 
 	Matrix3d F12;
 	cv2eigen(Fcv, F12);
@@ -351,7 +358,7 @@ double &theta, double &phi)
 	phi = acos(Fr1.normal().dot(Fr2.normal()));
 	theta = phi*2;
 
-	const int numPairs = min(50, static_cast<int>(featurePairs.size()));
+	const int numPairs = min(500, static_cast<int>(featurePairs.size()));
 
 	MatrixX3d PF1, PF2;
 	PF1.resize(numPairs, Eigen::NoChange);
@@ -564,7 +571,6 @@ void
 Matcher::matchH(
 	const BaseFrame &Fs1, const BaseFrame &Fs2,
 	cv::Mat planeMask,
-	std::vector<KpPair> &inlineFeaturePairs,
 	cv::Ptr<cv::FeatureDetector> fdetector,
 	cv::Ptr<cv::DescriptorMatcher> fmatcher,
 	Eigen::Matrix3d &H)
@@ -584,7 +590,7 @@ Matcher::matchH(
 	int howmany = std::min(MaxBestMatch, static_cast<int>(initialMatches.size()));
 
 	// Select N best matches
-	vector<cv::Point2f> pointsIn1(MaxBestMatch), pointsIn2(MaxBestMatch);
+	vector<cv::Point2f> pointsIn1(howmany), pointsIn2(howmany);
 	for (int i=0; i<howmany; ++i) {
 		auto &m = initialMatches[i];
 		pointsIn1[i] = F1.keypoint(m.queryIdx).pt;
@@ -593,4 +599,13 @@ Matcher::matchH(
 	cv::Mat inlierMask;
 	cv::Mat Hcv = cv::findHomography(pointsIn1, pointsIn2, cv::RANSAC, 3, inlierMask);
 	cv2eigen(Hcv, H);
+
+	// Check how many inliers we have
+	int nGood = 0;
+	for (int i=0; i<howmany; ++i) {
+		if(inlierMask.at<int>(i,0) != 0)
+			nGood++;
+	}
+
+	return;
 }
