@@ -72,6 +72,7 @@ private:
   convert(const diagnostic_msgs::DiagnosticArray::ConstPtr msg);
   autoware_system_msgs::SystemStatus system_status_;
   std::mutex mtx_;
+  bool ros_ok_;
   void updateConnectionStatus();
   // key topic_name,publisher_node,subscriber_node
   std::map<std::array<std::string, 3>, rosgraph_msgs::TopicStatistics>
