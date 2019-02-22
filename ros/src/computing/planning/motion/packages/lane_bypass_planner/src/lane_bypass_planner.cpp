@@ -136,7 +136,9 @@ void LaneBypassPlanner::timerCallback(const ros::TimerEvent &e)
 
     /* transform lane to target frame coordinate */
     autoware_msgs::Lane transformed_lane;
+    printf("1st start\n");
     coordinateTransformLane(*current_lane_ptr_, current_costmap_ptr_->header.frame_id, transformed_lane);
+    printf("1st end\n");
 
     std::vector<autoware_msgs::Lane> v_sub_lane;
     generateSubLane(transformed_lane, sub_lane_num_odd_, sub_lane_width_, v_sub_lane);
@@ -157,7 +159,9 @@ void LaneBypassPlanner::timerCallback(const ros::TimerEvent &e)
     }
 
     autoware_msgs::Lane output_msg; // in map coordinate
+    printf("2nd start\n");
     coordinateTransformLane(bypass_lane, current_lane_ptr_->header.frame_id, output_msg);
+    printf("2nd end\n");
     lane_pub_.publish(output_msg);
 
     /* debug */
@@ -208,6 +212,7 @@ void LaneBypassPlanner::smoothingTransition(const geometry_msgs::PoseStamped &se
             frame_to.erase(0, 1);
         geometry_msgs::TransformStamped ros_velo2world;
         ros_velo2world = tf_buffer_.lookupTransform(frame_from, frame_to, selfpose.header.stamp);
+        // printf("smoothingTransition(): frame_from = %s, frame_to = %s, selfpose.header.stamp.sec = %u, selfpose.header.stamp.nsec = %u\n", frame_from, frame_to, selfpose.header.stamp.sec, selfpose.header.stamp.nsec);
         tf2::fromMsg(ros_velo2world.transform, tf_velo2world);
     }
     catch (tf2::TransformException &ex)
@@ -410,8 +415,11 @@ void LaneBypassPlanner::coordinateTransformLane(const autoware_msgs::Lane &in_la
         {
             check_target_frame.erase(0, 1);
         }
+        ROS_INFO("coordinateTransformLane(): check_target_frame = %s, in_lane.header.frame_id = %s, stamp.sec = %u, stamp.nsec = %u", 
+                    check_target_frame.c_str(), in_lane.header.frame_id.c_str(), in_lane.header.stamp.sec, in_lane.header.stamp.nsec);
         geometry_msgs::TransformStamped ros_target2lane;
-        ros_target2lane = tf_buffer_.lookupTransform(check_target_frame, in_lane.header.frame_id, in_lane.header.stamp);
+        // ros_target2lane = tf_buffer_.lookupTransform(check_target_frame, in_lane.header.frame_id, in_lane.header.stamp);
+        ros_target2lane = tf_buffer_.lookupTransform(check_target_frame, in_lane.header.frame_id, ros::Time(0)); // lane header stamp is inappropiate. just use ros::Time(0) here.
         tf2::fromMsg(ros_target2lane.transform, tf_target2lane);
     }
     catch (tf2::TransformException &ex)
