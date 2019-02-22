@@ -133,6 +133,7 @@ int getMaxId(std::vector<vector_map_msgs::Line> lines);
 int getMaxId(std::vector<vector_map_msgs::Area> areas);
 int getMaxId(std::vector<vector_map_msgs::StopLine> stop_lines);
 int getMaxId(std::vector<vector_map_msgs::RoadSign> signs);
+double getAngleAverage(std::vector<double> angles);
 
 //visualization
 void insertMarkerArray(visualization_msgs::MarkerArray& a1, const visualization_msgs::MarkerArray& a2);
