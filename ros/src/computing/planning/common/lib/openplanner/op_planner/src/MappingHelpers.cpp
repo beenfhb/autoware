@@ -909,6 +909,67 @@ TiXmlElement* MappingHelpers::GetDataFolder(const string& folderName, TiXmlEleme
 	return nullptr;
 }
 
+void MappingHelpers::FindElements(const std::string& name, TiXmlElement* parent_element, std::vector<TiXmlElement*>& element_list)
+{
+	if(parent_element == nullptr)
+		return;
+	else if(name.compare(parent_element->Value()) == 0)
+		element_list.push_back(parent_element);
+
+	//std::cout << "Num:" << element_list.size() << ", main element: " <<  parent_element->Value() << std::endl;
+
+	FindElements(name, parent_element->FirstChildElement(), element_list);
+	FindElements(name, parent_element->NextSiblingElement(), element_list);
+}
+
+void MappingHelpers::FindFirstElement(const std::string& name, TiXmlElement* parent_element, TiXmlElement* p_elem)
+{
+	if(parent_element == nullptr || p_elem != nullptr)
+		return;
+	else if(name.compare(parent_element->Value()) == 0)
+	{
+		p_elem = parent_element;
+		return;
+	}
+
+	//std::cout << "Num:" << 1 << ", main element: " <<  parent_element->Value() << std::endl;
+
+	FindFirstElement(name, parent_element->FirstChildElement(), p_elem);
+	FindFirstElement(name, parent_element->NextSiblingElement(), p_elem);
+}
+
+int MappingHelpers::GetIntAttribute(TiXmlElement* p_elem, std::string name, int def_val )
+{
+	if(p_elem != nullptr && p_elem->Attribute(name) != nullptr)
+		return strtol(p_elem->Attribute(name.c_str()), NULL, 10);
+	else
+		return def_val;
+}
+
+double MappingHelpers::GetDoubleAttribute(TiXmlElement* p_elem, std::string name, double def_val )
+{
+	if(p_elem != nullptr && p_elem->Attribute(name) != nullptr)
+		return strtod(p_elem->Attribute(name.c_str()), NULL);
+	else
+		return def_val;
+}
+
+std::string MappingHelpers::GetStringAttribute(TiXmlElement* p_elem, std::string name, std::string def_val)
+{
+	if(p_elem != nullptr && p_elem->Attribute(name) != nullptr)
+		return std::string(p_elem->Attribute(name.c_str()));
+	else
+		return def_val;
+}
+
+std::string MappingHelpers::GetStringValue(TiXmlElement* p_elem, std::string def_val)
+{
+	if(p_elem != nullptr && p_elem->Value() != nullptr)
+		return p_elem->ValueStr();
+	else
+		return def_val;
+}
+
 WayPoint* MappingHelpers::GetClosestWaypointFromMap(const WayPoint& pos, RoadNetwork& map, const bool bDirectionBased)
 {
 	double distance_to_nearest_lane = 1;

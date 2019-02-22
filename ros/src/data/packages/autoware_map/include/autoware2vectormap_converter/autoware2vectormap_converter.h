@@ -128,7 +128,11 @@ double convertDecimalToDDMMSS(const double decimal);
 bool isWithinArea(double x, double y, const std::vector<autoware_map_msgs::Point> vertices);
 bool getIntersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double &intersect_x, double &intersect_y );
 void getMinMax(autoware_map_msgs::Point &min, autoware_map_msgs::Point &max, const std::vector<autoware_map_msgs::Point>points);
-double getAngleAverage(std::vector<double> angles);
+int getMaxId(std::vector<vector_map_msgs::Point> points);
+int getMaxId(std::vector<vector_map_msgs::Line> lines);
+int getMaxId(std::vector<vector_map_msgs::Area> areas);
+int getMaxId(std::vector<vector_map_msgs::StopLine> stop_lines);
+int getMaxId(std::vector<vector_map_msgs::RoadSign> signs);
 
 //visualization
 void insertMarkerArray(visualization_msgs::MarkerArray& a1, const visualization_msgs::MarkerArray& a2);

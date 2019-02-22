@@ -113,3 +113,51 @@ bool getIntersect(double x1, double y1, double x2, double y2, double x3, double 
         return false;
     }
 }
+
+int getMaxId(std::vector<vector_map_msgs::Point> points){
+  int max = 0;
+  for (auto p: points){
+    if (p.pid > max){
+      max = p.pid;
+    }
+  }
+  return max;
+}
+
+int getMaxId(std::vector<vector_map_msgs::Line> lines){
+  int max = 0;
+  for (auto l: lines){
+    if (l.lid > max){
+      max = l.lid;
+    }
+  }
+  return max;
+}
+int getMaxId(std::vector<vector_map_msgs::StopLine> stop_lines){
+  int max = 0;
+  for (auto l: stop_lines){
+    if (l.id > max){
+      max = l.id;
+    }
+  }
+  return max;
+}
+int getMaxId(std::vector<vector_map_msgs::RoadSign> signs){
+  int max = 0;
+  for (auto s: signs){
+    if (s.id > max){
+      max = s.id;
+    }
+  }
+  return max;
+}
+
+int getMaxId(std::vector<vector_map_msgs::Area> areas){
+  int max = 0;
+  for (auto a: areas){
+    if (a.aid > max){
+      max = a.aid;
+    }
+  }
+  return max;
+}

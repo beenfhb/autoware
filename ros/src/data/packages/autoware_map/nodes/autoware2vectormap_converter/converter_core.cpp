@@ -219,7 +219,7 @@ void createAreas(const AutowareMap &awmap, std::vector<vector_map_msgs::Area> &v
         return;
     }
 
-    int line_id = vmap_lines.size() + 1;
+    int line_id = getMaxId(vmap_lines) + 1;
     for ( auto awmap_area : awmap.findByFilter( [&](autoware_map_msgs::Area a){return true; }))
     {
         vector_map_msgs::Area vmap_area;
@@ -298,7 +298,7 @@ int createSquareArea(double x, double y, double z, double length,
                      std::vector<vector_map_msgs::Point> &vmap_points)
 {
     vector_map_msgs::Point v1, v2, v3, v4;
-    int point_id = vmap_points.size() + 1;
+    int point_id = getMaxId(vmap_points) + 1;
     v1.pid = point_id++;
     v1.bx = x - length / 2;
     v1.ly = y - length / 2;
@@ -326,7 +326,7 @@ int createSquareArea(double x, double y, double z, double length,
 
     vector_map_msgs::Line line;
     int lid, start_lid;
-    lid =start_lid= vmap_lines.size() + 1;
+    lid =start_lid= getMaxId(vmap_lines) + 1;
     line.lid = lid;
     line.bpid = v1.pid;
     line.fpid = v2.pid;
@@ -356,7 +356,7 @@ int createSquareArea(double x, double y, double z, double length,
     vmap_lines.push_back(line);
 
     vector_map_msgs::Area area;
-    area.aid = vmap_areas.size() + 1;
+    area.aid = getMaxId(vmap_areas) + 1;
     area.slid = start_lid;
     area.elid = lid;
     vmap_areas.push_back(area);
@@ -994,9 +994,9 @@ void createStopLines( const AutowareMap &awmap,
 
     const std::vector<autoware_map_msgs::WaypointRelation> awmap_waypoint_relations = awmap.findByFilter([&](autoware_map_msgs::WaypointRelation ){return true; });
 
-    int line_id = vmap_lines.size() + 1;
-    int point_id = vmap_points.size() + 1;
-    int stop_line_id = vmap_stop_lines.size() + 1;
+    int line_id = getMaxId(vmap_lines) + 1;
+    int point_id = getMaxId(vmap_points) + 1;
+    int stop_line_id = getMaxId(vmap_stop_lines) + 1;
 
     for(auto wp : awmap.findByFilter([] (const autoware_map_msgs::Waypoint wp){return wp.stop_line == 1; }))
     {
@@ -1092,7 +1092,7 @@ void createStopLines( const AutowareMap &awmap,
         vmap_stop_line.lid = vmap_line.lid;
         vmap_stop_line.tlid = 0;
         if( wsr_vector.empty()) {
-            int road_sign_id = vmap_road_signs.size() + 1;
+            int road_sign_id = getMaxId(vmap_road_signs) + 1;
             vmap_road_signs.push_back(createDummyRoadSign(road_sign_id));
             vmap_stop_line.signid = road_sign_id;
         }
