@@ -736,10 +736,10 @@ void createWayAreasFromLanes(const AutowareMap &awmap, std::vector<vector_map_ms
     }
 
     const std::vector<autoware_map_msgs::WaypointRelation> awmap_waypoint_relations = awmap.findByFilter([&](autoware_map_msgs::WaypointRelation ){return true; });
-    int line_id = vmap_lines.size() + 1;
-    int point_id = vmap_points.size() + 1;
-    int area_id = vmap_areas.size() + 1;
-    int wayarea_id = vmap_way_areas.size() + 1;
+    int line_id = getMaxId(vmap_lines) + 1;
+    int point_id = getMaxId(vmap_points) + 1;
+    int area_id = getMaxId(vmap_areas) + 1;
+    int wayarea_id = getMaxId(vmap_way_areas) + 1;
 
     std::unordered_map<int, WaypointWithYaw> wp_yaw_map;
     for(auto relation : awmap_waypoint_relations)

@@ -161,3 +161,13 @@ int getMaxId(std::vector<vector_map_msgs::Area> areas){
   }
   return max;
 }
+
+int getMaxId(std::vector<vector_map_msgs::WayArea> way_areas){
+  int max = 0;
+  for (auto a: way_areas){
+    if (a.waid > max){
+      max = a.waid;
+    }
+  }
+  return max;
+}
