@@ -676,12 +676,24 @@ private:
 		debug("Dumped to " + dumpImagePath);
 	}
 
+	/*
+	 * Save with detected features and Lidar scans
+	 * XXX: Unfinished
+	 */
 	void dataset_save_id(const string &sid)
 	{
 		dataItemId requestId = static_cast<dataItemId>(std::stoi(sid));
 
 		auto md = loadedDataset->get(requestId);
-		cv::Mat img = md->getImage();
+		cv::Mat img = md->getImage().clone();
+
+		if (mask.empty()==false) {
+
+		}
+		else {
+
+		}
+
 		cv::imwrite(dumpImagePath, img);
 		debug("Image #" + sid + " dumped to " + dumpImagePath);
 	}
@@ -939,7 +951,7 @@ private:
 		T12 = Matcher::calculateMovement(*Frame1, *Frame2, featurePairs, validKpPairs);
 
 		cv::Mat matchResult;
-		matchResult = Matcher::drawMatches(*Frame1, *Frame2, featurePairs, drawmode, maxNum);
+		matchResult = Matcher::drawMatches(*Frame1, *Frame2, validKpPairs, drawmode, maxNum);
 
 		const string matchFiledump("match.png");
 		cv::imwrite(matchFiledump, matchResult);
@@ -1110,6 +1122,8 @@ private:
 			}
 		}
 	}
+
+
 };
 
 

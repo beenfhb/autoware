@@ -41,6 +41,34 @@ int
 	Matcher::__maxDraw = 1;
 
 
+int countFeaturePairMask(const cv::Mat &M)
+{
+	assert (M.cols==1 and M.type()==CV_8UC1);
+
+	int s=0;
+	for (int r=0; r<M.rows; ++r) {
+		if (M.at<char>(r,0)!=0)
+			s+=1;
+	}
+
+	return s;
+}
+
+
+void filterFeaturePairMask(std::vector<Matcher::KpPair> &srcFeaturePair, const cv::Mat &M)
+{
+	assert (M.rows==srcFeaturePair.size());
+	vector<Matcher::KpPair> newPairList;
+
+	for (int i=0; i<srcFeaturePair.size(); ++i) {
+		if (M.at<char>(i,0)!=0)
+			newPairList.push_back(srcFeaturePair.at(i));
+	}
+
+	srcFeaturePair = newPairList;
+}
+
+
 struct FrameKeyPointFeatures
 {
 	vector<cv::KeyPoint> keypointList;
@@ -162,9 +190,10 @@ Matcher::matchAny(
 	}
 	cv::Mat mask;
 	cv::Mat Fcv = cv::findFundamentalMat(pointsIn1, pointsIn2, cv::FM_RANSAC, 3.84*Matcher::circleOfConfusionDiameter, 0.99, mask);
+	cerr << "Got " << countFeaturePairMask(mask) << " out of " << mask.rows << endl;
 	// Need Eigen Matrix of F
 
-	for (int i=0; i<MaxBestMatch; ++i) {
+	for (int i=0; i<initialMatches.size(); ++i) {
 		auto &m = initialMatches[i];
 		if (mask.at<char>(i,0)!=0)
 			featurePairs.push_back(make_pair(m.queryIdx, m.trainIdx));
@@ -175,22 +204,18 @@ Matcher::matchAny(
 	cv2eigen(Fcv, F12);
 
 	/*
-	 * Guided Match using new F
+	 * Select point pairs that obey epipolar geometry
 	 */
-	// Prepare constraints
-	cv::Mat gdMask = cv::Mat::zeros(Fr1.numOfKeyPoints(), Fr2.numOfKeyPoints(), CV_8UC1);
-	vector<kpid> kpid1NeedMatch;
-	set<kpid> kpid2NeedMatch;
-	float maxDistance = -1;
-	for (int i=0; i<initialMatches.size(); ++i) {
+	for (int i = 0; i < initialMatches.size(); ++i) {
 		auto &m = initialMatches[i];
 		const Vector2d keypoint1v = Fr1.keypointv(m.queryIdx);
 		const Line2 epl2 = createEpipolarLine(F12, Fr1.fKeypoints[m.queryIdx]);
-		const Line2 epl1 = createEpipolarLine(F12.transpose(), Fr2.fKeypoints[m.trainIdx]);
-		if (isKeypointInEpipolarLine(epl2, Fr2.keypointv(m.trainIdx))==true and isKeypointInEpipolarLine(epl1, Fr1.keypointv(m.queryIdx))==true) {
+		const Line2 epl1 = createEpipolarLine(F12.transpose(),
+				Fr2.fKeypoints[m.trainIdx]);
+		if (isKeypointInEpipolarLine(epl2, Fr2.keypointv(m.trainIdx)) == true
+				and isKeypointInEpipolarLine(epl1, Fr1.keypointv(m.queryIdx))
+					== true) {
 			featurePairs.push_back(make_pair(m.queryIdx, m.trainIdx));
-			if (m.distance > maxDistance)
-				maxDistance = m.distance;
 		}
 	}
 }
@@ -206,6 +231,8 @@ Matcher::calculateMovement (
 	const std::vector<KpPair> &featurePairs,
 	vector<KpPair> &validPairsByTriangulation)
 {
+	validPairsByTriangulation = featurePairs;
+
 	vector<cv::Point2f> pointsIn1(featurePairs.size()), pointsIn2(featurePairs.size());
 	for (int i=0; i<featurePairs.size(); ++i) {
 		auto &m = featurePairs[i];
@@ -214,15 +241,12 @@ Matcher::calculateMovement (
 	}
 
 	cv::Mat E12, R12e, te, mask;
-	E12 = cv::findEssentialMat(pointsIn1, pointsIn2, F1.cameraParam.toCvMat(), cv::RANSAC, 0.999, 3.84*Matcher::circleOfConfusionDiameter);
+	E12 = cv::findEssentialMat(pointsIn1, pointsIn2, F1.cameraParam.toCvMat(), cv::RANSAC, 0.999, 3.84*Matcher::circleOfConfusionDiameter, mask);
 
 	int inliers;
 	inliers = cv::recoverPose(E12, pointsIn1, pointsIn2, F1.cameraParam.toCvMat(), R12e, te, mask);
 
-	for (int i=0; i<featurePairs.size(); ++i) {
-		if (mask.at<int>(i,0)!=0)
-			validPairsByTriangulation.push_back(featurePairs.at(i));
-	}
+	filterFeaturePairMask(validPairsByTriangulation, mask);
 
 	Matrix3d R12;
 	Vector3d t;
