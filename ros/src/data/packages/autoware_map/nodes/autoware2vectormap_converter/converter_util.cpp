@@ -23,6 +23,17 @@ double addAngles(double angle1, double angle2)
     return sum;
 }
 
+double getAngleAverage(const std::vector<double> angles){
+    autoware_map_msgs::Point avg, sum;
+    for ( double angle : angles){
+        sum.x += cos(angle);
+        sum.y += sin(angle);
+    }
+    avg.x = sum.x / angles.size();
+    avg.y = sum.y / angles.size();
+    return atan2(avg.y, avg.x);
+}
+
 double convertDecimalToDDMMSS(const double decimal)
 {
     int degree, minutes,seconds;

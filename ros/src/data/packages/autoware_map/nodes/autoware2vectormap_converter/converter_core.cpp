@@ -34,24 +34,24 @@ Converter::~Converter()
 void Converter::statusCallback(const std_msgs::UInt64::ConstPtr &available_category)
 {
     autoware_map::category_t awmap_required_category = autoware_map::Category::AREA |
-                                                     autoware_map::Category::POINT |
-                                                     autoware_map::Category::LANE |
-                                                     autoware_map::Category::LANE_ATTR_RELATION |
-                                                     autoware_map::Category::LANE_SIGNAL_LIGHT_RELATION |
-                                                     autoware_map::Category::SIGNAL_LIGHT |
-                                                     autoware_map::Category::WAYAREA |
-                                                     autoware_map::Category::WAYPOINT |
-                                                     autoware_map::Category::WAYPOINT_RELATION |
-                                                     autoware_map::Category::WAYPOINT_LANE_RELATION |
-                                                     autoware_map::Category::WAYPOINT_SIGNAL_RELATION;
+                                                       autoware_map::Category::POINT |
+                                                       autoware_map::Category::LANE |
+                                                       autoware_map::Category::LANE_ATTR_RELATION |
+                                                       autoware_map::Category::LANE_SIGNAL_LIGHT_RELATION |
+                                                       autoware_map::Category::SIGNAL_LIGHT |
+                                                       autoware_map::Category::WAYAREA |
+                                                       autoware_map::Category::WAYPOINT |
+                                                       autoware_map::Category::WAYPOINT_RELATION |
+                                                       autoware_map::Category::WAYPOINT_LANE_RELATION |
+                                                       autoware_map::Category::WAYPOINT_SIGNAL_RELATION;
 
     //get autoware_map
     awmap_.subscribe(nh, available_category->data, ros::Duration(5));
     if(awmap_.hasSubscribed(awmap_required_category) == false)
     {
         autoware_map::Category missing_category = static_cast<autoware_map::Category>(awmap_required_category - (awmap_required_category & awmap_.hasSubscribed()));
-        ROS_WARN_STREAM("missing category : "<< missing_category << std::endl <<
-        "Did not subscribe all required category! Converted vector map might lack some data!");
+        ROS_WARN_STREAM("missing category : " << missing_category << std::endl <<
+                        "Did not subscribe all required category! Converted vector map might lack some data!");
     }
 
     ROS_INFO_STREAM("start conversion!");
@@ -66,6 +66,7 @@ void Converter::statusCallback(const std_msgs::UInt64::ConstPtr &available_categ
     createDTLanes( awmap_, vmap_dtlanes_,vmap_lanes_);
     createCrossWalks(awmap_, vmap_cross_walks_, vmap_areas_, vmap_lines_, vmap_points_);
     createWayAreas(awmap_, vmap_way_areas_);
+    createWayAreasFromLanes(awmap_, vmap_way_areas_, vmap_areas_, vmap_lines_, vmap_points_);
     createSignals(awmap_, vmap_signals_, vmap_vectors_,vmap_dummy_poles_);
     createStopLines(awmap_, vmap_lines_, vmap_points_, vmap_stop_lines_, vmap_road_signs_);
 
@@ -174,6 +175,7 @@ void Converter::publishVectorMap()
     insertMarkerArray(marker_array, createCrossWalkMarkerArray(vmap, vector_map::Color::WHITE));
     insertMarkerArray(marker_array, createSignalMarkerArray(vmap, vector_map::Color::RED, vector_map::Color::BLUE, vector_map::Color::YELLOW, vector_map::Color::CYAN, vector_map::Color::GRAY));
     insertMarkerArray(marker_array, createCrossRoadMarkerArray(vmap, vector_map::Color::LIGHT_GREEN));
+    insertMarkerArray(marker_array, createWayAreaMarkerArray(vmap, vector_map::Color::LIGHT_CYAN));
     // insertMarkerArray(marker_array, createAreaMarkerArray(vmap, vector_map::Color::WHITE));
     insertMarkerArray(marker_array, createLaneMarkerArray(vmap, vector_map::Color::YELLOW));
 
@@ -207,7 +209,7 @@ void createAreas(const AutowareMap &awmap, std::vector<vector_map_msgs::Area> &v
 {
     //return if enough information is not subscribed
     autoware_map::category_t required_category = autoware_map::Category::POINT |
-                                               autoware_map::Category::AREA;
+                                                 autoware_map::Category::AREA;
     if(!awmap.hasSubscribed(required_category) )
     {
         autoware_map::Category missing_category = static_cast<autoware_map::Category>(required_category - (required_category & awmap.hasSubscribed()));
@@ -401,7 +403,7 @@ void createCrossWalks(const AutowareMap &awmap, std::vector<vector_map_msgs::Cro
         autoware_map_msgs::Point min,max;
         getMinMax(min,max,vertices);
 
-        double resolution = 1.0;
+        double resolution = 2.0;
         for (double x = min.x - resolution; x < max.x + resolution; x += resolution / 2)
         {
             for (double y = min.y - resolution; y < max.y + resolution; y += resolution / 2)
@@ -461,7 +463,7 @@ void createNodes(const AutowareMap &awmap, std::vector<vector_map_msgs::Node> &v
 {
     //return if enough information is not subscribed
     autoware_map::category_t required_category = autoware_map::Category::POINT |
-                                               autoware_map::Category::WAYPOINT;
+                                                 autoware_map::Category::WAYPOINT;
     if(!awmap.hasSubscribed(required_category) )
     {
         autoware_map::Category missing_category = static_cast<autoware_map::Category>(required_category - (required_category & awmap.hasSubscribed()));
@@ -712,6 +714,161 @@ void createWayAreas(const AutowareMap &awmap, std::vector<vector_map_msgs::WayAr
         way_area.waid = awmap_area.wayarea_id;
         way_area.aid = awmap_area.area_id;
         vmap_way_areas.push_back(way_area);
+    }
+}
+
+void createWayAreasFromLanes(const AutowareMap &awmap, std::vector<vector_map_msgs::WayArea> &vmap_way_areas,
+                             std::vector<vector_map_msgs::Area> &vmap_areas,
+                             std::vector<vector_map_msgs::Line> &vmap_lines,
+                             std::vector<vector_map_msgs::Point> &vmap_points )
+{
+    //return if enough information is not subscribed
+    autoware_map::category_t required_category = autoware_map::Category::POINT |
+                                                 autoware_map::Category::WAYPOINT |
+                                                 autoware_map::Category::WAYPOINT_RELATION;
+    if(!awmap.hasSubscribed(required_category) )
+    {
+        autoware_map::Category missing_category = static_cast<autoware_map::Category>(required_category - (required_category & awmap.hasSubscribed()));
+        ROS_WARN_STREAM("missing category : "
+                        << missing_category << std::endl
+                        << "skipping conversion for wayareas");
+        return;
+    }
+
+    const std::vector<autoware_map_msgs::WaypointRelation> awmap_waypoint_relations = awmap.findByFilter([&](autoware_map_msgs::WaypointRelation ){return true; });
+    int line_id = vmap_lines.size() + 1;
+    int point_id = vmap_points.size() + 1;
+    int area_id = vmap_areas.size() + 1;
+    int wayarea_id = vmap_way_areas.size() + 1;
+
+    std::unordered_map<int, WaypointWithYaw> wp_yaw_map;
+    for(auto relation : awmap_waypoint_relations)
+    {
+        autoware_map_msgs::Waypoint awmap_wp = awmap.findById<autoware_map_msgs::Waypoint>(relation.waypoint_id);
+        autoware_map_msgs::Waypoint awmap_next_wp = awmap.findById<autoware_map_msgs::Waypoint>(relation.next_waypoint_id);
+        autoware_map_msgs::Point awmap_pt = awmap.findById<autoware_map_msgs::Point>(awmap_wp.point_id);
+        autoware_map_msgs::Point awmap_next_pt = awmap.findById<autoware_map_msgs::Point>(awmap_next_wp.point_id);
+
+        double yaw = atan2(awmap_next_pt.y - awmap_pt.y, awmap_next_pt.x - awmap_pt.x);
+
+        WaypointWithYaw wp_yaw;
+        if(wp_yaw_map.find(relation.waypoint_id) != wp_yaw_map.end()) {
+            wp_yaw = wp_yaw_map.at(relation.waypoint_id);
+        }
+        wp_yaw.waypoint = awmap_wp;
+        wp_yaw.point = awmap_pt;
+        wp_yaw.yaws.push_back(yaw);
+        wp_yaw_map[relation.waypoint_id] = wp_yaw;
+
+        WaypointWithYaw next_wp_yaw;
+        if(wp_yaw_map.find(relation.next_waypoint_id) != wp_yaw_map.end()) {
+            next_wp_yaw = wp_yaw_map.at(relation.next_waypoint_id);
+        }
+        next_wp_yaw.waypoint = awmap_next_wp;
+        next_wp_yaw.point = awmap_next_pt;
+        next_wp_yaw.yaws.push_back(yaw);
+        wp_yaw_map[relation.next_waypoint_id] = next_wp_yaw;
+    }
+
+    for( auto &item : wp_yaw_map)
+    {
+        WaypointWithYaw wp_yaw = item.second;
+        wp_yaw.yaw_avg = getAngleAverage(wp_yaw.yaws);
+        double yaw = wp_yaw.yaw_avg;
+        double r = wp_yaw.waypoint.width / 2;
+
+        double angle_left, angle_right;
+        if(isJapaneseCoordinate(wp_yaw.point.epsg)) {
+            angle_left = addAngles(yaw, -M_PI / 2);
+            angle_right = addAngles(yaw, M_PI / 2);
+        }else
+        {
+            angle_left = addAngles(yaw, M_PI / 2);
+            angle_right = addAngles(yaw, -M_PI / 2);
+        }
+
+        autoware_map_msgs::Point left_point,right_point;
+        left_point.x = wp_yaw.point.x + r * cos(angle_left);
+        left_point.y = wp_yaw.point.y + r * sin(angle_left);
+        left_point.z = wp_yaw.point.z;
+        left_point.point_id = point_id++;
+        wp_yaw.left_point = left_point;
+
+        right_point.x = wp_yaw.point.x + r * cos(angle_right);
+        right_point.y = wp_yaw.point.y + r * sin(angle_right);
+        right_point.z = wp_yaw.point.z;
+        right_point.point_id = point_id++;
+        wp_yaw.right_point = right_point;
+        item.second = wp_yaw;
+    }
+
+    for(auto relation : awmap_waypoint_relations)
+    {
+        WaypointWithYaw wp_yaw = wp_yaw_map.at(relation.waypoint_id);
+        WaypointWithYaw next_wp_yaw = wp_yaw_map.at(relation.next_waypoint_id);
+
+        vector_map_msgs::Point pt1, pt2, pt3, pt4;
+
+        convertPoint(pt1, wp_yaw.left_point);
+        pt1.pid = wp_yaw.left_point.point_id;
+        convertPoint(pt2, next_wp_yaw.left_point);
+        pt2.pid = next_wp_yaw.left_point.point_id;
+        if(pt2.pid == 0){
+            std::cout << next_wp_yaw.waypoint.waypoint_id << std::endl;
+        }
+        convertPoint(pt3, next_wp_yaw.right_point);
+        pt3.pid = next_wp_yaw.right_point.point_id;
+        convertPoint(pt4, wp_yaw.right_point);
+        pt4.pid = wp_yaw.right_point.point_id;
+
+        vmap_points.push_back(pt1);
+        vmap_points.push_back(pt2);
+        vmap_points.push_back(pt3);
+        vmap_points.push_back(pt4);
+
+        vector_map_msgs::Line vmap_line;
+        vmap_line.lid = line_id;
+        vmap_line.bpid = pt1.pid;
+        vmap_line.fpid = pt2.pid;
+        vmap_line.blid = 0;
+        vmap_line.flid = line_id + 1;
+        vmap_lines.push_back(vmap_line);
+        line_id++;
+
+        vmap_line.lid = line_id;
+        vmap_line.bpid = pt2.pid;
+        vmap_line.fpid = pt3.pid;
+        vmap_line.blid = line_id - 1;
+        vmap_line.flid = line_id + 1;
+        vmap_lines.push_back(vmap_line);
+        line_id++;
+
+        vmap_line.lid = line_id;
+        vmap_line.bpid = pt3.pid;
+        vmap_line.fpid = pt4.pid;
+        vmap_line.blid = line_id - 1;
+        vmap_line.flid = line_id + 1;
+        vmap_lines.push_back(vmap_line);
+        line_id++;
+
+        vmap_line.lid = line_id;
+        vmap_line.bpid = pt4.pid;
+        vmap_line.fpid = pt1.pid;
+        vmap_line.blid = line_id - 1;
+        vmap_line.flid = 0;
+        vmap_lines.push_back(vmap_line);
+        line_id++;
+
+        vector_map_msgs::Area vmap_area;
+        vmap_area.aid = area_id++;
+        vmap_area.slid = line_id - 4;
+        vmap_area.elid = line_id - 1;
+        vmap_areas.push_back(vmap_area);
+
+        vector_map_msgs::WayArea vmap_way_area;
+        vmap_way_area.aid = vmap_area.aid;
+        vmap_way_area.waid = wayarea_id++;
+        vmap_way_areas.push_back(vmap_way_area);
     }
 }
 

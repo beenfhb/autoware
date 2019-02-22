@@ -116,6 +116,34 @@ MarkerArray createCrossWalkMarkerArray(const VectorMap& vmap, Color color)
     return marker_array;
 }
 
+MarkerArray createWayAreaMarkerArray(const VectorMap& vmap, Color color)
+{
+    MarkerArray marker_array;
+    int id = 0;
+    for (const auto& way_area : vmap.findByFilter([] (const vector_map_msgs::WayArea &wayarea){return true; }))
+    {
+        if (way_area.aid == 0)
+        {
+            ROS_ERROR_STREAM("[createWayAreaMarkerArray] invalid cross_walk: " << way_area);
+            continue;
+        }
+
+        vector_map_msgs::Area area = vmap.findByKey(vector_map::Key<vector_map_msgs::Area>(way_area.aid));
+        if (area.aid == 0)
+        {
+            ROS_ERROR_STREAM("[createWayAreaMarkerArray] invalid area: " << area);
+            continue;
+        }
+
+        Marker marker = createAreaMarker("way_area", id++, color, vmap, area);
+        if (isValidMarker(marker))
+            marker_array.markers.push_back(marker);
+        else
+            ROS_ERROR_STREAM("[createWayAreaMarkerArray] failed createAreaMarker: " << area);
+    }
+    return marker_array;
+}
+
 MarkerArray createSignalMarkerArray(const VectorMap& vmap, Color red_color, Color blue_color,
                                                         Color yellow_color, Color other_color, Color pole_color)
 {

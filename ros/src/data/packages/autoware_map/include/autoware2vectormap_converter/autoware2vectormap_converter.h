@@ -79,6 +79,15 @@ private:
 
 };
 
+struct WaypointWithYaw{
+    autoware_map_msgs::Waypoint waypoint;
+    autoware_map_msgs::Point point;
+    autoware_map_msgs::Point left_point;
+    autoware_map_msgs::Point right_point;
+    std::vector<double> yaws;
+    double yaw_avg;
+};
+
 //conversion functions these don't have to be a member function of Converter class since it does not touch member variables
 void convertPoint(vector_map_msgs::Point &vmap_point, const autoware_map_msgs::Point awmap_point);
 void createPoints(const autoware_map::AutowareMap &awmap, std::vector<vector_map_msgs::Point> &vmap_points);
@@ -94,6 +103,10 @@ void createCrossWalks(const autoware_map::AutowareMap &awmap, std::vector<vector
 int getJunctionType(const std::vector<autoware_map_msgs::WaypointRelation> awmap_waypoint_relations, std::vector<int> branching_idx, std::vector<int> merging_idx);
 void createDTLanes(const autoware_map::AutowareMap &awmap, std::vector<vector_map_msgs::DTLane> &vmap_dtlanes, std::vector<vector_map_msgs::Lane> &vmap_lanes);
 void createWayAreas(const autoware_map::AutowareMap &awmap, std::vector<vector_map_msgs::WayArea> &vmap_way_areas);
+void createWayAreasFromLanes(const autoware_map::AutowareMap &awmap, std::vector<vector_map_msgs::WayArea> &vmap_way_areas,
+                            std::vector<vector_map_msgs::Area> &vmap_areas,
+                             std::vector<vector_map_msgs::Line> &vmap_lines,
+                             std::vector<vector_map_msgs::Point> &vmap_points );
 void createSignals( const autoware_map::AutowareMap &awmap,
                     std::vector<vector_map_msgs::Signal> &vmap_signals,
                     std::vector<vector_map_msgs::Vector> &vmap_vectors,
@@ -115,6 +128,7 @@ double convertDecimalToDDMMSS(const double decimal);
 bool isWithinArea(double x, double y, const std::vector<autoware_map_msgs::Point> vertices);
 bool getIntersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double &intersect_x, double &intersect_y );
 void getMinMax(autoware_map_msgs::Point &min, autoware_map_msgs::Point &max, const std::vector<autoware_map_msgs::Point>points);
+double getAngleAverage(std::vector<double> angles);
 
 //visualization
 void insertMarkerArray(visualization_msgs::MarkerArray& a1, const visualization_msgs::MarkerArray& a2);
@@ -137,5 +151,6 @@ visualization_msgs::MarkerArray createStopLineMarkerArray(const vector_map::Vect
 visualization_msgs::MarkerArray createCrossWalkMarkerArray(const vector_map::VectorMap& vmap, vector_map::Color color);
 visualization_msgs::MarkerArray createSignalMarkerArray(const vector_map::VectorMap& vmap, vector_map::Color red_color, vector_map::Color blue_color, vector_map::Color yellow_color, vector_map::Color other_color, vector_map::Color pole_color);
 visualization_msgs::MarkerArray createCrossRoadMarkerArray(const vector_map::VectorMap& vmap, vector_map::Color color);
+visualization_msgs::MarkerArray createWayAreaMarkerArray(const vector_map::VectorMap& vmap, vector_map::Color color);
 
 #endif // AUTOWARE_MAP_AUTOWARE_MAP_H
