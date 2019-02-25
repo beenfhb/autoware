@@ -161,7 +161,8 @@ std::ostream& operator<<(std::ostream& os, const autoware_map_msgs::Waypoint& ob
     << obj.point_id << ","
     << obj.velocity << ","
     << obj.stop_line << ","
-    << obj.width << ","
+    << obj.left_width << ","
+    << obj.right_width << ","
     << obj.height;
     return os;
 }
@@ -468,8 +469,9 @@ std::istream& operator>>(std::istream& is, autoware_map_msgs::Waypoint& obj)
     obj.point_id = std::stoi(columns.at(1));
     obj.velocity = std::stod(columns.at(2));
     obj.stop_line = std::stoi(columns.at(3));
-    obj.width = std::stod(columns.at(4));
-    obj.height = std::stod(columns.at(5));
+    obj.left_width = std::stod(columns.at(4));
+    obj.right_width = std::stod(columns.at(5));
+    obj.height = std::stod(columns.at(6));
     return is;
 }
 std::istream& operator>>(std::istream& is, autoware_map_msgs::WaypointLaneRelation& obj)

@@ -627,8 +627,8 @@ void createDTLanes(const AutowareMap &awmap,
 
         vmap_dtlane.slope = vertical_dist / horizontal_dist * 100; //decimal to percentage value
         vmap_dtlane.cant = 0;
-        vmap_dtlane.lw = awmap_waypoint.width / 2;
-        vmap_dtlane.rw = awmap_waypoint.width / 2;
+        vmap_dtlane.lw = awmap_waypoint.left_width;
+        vmap_dtlane.rw = awmap_waypoint.right_width;
 
         vmap_dtlanes.push_back(vmap_dtlane);
 
@@ -775,7 +775,8 @@ void createWayAreasFromLanes(const AutowareMap &awmap, std::vector<vector_map_ms
         WaypointWithYaw wp_yaw = item.second;
         wp_yaw.yaw_avg = getAngleAverage(wp_yaw.yaws);
         double yaw = wp_yaw.yaw_avg;
-        double r = wp_yaw.waypoint.width / 2;
+        double left_width = wp_yaw.waypoint.left_width;
+        double right_width = wp_yaw.waypoint.right_width;
 
         double angle_left, angle_right;
         if(isJapaneseCoordinate(wp_yaw.point.epsg)) {
@@ -788,14 +789,14 @@ void createWayAreasFromLanes(const AutowareMap &awmap, std::vector<vector_map_ms
         }
 
         autoware_map_msgs::Point left_point,right_point;
-        left_point.x = wp_yaw.point.x + r * cos(angle_left);
-        left_point.y = wp_yaw.point.y + r * sin(angle_left);
+        left_point.x = wp_yaw.point.x + left_width * cos(angle_left);
+        left_point.y = wp_yaw.point.y + left_width * sin(angle_left);
         left_point.z = wp_yaw.point.z;
         left_point.point_id = point_id++;
         wp_yaw.left_point = left_point;
 
-        right_point.x = wp_yaw.point.x + r * cos(angle_right);
-        right_point.y = wp_yaw.point.y + r * sin(angle_right);
+        right_point.x = wp_yaw.point.x + right_width * cos(angle_right);
+        right_point.y = wp_yaw.point.y + right_width * sin(angle_right);
         right_point.z = wp_yaw.point.z;
         right_point.point_id = point_id++;
         wp_yaw.right_point = right_point;
@@ -1023,19 +1024,23 @@ void createStopLines( const AutowareMap &awmap,
         vector_map_msgs::Point start_point, end_point;
         start_point.pid = point_id++;
 
-        double r = wp.width / 2;
+        double right_width = wp.right_width;
+        double left_width = wp.left_width;
+        //stop line must intersect with waypoints left side of the line, shorten left side
+        if(left_width < right_width * 0.9){
+            left_width = right_width * 0.9;
+        }
         //stop line cannot be right on waypoint with current rebuild_decision_maker
         double epsilon_x = cos(yaw) * 0.001;
         double epsilon_y = sin(yaw) * 0.001;
 
-        //stop line must intersect with waypoints left side of the line, lengthen left side
-        start_point.bx = awmap_pt.x + ( r * 0.9 ) * cos(angle_left) + epsilon_x;
-        start_point.ly = awmap_pt.y + (r * 0.9) * sin(angle_left) + epsilon_y;
+        start_point.bx = awmap_pt.x + ( left_width * 0.9 ) * cos(angle_left) + epsilon_x;
+        start_point.ly = awmap_pt.y + ( left_width * 0.9) * sin(angle_left) + epsilon_y;
         start_point.h = awmap_pt.z;
 
         end_point.pid = point_id++;
-        end_point.bx = awmap_pt.x + r * cos(angle_right) + epsilon_x;
-        end_point.ly = awmap_pt.y + r * sin(angle_right) + epsilon_y;
+        end_point.bx = awmap_pt.x + right_width * cos(angle_right) + epsilon_x;
+        end_point.ly = awmap_pt.y + right_width * sin(angle_right) + epsilon_y;
         end_point.h = awmap_pt.z;
 
         // make sure that stop line does not intersect with other lanes.
@@ -1055,12 +1060,13 @@ void createStopLines( const AutowareMap &awmap,
                               intersect_x, intersect_y))
             {
                 double distance = std::hypot( awmap_pt.x - intersect_x, awmap_pt.y - intersect_y );
-                r = distance * 0.9;   //shorten length of stop line so that it does not cross any other lanes
-
-                start_point.bx = awmap_pt.x + (r * 0.9) * cos(angle_left) + epsilon_x;
-                start_point.ly = awmap_pt.y + (r * 0.9) * sin(angle_left) + epsilon_y;
-                end_point.bx = awmap_pt.x + r * cos(angle_right) + epsilon_x;
-                end_point.ly = awmap_pt.y + r * sin(angle_right) + epsilon_y;
+                //shorten length of stop line so that it does not cross any other lanes
+                left_width = distance * 0.9;
+                right_width = distance;
+                start_point.bx = awmap_pt.x + left_width * cos(angle_left) + epsilon_x;
+                start_point.ly = awmap_pt.y + left_width * sin(angle_left) + epsilon_y;
+                end_point.bx = awmap_pt.x + right_width * cos(angle_right) + epsilon_x;
+                end_point.ly = awmap_pt.y + right_width * sin(angle_right) + epsilon_y;
             }
         }
 
