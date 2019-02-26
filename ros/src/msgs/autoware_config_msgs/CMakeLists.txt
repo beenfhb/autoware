@@ -43,7 +43,7 @@ add_message_files(
   ConfigVelocitySet.msg
   ConfigVoxelGridFilter.msg
   ConfigWaypointFollower.msg
-  ConfigWaypointLoader.msg
+  ConfigWaypointReplanner.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
