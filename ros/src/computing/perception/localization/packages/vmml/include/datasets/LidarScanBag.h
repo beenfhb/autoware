@@ -29,6 +29,8 @@ class LidarScanBag : public RandomAccessBag
 public:
 
 	typedef std::shared_ptr<LidarScanBag> Ptr;
+	typedef pcl::PointXYZ point3_t;
+	typedef pcl::PointCloud<point3_t> scan_t;
 
 	LidarScanBag(
 		rosbag::Bag const &bag, const std::string &topic,
@@ -44,30 +46,31 @@ public:
 
 	LidarScanBag subset(const ros::Time &start, ros::Duration &d) const;
 
-	pcl::PointCloud<pcl::PointXYZ>::ConstPtr
+	scan_t::ConstPtr
 	at (int position);
 
 	inline
-	pcl::PointCloud<pcl::PointXYZ>::ConstPtr
+	scan_t::ConstPtr
 	atDurationSecond (const double S)
 	{ return at (getPositionAtDurationSecond(S)); }
 
 	static
-	bool save(pcl::PointCloud<pcl::PointXYZ>::ConstPtr, const std::string &filename);
+	bool save(scan_t::ConstPtr, const std::string &filename);
 
 	bool filtered = false;
+
+	static
+	scan_t::ConstPtr
+	VoxelGridFilter (
+		scan_t::ConstPtr vcloud,
+		double voxel_leaf_size=0.2,
+		double measurement_range=3.0);
 
 protected:
 	boost::shared_ptr<velodyne_rawdata::RawData> data_;
 
-	pcl::PointCloud<pcl::PointXYZ>::ConstPtr
+	scan_t::ConstPtr
 	convertMessage(velodyne_msgs::VelodyneScan::ConstPtr bagmsg);
-
-	pcl::PointCloud<pcl::PointXYZ>::ConstPtr
-	VoxelGridFilter (
-		pcl::PointCloud<pcl::PointXYZ>::ConstPtr vcloud,
-		double voxel_leaf_size,
-		double measurement_range);
 
 	void prepare(const std::string &lidarCalibFile);
 };

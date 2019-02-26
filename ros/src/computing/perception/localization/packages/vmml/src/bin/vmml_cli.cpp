@@ -965,6 +965,12 @@ private:
 		debug("lambda: " + to_string(lambda));
 		T12.translation() *= lambda;
 
+		// Match by ICP Lidar scans
+		auto
+			meFrame1 = meidaiDsPtr->getNative(frnum1),
+			meFrame2 = meidaiDsPtr->getNative(frnum2);
+		TTransform TL12 = Matcher::matchLidarScans(*meFrame1, *meFrame2);
+
 		/*
 		 * Statistics
 		 */
@@ -973,6 +979,8 @@ private:
 		debug("Camera metric transformation: ");
 		TTransform T12m = Frame1->pose().inverse() * Frame2->pose();
 		debug(dumpVector(T12m));
+		debug("Lidar transformation: ");
+		debug(dumpVector(TL12));
 	}
 
 

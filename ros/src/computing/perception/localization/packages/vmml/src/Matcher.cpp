@@ -17,6 +17,7 @@
 #include <opencv2/calib3d.hpp>
 #include <opencv2/core/eigen.hpp>
 
+#include <pcl/registration/ndt.h>
 
 using namespace std;
 using namespace Eigen;
@@ -632,4 +633,40 @@ Matcher::matchH(
 	}
 
 	return;
+}
+
+
+Matrix4d
+Matcher::matchLidarScans(const MeidaiDataItem &frame1, const MeidaiDataItem &frame2)
+{
+	auto
+		pcscan1 = const_cast<MeidaiDataItem&>(frame1).getLidarScan(),
+		pcscan2 = const_cast<MeidaiDataItem&>(frame2).getLidarScan();
+
+	pcscan1 = LidarScanBag::VoxelGridFilter(pcscan1);
+	pcscan2 = LidarScanBag::VoxelGridFilter(pcscan2);
+
+	pcl::NormalDistributionsTransform<LidarScanBag::point3_t, LidarScanBag::point3_t> ndt;
+	ndt.setTransformationEpsilon(0.01);
+	ndt.setStepSize(0.1);
+	ndt.setResolution(1.0);
+	ndt.setMaximumIterations(10);
+	ndt.setInputSource(pcscan1);
+	ndt.setInputTarget(pcscan2);
+
+	LidarScanBag::scan_t finalCl;
+	// Initial guess
+//	TTransform guess12 = frame1.getPose().inverse() * frame2.getPose();
+//	ndt.align(finalCl, guess12.matrix().cast<float>());
+	ndt.align(finalCl);
+
+	if (ndt.hasConverged()) {
+		cout << "Converged; Score: " << ndt.getFitnessScore() << endl;
+		return ndt.getFinalTransformation().cast<double>();
+	}
+
+	else {
+		cout << "Not converged" << endl;
+		return Matrix4d::Identity();
+	}
 }

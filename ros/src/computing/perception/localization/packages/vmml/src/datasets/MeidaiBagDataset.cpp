@@ -68,13 +68,10 @@ MeidaiBagDataset::MeidaiBagDataset(
 		bagPath(path),
 		bagfd(new rosbag::Bag(path))
 {
-	prepareBag();
-
-	if (loadPositions==true)
-		loadCache();
+	// Directory of VMML package
+	bfs::path myPath = getMyPath();
 
 	// try to load mask image
-	bfs::path myPath = getMyPath();
 	auto mask1Path = myPath / _DashboardMask;
 	auto mask2Path = myPath / _ExposureAdjustmentMask;
 	dashBoardMask = cv::imread(mask1Path.string(), cv::IMREAD_GRAYSCALE);
@@ -92,6 +89,13 @@ MeidaiBagDataset::MeidaiBagDataset(
 
 	mPreprocessor.setMode(ImagePreprocessor::ProcessMode::AGC);
 	mPreprocessor.setMask(exposureMask);
+
+	velodyneCalibrationFilePath = (myPath / "params/meidai-64e-S2.yaml").string();
+
+	prepareBag();
+
+	if (loadPositions==true)
+		loadCache();
 }
 
 
@@ -127,7 +131,13 @@ MeidaiBagDataset::prepareBag (const ros::Time &beginTime, const ros::Time &stopT
 	numOfFrames = cameraRawBag->size();
 
 	gnssBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagGnssTopic));
-	velodyneBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagVelodyne));
+//	velodyneBag = RandomAccessBag::Ptr(new RandomAccessBag(*bagfd, meidaiBagVelodyne));
+
+	ros::Time
+		tstart = ros::TIME_MIN,
+		tstop = ros::TIME_MAX;
+
+	velodyneBag = LidarScanBag::Ptr (new LidarScanBag(*bagfd, meidaiBagVelodyne, velodyneCalibrationFilePath, tstart, tstop));
 }
 
 
@@ -212,8 +222,11 @@ GenericDataItem::ConstPtr
 MeidaiBagDataset::get(dataItemId i)
 const
 {
+/*
 	MeidaiDataItem::ConstPtr dp(new MeidaiDataItem(*this, i));
 	return dp;
+*/
+	return getNative(i);
 }
 
 
@@ -251,7 +264,7 @@ MeidaiBagDataset::setLidarParameters (
 {
 	lidarToCameraTransform = plidarToCameraTransform;
 	pcdMapFilePath = pmeidaiPCDMapFile;
-	velodyneCalibrationFilePath = pvelodyneCalibrationFile;
+//	velodyneCalibrationFilePath = pvelodyneCalibrationFile;
 }
 
 
@@ -330,12 +343,12 @@ MeidaiBagDataset::createTrajectories(ptime startTimep, ptime stopTimep, bool use
 	 */
 	if (useLidar==true) {
 		cout << "Creating NDT Trajectory\n";
-		auto lidarBag = getLidarScanBag();
+//		auto lidarBag = getLidarScanBag();
 
 		if (doCompensateTime)
-			lidarBag->setTimeConstraint(startTime, stopTime);
+			velodyneBag->setTimeConstraint(startTime, stopTime);
 
-		createTrajectoryFromNDT(*lidarBag, ndtTrack, gnssTrack, pcdMapFilePath);
+		createTrajectoryFromNDT(*velodyneBag, ndtTrack, gnssTrack, pcdMapFilePath);
 		trajectorySrc = &ndtTrack;
 		cameraTrackSource = CameraTrackSource::NDT;
 		// XXX: Check this value
@@ -378,6 +391,9 @@ MeidaiBagDataset::createTrajectories(ptime startTimep, ptime stopTimep, bool use
 		cout << i+1 << " / " << cameraRawBag->size() << "  \r";
 		imageBagPos += 1;
 	}
+
+	cameraRawBag->resetTimeConstraint();
+	velodyneBag->resetTimeConstraint();
 }
 
 
@@ -421,14 +437,7 @@ MeidaiBagDataset::getLowerBound (const ptime &t) const
 LidarScanBag::Ptr
 MeidaiBagDataset::getLidarScanBag ()
 {
-	if (velodyneCalibrationFilePath.empty())
-		throw runtime_error("Velodyne calibration file not set");
-
-	ros::Time
-		tstart = ros::TIME_MIN,
-		tstop = ros::TIME_MAX;
-
-	return LidarScanBag::Ptr (new LidarScanBag(*bagfd, meidaiBagVelodyne, velodyneCalibrationFilePath, tstart, tstop));
+	return velodyneBag;
 }
 
 
@@ -535,6 +544,14 @@ MeidaiDataItem::getTimestamp() const
 //	return bImageMsg->header.stamp.toBoost();
 	auto ts = parent.cameraRawBag->timeAt(pId);
 	return ts.toBoost();
+}
+
+
+LidarScanBag::scan_t::ConstPtr
+MeidaiDataItem::getLidarScan()
+{
+	auto p = parent.velodyneBag->getPositionAtTime(ros::Time::fromBoost(getTimestamp()));
+	return parent.velodyneBag->at(p);
 }
 
 

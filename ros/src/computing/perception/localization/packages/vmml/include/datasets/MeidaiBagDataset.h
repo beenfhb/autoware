@@ -17,14 +17,10 @@
 #include <rosbag/bag.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <boost/filesystem.hpp>
 #include <cv_bridge/cv_bridge.h>
 
-//#include <boost/serialization/serialization.hpp>
-//#include <boost/serialization/base_object.hpp>
-//#include <boost/serialization/vector.hpp>
-//#include <boost/serialization/split_member.hpp>
-//#include <boost/date_time/posix_time/time_serialize.hpp>
 #include <boost/serialization/map.hpp>
 
 #include "utilities.h"
@@ -70,6 +66,8 @@ public:
 
 	typedef std::shared_ptr<MeidaiDataItem> Ptr;
 	typedef std::shared_ptr<MeidaiDataItem const> ConstPtr;
+
+	LidarScanBag::scan_t::ConstPtr getLidarScan();
 
 protected:
 	const MeidaiBagDataset &parent;
@@ -204,7 +202,8 @@ protected:
 	std::shared_ptr<rosbag::Bag> bagfd;
 	RandomAccessBag::Ptr cameraRawBag;
 	RandomAccessBag::Ptr gnssBag;
-	RandomAccessBag::Ptr velodyneBag;
+//	RandomAccessBag::Ptr velodyneBag;
+	LidarScanBag::Ptr velodyneBag;
 
 	const boost::filesystem::path bagPath;
 

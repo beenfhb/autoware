@@ -54,6 +54,7 @@ public slots:
 	void on_scaleInput_editingFinished();
 	void on_pcdFileChooser_clicked(bool c);
 	void on_pcdCheckShow_stateChanged(int s);
+	void on_savePcdButton_clicked(bool checked);
 
 private:
 	Ui::DatasetBrowser_frm ui;

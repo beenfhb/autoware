@@ -248,7 +248,14 @@
        <item>
         <widget class="QPushButton" name="saveImageButton">
          <property name="text">
-          <string>Save</string>
+          <string>Save Image</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="savePcdButton">
+         <property name="text">
+          <string>Save PCD</string>
          </property>
         </widget>
        </item>

@@ -12,6 +12,7 @@
 #include <map>
 #include <set>
 
+#include "datasets/MeidaiBagDataset.h"
 #include "BaseFrame.h"
 
 
@@ -46,6 +47,9 @@ public:
 		cv::Ptr<cv::FeatureDetector> fdetector,
 		cv::Ptr<cv::DescriptorMatcher> fmatcher,
 		Eigen::Matrix3d &H);
+
+	static Eigen::Matrix4d
+	matchLidarScans(const MeidaiDataItem &frame1, const MeidaiDataItem &frame2);
 
 	static void
 	matchMapPoints(

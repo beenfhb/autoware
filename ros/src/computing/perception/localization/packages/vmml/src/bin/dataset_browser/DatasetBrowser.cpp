@@ -83,6 +83,25 @@ DatasetBrowser::on_saveImageButton_clicked(bool checked)
 }
 
 
+const string defaultPointCloudExtension = "pcd";
+
+void
+DatasetBrowser::on_savePcdButton_clicked(bool checked)
+{
+	Path cwd = boost::filesystem::current_path();
+	int currentId = timelineSlider->value();
+	string imageName = to_string(currentId) + '.' + defaultPointCloudExtension;
+	Path fullName = cwd / Path(imageName);
+
+	QString fname = QFileDialog::getSaveFileName(this, tr("Save Point Cloud"), QString::fromStdString(fullName.string()));
+	if (fname.length()==0)
+		return;
+
+	auto pcd = meidaiDs->getNative(timelineSlider->value())->getLidarScan();
+	LidarScanBag::save(pcd, fname.toStdString());
+}
+
+
 std::string dPoseLean (const Pose &frame)
 {
 	stringstream ss;
@@ -194,6 +213,7 @@ DatasetBrowser::disableControlsOnPlaying (bool state)
 	saveImageButton->setDisabled(state);
 	ui.nextFrameButton->setDisabled(state);
 	ui.prevFrameButton->setDisabled(state);
+	ui.savePcdButton->setDisabled(state);
 }
 
 

@@ -13,8 +13,8 @@ using namespace std;
 using velodyne_rawdata::VPoint;
 using velodyne_rawdata::VPointCloud;
 using pcl::PointCloud;
-using pcl::PointXYZ;
-
+//using pcl::PointXYZ;
+//using LidarScanBag::scan_t;
 
 /*
  * XXX: These values may need to be adjusted
@@ -28,11 +28,11 @@ const float
 
 template<class PointT>
 static
-PointCloud<PointXYZ>::Ptr
+LidarScanBag::scan_t::Ptr
 convertToExternal (const PointCloud<PointT> &cloudSrc)
 {
 	const int w=cloudSrc.width, h=cloudSrc.height;
-	PointCloud<PointXYZ>::Ptr cloudExt (new PointCloud<PointXYZ>(w*h, 1));
+	LidarScanBag::scan_t::Ptr cloudExt (new LidarScanBag::scan_t(w*h, 1));
 
 	if (h==1) for (int i=0; i<w; ++i) {
 		cloudExt->at(i).x = cloudSrc.at(i).x;
@@ -98,7 +98,7 @@ LidarScanBag::subset(const ros::Time &start, ros::Duration &d) const
 }
 
 
-pcl::PointCloud<pcl::PointXYZ>::ConstPtr
+LidarScanBag::scan_t::ConstPtr
 LidarScanBag::convertMessage(velodyne_msgs::VelodyneScan::ConstPtr bagmsg)
 {
 	VPointCloud::Ptr outPoints(new VPointCloud);
@@ -110,7 +110,7 @@ LidarScanBag::convertMessage(velodyne_msgs::VelodyneScan::ConstPtr bagmsg)
 		data_->unpack(bagmsg->packets[i], *outPoints, bagmsg->packets.size());
 	}
 
-	PointCloud<PointXYZ>::Ptr cloudTmp = convertToExternal(*outPoints);
+	scan_t::Ptr cloudTmp = convertToExternal(*outPoints);
 	if (filtered)
 	// These are the best value I know of
 		return VoxelGridFilter(cloudTmp, 0.2, 3.0);
@@ -119,7 +119,7 @@ LidarScanBag::convertMessage(velodyne_msgs::VelodyneScan::ConstPtr bagmsg)
 }
 
 
-pcl::PointCloud<pcl::PointXYZ>::ConstPtr
+LidarScanBag::scan_t::ConstPtr
 LidarScanBag::at (int position)
 {
 	auto msgP = RandomAccessBag::at<velodyne_msgs::VelodyneScan>(position);
@@ -127,13 +127,13 @@ LidarScanBag::at (int position)
 }
 
 
-pcl::PointCloud<pcl::PointXYZ>::ConstPtr
+LidarScanBag::scan_t::ConstPtr
 LidarScanBag::VoxelGridFilter (
-	pcl::PointCloud<pcl::PointXYZ>::ConstPtr vcloud,
+	LidarScanBag::scan_t::ConstPtr vcloud,
 	double voxel_leaf_size,
 	double measurement_range)
 {
-	PointCloud<PointXYZ>::Ptr filteredGridCLoud(new PointCloud<PointXYZ>);
+	scan_t::Ptr filteredGridCLoud(new scan_t);
 
 	assert(voxel_leaf_size>=0.1);
 	pcl::VoxelGrid<pcl::PointXYZ> voxel_grid_filter;
@@ -148,7 +148,7 @@ LidarScanBag::VoxelGridFilter (
 #include <pcl/io/pcd_io.h>
 
 bool
-LidarScanBag::save(pcl::PointCloud<pcl::PointXYZ>::ConstPtr pclPtr, const std::string &filename)
+LidarScanBag::save(LidarScanBag::scan_t::ConstPtr pclPtr, const std::string &filename)
 {
 	return pcl::io::savePCDFileBinary(filename, *pclPtr);
 }
