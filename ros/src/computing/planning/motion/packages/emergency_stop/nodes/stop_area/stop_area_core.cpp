@@ -36,105 +36,105 @@
 
 
 StopArea::StopArea(ros::NodeHandle nh, ros::NodeHandle private_nh)
-	:nh_(nh)
-	,private_nh_(private_nh)
-//	,tf_listener_(tf_buffer_)
-	,baselink_frame_("/base_link")
-    ,sim_time_(1.0)
-    ,sim_time_delta_(0.1)
-    ,filtering_radius_(0.5)
-    ,filtering_points_size_(5)
+	: nh_(nh)
+	, private_nh_(private_nh)
+	//	,tf_listener_(tf_buffer_)
+	, baselink_frame_("/base_link")
+	, sim_time_(1.0)
+	, sim_time_delta_(0.1)
+	, filtering_radius_(0.5)
+	, filtering_points_size_(5)
 {
-	private_nh_.param<std::string>("baselink_frame",  baselink_frame_, baselink_frame_);
+		private_nh_.param<std::string>("baselink_frame",  baselink_frame_, baselink_frame_);
 
-    private_nh_.param("sim_time", sim_time_, sim_time_);
-    private_nh_.param("sim_time_delta", sim_time_delta_, sim_time_delta_);
-    private_nh_.param("filtering_radius", filtering_radius_, filtering_radius_);
-    private_nh_.param("filtering_points_size", filtering_points_size_, filtering_points_size_);
+		private_nh_.param("sim_time", sim_time_, sim_time_);
+		private_nh_.param("sim_time_delta", sim_time_delta_, sim_time_delta_);
+		private_nh_.param("filtering_radius", filtering_radius_, filtering_radius_);
+		private_nh_.param("filtering_points_size", filtering_points_size_, filtering_points_size_);
 
-    Rectangular offset_rect;
-    private_nh_.param("offset_front",  offset_rect.front,   0.1);
-    private_nh_.param("offset_rear",   offset_rect.rear,    0.1);
-    private_nh_.param("offset_left",   offset_rect.left,    0.1);
-    private_nh_.param("offset_right",  offset_rect.right,   0.1);
-    private_nh_.param("offset_top",    offset_rect.top,     0.1);
-    private_nh_.param("offset_bottom", offset_rect.bottom,  -0.3);
+		Rectangular offset_rect;
+		private_nh_.param("offset_front",  offset_rect.front,   0.1);
+		private_nh_.param("offset_rear",   offset_rect.rear,    0.1);
+		private_nh_.param("offset_left",   offset_rect.left,    0.1);
+		private_nh_.param("offset_right",  offset_rect.right,   0.1);
+		private_nh_.param("offset_top",    offset_rect.top,     0.1);
+		private_nh_.param("offset_bottom", offset_rect.bottom,  -0.3);
 
-    bool use_vehicle_info_param = true;
-	private_nh_.param("use_vehicle_info_param",  use_vehicle_info_param, use_vehicle_info_param);
+		bool use_vehicle_info_param = true;
+		private_nh_.param("use_vehicle_info_param",  use_vehicle_info_param, use_vehicle_info_param);
 
-    vehicle_info_.length = 5.0;
-    vehicle_info_.width = 2.0;
-    vehicle_info_.height = 2.0;
-    vehicle_info_.wheel_base = 2.95;
-    vehicle_info_.tread_front = 1.5;
-    vehicle_info_.tread_rear = 1.5;
-    vehicle_info_.center_to_base = -1.5;
+		vehicle_info_.length = 5.0;
+		vehicle_info_.width = 2.0;
+		vehicle_info_.height = 2.0;
+		vehicle_info_.wheel_base = 2.95;
+		vehicle_info_.tread_front = 1.5;
+		vehicle_info_.tread_rear = 1.5;
+		vehicle_info_.center_to_base = -1.5;
 
-	if(use_vehicle_info_param) {
-        nh_.param("/actuation/vehicle_info/length",          vehicle_info_.length,        vehicle_info_.length);
-		nh_.param("/actuation/vehicle_info/width",           vehicle_info_.width,          vehicle_info_.width);
-		nh_.param("/actuation/vehicle_info/height",          vehicle_info_.height,         vehicle_info_.height);
-        nh_.param("/actuation/vehicle_info/wheel_base",      vehicle_info_.wheel_base,     vehicle_info_.wheel_base);
-        nh_.param("/actuation/vehicle_info/tread_front",     vehicle_info_.tread_front,    vehicle_info_.tread_front);
-        nh_.param("/actuation/vehicle_info/tread_rear",      vehicle_info_.tread_rear,     vehicle_info_.tread_rear);
-		nh_.param("/actuation/vehicle_info/center_to_base",  vehicle_info_.center_to_base, vehicle_info_.center_to_base);
-	}
-	else {
-        private_nh_.param("vehicle_info_length",          vehicle_info_.length,        vehicle_info_.length);
-		private_nh_.param("vehicle_info_width",           vehicle_info_.width,          vehicle_info_.width);
-		private_nh_.param("vehicle_info_height",          vehicle_info_.height,         vehicle_info_.height);
-        private_nh_.param("vehicle_info_wheel_base",      vehicle_info_.wheel_base,     vehicle_info_.wheel_base);
-        private_nh_.param("vehicle_info_tread_front",     vehicle_info_.tread_front,    vehicle_info_.tread_front);
-        private_nh_.param("vehicle_info_tread_rear",      vehicle_info_.tread_rear,     vehicle_info_.tread_rear);
-		private_nh_.param("vehicle_info_center_to_base",  vehicle_info_.center_to_base, vehicle_info_.center_to_base);
-	}
+		if(use_vehicle_info_param) {
+				nh_.param("/actuation/vehicle_info/length",          vehicle_info_.length,        vehicle_info_.length);
+				nh_.param("/actuation/vehicle_info/width",           vehicle_info_.width,          vehicle_info_.width);
+				nh_.param("/actuation/vehicle_info/height",          vehicle_info_.height,         vehicle_info_.height);
+				nh_.param("/actuation/vehicle_info/wheel_base",      vehicle_info_.wheel_base,     vehicle_info_.wheel_base);
+				nh_.param("/actuation/vehicle_info/tread_front",     vehicle_info_.tread_front,    vehicle_info_.tread_front);
+				nh_.param("/actuation/vehicle_info/tread_rear",      vehicle_info_.tread_rear,     vehicle_info_.tread_rear);
+				nh_.param("/actuation/vehicle_info/center_to_base",  vehicle_info_.center_to_base, vehicle_info_.center_to_base);
+		}
+		else {
+			private_nh_.param("vehicle_info_length",          vehicle_info_.length,        vehicle_info_.length);
+			private_nh_.param("vehicle_info_width",           vehicle_info_.width,          vehicle_info_.width);
+			private_nh_.param("vehicle_info_height",          vehicle_info_.height,         vehicle_info_.height);
+			private_nh_.param("vehicle_info_wheel_base",      vehicle_info_.wheel_base,     vehicle_info_.wheel_base);
+			private_nh_.param("vehicle_info_tread_front",     vehicle_info_.tread_front,    vehicle_info_.tread_front);
+			private_nh_.param("vehicle_info_tread_rear",      vehicle_info_.tread_rear,     vehicle_info_.tread_rear);
+			private_nh_.param("vehicle_info_center_to_base",  vehicle_info_.center_to_base, vehicle_info_.center_to_base);
+		}
 
-    vehicle_rect_.front  =  vehicle_info_.length / 2.0 - vehicle_info_.center_to_base;
-	vehicle_rect_.rear   = -vehicle_info_.length / 2.0 - vehicle_info_.center_to_base;
-	vehicle_rect_.left   =  vehicle_info_.width  / 2.0;
-	vehicle_rect_.right  = -vehicle_info_.width  / 2.0;
-	vehicle_rect_.top    =  vehicle_info_.height;
-	vehicle_rect_.bottom = 0;
+		vehicle_rect_.front  =  vehicle_info_.length / 2.0 - vehicle_info_.center_to_base;
+		vehicle_rect_.rear   = -vehicle_info_.length / 2.0 - vehicle_info_.center_to_base;
+		vehicle_rect_.left   =  vehicle_info_.width  / 2.0;
+		vehicle_rect_.right  = -vehicle_info_.width  / 2.0;
+		vehicle_rect_.top    =  vehicle_info_.height;
+		vehicle_rect_.bottom = 0;
 
-    safety_rect_.front  = vehicle_rect_.front  + offset_rect.front;
-	safety_rect_.rear   = vehicle_rect_.rear   - offset_rect.rear;
-	safety_rect_.left   = vehicle_rect_.left   + offset_rect.left;
-	safety_rect_.right  = vehicle_rect_.right  - offset_rect.right;
-	safety_rect_.top    = vehicle_rect_.top    + offset_rect.top;
-	safety_rect_.bottom = vehicle_rect_.bottom - offset_rect.bottom;
+		safety_rect_.front  = vehicle_rect_.front  + offset_rect.front;
+		safety_rect_.rear   = vehicle_rect_.rear   - offset_rect.rear;
+		safety_rect_.left   = vehicle_rect_.left   + offset_rect.left;
+		safety_rect_.right  = vehicle_rect_.right  - offset_rect.right;
+		safety_rect_.top    = vehicle_rect_.top    + offset_rect.top;
+		safety_rect_.bottom = vehicle_rect_.bottom - offset_rect.bottom;
 
-	config_sub_ = nh_.subscribe("/config/stop_area", 1, &StopArea::configCallback, this);
-	points_sub_ = nh_.subscribe("/points_raw", 1, &StopArea::pointCloudCallback, this);
-    twist_sub_ = nh_.subscribe("/current_velocity", 1, &StopArea::twistCallback, this);
-    vehicle_cmd_sub_ = nh_.subscribe("/vehicle_cmd", 1, &StopArea::vehicleCmdCallback, this);
-    vehicle_status_sub_ = nh_.subscribe("/vehicle_status", 1, &StopArea::vehicleStatusCallback, this);
+		config_sub_ = nh_.subscribe("/config/stop_area", 1, &StopArea::configCallback, this);
+		points_sub_ = nh_.subscribe("/points_raw", 1, &StopArea::pointCloudCallback, this);
+		twist_sub_ = nh_.subscribe("/current_velocity", 1, &StopArea::twistCallback, this);
+		vehicle_cmd_sub_ = nh_.subscribe("/vehicle_cmd", 1, &StopArea::vehicleCmdCallback, this);
+		vehicle_status_sub_ = nh_.subscribe("/vehicle_status", 1, &StopArea::vehicleStatusCallback, this);
 
-    emergency_flag_pub_ = private_nh_.advertise<std_msgs::Int32>("emergency_flag", 10);
-    diag_pub_ = private_nh_.advertise<diagnostic_msgs::DiagnosticArray>("diag", 10);
-    points_pub_ = private_nh_.advertise<sensor_msgs::PointCloud2>("points_obstacle", 10);
+		emergency_flag_pub_ = private_nh_.advertise<std_msgs::Int32>("emergency_flag", 10);
+		diag_pub_ = private_nh_.advertise<diagnostic_msgs::DiagnosticArray>("diag", 10);
+		points_pub_ = private_nh_.advertise<sensor_msgs::PointCloud2>("points_obstacle", 10);
 
-    marker_array_pub_ = private_nh_.advertise<visualization_msgs::MarkerArray>("marker_array", 10);
+		marker_array_pub_ = private_nh_.advertise<visualization_msgs::MarkerArray>("marker_array", 10);
 }
 
 void StopArea::configCallback(const autoware_config_msgs::ConfigStopArea::ConstPtr& config_msg_ptr)
 {
-    sim_time_ = config_msg_ptr->sim_time;
-    sim_time_delta_ = config_msg_ptr->sim_time_delta;
+		sim_time_ = config_msg_ptr->sim_time;
+		sim_time_delta_ = config_msg_ptr->sim_time_delta;
 
-    filtering_radius_ = config_msg_ptr->filtering_radius;
-    filtering_points_size_ = config_msg_ptr->filtering_points_size;
+		filtering_radius_ = config_msg_ptr->filtering_radius;
+		filtering_points_size_ = config_msg_ptr->filtering_points_size;
 
-    Rectangular offset_rect;
-    offset_rect.front   = config_msg_ptr->offset_front;
-    offset_rect.rear    = config_msg_ptr->offset_rear;
-    offset_rect.left    = config_msg_ptr->offset_left;
-    offset_rect.right   = config_msg_ptr->offset_right;
-    offset_rect.top     = config_msg_ptr->offset_top;
-    offset_rect.bottom  = config_msg_ptr->offset_bottom;
+		Rectangular offset_rect;
+		offset_rect.front   = config_msg_ptr->offset_front;
+		offset_rect.rear    = config_msg_ptr->offset_rear;
+		offset_rect.left    = config_msg_ptr->offset_left;
+		offset_rect.right   = config_msg_ptr->offset_right;
+		offset_rect.top     = config_msg_ptr->offset_top;
+		offset_rect.bottom  = config_msg_ptr->offset_bottom;
 
-    bool use_vehicle_info_param = config_msg_ptr->use_vehicle_info_param;
-    if(use_vehicle_info_param) {
+		bool use_vehicle_info_param = config_msg_ptr->use_vehicle_info_param;
+		if(use_vehicle_info_param) {
       nh_.param("/actuation/vehicle_info/length",          vehicle_info_.length,        vehicle_info_.length);
       nh_.param("/actuation/vehicle_info/width",           vehicle_info_.width,          vehicle_info_.width);
       nh_.param("/actuation/vehicle_info/height",          vehicle_info_.height,         vehicle_info_.height);
@@ -185,9 +185,9 @@ void StopArea::vehicleStatusCallback(const autoware_msgs::VehicleStatus::ConstPt
 
 void StopArea::pointCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& sensorTF_in_cloud_msg_ptr)
 {
-	std::string sensor_frame = sensorTF_in_cloud_msg_ptr->header.frame_id;
-	ros::Time sensor_time = sensorTF_in_cloud_msg_ptr->header.stamp;
-    sensor_msgs::PointCloud2::Ptr baselinkTF_in_cloud_msg_ptr(new sensor_msgs::PointCloud2);
+		std::string sensor_frame = sensorTF_in_cloud_msg_ptr->header.frame_id;
+		ros::Time sensor_time = sensorTF_in_cloud_msg_ptr->header.stamp;
+		sensor_msgs::PointCloud2::Ptr baselinkTF_in_cloud_msg_ptr(new sensor_msgs::PointCloud2);
     try {
         tf_listener_.waitForTransform(baselink_frame_, sensor_frame, sensor_time, ros::Duration(1.0));
         pcl_ros::transformPointCloud(baselink_frame_, *sensorTF_in_cloud_msg_ptr, *baselinkTF_in_cloud_msg_ptr, tf_listener_);
@@ -206,8 +206,8 @@ void StopArea::pointCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& sens
 	// }
 	// tf2::doTransform(*sensorTF_in_cloud_msg_ptr, *baselinkTF_in_cloud_msg_ptr, transform_stamped);
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr baselinkTF_in_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::fromROSMsg(*baselinkTF_in_cloud_msg_ptr, *baselinkTF_in_cloud_ptr);
+		pcl::PointCloud<pcl::PointXYZ>::Ptr baselinkTF_in_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+		pcl::fromROSMsg(*baselinkTF_in_cloud_msg_ptr, *baselinkTF_in_cloud_ptr);
 
     const auto polygon = createVehicleTrajectoryPolygon();
 
@@ -284,12 +284,12 @@ boost::shared_ptr< pcl::PointCloud<PointType> > StopArea::extractPointsInRect(co
     boost::shared_ptr< pcl::PointCloud<PointType> > out_cloud_ptr(new pcl::PointCloud<PointType>);
     out_cloud_ptr->points.reserve( in_cloud_ptr->points.size() );
     for (const auto& point : in_cloud_ptr->points) {
-		if (point.x < rect.front && point.x > rect.rear  &&
-		    point.y < rect.left  && point.y > rect.right &&
-			point.z < rect.top   && point.z > rect.bottom  )
-		{
-			out_cloud_ptr->points.push_back(point);
-		}
+			if (point.x < rect.front && point.x > rect.rear  &&
+			    point.y < rect.left  && point.y > rect.right &&
+					point.z < rect.top   && point.z > rect.bottom  )
+			{
+						out_cloud_ptr->points.push_back(point);
+			}
 	}
     return out_cloud_ptr;
 }
@@ -302,7 +302,7 @@ boost::shared_ptr< pcl::PointCloud<PointType> > StopArea::removePointsInRect(con
     for (const auto& point : in_cloud_ptr->points) {
 		if (point.x > rect.front || point.x < rect.rear  ||
 		    point.y > rect.left  || point.y < rect.right ||
-			point.z > rect.top   || point.z < rect.bottom  )
+				point.z > rect.top   || point.z < rect.bottom  )
 		{
 			out_cloud_ptr->points.push_back(point);
 		}
@@ -314,7 +314,7 @@ template <class PointType>
 boost::shared_ptr< pcl::PointCloud<PointType> > StopArea::removeOutlierPoints(const boost::shared_ptr< pcl::PointCloud<PointType> >& in_cloud_ptr)
 {
     boost::shared_ptr< pcl::PointCloud<PointType> > out_cloud_ptr(new pcl::PointCloud<PointType>);
-    if(in_cloud_ptr->points.empty()){
+    if(in_cloud_ptr->points.empty()) {
         return out_cloud_ptr;
     }
     out_cloud_ptr->points.reserve( in_cloud_ptr->points.size() );

@@ -35,9 +35,9 @@
 
 #include <tf/tf.h>
 
-#include <tf2/transform_datatypes.h>
-#include <tf2_ros/transform_listener.h>
-#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
+// #include <tf2/transform_datatypes.h>
+// #include <tf2_ros/transform_listener.h>
+// #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
 
 #include <std_msgs/Int32.h>
 #include <sensor_msgs/point_cloud_conversion.h>
@@ -98,9 +98,9 @@ public:
 	StopArea(ros::NodeHandle nh, ros::NodeHandle private_nh);
 
 private:
-	void configCallback(const autoware_config_msgs::ConfigStopArea::ConstPtr& config_msg_ptr);
+    void configCallback(const autoware_config_msgs::ConfigStopArea::ConstPtr& config_msg_ptr);
     void twistCallback(const geometry_msgs::TwistStamped::ConstPtr& twist_msg_ptr);
-	void pointCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& sensorTF_in_cloud_msg_ptr);
+    void pointCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& sensorTF_in_cloud_msg_ptr);
     void vehicleCmdCallback(const autoware_msgs::VehicleCmd::ConstPtr& vehicle_cmd_msg_ptr);
     void vehicleStatusCallback(const autoware_msgs::VehicleStatus::ConstPtr& vehicle_status_msg_ptr);
 
@@ -124,14 +124,14 @@ private:
     visualization_msgs::MarkerArray createTireMakerArrayMsg(const std::vector<Point2d> tiers, const double radius, const double width, const Point2d circle_center, const ros::Time& ros_time);
 
 
-	ros::NodeHandle nh_;
-	ros::NodeHandle private_nh_;
-	tf::TransformListener tf_listener_;
-	// tf2_ros::Buffer tf_buffer_;
+    ros::NodeHandle nh_;
+    ros::NodeHandle private_nh_;
+    tf::TransformListener tf_listener_;
+    // tf2_ros::Buffer tf_buffer_;
     // tf2_ros::TransformListener tf_listener_;
 
-	ros::Subscriber config_sub_;
-	ros::Subscriber points_sub_;
+	   ros::Subscriber config_sub_;
+    ros::Subscriber points_sub_;
     ros::Subscriber twist_sub_;
     ros::Subscriber vehicle_cmd_sub_;
     ros::Subscriber vehicle_status_sub_;
@@ -142,7 +142,7 @@ private:
     ros::Publisher  marker_array_pub_;
     //diagnostic_updater::Updater diag_updater_;
 
-	std::string baselink_frame_;
+    std::string baselink_frame_;
     VehicleInfo vehicle_info_;
     Rectangular vehicle_rect_;
     Rectangular safety_rect_;
