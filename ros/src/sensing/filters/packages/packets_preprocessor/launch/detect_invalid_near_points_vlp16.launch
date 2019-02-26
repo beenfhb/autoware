@@ -1,0 +1,17 @@
+<launch>
+  <arg name="calibration" default="$(find velodyne_pointcloud)/params/VLP16db.yaml"/>
+  <arg name="view_direction" default="0.0" />
+  <arg name="view_width" default="6.28318530718" />
+  <arg name="method_type" default="0"/> <!--0:UseValidIntensity, 1:UseBottomRing -->
+  <arg name="num_points_thresthold" default="300"/>
+  <arg name="invalid_intensity" default="[14, 10, 10, 10, 28, 14, 15, 14, 12, 8, 12, 13, 13, 14, 11, 4]"/>
+
+  <node pkg="packets_preprocessor" type="detect_invalid_near_points" name="detect_invalid_near_points" output="screen">
+    <param name="calibration" value="$(arg calibration)"/>
+    <param name="view_direction" value="$(arg view_direction)"/>
+    <param name="view_width" value="$(arg view_width)"/>
+    <param name="method_type" value="$(arg method_type)"/>
+    <param name="num_points_thresthold" value="$(arg num_points_thresthold)"/>
+    <param name="invalid_intensity" value="$(arg invalid_intensity)"/>
+  </node>
+</launch>

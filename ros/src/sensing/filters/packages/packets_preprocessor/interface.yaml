@@ -1,0 +1,3 @@
+- name: /detect_invalid_near_points
+  publish: [/velodyne_packets]
+  subscribe: [/near_points, /invalid_distance_points, /found_invalid_near_points]
