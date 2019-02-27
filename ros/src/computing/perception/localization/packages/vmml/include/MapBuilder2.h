@@ -18,6 +18,8 @@
 #include "utilities.h"
 
 #include "datasets/GenericDataset.h"
+#include "datasets/MeidaiBagDataset.h"
+#include "datasets/OxfordDataset.h"
 
 
 class Viewer;
@@ -90,10 +92,23 @@ public:
 		const ptime stopTime);
 
 	void runFromDataset
+		(MeidaiBagDataset::Ptr sourceDs,
+			dataItemId startPos=std::numeric_limits<dataItemId>::max(),
+			dataItemId stopPos=std::numeric_limits<dataItemId>::max()
+		);
+
+	void runFromDataset
+		(OxfordDataset::Ptr sourceDs,
+			dataItemId startPos=std::numeric_limits<dataItemId>::max(),
+			dataItemId stopPos=std::numeric_limits<dataItemId>::max()
+		);
+
+	void runFromDataset
 		(GenericDataset::Ptr sourceDs,
 			dataItemId startPos=std::numeric_limits<dataItemId>::max(),
 			dataItemId stopPos=std::numeric_limits<dataItemId>::max()
 		);
+
 
 	void runFromDataset2
 	(GenericDataset::Ptr sourceDs, dataItemId startPos, dataItemId stopPos);
@@ -134,6 +149,11 @@ protected:
 	bool initialized = false;
 
 	GenericDataset::Ptr sourceDataset=nullptr;
+	enum {
+		OxfordType,
+		MeidaiType,
+		UnknownType
+	} datasetType = UnknownType;
 	frameCallback inputCallback;
 
 	InputFrame frame0;

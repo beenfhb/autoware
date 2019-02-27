@@ -61,6 +61,8 @@ MapBuilder2::track (const InputFrame &f)
 	if (initialized==false)
 		throw runtime_error("Map not initialized");
 
+	// XXX: Get correct metric scale of the two frames
+
 	kfid fId = cMap->createKeyFrame(f.image, f.position, f.orientation, f.cameraId, NULL, f.sourceId, f.tm);
 	cMap->estimateAndTrack(kfAnchor, fId);
 
@@ -225,8 +227,21 @@ MapBuilder2::runFromDataset(GenericDataset::Ptr sourceDs, dataItemId startPos, d
 	}
 
 	this->build();
-
 }
+
+
+/*
+void
+MapBuilder2::runFromDataset
+(MeidaiBagDataset::Ptr sourceDs,
+	dataItemId startPos=std::numeric_limits<dataItemId>::max(),
+	dataItemId stopPos=std::numeric_limits<dataItemId>::max() )
+{
+	datasetType = MeidaiType;
+	return runFromDataset(sourceDs, startPos, stopPos);
+}
+*/
+
 
 
 bool

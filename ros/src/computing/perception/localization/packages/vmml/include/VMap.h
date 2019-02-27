@@ -140,7 +140,7 @@ public:
 
 	void estimateStructure (const kfid &keyFrame1, const kfid &keyFrame2);
 
-	void estimateAndTrack (const kfid &kfid1, const kfid &kfid2);
+	void estimateAndTrack (const kfid &kfid1, const kfid &kfid2, const double metricDisposition=1.0);
 
 	std::vector<kfid> allKeyFrames () const;
 	std::vector<mpid> allMapPoints () const;

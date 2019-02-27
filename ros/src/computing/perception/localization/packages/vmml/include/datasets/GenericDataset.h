@@ -48,8 +48,7 @@ public:
 	virtual Eigen::Quaterniond getOrientation() const = 0;
 
 	/*
-	 * DataItem IDs are numbered from 0, thus they signify
-	 * position in an array
+	 * DataItem IDs are numbered from 0
 	 */
 	virtual dataItemId getId() const = 0;
 //	{ return itemId; }

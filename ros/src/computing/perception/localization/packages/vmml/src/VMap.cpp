@@ -188,7 +188,7 @@ double distance (const Vector2d &p1, const Vector2d &p2)
 
 
 void
-VMap::estimateAndTrack (const kfid &kfid1, const kfid &kfid2)
+VMap::estimateAndTrack (const kfid &kfid1, const kfid &kfid2, const double metricDisposition)
 {
 	KeyFrame
 		&KF1 = *getKeyFrameById(kfid1),
@@ -223,6 +223,10 @@ VMap::estimateAndTrack (const kfid &kfid1, const kfid &kfid2)
 	Pose PF2;
 	Matcher::solvePose(KF1, KF2, oldMapPointPairs, descriptorMatcher, PF2);
 	KF2.setPose(PF2);
+
+	// The transformation acquired above is not in metric scale. Try to get it right.
+	TTransform T12 = KF1.pose().inverse() * PF2;
+	T12.translation() = T12.translation().normalized() * metricDisposition;
 
 	// Put point appearances
 	for (int i=0; i<oldMapPointPairs.size(); ++i) {
