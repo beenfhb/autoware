@@ -1,0 +1,16 @@
+<launch>
+	<arg name="map_files" default=""/>
+	<arg name="use_autoware_map" default="False"/>
+
+	<group if="$(arg use_autoware_map)">
+	    <node pkg="map_file" type="autoware_map_loader" name="autoware_map_loader" output="screen" respawn="true">
+		 	<param name="map_files" value="$(arg map_files)"/>
+		</node>
+    	<node pkg="autoware_map" type="autoware2vectormap_converter" name="amap2vmap_converter" output="screen" respawn="true"/>
+	</group>
+    <group unless="$(arg use_autoware_map)">
+		<node pkg="map_file" type="vector_map_loader" name="vector_map_loader" output="screen" respawn="true">
+		 	<param name="map_files" value="$(arg map_files)"/>
+		</node>
+	</group>	
+</launch>

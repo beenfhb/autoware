@@ -19,6 +19,8 @@ find_package(catkin REQUIRED COMPONENTS
         tf2_geometry_msgs
         autoware_msgs
         vector_map
+        autoware_map_msgs
+        autoware_map
         )
 
 find_package(PCL REQUIRED COMPONENTS io)
@@ -70,6 +72,9 @@ add_dependencies(points_map_loader ${catkin_EXPORTED_TARGETS})
 add_executable(vector_map_loader nodes/vector_map_loader/vector_map_loader.cpp)
 target_link_libraries(vector_map_loader ${catkin_LIBRARIES} ${vector_map_LIBRARIES} get_file ${CURL_LIBRARIES})
 
+add_executable(autoware_map_loader nodes/autoware_map_loader/autoware_map_loader.cpp)
+target_link_libraries(autoware_map_loader ${catkin_LIBRARIES} get_file ${CURL_LIBRARIES})
+
 add_executable(points_map_filter nodes/points_map_filter/points_map_filter_node.cpp nodes/points_map_filter/points_map_filter.cpp)
 target_link_libraries(points_map_filter ${catkin_LIBRARIES})
 add_dependencies(points_map_filter ${catkin_EXPORTED_TARGETS})
@@ -79,6 +84,7 @@ install(TARGETS
         get_file
         points_map_loader
         vector_map_loader
+        autoware_map_loader
     points_map_filter
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
