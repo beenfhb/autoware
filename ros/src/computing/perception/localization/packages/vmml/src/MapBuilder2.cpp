@@ -62,9 +62,20 @@ MapBuilder2::track (const InputFrame &f)
 		throw runtime_error("Map not initialized");
 
 	// XXX: Get correct metric scale of the two frames
+	double dist2Frame = 1.0;
+/*
+	if (datasetType==MeidaiType) {
+		MeidaiBagDataset::Ptr meidaiDs = static_pointer_cast<MeidaiBagDataset>(sourceDataset);
+		MeidaiDataitem::Ptr
+			anchorDi = meidaiDs->getNative(ifrAnchor.sourceId),
+			curDi = meidaiDs->getNative(f.sourceId);
+		TTransform T12 = Matcher::matchLidarScans(*anchorDi, *curDi);
+		dist2Frame = T12.translation().norm();
+	}
+*/
 
 	kfid fId = cMap->createKeyFrame(f.image, f.position, f.orientation, f.cameraId, NULL, f.sourceId, f.tm);
-	cMap->estimateAndTrack(kfAnchor, fId);
+	cMap->estimateAndTrack(kfAnchor, fId, dist2Frame);
 
 	cMap->keyframe(fId)->previousKeyframe = kfAnchor;
 
@@ -230,7 +241,6 @@ MapBuilder2::runFromDataset(GenericDataset::Ptr sourceDs, dataItemId startPos, d
 }
 
 
-/*
 void
 MapBuilder2::runFromDataset
 (MeidaiBagDataset::Ptr sourceDs,
@@ -238,10 +248,8 @@ MapBuilder2::runFromDataset
 	dataItemId stopPos=std::numeric_limits<dataItemId>::max() )
 {
 	datasetType = MeidaiType;
-	return runFromDataset(sourceDs, startPos, stopPos);
+	return runFromDataset(static_pointer_cast<GenericDataset>(sourceDs), startPos, stopPos);
 }
-*/
-
 
 
 bool
