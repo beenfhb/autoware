@@ -1628,6 +1628,14 @@ params :
     topic : /config/velocity_set
     msg   : ConfigVelocitySet
     vars  :
+    - name  : use_autoware_map
+      desc  : Use autoware map format for crosswalk detection
+      label : Use Autoware Map
+      kind  : checkbox
+      v     : False
+      cmd_param:
+        dash     : ''
+        delim    : ':='
     - name  : use_crosswalk_detection
       desc  : use_crosswalk_detection desc sample
       label : Use Crosswalk Detection

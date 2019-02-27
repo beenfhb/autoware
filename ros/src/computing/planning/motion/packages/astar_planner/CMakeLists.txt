@@ -14,15 +14,16 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   tf
   waypoint_follower
-  autoware_msgs 
+  autoware_msgs
   autoware_health_checker
+  autoware_map
 )
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs tf waypoint_follower autoware_msgs vector_map
+  CATKIN_DEPENDS roscpp std_msgs tf waypoint_follower autoware_msgs vector_map autoware_map
 )
 
 ###########
@@ -39,7 +40,12 @@ include_directories(
 
 add_executable(velocity_set nodes/velocity_set/velocity_set.cpp nodes/velocity_set/velocity_set_path.cpp nodes/velocity_set/velocity_set_info.cpp nodes/velocity_set/libvelocity_set.cpp)
 target_link_libraries(velocity_set ${catkin_LIBRARIES})
-add_dependencies(velocity_set 
+add_dependencies(velocity_set
+${catkin_EXPORTED_TARGETS})
+
+add_executable(autowaremap_velocity_set nodes/autowaremap_velocity_set/autowaremap_velocity_set.cpp nodes/velocity_set/velocity_set_path.cpp nodes/velocity_set/velocity_set_info.cpp nodes/velocity_set/libvelocity_set.cpp nodes/autowaremap_velocity_set/crosswalk.cpp nodes/autowaremap_velocity_set/crosswalk_manager.cpp)
+target_link_libraries(autowaremap_velocity_set ${catkin_LIBRARIES})
+add_dependencies(autowaremap_velocity_set
 ${catkin_EXPORTED_TARGETS})
 
 add_executable(obstacle_avoid nodes/obstacle_avoid/obstacle_avoid.cpp nodes/obstacle_avoid/astar_search.cpp nodes/obstacle_avoid/search_info_ros.cpp nodes/obstacle_avoid/astar_util.cpp)
@@ -63,4 +69,3 @@ install(TARGETS
 install(DIRECTORY launch/
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
         PATTERN ".svn" EXCLUDE)
-

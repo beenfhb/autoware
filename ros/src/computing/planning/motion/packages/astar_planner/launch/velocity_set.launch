@@ -1,5 +1,6 @@
 <!-- -->
 <launch>
+  <arg name="use_autoware_map" default="false"/>
   <arg name="use_crosswalk_detection" default="true" />
   <arg name="points_topic" default="points_no_ground" />
   <arg name="velocity_offset" default="1.2" />
@@ -8,14 +9,28 @@
   <arg name="enable_multiple_crosswalk_detection" default="true" />
   <arg name="enablePlannerDynamicSwitch" default="false" />
 
-  <node pkg="astar_planner" type="velocity_set" name="velocity_set" output="screen">
-    <param name="use_crosswalk_detection" value="$(arg use_crosswalk_detection)" />
-    <param name="enable_multiple_crosswalk_detection" value="$(arg enable_multiple_crosswalk_detection)" />
-    <param name="points_topic" value="$(arg points_topic)" />
-    <param name="velocity_offset" value="$(arg velocity_offset)" />
-    <param name="decelerate_vel_min" value="$(arg decelerate_vel_min)" />
-    <param name="remove_points_upto" value="$(arg remove_points_upto)" />
-    <param name="enablePlannerDynamicSwitch" value="$(arg enablePlannerDynamicSwitch)" />
-  </node>
+
+  <group unless="$(arg use_autoware_map)">
+    <node pkg="astar_planner" type="velocity_set" name="velocity_set" output="screen">
+      <param name="use_crosswalk_detection" value="$(arg use_crosswalk_detection)" />
+      <param name="enable_multiple_crosswalk_detection" value="$(arg enable_multiple_crosswalk_detection)" />
+      <param name="points_topic" value="$(arg points_topic)" />
+      <param name="velocity_offset" value="$(arg velocity_offset)" />
+      <param name="decelerate_vel_min" value="$(arg decelerate_vel_min)" />
+      <param name="remove_points_upto" value="$(arg remove_points_upto)" />
+      <param name="enablePlannerDynamicSwitch" value="$(arg enablePlannerDynamicSwitch)" />
+    </node>
+  </group>
+  <group if="$(arg use_autoware_map)">
+    <node pkg="astar_planner" type="autowaremap_velocity_set" name="velocity_set" output="screen">
+      <param name="use_crosswalk_detection" value="$(arg use_crosswalk_detection)" />
+      <param name="enable_multiple_crosswalk_detection" value="$(arg enable_multiple_crosswalk_detection)" />
+      <param name="points_topic" value="$(arg points_topic)" />
+      <param name="velocity_offset" value="$(arg velocity_offset)" />
+      <param name="decelerate_vel_min" value="$(arg decelerate_vel_min)" />
+      <param name="remove_points_upto" value="$(arg remove_points_upto)" />
+      <param name="enablePlannerDynamicSwitch" value="$(arg enablePlannerDynamicSwitch)" />
+    </node>
+  </group>
 
 </launch>
