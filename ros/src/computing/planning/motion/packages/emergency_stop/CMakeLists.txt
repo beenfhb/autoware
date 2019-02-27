@@ -24,7 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## catkin specific configuration ##
 ###################################
 catkin_package(
-        INCLUDE_DIRS include
+#        INCLUDE_DIRS include
         LIBRARIES libwaypoint_follower
         CATKIN_DEPENDS roscpp
         tf
@@ -44,7 +44,6 @@ catkin_package(
 ###########
 
 include_directories(
-        include
         ${catkin_INCLUDE_DIRS}
 )
 
