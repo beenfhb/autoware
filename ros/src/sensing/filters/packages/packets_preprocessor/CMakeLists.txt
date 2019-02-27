@@ -40,11 +40,10 @@ catkin_package(
     pcl_ros
     cv_bridge
     image_transport
-    INCLUDE_DIRS include
+#    INCLUDE_DIRS include
 )
 
 include_directories(
-    include
     ${catkin_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
 )
