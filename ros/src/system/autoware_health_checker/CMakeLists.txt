@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES health_checker
+  LIBRARIES health_checker system_status_subscriber
   CATKIN_DEPENDS autoware_system_msgs roscpp rosgraph_msgs
 #  DEPENDS system_lib
 )
