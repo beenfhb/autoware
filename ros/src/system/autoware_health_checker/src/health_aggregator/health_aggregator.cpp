@@ -118,7 +118,6 @@ void HealthAggregator::addTopicDiag() {
     }
     for (auto itr = drop_rate_params_.begin(); itr != drop_rate_params_.end();
          itr++) {
-      ROS_ERROR_STREAM(itr->second);
       std::string key = itr->first;
       XmlRpc::XmlRpcValue data = itr->second["sub_node"];
       std::string sub_node = data;
@@ -154,6 +153,7 @@ void HealthAggregator::addTopicDiag() {
         } else {
           diag_drop_rate.level = autoware_health_checker::LEVEL_OK;
         }
+        //ROS_ERROR_STREAM(diag_drop_rate);
         for (auto node_status_itr = system_status_.node_status.begin();
              node_status_itr != system_status_.node_status.end();
              node_status_itr++) {
