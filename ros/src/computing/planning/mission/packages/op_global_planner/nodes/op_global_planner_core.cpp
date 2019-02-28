@@ -30,6 +30,7 @@
 
 #include "op_global_planner_core.h"
 #include "op_ros_helpers/op_ROSHelpers.h"
+#include "opendrive2autoware_converter/opendrive2autoware_converter_core.h"
 
 namespace GlobalPlanningNS
 {
@@ -61,7 +62,7 @@ GlobalPlanner::GlobalPlanner()
 		m_params.mapSource = PlannerHNS::MAP_KML_FILE;
 
 	tf::StampedTransform transform;
-	PlannerHNS::ROSHelpers::GetTransformFromTF("map", "world", transform);
+	//PlannerHNS::ROSHelpers::GetTransformFromTF("map", "world", transform);
 	m_OriginPos.position.x  = transform.getOrigin().x();
 	m_OriginPos.position.y  = transform.getOrigin().y();
 	m_OriginPos.position.z  = transform.getOrigin().z();
@@ -424,9 +425,24 @@ void GlobalPlanner::MainLoop()
 		if(m_params.mapSource == PlannerHNS::MAP_KML_FILE && !m_bKmlMap)
 		{
 			m_bKmlMap = true;
-			PlannerHNS::MappingHelpers::LoadKML(m_params.KmlMapPath, m_Map);
+			//PlannerHNS::MappingHelpers::LoadKML(m_params.KmlMapPath, m_Map);
+
+			autoware_map::OpenDrive2AutoConv converter;
+			autoware_map::InternalRoadNet map;
+			converter.loadOpenDRIVE("/home/hatem/OpenDRIVE/Roundabout8Course.xodr", map);
+			PlannerHNS::RoadSegment segment;
+			segment.id = 1;
+			converter.GetReferenceLanes(segment.Lanes);
+
+			//std::cout << "Final Lanes Points : " << map_marker_array.markers.size() << std::endl;
+
+			m_Map.roadSegments.push_back(segment);
+
 			visualization_msgs::MarkerArray map_marker_array;
 			PlannerHNS::ROSHelpers::ConvertFromRoadNetworkToAutowareVisualizeMapFormat(m_Map, map_marker_array);
+
+			std::cout << "Final Map Lanes : " << map_marker_array.markers.size() << std::endl;
+
 			pub_MapRviz.publish(map_marker_array);
 		}
 		else if (m_params.mapSource == PlannerHNS::MAP_FOLDER && !m_bKmlMap)

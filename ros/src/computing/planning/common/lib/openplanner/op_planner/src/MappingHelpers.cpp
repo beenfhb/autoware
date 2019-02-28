@@ -922,20 +922,21 @@ void MappingHelpers::FindElements(const std::string& name, TiXmlElement* parent_
 	FindElements(name, parent_element->NextSiblingElement(), element_list);
 }
 
-void MappingHelpers::FindFirstElement(const std::string& name, TiXmlElement* parent_element, TiXmlElement* p_elem)
+void MappingHelpers::FindFirstElement(const std::string& name, TiXmlElement* parent_element, std::vector<TiXmlElement*>& element_list)
 {
-	if(parent_element == nullptr || p_elem != nullptr)
+	if(parent_element == nullptr  || element_list.size()>0)
 		return;
 	else if(name.compare(parent_element->Value()) == 0)
 	{
-		p_elem = parent_element;
+		element_list.push_back(parent_element);
+	//	std::cout << "Name:" << name << " Found Found " << element_list.size() << std::endl;
 		return;
 	}
 
-	//std::cout << "Num:" << 1 << ", main element: " <<  parent_element->Value() << std::endl;
+//	std::cout << "Name:" << name << " Not Found " << element_list.size() << std::endl;
 
-	FindFirstElement(name, parent_element->FirstChildElement(), p_elem);
-	FindFirstElement(name, parent_element->NextSiblingElement(), p_elem);
+	FindFirstElement(name, parent_element->FirstChildElement(), element_list);
+	FindFirstElement(name, parent_element->NextSiblingElement(), element_list);
 }
 
 int MappingHelpers::GetIntAttribute(TiXmlElement* p_elem, std::string name, int def_val )

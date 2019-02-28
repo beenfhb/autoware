@@ -27,7 +27,10 @@ include_directories(
 )
 
 
-add_library( autoware_map lib/autoware_map/autoware_map.cpp lib/autoware_map/util.cpp lib/autoware_map/visualization.cpp)
+add_library( autoware_map lib/autoware_map/autoware_map.cpp 
+							lib/autoware_map/util.cpp lib/autoware_map/visualization.cpp
+                			lib/autoware_map/opendrive2autoware_converter_core.cpp
+                			lib/autoware_map/odrSpiral.cpp)
 add_dependencies( autoware_map ${catkin_EXPORTED_TARGETS} )
 target_link_libraries( autoware_map ${catkin_LIBRARIES} )
 
@@ -41,8 +44,7 @@ add_dependencies( autoware2vectormap_converter ${catkin_EXPORTED_TARGETS})
 target_link_libraries( autoware2vectormap_converter ${catkin_LIBRARIES} autoware_map)
 
 add_executable( opendrive2autoware_converter
-                nodes/opendrive2autoware_converter/opendrive2autoware_converter.cpp
-                nodes/opendrive2autoware_converter/opendrive2autoware_converter_core.cpp)
+                nodes/opendrive2autoware_converter/opendrive2autoware_converter.cpp )
                 
 add_dependencies( opendrive2autoware_converter ${catkin_EXPORTED_TARGETS})
 target_link_libraries( opendrive2autoware_converter ${catkin_LIBRARIES} autoware_map)

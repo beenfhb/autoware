@@ -80,7 +80,7 @@ public:
 	static TiXmlElement* GetHeadElement(TiXmlElement* pMainElem);
 	static TiXmlElement* GetDataFolder(const std::string& folderName, TiXmlElement* pMainElem);
 	static void FindElements(const std::string& name, TiXmlElement* parent_element, std::vector<TiXmlElement*>& element_list);
-	static void FindFirstElement(const std::string& name, TiXmlElement* parent_element, TiXmlElement* p_elem);
+	static void FindFirstElement(const std::string& name, TiXmlElement* parent_element, std::vector<TiXmlElement*>& element_list);
 	static int GetIntAttribute(TiXmlElement* p_elem, std::string name, int def_val = 0);
 	static double GetDoubleAttribute(TiXmlElement* p_elem, std::string name, double def_val = 0.0);
 	static std::string GetStringAttribute(TiXmlElement* p_elem, std::string name, std::string def_val);
