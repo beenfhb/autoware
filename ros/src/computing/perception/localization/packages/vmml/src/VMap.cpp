@@ -160,9 +160,7 @@ void VMap::estimateStructure (const kfid &kfid1, const kfid &kfid2)
 		&kf2 = *getKeyFrameById(kfid2);
 
 	vector<Matcher::KpPair> featurePairs_1_2, validKpPairs;
-	TTransform T12;
 	Matcher::matchAny(kf1, kf2, featurePairs_1_2, descriptorMatcher);
-	T12 = Matcher::calculateMovement(kf1, kf2, featurePairs_1_2, validKpPairs);
 
 	vector<mpid> newMapPointList;
 
@@ -222,11 +220,13 @@ VMap::estimateAndTrack (const kfid &kfid1, const kfid &kfid2, const double metri
 	// Estimate pose for KF2
 	Pose PF2;
 	Matcher::solvePose(KF1, KF2, oldMapPointPairs, descriptorMatcher, PF2);
-	KF2.setPose(PF2);
 
 	// The transformation acquired above is not in metric scale. Try to get it right.
 	TTransform T12 = KF1.pose().inverse() * PF2;
 	T12.translation() = T12.translation().normalized() * metricDisposition;
+	PF2 = KF1.pose() * T12;
+
+	KF2.setPose(PF2);
 
 	// Put point appearances
 	for (int i=0; i<oldMapPointPairs.size(); ++i) {

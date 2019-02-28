@@ -602,7 +602,7 @@ private:
 			meidaiDsPtr = static_pointer_cast<MeidaiBagDataset>(loadedDataset);
 			slDatasourceType = MEIDAI_DATASET_TYPE;
 			meidaiDsPtr->addCameraParameter(meidaiCamera1Params);
-			meidaiDsPtr->isPreprocessed = false;
+			meidaiDsPtr->isPreprocessed = true;
 			debug ("Nagoya University Dataset Loaded");
 		}
 
@@ -821,7 +821,7 @@ private:
 		[&] (const InputFrame &f)
 		{
 			imgViewer->update(f.sourceId, mapBuilder.getCurrentKeyFrameId());
-			cout << _callbackFrameId << " / " << numOfFrames << endl;
+//			cout << _callbackFrameId << " / " << numOfFrames << endl;
 			_callbackFrameId += 1;
 		};
 		mapBuilder.registerFrameCallback(frmCallback);
@@ -830,8 +830,14 @@ private:
 			mapBuilder.runFromDataset(loadedDataset, numeric_limits<dataItemId>::max(), numeric_limits<dataItemId>::max());
 		}
 		else {
-			if (useIntPosition==true)
-				mapBuilder.runFromDataset(loadedDataset, start.asPosition, stop.asPosition);
+			if (useIntPosition==true) {
+				if (slDatasourceType==MEIDAI_DATASET_TYPE) {
+					mapBuilder.runFromDataset(meidaiDsPtr, start.asPosition, stop.asPosition);
+				}
+				else {
+					mapBuilder.runFromDataset(loadedDataset, start.asPosition, stop.asPosition);
+				}
+			}
 			else
 				mapBuilder.runFromDataset(loadedDataset, ptstart, ptstop);
 		}

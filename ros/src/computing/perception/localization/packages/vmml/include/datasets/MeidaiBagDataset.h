@@ -67,7 +67,7 @@ public:
 	typedef std::shared_ptr<MeidaiDataItem> Ptr;
 	typedef std::shared_ptr<MeidaiDataItem const> ConstPtr;
 
-	LidarScanBag::scan_t::ConstPtr getLidarScan();
+	LidarScanBag::scan_t::ConstPtr getLidarScan(ptime *scanTime=nullptr);
 
 protected:
 	const MeidaiBagDataset &parent;

@@ -18,6 +18,7 @@
 #include <pcl/io/pcd_io.h>
 #include <velodyne_pointcloud/rawdata.h>
 
+#include "utilities.h"
 #include "RandomAccessBag.h"
 
 
@@ -47,7 +48,7 @@ public:
 	LidarScanBag subset(const ros::Time &start, ros::Duration &d) const;
 
 	scan_t::ConstPtr
-	at (int position);
+	at (int position, ptime *msgTime=nullptr);
 
 	inline
 	scan_t::ConstPtr

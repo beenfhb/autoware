@@ -120,9 +120,11 @@ LidarScanBag::convertMessage(velodyne_msgs::VelodyneScan::ConstPtr bagmsg)
 
 
 LidarScanBag::scan_t::ConstPtr
-LidarScanBag::at (int position)
+LidarScanBag::at (int position, ptime *msgTime)
 {
 	auto msgP = RandomAccessBag::at<velodyne_msgs::VelodyneScan>(position);
+	if (msgTime!=nullptr)
+		*msgTime = msgP->header.stamp.toBoost();
 	return convertMessage(msgP);
 }
 

@@ -636,12 +636,13 @@ Matcher::matchH(
 }
 
 
-Matrix4d
+TTransform
 Matcher::matchLidarScans(const MeidaiDataItem &frame1, const MeidaiDataItem &frame2)
 {
+	ptime scantime_frame1, scantime_frame2;
 	auto
-		pcscan1 = const_cast<MeidaiDataItem&>(frame1).getLidarScan(),
-		pcscan2 = const_cast<MeidaiDataItem&>(frame2).getLidarScan();
+		pcscan1 = const_cast<MeidaiDataItem&>(frame1).getLidarScan(&scantime_frame1),
+		pcscan2 = const_cast<MeidaiDataItem&>(frame2).getLidarScan(&scantime_frame2);
 
 	pcscan1 = LidarScanBag::VoxelGridFilter(pcscan1);
 	pcscan2 = LidarScanBag::VoxelGridFilter(pcscan2);
@@ -655,18 +656,20 @@ Matcher::matchLidarScans(const MeidaiDataItem &frame1, const MeidaiDataItem &fra
 	ndt.setInputTarget(pcscan2);
 
 	LidarScanBag::scan_t finalCl;
-	// Initial guess
-//	TTransform guess12 = frame1.getPose().inverse() * frame2.getPose();
-//	ndt.align(finalCl, guess12.matrix().cast<float>());
+	TTransform guess12;
 	ndt.align(finalCl);
 
 	if (ndt.hasConverged()) {
 		cout << "Converged; Score: " << ndt.getFitnessScore() << endl;
-		return ndt.getFinalTransformation().cast<double>();
+		guess12 = ndt.getFinalTransformation().cast<double>();
 	}
 
 	else {
 		cout << "Not converged" << endl;
 		return Matrix4d::Identity();
 	}
+
+	double velocity = guess12.translation().norm() / toSeconds(scantime_frame2-scantime_frame1);
+	guess12.translation() = guess12.translation().normalized() * velocity * toSeconds(frame2.getTimestamp()-frame1.getTimestamp());
+	return guess12;
 }

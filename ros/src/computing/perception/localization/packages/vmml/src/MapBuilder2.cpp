@@ -47,6 +47,7 @@ MapBuilder2::~MapBuilder2()
 void
 MapBuilder2::initialize (const InputFrame &f1, const InputFrame &f2)
 {
+	cout << "Comparing for init: " << f1.sourceId << "->" << f2.sourceId << endl;
 	kfid k1 = cMap->createKeyFrame(f1.image, f1.position, f1.orientation, f1.cameraId, NULL, f1.sourceId, f1.tm);
 	kfid k2 = cMap->createKeyFrame(f2.image, f2.position, f2.orientation, f2.cameraId, NULL, f2.sourceId, f2.tm);
 	cMap->estimateStructure(k1, k2);
@@ -63,18 +64,19 @@ MapBuilder2::track (const InputFrame &f)
 
 	// XXX: Get correct metric scale of the two frames
 	double dist2Frame = 1.0;
-/*
 	if (datasetType==MeidaiType) {
 		MeidaiBagDataset::Ptr meidaiDs = static_pointer_cast<MeidaiBagDataset>(sourceDataset);
-		MeidaiDataitem::Ptr
+		MeidaiDataItem::Ptr
 			anchorDi = meidaiDs->getNative(ifrAnchor.sourceId),
 			curDi = meidaiDs->getNative(f.sourceId);
 		TTransform T12 = Matcher::matchLidarScans(*anchorDi, *curDi);
 		dist2Frame = T12.translation().norm();
 	}
-*/
 
 	kfid fId = cMap->createKeyFrame(f.image, f.position, f.orientation, f.cameraId, NULL, f.sourceId, f.tm);
+
+	cout << "Comparing for tracking: " << ifrAnchor.sourceId << "->" << f.sourceId << endl;
+
 	cMap->estimateAndTrack(kfAnchor, fId, dist2Frame);
 
 	cMap->keyframe(fId)->previousKeyframe = kfAnchor;
@@ -244,8 +246,8 @@ MapBuilder2::runFromDataset(GenericDataset::Ptr sourceDs, dataItemId startPos, d
 void
 MapBuilder2::runFromDataset
 (MeidaiBagDataset::Ptr sourceDs,
-	dataItemId startPos=std::numeric_limits<dataItemId>::max(),
-	dataItemId stopPos=std::numeric_limits<dataItemId>::max() )
+	dataItemId startPos,
+	dataItemId stopPos)
 {
 	datasetType = MeidaiType;
 	return runFromDataset(static_pointer_cast<GenericDataset>(sourceDs), startPos, stopPos);
