@@ -60,6 +60,6 @@ docker run -it --rm \
     --env="XAUTHORITY=$XAUTH" \
     --env="DISPLAY=$DISPLAY" \
     --env="QT_X11_NO_MITSHM=1" \
-    -u root \
+    -u autoware \
     --net=host \
 $DOCKER_HUB_REPO:$TAG

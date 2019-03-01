@@ -36,6 +36,8 @@ RUN /bin/bash -c 'cd carla-autoware; git submodule init; git submodule update'
 RUN mv carla-autoware /home/$USERNAME/
 RUN cp -r carla/PythonAPI /home/$USERNAME/carla-autoware/
 
+COPY --from=carla --chown=autoware /home/carla/PythonAPI home/$USERNAME/carla-autoware/PythonAPI
+
 RUN /bin/bash -c 'source /home/$USERNAME/Autoware/ros/devel/setup.bash; cd /home/$USERNAME/carla-autoware/catkin_ws/src; catkin_init_workspace; cd ../; catkin_make -DCMAKE_BUILD_TYPE=Release'
 USER autoware
 ENV CARLA_AUTOWARE_ROOT=/home/$USERNAME/carla-autoware
