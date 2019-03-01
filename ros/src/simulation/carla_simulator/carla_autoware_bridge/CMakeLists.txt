@@ -15,11 +15,6 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
-foreach (dir launch)
-    install(DIRECTORY ${dir}/
-            DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${dir})
-endforeach (dir)
-
 install(PROGRAMS scripts/launch_bridge.sh scripts/launch_carla.sh
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
         )
