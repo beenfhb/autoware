@@ -191,7 +191,6 @@ Matcher::matchAny(
 	}
 	cv::Mat mask;
 	cv::Mat Fcv = cv::findFundamentalMat(pointsIn1, pointsIn2, cv::FM_RANSAC, 3.84*Matcher::circleOfConfusionDiameter, 0.99, mask);
-	cerr << "Got " << countFeaturePairMask(mask) << " out of " << mask.rows << endl;
 	// Need Eigen Matrix of F
 
 	for (int i=0; i<initialMatches.size(); ++i) {

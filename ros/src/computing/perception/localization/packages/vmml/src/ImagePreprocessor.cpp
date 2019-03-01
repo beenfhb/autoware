@@ -190,7 +190,7 @@ cv::Mat ImagePreprocessor::autoAdjustGammaRGB (const cv::Mat &rgbImg, const cv::
 	cv::LUT(monoImg, LUT, monoImg);
 
 	cv::Mat histAll = histogram(monoImg);
-	int i;
+	int i=0;
 	while (!histAll.at<uchar>(i))
 		i++;
 	float a = 127.0/(127.0-(float)i);

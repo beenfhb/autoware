@@ -23,19 +23,23 @@ class Matcher {
 public:
 
 	typedef std::pair<kpid,kpid> KpPair;
+	typedef std::vector<KpPair> PairList;
 
 	// Match with epipolar constraints
 	static void
 	matchAny(
 		const BaseFrame &F1,
 		const BaseFrame &F2,
-		std::vector<KpPair> &featurePairs,
+		PairList &featurePairs,
 		cv::Ptr<cv::DescriptorMatcher> matcher);
 
+	/*
+	 * Perform motion estimation using essential matrix
+	 */
 	static TTransform
 	calculateMovement (
 		const BaseFrame &F1, const BaseFrame &F2,
-		const std::vector<KpPair> &featurePairs,
+		const PairList &featurePairs,
 		std::vector<KpPair> &validPairsByTriangulation);
 
 	// Match with homography constraints.
@@ -55,7 +59,7 @@ public:
 	matchMapPoints(
 		const KeyFrame &KFsrc,
 		const BaseFrame &Ft,
-		std::vector<KpPair> &featurePairs,
+		PairList &featurePairs,
 		cv::Ptr<cv::DescriptorMatcher> matcher);
 
 	/*
@@ -66,7 +70,7 @@ public:
 	solvePose(
 		const KeyFrame &KFsrc,
 		const BaseFrame &Ft,
-		std::vector<KpPair> &featurePairs,
+		PairList &featurePairs,
 		cv::Ptr<cv::DescriptorMatcher> matcher,
 		Pose &newFramePose);
 
@@ -81,7 +85,7 @@ public:
 	drawMatches(
 		const BaseFrame &F1,
 		const BaseFrame &F2,
-		const std::vector<KpPair> &featurePairs,
+		const PairList &featurePairs,
 		DrawMode m,
 		int maxNumOfPairs=-1);
 

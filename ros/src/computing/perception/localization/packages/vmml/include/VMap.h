@@ -138,7 +138,7 @@ public:
 	const MapPoint* mappoint (const mpid &i) const
 	{ return mappointInvIdx.at(i); }
 
-	void estimateStructure (const kfid &keyFrame1, const kfid &keyFrame2);
+	void estimateStructure (const kfid &keyFrame1, const kfid &keyFrame2, double translationHint=-1.0);
 
 	void estimateAndTrack (const kfid &kfid1, const kfid &kfid2, const double metricDisposition=1.0);
 

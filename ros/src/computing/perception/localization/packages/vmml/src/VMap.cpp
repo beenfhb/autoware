@@ -153,14 +153,22 @@ mpid VMap::createMapPoint(const Vector3d &p, MapPoint **ptr)
 }
 
 
-void VMap::estimateStructure (const kfid &kfid1, const kfid &kfid2)
+void VMap::estimateStructure (const kfid &kfid1, const kfid &kfid2, double translationHint)
 {
-	const KeyFrame
+	KeyFrame
 		&kf1 = *getKeyFrameById(kfid1),
 		&kf2 = *getKeyFrameById(kfid2);
 
-	vector<Matcher::KpPair> featurePairs_1_2, validKpPairs;
+	Matcher::PairList featurePairs_1_2, validKpPairs;
 	Matcher::matchAny(kf1, kf2, featurePairs_1_2, descriptorMatcher);
+
+	// Don't touch KF1's pose, but estimate motion to KF2
+	if (translationHint > 0) {
+		TTransform T12 = Matcher::calculateMovement(kf1, kf2, featurePairs_1_2, validKpPairs);
+		T12.translation() *= translationHint;
+		Pose pf2 = kf1.pose() * T12;
+		kf2.setPose(pf2);
+	}
 
 	vector<mpid> newMapPointList;
 

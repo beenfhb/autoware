@@ -521,6 +521,7 @@ MeidaiDataItem::getOrientation() const
 cv::Mat
 MeidaiDataItem::getImage() const
 {
+	// Convert image to RGB colorspace (originally in RGGB)
 	auto imgPtr = cv_bridge::toCvCopy(bImageMsg, sensor_msgs::image_encodings::BGR8);
 
 	if (parent.isPreprocessed) {
