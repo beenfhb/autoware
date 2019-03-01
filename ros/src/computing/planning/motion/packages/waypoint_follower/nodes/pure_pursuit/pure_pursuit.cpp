@@ -265,4 +265,70 @@ bool PurePursuit::canGetCurvature(double *output_kappa)
   return true;
 }
 
+bool PurePursuit::calculateNearestYawError(double &yawerr, double &self_yaw, double &ref_yaw)
+{
+
+  if (current_waypoints_.size() < 6)
+    return false;
+
+
+  self_yaw = tf2::getYaw(current_pose_.orientation);
+
+  /* Since the current /final_waypoints can not calculate the nearest yaw,
+     we get reference yaw as an angle of vector from waypoints[1] to waypoints[2].
+     NODE: this depends strongly on the specification of waypoints. should be changed as soon as possible. */
+
+  double p0x = current_waypoints_[1].pose.pose.position.x;
+  double p0y = current_waypoints_[1].pose.pose.position.y;
+  double p1x = current_waypoints_[2].pose.pose.position.x;
+  double p1y = current_waypoints_[2].pose.pose.position.y;
+  double ref_yaw1 = std::atan2((p1y - p0y), (p1x - p0x));
+
+  p0x = current_waypoints_[2].pose.pose.position.x;
+  p0y = current_waypoints_[2].pose.pose.position.y;
+  p1x = current_waypoints_[3].pose.pose.position.x;
+  p1y = current_waypoints_[3].pose.pose.position.y;
+  double ref_yaw2 = std::atan2((p1y - p0y), (p1x - p0x));
+
+  double dist1 = std::sqrt(std::pow(current_waypoints_[1].pose.pose.position.x - current_pose_.position.x, 2.0) +
+                           std::pow(current_waypoints_[1].pose.pose.position.y - current_pose_.position.y, 2.0));
+  double dist2 = std::sqrt(std::pow(current_waypoints_[2].pose.pose.position.x - current_pose_.position.x, 2.0) +
+                           std::pow(current_waypoints_[2].pose.pose.position.y - current_pose_.position.y, 2.0));
+  // ref_yaw = (dist1 * ref_yaw1 + dist2 * ref_yaw2) / (dist1 + dist2);
+  ref_yaw = ref_yaw1;
+  yawerr = self_yaw - ref_yaw;
+  while (std::fabs(yawerr) > 3.1415) {
+    yawerr -= 2.0 * 3.1415 * (yawerr > 0.0 ? 1.0 : -1.0);
+  }
+  printf("\n========================================\n");
+  printf("my_yaw = %f, ref_yaw = %f, yaw_err = %f\n", self_yaw, ref_yaw, yawerr);
+  printf("========================================\n");
+
+  return true;
+}
+
+bool PurePursuit::calculateNearestCurvature(double &kappa){
+
+  if (current_waypoints_.size() < 6)
+    return false;
+
+  geometry_msgs::Point p0 = current_waypoints_[1].pose.pose.position;
+  geometry_msgs::Point p1 = current_waypoints_[3].pose.pose.position;
+  geometry_msgs::Point p2 = current_waypoints_[5].pose.pose.position;
+
+  auto dist = [](const geometry_msgs::Point &p1, const geometry_msgs::Point &p2) {
+    double dx = p1.x - p2.x;
+    double dy = p1.y - p2.y;
+    return std::sqrt(dx * dx + dy * dy);
+  };
+
+  auto area2 = [](const geometry_msgs::Point &a, const geometry_msgs::Point &b, const geometry_msgs::Point &c) {
+    return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+  };
+
+  kappa = 2.0 * area2(p0, p1, p2) / (dist(p0, p1) * dist(p1, p2) * dist(p2, p0));
+  printf("kapap feedforward = %f\n", kappa);
+  return true;
+}
+
 }  // waypoint_follower

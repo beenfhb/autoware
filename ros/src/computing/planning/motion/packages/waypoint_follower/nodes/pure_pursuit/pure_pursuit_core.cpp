@@ -54,6 +54,10 @@ void PurePursuitNode::initForROS()
   // ROS_INFO_STREAM("is_linear_interpolation : " << is_linear_interpolation_);
   private_nh_.param("publishes_for_steering_robot", publishes_for_steering_robot_, bool(false));
   nh_.param("vehicle_info/wheel_base", wheel_base_, double(2.7));
+  private_nh_.param("use_yawerr_feedback", use_yawerr_feedback_, bool(false));
+  private_nh_.param("yawerr_feedback_gain", yawerr_feedback_gain_, double(1.0));
+  private_nh_.param("feedforward_ratio", feedforward_ratio_, double(0.0));
+
 
   // setup subscriber
   sub1_ = nh_.subscribe("final_waypoints", 10, &PurePursuitNode::callbackFromWayPoints, this);
@@ -71,6 +75,9 @@ void PurePursuitNode::initForROS()
   pub15_ = nh_.advertise<visualization_msgs::Marker>("trajectory_circle_mark", 0);
   pub16_ = nh_.advertise<std_msgs::Float32>("angular_gravity", 0);
   pub17_ = nh_.advertise<std_msgs::Float32>("deviation_of_current_position", 0);
+  pub18_ = nh_.advertise<std_msgs::Float32>("ref_yaw", 0);
+  pub19_ = nh_.advertise<std_msgs::Float32>("my_yaw", 0);
+  pub20_ = nh_.advertise<std_msgs::Float32>("yaw_err", 0);
   // pub7_ = nh.advertise<std_msgs::Bool>("wf_stat", 0);
 }
 
@@ -81,21 +88,53 @@ void PurePursuitNode::run()
   while (ros::ok())
   {
     ros::spinOnce();
-    if (!is_pose_set_ || !is_waypoint_set_ || !is_velocity_set_ || !is_config_set_)
+
+    if (!is_pose_set_ || !is_config_set_)
     {
-      ROS_WARN("Necessary topics are not subscribed yet ... ");
+      ROS_WARN("Necessary topics are not subscribed yet ... pose: %d, waypoint: %d, vel: %d, config: %d",
+               is_pose_set_, is_waypoint_set_, is_velocity_set_, is_config_set_);
       loop_rate.sleep();
       continue;
     }
+    ROS_INFO("pose: %d, waypoint: %d, vel: %d, config: %d",
+      is_pose_set_, is_waypoint_set_, is_velocity_set_, is_config_set_);
 
-    pp_.setLookaheadDistance(computeLookaheadDistance());
+    double lookahead_dist = computeLookaheadDistance();
+    pp_.setLookaheadDistance(lookahead_dist);
     pp_.setMinimumLookaheadDistance(minimum_lookahead_distance_);
 
-    double kappa = 0;
-    bool can_get_curvature = pp_.canGetCurvature(&kappa);
+    double kappa_fb = 0;
+    bool can_get_curvature = pp_.canGetCurvature(&kappa_fb);
     
+    if (use_yawerr_feedback_) {
+      // double yawerr(0.0), my_yaw(0.0), ref_yaw(0.0);
+      // pp_.calculateNearestYawError(yawerr, my_yaw, ref_yaw);
+      // double yaw_fb = (-2.0) * yawerr_feedback_gain_ * yawerr / std::max(std::fabs(lookahead_dist), 1.0);
+      // double cmd_vx = computeCommandVelocity();
+      // double cmd_vx_min = 1.0;
+      // if (std::fabs(cmd_vx) < cmd_vx_min)
+      //   cmd_vx = cmd_vx_min * (cmd_vx > 0.0 ? 1.0 : -1.0);
+      // printf("kappa = %f -> ", kappa);
+      // kappa += yaw_fb / cmd_vx;
+      // printf("%f\n", kappa);
+      // std_msgs::Float32 msg1, msg2, msg3;
+      // msg1.data = ref_yaw;
+      // msg2.data = my_yaw;
+      // msg3.data = yawerr;
+      // pub18_.publish(msg1);
+      // pub19_.publish(msg2);
+      // pub20_.publish(msg3);
+    }
+
+    double kappa_ff;
+    pp_.calculateNearestCurvature(kappa_ff);
+
+    double kappa = feedforward_ratio_ * kappa_ff + (1.0 - feedforward_ratio_) * kappa_fb;
+
+
     publishTwistStamped(can_get_curvature, kappa);
     publishControlCommandStamped(can_get_curvature, kappa);
+
     node_status_publisher_ptr_->NODE_ACTIVATE();
     node_status_publisher_ptr_->CHECK_RATE("/topic/rate/vehicle/slow",8,5,1,"topic vehicle_cmd publish rate low.");
     // for visualization with Rviz

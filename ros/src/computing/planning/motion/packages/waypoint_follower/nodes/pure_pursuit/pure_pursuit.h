@@ -22,6 +22,7 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <tf2/utils.h>
 
 // User defined includes
 #include "autoware_msgs/Lane.h"
@@ -88,6 +89,8 @@ public:
   }
   // processing
   bool canGetCurvature(double *output_kappa);
+  bool calculateNearestYawError(double &yawerr, double &my_yaw, double &ref_yaw);
+  bool calculateNearestCurvature(double &kappa);
 
 private:
   // constant
