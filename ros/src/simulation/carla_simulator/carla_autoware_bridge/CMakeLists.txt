@@ -10,13 +10,16 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 catkin_package(
-  INCLUDE_DIRS include
 #  LIBRARIES carla_autoware_bridge
 #  CATKIN_DEPENDS autoware_msgs roscpp rospy
 #  DEPENDS system_lib
 )
 
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
+foreach (dir launch)
+    install(DIRECTORY ${dir}/
+            DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${dir})
+endforeach (dir)
+
+install(PROGRAMS scripts/launch_bridge.sh scripts/launch_carla.sh
+        DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )

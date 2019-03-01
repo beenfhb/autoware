@@ -43,3 +43,5 @@ USER autoware
 ENV CARLA_AUTOWARE_ROOT=/home/$USERNAME/carla-autoware
 ENV PYTHONPATH=/home/$USERNAME/carla-autoware/PythonAPI/carla-$CARLA_VERSION-py2.7-linux-x86_64.egg:/home/$USERNAME/carla-autoware/PythonAPI
 RUN echo "source /home/$USERNAME/carla-autoware/catkin_ws/devel/setup.bash" >> /home/$USERNAME/.bashrc
+
+CMD /bin/bash -c 'source /home/$USERNAME/carla-autoware/catkin_ws/devel/setup.bash ; roslaunch carla_autoware_bridge carla_autoware_bridge.launch'

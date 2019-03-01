@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="carla_autoware_bridge" type="launch_sim.bash" name="lgsvl_simulator_launcher">
+    </node>
+</launch>
