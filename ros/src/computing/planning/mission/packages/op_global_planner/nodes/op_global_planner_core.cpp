@@ -70,6 +70,7 @@ GlobalPlanner::GlobalPlanner()
 	pub_Paths = nh.advertise<autoware_msgs::LaneArray>("lane_waypoints_array", 1, true);
 	pub_PathsRviz = nh.advertise<visualization_msgs::MarkerArray>("global_waypoints_rviz", 1, true);
 	pub_MapRviz  = nh.advertise<visualization_msgs::MarkerArray>("vector_map_center_lines_rviz", 1, true);
+	pub_MapRvizII  = nh.advertise<visualization_msgs::MarkerArray>("vector_map_center_lines_rviz_ii", 1, true);
 	pub_GoalsListRviz = nh.advertise<visualization_msgs::MarkerArray>("op_destinations_rviz", 1, true);
 
 	if(m_params.bEnableRvizInput)
@@ -429,28 +430,34 @@ void GlobalPlanner::MainLoop()
 
 			autoware_map::OpenDrive2AutoConv converter;
 			autoware_map::InternalRoadNet map;
-			converter.loadOpenDRIVE("/home/hatem/OpenDRIVE/Roundabout8Course.xodr", map);
+			converter.loadOpenDRIVE("/home/hatem/open_drive/sample1.1_roadz.xodr", map);
+
 			PlannerHNS::RoadSegment segment;
 			segment.id = 1;
-			converter.GetReferenceLanes(segment.Lanes);
-
-			//std::cout << "Final Lanes Points : " << map_marker_array.markers.size() << std::endl;
-
+			converter.GetReferenceGeometry(segment.Lanes);
 			m_Map.roadSegments.push_back(segment);
-
 			visualization_msgs::MarkerArray map_marker_array;
 			PlannerHNS::ROSHelpers::ConvertFromRoadNetworkToAutowareVisualizeMapFormat(m_Map, map_marker_array);
-
-			std::cout << "Final Map Lanes : " << map_marker_array.markers.size() << std::endl;
-
+			std::cout << "Final Map Road Centers : " << map_marker_array.markers.size() << std::endl;
 			pub_MapRviz.publish(map_marker_array);
+
+
+			PlannerHNS::RoadSegment segment_ii;
+			segment_ii.id = 1;
+			converter.GetReferenceLanes(segment_ii.Lanes);
+			PlannerHNS::RoadNetwork m_MapII;
+			m_MapII.roadSegments.push_back(segment_ii);
+			visualization_msgs::MarkerArray map_marker_array_ii;
+			PlannerHNS::ROSHelpers::ConvertFromRoadNetworkToAutowareVisualizeMapFormat(m_MapII, map_marker_array_ii, 1);
+			std::cout << "Final Map Lanes Centers : " << map_marker_array_ii.markers.size() << std::endl;
+			pub_MapRvizII.publish(map_marker_array_ii);
 		}
 		else if (m_params.mapSource == PlannerHNS::MAP_FOLDER && !m_bKmlMap)
 		{
 			m_bKmlMap = true;
 			PlannerHNS::MappingHelpers::ConstructRoadNetworkFromDataFiles(m_params.KmlMapPath, m_Map, true);
 			visualization_msgs::MarkerArray map_marker_array;
-			PlannerHNS::ROSHelpers::ConvertFromRoadNetworkToAutowareVisualizeMapFormat(m_Map, map_marker_array);
+			PlannerHNS::ROSHelpers::ConvertFromRoadNetworkToAutowareVisualizeMapFormat(m_Map, map_marker_array, 2);
 
 			pub_MapRviz.publish(map_marker_array);
 		}

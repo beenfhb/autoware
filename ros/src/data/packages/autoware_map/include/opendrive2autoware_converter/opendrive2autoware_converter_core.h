@@ -246,7 +246,7 @@ public:
 };
 
 //from  <planView> from <road>
-class Goemetry
+class Geometry
 {
 public:
 	double s,x, y, heading, length; //genral use 'line'
@@ -256,7 +256,7 @@ public:
 
 	GEOMETRY_TYPE type;
 
-	Goemetry(TiXmlElement* main_element)
+	Geometry(TiXmlElement* main_element)
 	{
 		type = UNKNOWN_GEOMETRY;
 		curvature = 0;
@@ -293,7 +293,7 @@ public:
 		}
 	}
 
-	bool GetPoint(const double _s, WayPoint& wp)
+	bool GetPoint(const double _s, PlannerHNS::WayPoint& wp)
 	{
 		if(_s < s || _s > (s+length)) //only calculate points inside the geometry
 			return false;
@@ -302,9 +302,9 @@ public:
 
 		if(type == LINE_GEOMETRY)
 		{
-			wp.pose.x = x + internal_s*cos(heading);
-			wp.pose.y = y + internal_s*sin(heading);
-			wp.pose.a = heading;
+			wp.pos.x = x + internal_s*cos(heading);
+			wp.pos.y = y + internal_s*sin(heading);
+			wp.pos.a = heading;
 		//	std::cout << " Line Calc, " << _s <<", " << s << ", " << internal_s <<  std::endl;
 		}
 		else if(type == ARC_GEOMETRY)
@@ -316,9 +316,9 @@ public:
 			double a = 2.0 / c * sin(internal_s * c / 2.0);
 			double alpha = ((M_PI - (internal_s * c)) / 2.0) - hdg;
 
-			wp.pose.x = x + (-1.0 * a * cos(alpha));
-			wp.pose.y = y + (a * sin(alpha));
-			wp.pose.a = heading + internal_s * c;
+			wp.pos.x = x + (-1.0 * a * cos(alpha));
+			wp.pos.y = y + (a * sin(alpha));
+			wp.pos.a = heading + internal_s * c;
 
 		//	std::cout << " ARC Calc" << std::endl;
 		}
@@ -349,10 +349,10 @@ public:
 			PlannerHNS::GPSPoint t_p = rotationMat*p;
 			t_p = translationMat*t_p;
 
-			wp.pose.x = t_p.x;
-			wp.pose.y = t_p.y;
-			wp.pose.z = t_p.z;
-			wp.pose.a = t_p.a;
+			wp.pos.x = t_p.x;
+			wp.pos.y = t_p.y;
+			wp.pos.z = t_p.z;
+			wp.pos.a = t_p.a;
 
 			//std::cout << " Spiral Calc, " << _s <<", " << s << ", " << internal_s << ", " << curvDot << ", "<<curveStart <<  std::endl;
 		}
@@ -419,6 +419,7 @@ class OpenDriveLane
 public:
 	int id;
 	int level;
+	double section_offset;
 	double length;
 	LANE_DIRECTION dir;
 	LANE_TYPE type;
@@ -429,8 +430,9 @@ public:
 	std::vector<LaneLink> predecessor_lane_;
 	std::vector<LaneLink> successor_lane_;
 
-	OpenDriveLane(TiXmlElement* main_element, const LANE_DIRECTION& _dir, const double& lane_length)
+	OpenDriveLane(TiXmlElement* main_element, const LANE_DIRECTION& _dir, const double& s_offset, const double& lane_length)
 	{
+		section_offset = s_offset;
 		length = lane_length;
 		dir = _dir;
 		id = PlannerHNS::MappingHelpers::GetIntAttribute(main_element, "id", 0);
@@ -461,25 +463,35 @@ public:
 //			type = DRIVING_LANE;
 //		}
 
-		TiXmlElement* link_element = nullptr;
-		//PlannerHNS::MappingHelpers::FindFirstElement("link", main_element, link_element);
-		if(link_element != nullptr)
+		//TiXmlElement* link_element = nullptr;
+		std::vector<TiXmlElement*> elements;
+		PlannerHNS::MappingHelpers::FindFirstElement("link", main_element, elements);
+		if(elements.size() > 0)
 		{
 			std::vector<TiXmlElement*> pred_elements, succ_elements;
 
-			PlannerHNS::MappingHelpers::FindElements("predecessor", link_element, pred_elements);
+			PlannerHNS::MappingHelpers::FindElements("predecessor", elements.at(0), pred_elements);
 			for(unsigned int j=0; j < pred_elements.size(); j++)
 			{
 				predecessor_lane_.push_back(LaneLink(pred_elements.at(j)));
 			}
 
-			PlannerHNS::MappingHelpers::FindElements("successor", link_element, succ_elements);
+			PlannerHNS::MappingHelpers::FindElements("successor", elements.at(0), succ_elements);
 			for(unsigned int j=0; j < succ_elements.size(); j++)
 			{
 				successor_lane_.push_back(LaneLink(succ_elements.at(j)));
 			}
 		}
+
+		std::vector<TiXmlElement*> width_elements;
+		PlannerHNS::MappingHelpers::FindElements("width", main_element, width_elements);
+		for(unsigned int i=0; i < width_elements.size(); i++)
+		{
+			width_list.push_back(LaneWidth(width_elements.at(i)));
+		}
 	}
+
+	LaneWidth* GetMatchingWidth(const double& sOffset);
 };
 
 class OpenDriveRoad
@@ -491,7 +503,7 @@ public:
 	double length_;
 	std::vector<RoadLink> predecessor_road_;
 	std::vector<RoadLink> successor_road_;
-	std::vector<Goemetry> geometries_;
+	std::vector<Geometry> geometries_;
 	std::vector<OpenDriveLane> lanes_;
 	std::vector<LaneOffset> laneOffsets_;
 
@@ -543,7 +555,7 @@ public:
 			PlannerHNS::MappingHelpers::FindElements("geometry", elements.at(0), geom_elements);
 			for(unsigned int j=0; j < geom_elements.size(); j++)
 			{
-				geometries_.push_back(Goemetry(geom_elements.at(j)));
+				geometries_.push_back(Geometry(geom_elements.at(j)));
 			}
 		}
 
@@ -595,19 +607,19 @@ public:
 				std::vector<TiXmlElement*> sub_elements;
 				PlannerHNS::MappingHelpers::FindFirstElement("left", sections.at(j), sub_elements);
 				if(sub_elements.size() > 0)
-					lanes_.push_back(OpenDriveLane(sub_elements.at(0), LEFT_LANE, section_length));
+					lanes_.push_back(OpenDriveLane(sub_elements.at(0), LEFT_LANE, curr_section_s, section_length));
 
 				//TiXmlElement* center_element = nullptr;
 				sub_elements.clear();
 				PlannerHNS::MappingHelpers::FindFirstElement("center", sections.at(j), sub_elements);
 				if(sub_elements.size() > 0)
-					lanes_.push_back(OpenDriveLane(sub_elements.at(0), CENTER_LANE, section_length));
+					lanes_.push_back(OpenDriveLane(sub_elements.at(0), CENTER_LANE, curr_section_s, section_length));
 
 				//TiXmlElement* right_element = nullptr;
 				sub_elements.clear();
 				PlannerHNS::MappingHelpers::FindFirstElement("right", sections.at(j), sub_elements);
 				if(sub_elements.size() > 0)
-					lanes_.push_back(OpenDriveLane(sub_elements.at(0), RIGHT_LANE, section_length));
+					lanes_.push_back(OpenDriveLane(sub_elements.at(0), RIGHT_LANE, curr_section_s, section_length));
 			}
 
 			//std::cout << "LaneSections Loaded with: " << sections.size() <<" Sections , And: " << lanes_.size() << " Lanes" <<std::endl;
@@ -616,8 +628,9 @@ public:
 		//std::cout << "Road Loaded With ID: " << id_ << " , Length: " << length_  << std::endl;
 	}
 
-	void GetRoadLanes(std::vector<Lane>& lanes_list, const double& resolution = 0.5);
-	void GetReferenceWaypoints(std::vector<WayPoint>& road_wps, const double& resolution = 0.5);
+	void GetRoadLanes(std::vector<PlannerHNS::Lane>& lanes_list, const double& resolution = 0.5);
+	void GetReferenceWaypoints(std::vector<PlannerHNS::WayPoint>& road_wps, const double& resolution = 0.5);
+	Geometry* GetMatchingGeometry(const double& sOffset);
 
 };
 
@@ -628,7 +641,8 @@ public:
 	OpenDrive2AutoConv();
     ~OpenDrive2AutoConv();
     void loadOpenDRIVE(const std::string& xodr_file, autoware_map::InternalRoadNet& map);
-    void GetReferenceLanes(std::vector<PlannerHNS::Lane>& road_lanes, const double& resolution = 0.5);
+    void GetReferenceGeometry(std::vector<PlannerHNS::Lane>& road_lanes, const double& resolution = 0.5);
+    void GetReferenceLanes(std::vector<PlannerHNS::Lane>& all_lanes, const double& resolution = 0.5);
 
 private:
     std::vector<OpenDriveRoad> roads_list_;
