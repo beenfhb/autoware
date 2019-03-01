@@ -33,9 +33,7 @@ RUN cd && mkdir -p /home/$USERNAME/carla-autoware
 RUN git clone https://github.com/carla-simulator/carla-autoware.git
 RUN /bin/bash -c 'cd carla-autoware; git submodule init; git submodule update'
 
-RUN wget https://drive.google.com/open?id=1sFf8WnsSVsLhVzXnB2CMdM8LiWoZDE0c
-
-RUN cp -r carla-autoware /home/$USERNAME/
+RUN mv carla-autoware /home/$USERNAME/
 RUN cp -r carla/PythonAPI /home/$USERNAME/carla-autoware/
 
 RUN /bin/bash -c 'source /home/$USERNAME/Autoware/ros/devel/setup.bash; cd /home/$USERNAME/carla-autoware/catkin_ws/src; catkin_init_workspace; cd ../; catkin_make -DCMAKE_BUILD_TYPE=Release'
