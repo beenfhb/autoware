@@ -48,7 +48,7 @@ public:
 		cv::Ptr<cv::DescriptorMatcher> fmatcher,
 		Eigen::Matrix3d &H);
 
-	static Eigen::Matrix4d
+	static TTransform
 	matchLidarScans(const MeidaiDataItem &frame1, const MeidaiDataItem &frame2);
 
 	static void

@@ -548,10 +548,10 @@ MeidaiDataItem::getTimestamp() const
 
 
 LidarScanBag::scan_t::ConstPtr
-MeidaiDataItem::getLidarScan()
+MeidaiDataItem::getLidarScan(ptime *scanTime)
 {
 	auto p = parent.velodyneBag->getPositionAtTime(ros::Time::fromBoost(getTimestamp()));
-	return parent.velodyneBag->at(p);
+	return parent.velodyneBag->at(p, scanTime);
 }
 
 
