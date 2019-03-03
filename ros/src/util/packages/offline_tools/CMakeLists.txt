@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 2.8)
 project(offline_tools)
 
 add_compile_options(-std=c++11)
@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
 	rviz
 	cv_bridge
 	pcl_ros
-	vector_map
 	rosbag_storage)
 
 #find_package(Qt5 REQUIRED Core Widgets)
@@ -27,7 +26,10 @@ catkin_package(
   LIBRARIES 
   	rviz_offline_display
   	random_access_bag
-  CATKIN_DEPENDS roscpp rviz vector_map rosbag_storage
+  CATKIN_DEPENDS 
+	roscpp 
+	rviz 
+	rosbag_storage
 )
 
 
@@ -47,9 +49,6 @@ add_library(
 		rviz_plugins/PCDFileDisplay.cpp
 		rviz_plugins/CSVTrajectory.cpp
 		rviz_plugins/FileProperty.cpp
-		rviz_plugins/VectorMapDisplay.cpp
-		rviz_plugins/VectorMapLoader.cpp
-		rviz_plugins/SinglePose.cpp
 )
 
 target_link_libraries(
@@ -69,18 +68,6 @@ target_link_libraries(
 	random_access_bag
 		${catkin_LIBRARIES}
 )
-
-add_executable(test_bag
-	random_access_bag
-		random_access_bag/test.cpp
-)
-
-target_link_libraries(
-	test_bag
-		random_access_bag
-		${catkin_LIBRARIES}
-)
-
 
 
 add_executable(bag_viewer
@@ -104,4 +91,15 @@ target_link_libraries(
 target_include_directories(bag_viewer
 	PUBLIC bag_viewer
 )
+
+
+if (CATKIN_ENABLE_TESTING)
+	find_package(rostest REQUIRED)
+	add_rostest_gtest(bag_test 
+		test/test_random_access_bag.launch 
+		test/test_random_access_bag.cpp)
+	target_link_libraries(bag_test 
+		random_access_bag 
+		${catkin_LIBRARIES})
+endif ()
 

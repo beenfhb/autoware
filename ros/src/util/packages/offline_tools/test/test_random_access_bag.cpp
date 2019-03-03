@@ -31,74 +31,62 @@
 
 
 /*
- * PCDMap.h
+ * test_random_access_bag.cpp
  *
- *  Created on: Sep 30, 2018
+ *  Created on: Dec 3, 2018
  *      Author: sujiwo
  */
 
-#ifndef _RVIZ_PLUGINS_PCDMAP_H_
-#define _RVIZ_PLUGINS_PCDMAP_H_
-
 #include <string>
-#include <vector>
 
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <gtest/gtest.h>
+#include <ros/package.h>
+#include <rosbag/bag.h>
+#include <std_msgs/Int32.h>
+#include <std_msgs/String.h>
 
-#include <rviz/default_plugin/point_cloud_transformers.h>
-#include <rviz/display.h>
-#include <rviz/ogre_helpers/point_cloud.h>
-#include <rviz/properties/enum_property.h>
-#include <rviz/properties/float_property.h>
-#include <rviz/properties/string_property.h>
+#include "RandomAccessBag.h"
 
-class PCDFileDisplay : public rviz::Display {
-  Q_OBJECT
+using namespace std;
+
+class RandomAccessBagTestClass {
 public:
-  PCDFileDisplay();
-  virtual ~PCDFileDisplay();
+  RandomAccessBagTestClass() {
+    string mybag = ros::package::getPath("offline_tools") + "/test/test.bag";
+    testBag.open(mybag, rosbag::BagMode::Read);
+    numberView =
+        shared_ptr<RandomAccessBag>(new RandomAccessBag(testBag, "numbers"));
+    stringView =
+        shared_ptr<RandomAccessBag>(new RandomAccessBag(testBag, "text"));
+  }
 
-  enum { FLAT_COLOR, Z_COLOR };
+  int getNumbersLen() { return numberView->size(); }
 
-protected:
-  virtual void onInitialize();
+  int getSum() {
+    int s = 0;
+    for (int i = 0; i < numberView->size(); ++i) {
+      s += numberView->at<std_msgs::Int32>(i)->data;
+    }
+    return s;
+  }
 
-public Q_SLOTS:
-  void causeRetransform();
-
-private Q_SLOTS:
-  void changeFile();
-  void updateStyle();
-  void updateBillboardSize();
-  void updateColorTransformer();
-
-private:
-  rviz::StringProperty *pcdfile_;
-  rviz::EnumProperty *style_property_;
-  rviz::FloatProperty *point_world_size_property_;
-  rviz::FloatProperty *point_pixel_size_property_;
-
-  sensor_msgs::PointCloud2::Ptr cloudMsg_;
-  boost::shared_ptr<rviz::PointCloud> cloud_render_;
-  std::vector<rviz::PointCloud::Point> pointList;
-
-  rviz::EnumProperty *colorChooser_;
-
-  rviz::AxisColorPCTransformer *axesColorTransform_;
-  QList<rviz::Property *> axesColorTransformProps;
-
-  rviz::FlatColorPCTransformer *flatColorTransform_;
-  QList<rviz::Property *> flatColorTransformProps;
-
-  rviz::PointCloudTransformer *activeTransform_ = NULL;
+  string getSingleTextMessage() {
+    return stringView->at<std_msgs::String>(0)->data;
+  }
 
 private:
-  void updatePointCloud(const std::string &loadThisFile);
-
-  void updateDisplay();
+  rosbag::Bag testBag;
+  RandomAccessBag::Ptr numberView, stringView;
 };
 
-#endif /* _RVIZ_PLUGINS_PCDMAP_H_ */
+TEST(TestSuite, BAG_QUERY) {
+  RandomAccessBagTestClass rabTest;
+  ASSERT_EQ(rabTest.getNumbersLen(), 10) << "Invalid number of messages";
+  ASSERT_EQ(rabTest.getSum(), 45) << "Invalid checksum";
+  ASSERT_EQ(rabTest.getSingleTextMessage(), "Test Bag") << "Invalid text found";
+}
+
+int main(int argc, char *argv[]) {
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
