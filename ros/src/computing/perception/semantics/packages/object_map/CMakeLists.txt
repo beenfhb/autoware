@@ -35,7 +35,15 @@ endif ()
 catkin_package(
         INCLUDE_DIRS include
         LIBRARIES object_map_utils_lib
-        CATKIN_DEPENDS roscpp pcl_ros pcl_conversions tf sensor_msgs nav_msgs autoware_msgs vector_map
+        CATKIN_DEPENDS
+        roscpp
+        pcl_ros
+        pcl_conversions
+        tf
+        sensor_msgs
+        nav_msgs
+        autoware_msgs
+        vector_map
 )
 
 set(CMAKE_CXX_FLAGS "-O2 -g -Wall ${CMAKE_CXX_FLAGS}")
@@ -125,7 +133,16 @@ target_link_libraries(wayarea2grid
         wayarea2grid_lib
         )
 
-install(TARGETS wayarea2grid grid_map_filter potential_field points2costmap laserscan2costmap object_map_utils_lib
+install(TARGETS
+            wayarea2grid
+            wayarea2grid_lib
+            grid_map_filter_lib
+            grid_map_filter
+            potential_field
+            points2costmap
+            laserscan2costmap
+            object_map_utils_lib
+
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
@@ -137,8 +154,3 @@ install(DIRECTORY launch/
 install(DIRECTORY config/
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config
         PATTERN ".svn" EXCLUDE)
-
-install(DIRECTORY include/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-        PATTERN ".svn" EXCLUDE
-        )
