@@ -1,19 +1,9 @@
 health_checker:
-  estimate_twist_angular:
-    max:
-      warn: 0.3
-      error: 0.6
-      fatal : 0.9
-  estimate_twist_linear:
-    max:
-      warn: 10.0
-      error: 20.0
-      fatal: 30.0
-  time_ndt_matching:
-    max:
-      warn: 50.0
-      error: 75.0
-      fatal : 100.0
+  ndt_matching_score:
+    min:
+      warn: 0.7
+      error: 0.3
+      fatal : 0.3
   closest_waypoint_distance:
     max:
       warn: 1.0
