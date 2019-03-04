@@ -515,3 +515,9 @@ int optimize_pose (const Frame &frame, Pose &initPose, const VMap *vmap)
 
 	return N-numOutliers;
 }
+
+
+void local_bundle_adjustment (VMap *origMap, const std::vector<kfid> &targetKf)
+{
+
+}

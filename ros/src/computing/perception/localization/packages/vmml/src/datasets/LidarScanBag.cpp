@@ -7,6 +7,7 @@
 
 
 #include "datasets/LidarScanBag.h"
+#include <pcl_conversions/pcl_conversions.h>
 
 
 using namespace std;
@@ -24,6 +25,33 @@ const float
 	velodyneMaxRange = 130,
 	velodyneViewDirection = 0,
 	velodyneViewWidth = 2*M_PI;
+
+
+class mPointcloudXYZIR : public velodyne_rawdata::DataContainerBase
+{
+public:
+	velodyne_rawdata::VPointCloud::Ptr pc;
+
+	mPointcloudXYZIR() : pc(new velodyne_rawdata::VPointCloud) {}
+
+	virtual void
+	addPoint(const float& x, const float& y, const float& z, const uint16_t& ring, const uint16_t& azimuth, const float& distance, const float& intensity)
+	{
+		// convert polar coordinates to Euclidean XYZ
+		velodyne_rawdata::VPoint point;
+		point.ring = ring;
+		point.x = x;
+		point.y = y;
+		point.z = z;
+		point.intensity = intensity;
+
+		// append this point to the cloud
+		pc->points.push_back(point);
+		++pc->width;
+	}
+};
+
+
 
 
 template<class PointT>
@@ -90,7 +118,6 @@ LidarScanBag::prepare(const string &lidarCalibFile)
 }
 
 
-
 LidarScanBag
 LidarScanBag::subset(const ros::Time &start, ros::Duration &d) const
 {
@@ -101,16 +128,19 @@ LidarScanBag::subset(const ros::Time &start, ros::Duration &d) const
 LidarScanBag::scan_t::ConstPtr
 LidarScanBag::convertMessage(velodyne_msgs::VelodyneScan::ConstPtr bagmsg)
 {
-	VPointCloud::Ptr outPoints(new VPointCloud);
-	outPoints->header.stamp = pcl_conversions::toPCL(bagmsg->header).stamp;
-	outPoints->header.frame_id = bagmsg->header.frame_id;
-	outPoints->height = 1;
+	mPointcloudXYZIR outPoints;
+	outPoints.pc->header.stamp = pcl_conversions::toPCL(bagmsg->header).stamp;
+	outPoints.pc->header.frame_id = bagmsg->header.frame_id;
+	outPoints.pc->height = 1;
+
+	outPoints.pc->points.reserve(bagmsg->packets.size() * data_->scansPerPacket());
 
 	for (int i=0; i<bagmsg->packets.size(); ++i) {
-		data_->unpack(bagmsg->packets[i], *outPoints, bagmsg->packets.size());
+		data_->unpack(bagmsg->packets[i], outPoints);
 	}
 
-	scan_t::Ptr cloudTmp = convertToExternal(*outPoints);
+	scan_t::Ptr cloudTmp = convertToExternal(*outPoints.pc);
+
 	if (filtered)
 	// These are the best value I know of
 		return VoxelGridFilter(cloudTmp, 0.2, 3.0);
