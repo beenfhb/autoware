@@ -1,14 +1,15 @@
 <launch>
 	<arg name="input_path_name" 			default="/in_bypass_waypoints" />
     <arg name="input_selfpose_name"			default="/current_pose" />
-    <arg name="input_costmap_name"          default="/semantics/costmap_generator/occupancy_grid"/>
+    <arg name="input_costmap_name"          default="/realtime_cost_map"/>
 	<arg name="output_path_name" 			default="/safety_waypoints" />
     
 
 	<node pkg="lane_bypass_planner" type="lane_bypass_planner_node" name="lane_bypass_planner" output="screen">
 		<param name="input_path_name" 			value="$(arg input_path_name)" />
 		<param name="input_selfpose_name"		value="$(arg input_selfpose_name)" />		
-        <param name="output_path_name" 			value="$(arg output_path_name)" />	
+        <param name="input_costmap_name" 			value="$(arg input_costmap_name)" />	
+		<param name="output_path_name" 			value="$(arg output_path_name)" />	
         <rosparam command="load" file="$(find lane_bypass_planner)/config/lane_bypass_planner.yaml" />
 	</node>
 

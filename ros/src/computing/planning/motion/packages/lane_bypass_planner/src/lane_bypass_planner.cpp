@@ -54,6 +54,7 @@ class LaneBypassPlanner
     void calculateLaneCost(const std::vector<autoware_msgs::Lane> &v_sub_lane,
                            const std::shared_ptr<nav_msgs::OccupancyGrid> current_costmap_ptr_,
                            const int check_num_max, std::vector<double> &costs);
+    bool transformRosPose(const geometry_msgs::PoseStamped &in_pose, const std::string &target_frame, geometry_msgs::PoseStamped &out_pose);
 
     void debugPublishSubLane(const std::vector<autoware_msgs::Lane> &v_sub_lane);
     void debugPublishFinalLane(const autoware_msgs::Lane &lane);
@@ -187,6 +188,37 @@ void LaneBypassPlanner::generateSubLane(const autoware_msgs::Lane &base_lane, co
     }
 }
 
+bool LaneBypassPlanner::transformRosPose(const geometry_msgs::PoseStamped &in_pose, const std::string &target_frame, geometry_msgs::PoseStamped &out_pose) {
+    geometry_msgs::Pose my_pose;
+    tf2::Transform tf_in2out;
+    try
+    {
+        std::string frame_from = in_pose.header.frame_id;
+        std::string frame_to = target_frame;
+        if (frame_from.front() == '/')
+            frame_from.erase(0, 1);
+        if (frame_to.front() == '/')
+            frame_to.erase(0, 1);
+        geometry_msgs::TransformStamped ros_in2out;
+        ros_in2out = tf_buffer_.lookupTransform(frame_to, frame_from, ros::Time(0));
+        tf2::fromMsg(ros_in2out.transform, tf_in2out);
+    }
+    catch (tf2::TransformException &ex)
+    {
+        ROS_WARN("%s", ex.what());
+        return false;
+    }
+    tf2::Transform tf_in2pose, tf_out2pose;
+    tf2::fromMsg(in_pose.pose, tf_in2pose);
+    tf_out2pose = tf_in2out * tf_in2pose;
+    tf2::toMsg(tf_out2pose, my_pose);
+    out_pose.pose = my_pose;
+    out_pose.header.frame_id = target_frame;
+    out_pose.header.stamp = in_pose.header.stamp;
+
+    return true;
+}
+
 void LaneBypassPlanner::smoothingTransition(const geometry_msgs::PoseStamped &selfpose, const double &smooth_transit_dist,
                                             std::vector<autoware_msgs::Lane> &v_sub_lane)
 {
@@ -196,30 +228,34 @@ void LaneBypassPlanner::smoothingTransition(const geometry_msgs::PoseStamped &se
     /* TODO: THIS SHOULD BE SUMARIZED WITH OTHER TRANSFORMATION CODE */
     /* ------------------------------------------------------------- */
 
-    geometry_msgs::Pose my_pose;
-    tf2::Transform tf_velo2world;
-    try
-    {
-        std::string frame_from = v_sub_lane[0].header.frame_id;
-        std::string frame_to = selfpose.header.frame_id;
-        if (frame_from.front() == '/')
-            frame_from.erase(0, 1);
-        if (frame_to.front() == '/')
-            frame_to.erase(0, 1);
-        geometry_msgs::TransformStamped ros_velo2world;
-        ros_velo2world = tf_buffer_.lookupTransform(frame_from, frame_to, selfpose.header.stamp);
-        tf2::fromMsg(ros_velo2world.transform, tf_velo2world);
-    }
-    catch (tf2::TransformException &ex)
-    {
-        ROS_WARN("%s", ex.what());
-        return;
-    }
-    tf2::Transform tf_world2selfpose, tf_velo2selfpose;
-    tf2::fromMsg(selfpose.pose, tf_world2selfpose);
-    tf_velo2selfpose = tf_velo2world * tf_world2selfpose;
-    tf2::toMsg(tf_velo2selfpose, my_pose);
-    const geometry_msgs::Point my_p = my_pose.position;
+    geometry_msgs::PoseStamped my_posestamped;
+    transformRosPose(selfpose, v_sub_lane[0].header.frame_id, my_posestamped);
+    const geometry_msgs::Point my_p = my_posestamped.pose.position;
+
+    // geometry_msgs::Pose my_pose;
+    // tf2::Transform tf_velo2world;
+    // try
+    // {
+    //     std::string frame_from = v_sub_lane[0].header.frame_id;
+    //     std::string frame_to = selfpose.header.frame_id;
+    //     if (frame_from.front() == '/')
+    //         frame_from.erase(0, 1);
+    //     if (frame_to.front() == '/')
+    //         frame_to.erase(0, 1);
+    //     geometry_msgs::TransformStamped ros_velo2world;
+    //     ros_velo2world = tf_buffer_.lookupTransform(frame_from, frame_to, selfpose.header.stamp);
+    //     tf2::fromMsg(ros_velo2world.transform, tf_velo2world);
+    // }
+    // catch (tf2::TransformException &ex)
+    // {
+    //     ROS_WARN("%s", ex.what());
+    //     return;
+    // }
+    // tf2::Transform tf_world2selfpose, tf_velo2selfpose;
+    // tf2::fromMsg(selfpose.pose, tf_world2selfpose);
+    // tf_velo2selfpose = tf_velo2world * tf_world2selfpose;
+    // tf2::toMsg(tf_velo2selfpose, my_pose);
+    // const geometry_msgs::Point my_p = my_pose.position;
 
     /* calculate smoothing parameter */
     std::vector<double> v_tanh;
@@ -376,6 +412,10 @@ void LaneBypassPlanner::costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr 
 
 void LaneBypassPlanner::laneCallback(const autoware_msgs::Lane::ConstPtr &msg)
 {
+    if (msg->waypoints.size() == 0) {
+        ROS_WARN("waypoints size in lane message is zero. ignore planning.");
+        return;
+    }
     current_lane_ptr_ = std::make_shared<autoware_msgs::Lane>(*msg);
 }
 
@@ -410,8 +450,6 @@ void LaneBypassPlanner::coordinateTransformLane(const autoware_msgs::Lane &in_la
         {
             check_target_frame.erase(0, 1);
         }
-        ROS_INFO("coordinateTransformLane(): check_target_frame = %s, in_lane.header.frame_id = %s, stamp.sec = %u, stamp.nsec = %u", 
-                    check_target_frame.c_str(), in_lane.header.frame_id.c_str(), in_lane.header.stamp.sec, in_lane.header.stamp.nsec);
         geometry_msgs::TransformStamped ros_target2lane;
         ros_target2lane = tf_buffer_.lookupTransform(check_target_frame, in_lane.header.frame_id, ros::Time(0)); // lane header stamp is inappropiate. just use ros::Time(0) here.
         tf2::fromMsg(ros_target2lane.transform, tf_target2lane);
