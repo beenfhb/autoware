@@ -63,6 +63,9 @@ public:
 	mpid getId () const
 	{ return id; }
 
+	// Set by bundle adjustment routines
+	bool hasBa = false;
+
 protected:
 
 	template <class Archive>

@@ -151,7 +151,9 @@ public:
 	int numOfMapPoints() const
 	{ return mappointInvIdx.size(); }
 
-	std::set<kfid> getRelatedKeyFrames (const mpid &i) const
+	std::vector<mpid> getVisibleMapPoints (const kfid &kf) const;
+
+	inline std::set<kfid> getRelatedKeyFrames (const mpid &i) const
 	{ return pointAppearances.at(i); }
 
 	inline kpid getKeyPointId (const kfid k, const mpid p)

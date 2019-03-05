@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <random>
+#include <algorithm>
 
 #include "VMap.h"
 #include "Optimizer.h"
@@ -17,10 +18,9 @@
 #include "g2o/core/optimization_algorithm_levenberg.h"
 #include "g2o/solvers/eigen/linear_solver_eigen.h"
 #include "g2o/solvers/dense/linear_solver_dense.h"
-//#include "g2o/types/sba/types_six_dof_expmap.h"
-#include "g2o/types/sba/types_sba.h"
+#include "g2o/types/sba/types_six_dof_expmap.h"
 #include "g2o/core/robust_kernel_impl.h"
-#include "g2o/types/sim3/types_seven_dof_expmap.h"
+//#include "g2o/types/sim3/types_seven_dof_expmap.h"
 
 
 using namespace std;
@@ -517,7 +517,37 @@ int optimize_pose (const Frame &frame, Pose &initPose, const VMap *vmap)
 }
 
 
-void local_bundle_adjustment (VMap *origMap, const std::vector<kfid> &targetKf)
+void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 {
+	// Find connected keyframes from targetKf
+	vector<kfid> neighbourKfs = origMap->getKeyFramesComeInto(targetKf);
+	neighbourKfs.push_back(targetKf);
+
+	// Local MapPoints seen in Local KeyFrames
+	vector<mpid> relatedMps;
+	for (auto &kfl: neighbourKfs) {
+		for (auto &mpair: origMap->allMapPointsAtKeyFrame(kfl)) {
+			relatedMps.push_back(mpair.first);
+		}
+	}
+
+	// Fixed KeyFrames: those that see local MapPoints but not included in connected keyframes
+	vector<kfid> fixedKfs;
+	for (auto &mp: relatedMps) {
+		auto curRelatedKf = origMap->getRelatedKeyFrames(mp);
+		for (auto &kf: curRelatedKf) {
+			if (std::find(neighbourKfs.begin(), neighbourKfs.end(), kf) != neighbourKfs.end())
+				continue;
+			fixedKfs.push_back(kf);
+		}
+	}
+
+	// Setup optimizer
+	g2o::SparseOptimizer optimizer;
+	auto *linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>;
+	auto solverPtr = new g2o::BlockSolver_6_3(linearSolver);
+	g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solverPtr);
+	optimizer.setAlgorithm(solver);
+
 
 }

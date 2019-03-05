@@ -23,7 +23,7 @@ void bundle_adjustment_2 (VMap *orgMap);
 
 int optimize_pose (const Frame &frame, Pose &initPose, const VMap *vmap);
 
-void local_bundle_adjustment (VMap *origMap, const std::vector<kfid> &targetKf);
+void local_bundle_adjustment (VMap *origMap, const kfid &targetKf);
 
 
 #endif /* OPTIMIZER_H_ */
