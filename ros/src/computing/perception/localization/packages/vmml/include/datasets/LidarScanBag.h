@@ -34,13 +34,11 @@ public:
 
 	LidarScanBag(
 		rosbag::Bag const &bag, const std::string &topic,
-		const std::string &lidarCalibFile,
 		const ros::Time &startTime = ros::TIME_MIN,
 		const ros::Time &endTime = ros::TIME_MAX);
 
 	LidarScanBag(
 		rosbag::Bag const &bag, const std::string &topic,
-		const std::string &lidarCalibFile,
 		const double seconds1FromOffset,
 		const double seconds2FromOffset);
 

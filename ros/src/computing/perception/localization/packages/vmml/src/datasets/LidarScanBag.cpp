@@ -8,6 +8,9 @@
 
 #include "datasets/LidarScanBag.h"
 #include <pcl_conversions/pcl_conversions.h>
+#include <ros/package.h>
+
+#include <boost/filesystem.hpp>
 
 
 using namespace std;
@@ -80,30 +83,36 @@ convertToExternal (const PointCloud<PointT> &cloudSrc)
 }
 
 
+string getVelodynePointCloudcalibrationFile()
+{
+	boost::filesystem::path vlp (ros::package::getPath("velodyne_pointcloud"));
+	vlp /= "params/64e_s2.1-sztaki.yaml";
+	return vlp.string();
+}
+
+
 LidarScanBag::LidarScanBag(
 	rosbag::Bag const &bag,
 	const std::string &topic,
-	const std::string &lidarCalibFile,
 	const ros::Time &startTime,
 	const ros::Time &endTime) :
 
 		RandomAccessBag(bag, topic, startTime, endTime),
 		data_(new velodyne_rawdata::RawData())
 {
-	prepare(lidarCalibFile);
+	prepare(getVelodynePointCloudcalibrationFile());
 }
 
 
 LidarScanBag::LidarScanBag(
 	rosbag::Bag const &bag, const std::string &topic,
-	const std::string &lidarCalibFile,
 	const double seconds1FromOffset,
 	const double seconds2FromOffset) :
 
 		RandomAccessBag(bag, topic, seconds1FromOffset, seconds2FromOffset),
 		data_(new velodyne_rawdata::RawData())
 {
-	prepare(lidarCalibFile);
+	prepare(getVelodynePointCloudcalibrationFile());
 }
 
 
