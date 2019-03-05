@@ -90,6 +90,8 @@ MeidaiBagDataset::MeidaiBagDataset(
 	mPreprocessor.setMode(ImagePreprocessor::ProcessMode::AGC);
 	mPreprocessor.setMask(exposureMask);
 
+	velodyneCalibrationFilePath = (myPath / "params/meidai-64e-S2.yaml").string();
+
 	prepareBag();
 
 	if (loadPositions==true)
@@ -135,7 +137,7 @@ MeidaiBagDataset::prepareBag (const ros::Time &beginTime, const ros::Time &stopT
 		tstart = ros::TIME_MIN,
 		tstop = ros::TIME_MAX;
 
-	velodyneBag = LidarScanBag::Ptr (new LidarScanBag(*bagfd, meidaiBagVelodyne, tstart, tstop));
+	velodyneBag = LidarScanBag::Ptr (new LidarScanBag(*bagfd, meidaiBagVelodyne, tstart, tstop, velodyneCalibrationFilePath));
 }
 
 

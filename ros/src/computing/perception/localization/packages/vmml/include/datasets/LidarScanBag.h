@@ -8,6 +8,7 @@
 #ifndef _LIDARSCANBAG_H
 #define _LIDARSCANBAG_H
 
+#include <string>
 #include <exception>
 #include <ros/ros.h>
 #include <pcl/point_cloud.h>
@@ -17,7 +18,7 @@
 #include <pcl/io/pcd_io.h>
 #include <velodyne_pointcloud/rawdata.h>
 
-#include "utilities.h"
+//#include "utilities.h"
 #include "RandomAccessBag.h"
 
 
@@ -35,17 +36,19 @@ public:
 	LidarScanBag(
 		rosbag::Bag const &bag, const std::string &topic,
 		const ros::Time &startTime = ros::TIME_MIN,
-		const ros::Time &endTime = ros::TIME_MAX);
+		const ros::Time &endTime = ros::TIME_MAX,
+		const std::string &velodyneCalibrationFile=std::string());
 
 	LidarScanBag(
 		rosbag::Bag const &bag, const std::string &topic,
 		const double seconds1FromOffset,
-		const double seconds2FromOffset);
+		const double seconds2FromOffset,
+		const std::string &velodyneCalibrationFile=std::string());
 
 	LidarScanBag subset(const ros::Time &start, ros::Duration &d) const;
 
 	scan_t::ConstPtr
-	at (int position, ptime *msgTime=nullptr);
+	at (int position, boost::posix_time::ptime *msgTime=nullptr);
 
 	inline
 	scan_t::ConstPtr

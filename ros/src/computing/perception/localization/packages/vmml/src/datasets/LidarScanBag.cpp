@@ -83,43 +83,58 @@ convertToExternal (const PointCloud<PointT> &cloudSrc)
 }
 
 
+/*
 string getVelodynePointCloudcalibrationFile()
 {
 	boost::filesystem::path vlp (ros::package::getPath("velodyne_pointcloud"));
 	vlp /= "params/64e_s2.1-sztaki.yaml";
+	return "/tmp/64e-S2.y"
 	return vlp.string();
 }
+*/
 
 
 LidarScanBag::LidarScanBag(
 	rosbag::Bag const &bag,
 	const std::string &topic,
 	const ros::Time &startTime,
-	const ros::Time &endTime) :
+	const ros::Time &endTime,
+	const std::string &velodyneCalibrationFile) :
 
 		RandomAccessBag(bag, topic, startTime, endTime),
 		data_(new velodyne_rawdata::RawData())
 {
-	prepare(getVelodynePointCloudcalibrationFile());
+	prepare(velodyneCalibrationFile);
 }
 
 
 LidarScanBag::LidarScanBag(
-	rosbag::Bag const &bag, const std::string &topic,
+	rosbag::Bag const &bag,
+	const std::string &topic,
 	const double seconds1FromOffset,
-	const double seconds2FromOffset) :
+	const double seconds2FromOffset,
+	const std::string &velodyneCalibrationFile) :
 
 		RandomAccessBag(bag, topic, seconds1FromOffset, seconds2FromOffset),
 		data_(new velodyne_rawdata::RawData())
 {
-	prepare(getVelodynePointCloudcalibrationFile());
+	prepare(velodyneCalibrationFile);
 }
 
 
 void
 LidarScanBag::prepare(const string &lidarCalibFile)
 {
-	if (data_->setupOffline(lidarCalibFile, velodyneMaxRange, velodyneMinRange)
+	string fname;
+	if (lidarCalibFile.empty()) {
+		boost::filesystem::path vlp (ros::package::getPath("velodyne_pointcloud"));
+		vlp /= "params/64e_s2.1-sztaki.yaml";
+		fname = vlp.string();
+		cerr << "Bug: using default Velodyne Calibration Parameter" << endl;
+	}
+	else fname = lidarCalibFile;
+
+	if (data_->setupOffline(fname, velodyneMaxRange, velodyneMinRange)
 		== -1)
 		throw runtime_error("Unable to set velodyne converter");
 
@@ -159,7 +174,7 @@ LidarScanBag::convertMessage(velodyne_msgs::VelodyneScan::ConstPtr bagmsg)
 
 
 LidarScanBag::scan_t::ConstPtr
-LidarScanBag::at (int position, ptime *msgTime)
+LidarScanBag::at (int position, boost::posix_time::ptime *msgTime)
 {
 	auto msgP = RandomAccessBag::at<velodyne_msgs::VelodyneScan>(position);
 	if (msgTime!=nullptr)
