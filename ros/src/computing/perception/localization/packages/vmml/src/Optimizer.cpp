@@ -87,6 +87,25 @@ protected:
 };
 
 
+class G2O_TYPES_SBA_API EdgeProjectMonocular : public g2o::EdgeProjectP2MC
+{
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+	EdgeProjectMonocular() :
+		g2o::EdgeProjectP2MC()
+	{}
+
+	bool isDepthPositive()
+	{
+		const g2o::VertexSBAPointXYZ &point = *static_cast<const g2o::VertexSBAPointXYZ*>(_vertices[0]);
+		const g2o::VertexCam &camera = *static_cast<const g2o::VertexCam*>(_vertices[1]);
+		float d = camera.estimate().map(point.estimate()).z();
+		return (d > 0.0);
+	}
+};
+
+
 g2o::SE3Quat toSE3Quat (const KeyFrame &kf)
 {
 	Matrix4d extMat = kf.externalParamMatrix4();
@@ -549,5 +568,115 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 	g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solverPtr);
 	optimizer.setAlgorithm(solver);
 
+	map<int, kfid> vertexKfMap;
+	map<kfid, int> vertexKfMapInv;
+	map<int, mpid> vertexMpMap;
+	map<mpid, int> vertexMpMapInv;
+	int vId = 1;
 
+	// Local KeyFrame vertices
+	vector<g2o::VertexCam> localKfVertices(neighbourKfs.size());
+	int i = 0;
+	for (auto &kf: neighbourKfs) {
+		auto Kf = origMap->keyframe(kf);
+		localKfVertices[i].setEstimate(Kf->forG2O());
+		localKfVertices[i].setId(vId);
+		localKfVertices[i].setFixed(false);
+		optimizer.addVertex(&localKfVertices[i]);
+		vertexKfMap[vId] = kf;
+		vertexKfMapInv[kf] = vId;
+		++i;
+		vId++;
+	}
+
+	// Fixed keyframe vertices
+	vector<g2o::VertexCam> fixedKfVertices(fixedKfs.size());
+	i = 0;
+	for (auto &kf: fixedKfs) {
+		auto Kf = origMap->keyframe(kf);
+		fixedKfVertices[i].setEstimate(Kf->forG2O());
+		fixedKfVertices[i].setId(vId);
+		fixedKfVertices[i].setFixed(true);
+		optimizer.addVertex(&fixedKfVertices[i]);
+		vertexKfMap[vId] = kf;
+		vertexKfMapInv[kf] = vId;
+		++i;
+		vId++;
+	}
+
+	// How many edges do we need ?
+	int numEdges = 0;
+	for (auto &mp: relatedMps)
+		numEdges += origMap->countRelatedKeyFrames(mp);
+
+	// Test using single instance of robust kernel
+	const double thHuberDelta = sqrt(5.991);
+	g2o::RobustKernelHuber robustKernel;
+	robustKernel.setDelta(thHuberDelta);
+
+	// MapPoint Vertices
+	vector<g2o::VertexSBAPointXYZ> relatedMpVertices(relatedMps.size());
+	vector<EdgeProjectMonocular> edgesMpKf;
+	i = 0;
+	int j = 0;
+	for (auto &mp: relatedMps) {
+		auto Mp = origMap->mappoint(mp);
+		relatedMpVertices[i].setFixed(false);
+		relatedMpVertices[i].setEstimate(Mp->getPosition());
+		relatedMpVertices[i].setId(vId);
+		relatedMpVertices[i].setMarginalized(true);
+		optimizer.addVertex(&relatedMpVertices[i]);
+		++i;
+		vId++;
+
+		// Create Edges
+		for (auto &kf: origMap->getRelatedKeyFrames(mp)) {
+
+			auto kfTarget = origMap->keyframe(kf);
+			auto mKeypoint = kfTarget->keypoint(origMap->getKeyPointId(kf, mp));
+			edgesMpKf[j].setVertex(0, &relatedMpVertices[i]);
+			edgesMpKf[j].setVertex(1, optimizer.vertex(vertexKfMapInv.at(kf)));
+			edgesMpKf[j].setMeasurement(Vector2d(mKeypoint.pt.x, mKeypoint.pt.y));
+
+			Matrix2d edgeInfo = Matrix2d::Identity() * 1.2 * (mKeypoint.octave+1);
+			edgesMpKf[j].setInformation(Matrix2d::Identity() * 1.2 * (mKeypoint.octave+1));
+
+			edgesMpKf[j].setRobustKernel(&robustKernel);
+
+			optimizer.addEdge(&edgesMpKf[j]);
+			j++;
+		}
+	}
+
+	optimizer.initializeOptimization();
+	optimizer.optimize(5);
+
+	// Check inliers
+	for (auto &edge: edgesMpKf) {
+		if (edge.chi2() > 5.991 or !edge.isDepthPositive()) {
+			edge.setLevel(1);
+		}
+
+		edge.setRobustKernel(nullptr);
+	}
+
+	// Re-optimize without outliers
+	optimizer.initializeOptimization(0);
+	optimizer.optimize(10);
+
+	// Recover optimized data
+	for (auto &kfl: neighbourKfs) {
+		auto curKeyframe = origMap->keyframe(kfl);
+		auto kfVtxId = vertexKfMapInv.at(kfl);
+		auto vKfSE3 = static_cast<g2o::VertexCam*> (optimizer.vertex(kfVtxId));
+		g2o::SE3Quat kfPoseSE3 = vKfSE3->estimate();
+		fromSE3Quat(kfPoseSE3, *curKeyframe);
+	}
+
+	for (auto &mp: relatedMps) {
+		auto curMappoint = origMap->mappoint(mp);
+		auto mpVtxId = vertexMpMapInv.at(mp);
+		auto vPoint = static_cast<g2o::VertexSBAPointXYZ*> (optimizer.vertex(mpVtxId));
+		curMappoint->setPosition(vPoint->estimate());
+	}
 }

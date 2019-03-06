@@ -153,6 +153,9 @@ public:
 
 	std::vector<mpid> getVisibleMapPoints (const kfid &kf) const;
 
+	inline int countRelatedKeyFrames(const mpid &i) const
+	{ return pointAppearances.at(i).size(); }
+
 	inline std::set<kfid> getRelatedKeyFrames (const mpid &i) const
 	{ return pointAppearances.at(i); }
 
