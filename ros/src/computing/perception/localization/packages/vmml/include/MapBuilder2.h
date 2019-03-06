@@ -158,6 +158,9 @@ protected:
 
 	InputFrame frame0;
 
+	// Local BA Stuffs
+	kfid localBAAnchor;
+
 private:
 	static bool isNormalFrame (const InputFrame &f);
 

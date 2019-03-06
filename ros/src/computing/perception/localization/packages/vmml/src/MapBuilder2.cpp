@@ -65,11 +65,14 @@ MapBuilder2::initialize (const InputFrame &f1, const InputFrame &f2)
 		translationHint = (f1.position - f2.position).norm();
 	}
 */
+	// Cheating !
 	translationHint = (f1.position - f2.position).norm();
 
 	cMap->estimateStructure(k1, k2, translationHint);
 	kfAnchor = k2;
 	ifrAnchor = f2;
+
+	localBAAnchor = k1;
 }
 
 
@@ -91,6 +94,7 @@ MapBuilder2::track (const InputFrame &f)
 		dist2Frame = T12.translation().norm();
 	}
 */
+	// Cheating !
 	translationHint = (f.position - ifrAnchor.position).norm();
 
 	kfid fId = cMap->createKeyFrame(f.image, f.position, f.orientation, f.cameraId, NULL, f.sourceId, f.tm);
@@ -100,6 +104,15 @@ MapBuilder2::track (const InputFrame &f)
 	cMap->estimateAndTrack(kfAnchor, fId, translationHint);
 
 	cMap->keyframe(fId)->previousKeyframe = kfAnchor;
+
+	// Check whether we need local BA
+	vector<kfid> prevKeyframes = cMap->getKeyFramesComeInto(fId);
+	if (std::find(prevKeyframes.begin(), prevKeyframes.end(), localBAAnchor)==prevKeyframes.end()) {
+		cout << "Local BA running\n";
+		kfid target = cMap->keyframe(fId)->previousKeyframe;
+		local_bundle_adjustment(cMap, target);
+		localBAAnchor = target;
+	}
 
 	// XXX: Decide when to move the anchor
 	kfAnchor = fId;

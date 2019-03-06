@@ -160,7 +160,6 @@ public:
 
 	void updateNormal();
 
-	// Only used in visualization
 	kfid previousKeyframe = std::numeric_limits<kfid>::max();
 
 protected:

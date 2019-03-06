@@ -20,6 +20,7 @@
 #include "g2o/solvers/dense/linear_solver_dense.h"
 #include "g2o/types/sba/types_six_dof_expmap.h"
 #include "g2o/core/robust_kernel_impl.h"
+#include "g2o/core/factory.h"
 //#include "g2o/types/sim3/types_seven_dof_expmap.h"
 
 
@@ -96,6 +97,7 @@ public:
 		g2o::EdgeProjectP2MC()
 	{}
 
+	// XXX: Depth is always negative
 	bool isDepthPositive()
 	{
 		const g2o::VertexSBAPointXYZ &point = *static_cast<const g2o::VertexSBAPointXYZ*>(_vertices[0]);
@@ -104,6 +106,9 @@ public:
 		return (d > 0.0);
 	}
 };
+
+G2O_REGISTER_TYPE(EDGE_PROJECT_MONOCULAR, EdgeProjectMonocular);
+
 
 
 g2o::SE3Quat toSE3Quat (const KeyFrame &kf)
@@ -551,13 +556,13 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 	}
 
 	// Fixed KeyFrames: those that see local MapPoints but not included in connected keyframes
-	vector<kfid> fixedKfs;
+	set<kfid> fixedKfs;
 	for (auto &mp: relatedMps) {
 		auto curRelatedKf = origMap->getRelatedKeyFrames(mp);
 		for (auto &kf: curRelatedKf) {
 			if (std::find(neighbourKfs.begin(), neighbourKfs.end(), kf) != neighbourKfs.end())
 				continue;
-			fixedKfs.push_back(kf);
+			fixedKfs.insert(kf);
 		}
 	}
 
@@ -609,43 +614,49 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 	for (auto &mp: relatedMps)
 		numEdges += origMap->countRelatedKeyFrames(mp);
 
-	// Test using single instance of robust kernel
 	const double thHuberDelta = sqrt(5.991);
-	g2o::RobustKernelHuber robustKernel;
-	robustKernel.setDelta(thHuberDelta);
 
 	// MapPoint Vertices
 	vector<g2o::VertexSBAPointXYZ> relatedMpVertices(relatedMps.size());
-	vector<EdgeProjectMonocular> edgesMpKf;
+	vector<EdgeProjectMonocular> edgesMpKf(numEdges);
 	i = 0;
 	int j = 0;
 	for (auto &mp: relatedMps) {
+		auto *vertexMp = &relatedMpVertices[i];
 		auto Mp = origMap->mappoint(mp);
-		relatedMpVertices[i].setFixed(false);
-		relatedMpVertices[i].setEstimate(Mp->getPosition());
-		relatedMpVertices[i].setId(vId);
-		relatedMpVertices[i].setMarginalized(true);
-		optimizer.addVertex(&relatedMpVertices[i]);
-		++i;
-		vId++;
+		vertexMp->setFixed(false);
+		vertexMp->setEstimate(Mp->getPosition());
+		vertexMp->setId(vId);
+		vertexMp->setMarginalized(true);
+		optimizer.addVertex(vertexMp);
 
 		// Create Edges
 		for (auto &kf: origMap->getRelatedKeyFrames(mp)) {
 
+			auto *edge = &edgesMpKf[j];
+
 			auto kfTarget = origMap->keyframe(kf);
 			auto mKeypoint = kfTarget->keypoint(origMap->getKeyPointId(kf, mp));
-			edgesMpKf[j].setVertex(0, &relatedMpVertices[i]);
-			edgesMpKf[j].setVertex(1, optimizer.vertex(vertexKfMapInv.at(kf)));
-			edgesMpKf[j].setMeasurement(Vector2d(mKeypoint.pt.x, mKeypoint.pt.y));
+			edge->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(vertexMp));
+			edge->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(vertexKfMapInv.at(kf))));
+			edge->setMeasurement(Vector2d(mKeypoint.pt.x, mKeypoint.pt.y));
 
 			Matrix2d edgeInfo = Matrix2d::Identity() * 1.2 * (mKeypoint.octave+1);
-			edgesMpKf[j].setInformation(Matrix2d::Identity() * 1.2 * (mKeypoint.octave+1));
+			edge->setInformation(Matrix2d::Identity() * 1.2 * (mKeypoint.octave+1));
 
-			edgesMpKf[j].setRobustKernel(&robustKernel);
+			auto *robustKernel = new g2o::RobustKernelHuber;
+			edge->setRobustKernel(robustKernel);
+			robustKernel->setDelta(thHuberDelta);
 
-			optimizer.addEdge(&edgesMpKf[j]);
+			auto v0 = (const g2o::OptimizableGraph::Vertex*)edge->vertices()[0];
+			auto g = v0->graph();
+
+			optimizer.addEdge(edge);
 			j++;
 		}
+
+		++i;
+		vId++;
 	}
 
 	optimizer.initializeOptimization();
@@ -653,7 +664,9 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 
 	// Check inliers
 	for (auto &edge: edgesMpKf) {
-		if (edge.chi2() > 5.991 or !edge.isDepthPositive()) {
+		double c = edge.chi2();
+		bool b = edge.isDepthPositive();
+		if (c > 5.991 or !b) {
 			edge.setLevel(1);
 		}
 
