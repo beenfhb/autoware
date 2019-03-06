@@ -29,8 +29,8 @@
  ********************/
 
 // headers in local directory
-#include "object_map_utils.hpp"
-#include "costmap_generator.h"
+#include "object_map/object_map_utils.hpp"
+#include "costmap_generator/costmap_generator.h"
 
 // Constructor
 CostmapGenerator::CostmapGenerator()
@@ -102,16 +102,20 @@ void CostmapGenerator::objectsCallback(const autoware_msgs::DetectedObjectArray:
   costmap_[VECTORMAP_COSTMAP_LAYER_] = generateVectormapCostmap();
   costmap_[COMBINED_COSTMAP_LAYER_] = generateCombinedCostmap();
 
-  publishRosMsg(costmap_);
+  std_msgs::Header in_header = in_objects->header;
+  publishRosMsg(costmap_, in_header);
 }
 
 void CostmapGenerator::sensorPointsCallback(const sensor_msgs::PointCloud2::ConstPtr& in_sensor_points_msg)
 {
-  costmap_[SENSOR_POINTS_COSTMAP_LAYER_] = generateSensorPointsCostmap(in_sensor_points_msg);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr in_sensor_points(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::fromROSMsg(*in_sensor_points_msg, *in_sensor_points);
+  costmap_[SENSOR_POINTS_COSTMAP_LAYER_] = generateSensorPointsCostmap(in_sensor_points);
   costmap_[VECTORMAP_COSTMAP_LAYER_] = generateVectormapCostmap();
   costmap_[COMBINED_COSTMAP_LAYER_] = generateCombinedCostmap();
 
-  publishRosMsg(costmap_);
+  std_msgs::Header in_header = in_sensor_points_msg->header;
+  publishRosMsg(costmap_, in_header);
 }
 
 void CostmapGenerator::initGridmap()
@@ -128,11 +132,11 @@ void CostmapGenerator::initGridmap()
 }
 
 grid_map::Matrix
-CostmapGenerator::generateSensorPointsCostmap(const sensor_msgs::PointCloud2::ConstPtr& in_sensor_points_msg)
+CostmapGenerator::generateSensorPointsCostmap(const pcl::PointCloud<pcl::PointXYZ>::Ptr& in_sensor_points)
 {
   grid_map::Matrix sensor_points_costmap = points2costmap_.makeCostmapFromSensorPoints(
       maximum_lidar_height_thres_, minimum_lidar_height_thres_, grid_min_value_, grid_max_value_, costmap_,
-      SENSOR_POINTS_COSTMAP_LAYER_, in_sensor_points_msg);
+      SENSOR_POINTS_COSTMAP_LAYER_, in_sensor_points);
   return sensor_points_costmap;
 }
 
@@ -182,14 +186,16 @@ grid_map::Matrix CostmapGenerator::generateCombinedCostmap()
   return combined_costmap[COMBINED_COSTMAP_LAYER_];
 }
 
-void CostmapGenerator::publishRosMsg(const grid_map::GridMap& costmap)
+void CostmapGenerator::publishRosMsg(const grid_map::GridMap& costmap, const std_msgs::Header& in_header)
 {
   nav_msgs::OccupancyGrid out_occupancy_grid;
   grid_map::GridMapRosConverter::toOccupancyGrid(costmap, COMBINED_COSTMAP_LAYER_, grid_min_value_, grid_max_value_,
                                                  out_occupancy_grid);
+  out_occupancy_grid.header = in_header;
   pub_occupancy_grid_.publish(out_occupancy_grid);
 
   grid_map_msgs::GridMap out_gridmap_msg;
   grid_map::GridMapRosConverter::toMessage(costmap, out_gridmap_msg);
+  out_gridmap_msg.info.header = in_header;
   pub_costmap_.publish(out_gridmap_msg);
 }

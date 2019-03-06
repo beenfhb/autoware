@@ -35,10 +35,14 @@
 #include <tf/transform_datatypes.h>
 
 // headers in local directory
-#include "objects2costmap.h"
+#include "costmap_generator/objects2costmap.h"
 
 // Constructor
-Objects2Costmap::Objects2Costmap() : NUMBER_OF_POINTS(4), NUMBER_OF_DIMENSIONS(2)
+Objects2Costmap::Objects2Costmap() :
+NUMBER_OF_POINTS(4),
+NUMBER_OF_DIMENSIONS(2),
+OBJECTS_COSTMAP_LAYER_("objects_costmap"),
+EXPANDED_OBJECTS_COSTMAP_LAYER_("expanded_objects_costmap")
 {
 }
 
@@ -82,21 +86,21 @@ grid_map::Polygon Objects2Costmap::makePolygonFromObjectBox(const autoware_msgs:
 }
 
 geometry_msgs::Point Objects2Costmap::makeExpandedPoint(const geometry_msgs::Point& in_centroid,
-                                                         const geometry_msgs::Point32& in_point,
-                                                         const double expand_polygon_size)
+                                                        const geometry_msgs::Point32& in_corner_point,
+                                                        const double expand_polygon_size)
 {
   geometry_msgs::Point expanded_point;
   if(expand_polygon_size == 0)
   {
-    expanded_point.x = in_point.x;
-    expanded_point.y = in_point.y;
+    expanded_point.x = in_corner_point.x;
+    expanded_point.y = in_corner_point.y;
     return expanded_point;
   }
-  double theta = std::atan2(in_point.y - in_centroid.y, in_point.x - in_centroid.x);
+  double theta = std::atan2(in_corner_point.y - in_centroid.y, in_corner_point.x - in_centroid.x);
   double delta_x = expand_polygon_size * std::cos(theta);
   double delta_y = expand_polygon_size * std::sin(theta);
-  expanded_point.x = in_point.x + delta_x;
-  expanded_point.y = in_point.y + delta_y;
+  expanded_point.x = in_corner_point.x + delta_x;
+  expanded_point.y = in_corner_point.y + delta_y;
   return expanded_point;
 }
 
@@ -107,12 +111,16 @@ grid_map::Polygon Objects2Costmap::makePolygonFromObjectConvexHull(const autowar
   grid_map::Polygon polygon;
   polygon.setFrameId(in_object.header.frame_id);
 
-  for (size_t index = 0; index < in_object.convex_hull.polygon.points.size()/2; index++)
+  double initial_z = in_object.convex_hull.polygon.points[0].z;
+  for (size_t index = 0; index < in_object.convex_hull.polygon.points.size(); index++)
   {
-    geometry_msgs::Point centroid = in_object.pose.position;
-    geometry_msgs::Point expanded_point = makeExpandedPoint(centroid,
-                                            in_object.convex_hull.polygon.points[index], expand_polygon_size);
-    polygon.addVertex(grid_map::Position(expanded_point.x, expanded_point.y));
+    if(in_object.convex_hull.polygon.points[index].z == initial_z)
+    {
+      geometry_msgs::Point centroid = in_object.pose.position;
+      geometry_msgs::Point expanded_point = makeExpandedPoint(centroid,
+        in_object.convex_hull.polygon.points[index], expand_polygon_size);
+      polygon.addVertex(grid_map::Position(expanded_point.x, expanded_point.y));
+    }
   }
   return polygon;
 }
@@ -137,11 +145,9 @@ grid_map::Matrix Objects2Costmap::makeCostmapFromObjects(const grid_map::GridMap
                                                          const autoware_msgs::DetectedObjectArray::ConstPtr& in_objects,
                                                          const bool use_objects_convex_hull)
 {
-  const std::string polygon_gridmap_layer_name = "polygon_costmap";
   grid_map::GridMap objects_costmap = costmap;
-  objects_costmap.add(polygon_gridmap_layer_name, 0);
-  const std::string expanded_polygon_gridmap_layer_name = "expanded_polygon_costmap";
-  objects_costmap.add(expanded_polygon_gridmap_layer_name, 0);
+  objects_costmap.add(OBJECTS_COSTMAP_LAYER_, 0);
+  objects_costmap.add(EXPANDED_OBJECTS_COSTMAP_LAYER_, 0);
 
   const double not_expand_polygon_size = 0;
   for (const auto& object : in_objects->objects)
@@ -157,22 +163,22 @@ grid_map::Matrix Objects2Costmap::makeCostmapFromObjects(const grid_map::GridMap
       polygon = makePolygonFromObjectBox(object, not_expand_polygon_size);
       expanded_polygon = makePolygonFromObjectBox(object, expand_polygon_size);
     }
-    setCostInPolygon(polygon, polygon_gridmap_layer_name, object.score, objects_costmap);
-    setCostInPolygon(expanded_polygon, expanded_polygon_gridmap_layer_name, object.score, objects_costmap);
+    setCostInPolygon(polygon, OBJECTS_COSTMAP_LAYER_, object.score, objects_costmap);
+    setCostInPolygon(expanded_polygon, EXPANDED_OBJECTS_COSTMAP_LAYER_, object.score, objects_costmap);
   }
   // Applying mean filter to expanded gridmap
   const grid_map::SlidingWindowIterator::EdgeHandling edge_handling =
       grid_map::SlidingWindowIterator::EdgeHandling::CROP;
-  for (grid_map::SlidingWindowIterator iterator(objects_costmap, expanded_polygon_gridmap_layer_name, edge_handling,
+  for (grid_map::SlidingWindowIterator iterator(objects_costmap, EXPANDED_OBJECTS_COSTMAP_LAYER_, edge_handling,
                                                 size_of_expansion_kernel);
        !iterator.isPastEnd(); ++iterator)
   {
-    objects_costmap.at(expanded_polygon_gridmap_layer_name, *iterator) =
+    objects_costmap.at(EXPANDED_OBJECTS_COSTMAP_LAYER_, *iterator) =
         iterator.getData().meanOfFinites();  // Blurring.
   }
 
-  objects_costmap[polygon_gridmap_layer_name] =
-      objects_costmap[polygon_gridmap_layer_name].cwiseMax(objects_costmap[expanded_polygon_gridmap_layer_name]);
+  objects_costmap[OBJECTS_COSTMAP_LAYER_] =
+      objects_costmap[OBJECTS_COSTMAP_LAYER_].cwiseMax(objects_costmap[EXPANDED_OBJECTS_COSTMAP_LAYER_]);
 
-  return objects_costmap[polygon_gridmap_layer_name];
+  return objects_costmap[OBJECTS_COSTMAP_LAYER_];
 }

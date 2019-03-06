@@ -59,6 +59,7 @@ public:
   void run();
 
 private:
+  friend class TestClass;
   ros::NodeHandle nh_;
   ros::NodeHandle private_nh_;
   bool use_objects_box_;
@@ -121,11 +122,12 @@ private:
   /// \brief publish ros msg: /semantics/costmap (grid_map::GridMap),
   ///                         /semantics/costmap_generator/occupancy_grid(nav_msgs::OccupancyGrid)
   /// \param[in] gridmap with calculated cost
-  void publishRosMsg(const grid_map::GridMap& gridmap);
+  /// \param[in] input ros header
+  void publishRosMsg(const grid_map::GridMap& gridmap, const std_msgs::Header& in_header);
 
   /// \brief calculate cost from pointcloud data
   /// \param[in] in_sensor_points: subscribed pointcloud data
-  grid_map::Matrix generateSensorPointsCostmap(const sensor_msgs::PointCloud2::ConstPtr& in_sensor_points);
+  grid_map::Matrix generateSensorPointsCostmap(const pcl::PointCloud<pcl::PointXYZ>::Ptr& in_sensor_points);
 
   /// \brief calculate cost from DetectedObjectArray
   /// \param[in] in_objects: subscribed DetectedObjectArray
