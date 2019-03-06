@@ -1,7 +1,7 @@
 <launch>
 	<arg name="input_path_name" 			default="/in_bypass_waypoints" />
     <arg name="input_selfpose_name"			default="/current_pose" />
-    <arg name="input_costmap_name"          default="/realtime_cost_map"/>
+    <arg name="input_costmap_name"          default="/semantics/costmap_generator/occupancy_grid"/>
 	<arg name="output_path_name" 			default="/safety_waypoints" />
     
 
