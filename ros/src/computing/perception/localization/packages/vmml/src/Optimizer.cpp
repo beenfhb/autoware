@@ -97,13 +97,21 @@ public:
 		g2o::EdgeProjectP2MC()
 	{}
 
+	static Vector3d transformWorldPointToFrame(const g2o::SE3Quat &framePose, const Vector3d &pointInWorld)
+	{
+		Matrix4d ex = Matrix4d::Identity();
+		ex.block<3,3>(0,0) = framePose.rotation().toRotationMatrix().transpose();
+		ex.col(3).head(3) = -ex.block<3,3>(0,0) * framePose.translation();
+		return (ex * pointInWorld.homogeneous()).hnormalized();
+	}
+
 	// XXX: Depth is always negative
 	bool isDepthPositive()
 	{
 		const g2o::VertexSBAPointXYZ &point = *static_cast<const g2o::VertexSBAPointXYZ*>(_vertices[0]);
 		const g2o::VertexCam &camera = *static_cast<const g2o::VertexCam*>(_vertices[1]);
-		float d = camera.estimate().map(point.estimate()).z();
-		return (d > 0.0);
+		Vector3d ptByCam = transformWorldPointToFrame(camera.estimate(), point.estimate());
+		return (ptByCam.z() > 0.0);
 	}
 };
 
@@ -545,13 +553,14 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 {
 	// Find connected keyframes from targetKf
 	vector<kfid> neighbourKfs = origMap->getKeyFramesComeInto(targetKf);
+	std::sort(neighbourKfs.begin(), neighbourKfs.end());
 	neighbourKfs.push_back(targetKf);
 
 	// Local MapPoints seen in Local KeyFrames
-	vector<mpid> relatedMps;
+	set<mpid> relatedMps;
 	for (auto &kfl: neighbourKfs) {
 		for (auto &mpair: origMap->allMapPointsAtKeyFrame(kfl)) {
-			relatedMps.push_back(mpair.first);
+			relatedMps.insert(mpair.first);
 		}
 	}
 
@@ -575,7 +584,7 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 
 	map<int, kfid> vertexKfMap;
 	map<kfid, int> vertexKfMapInv;
-	map<int, mpid> vertexMpMap;
+//	map<int, mpid> vertexMpMap;
 	map<mpid, int> vertexMpMapInv;
 	int vId = 1;
 
@@ -586,7 +595,7 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 		auto Kf = origMap->keyframe(kf);
 		localKfVertices[i].setEstimate(Kf->forG2O());
 		localKfVertices[i].setId(vId);
-		localKfVertices[i].setFixed(false);
+		localKfVertices[i].setFixed(vId==1);
 		optimizer.addVertex(&localKfVertices[i]);
 		vertexKfMap[vId] = kf;
 		vertexKfMapInv[kf] = vId;
@@ -629,6 +638,9 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 		vertexMp->setId(vId);
 		vertexMp->setMarginalized(true);
 		optimizer.addVertex(vertexMp);
+
+//		vertexMpMap[vId] = mp;
+		vertexMpMapInv[mp] = vId;
 
 		// Create Edges
 		for (auto &kf: origMap->getRelatedKeyFrames(mp)) {

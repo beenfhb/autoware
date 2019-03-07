@@ -73,6 +73,9 @@ MapBuilder2::initialize (const InputFrame &f1, const InputFrame &f2)
 	ifrAnchor = f2;
 
 	localBAAnchor = k1;
+
+	auto myneigh = cMap->getKeyFramesComeInto(kfAnchor);
+	return;
 }
 
 
@@ -105,18 +108,12 @@ MapBuilder2::track (const InputFrame &f)
 
 	cMap->keyframe(fId)->previousKeyframe = kfAnchor;
 
-	// Check whether we need local BA
-	vector<kfid> prevKeyframes = cMap->getKeyFramesComeInto(fId);
-	if (std::find(prevKeyframes.begin(), prevKeyframes.end(), localBAAnchor)==prevKeyframes.end()) {
-		cout << "Local BA running\n";
-		kfid target = cMap->keyframe(fId)->previousKeyframe;
-		local_bundle_adjustment(cMap, target);
-		localBAAnchor = target;
-	}
-
 	// XXX: Decide when to move the anchor
 	kfAnchor = fId;
 	ifrAnchor = f;
+
+	auto myneigh = cMap->getKeyFramesComeInto(kfAnchor);
+	return;
 }
 
 
@@ -166,9 +163,15 @@ MapBuilder2::input(const InputFrame &f)
 			for (auto &kfx: kfInsToAnchor) {
 				cMap->trackMapPoints(kfx, targetKfId);
 			}
-//			for (int i=0; i<min(4, int(kfInsToAnchor.size())); ++i) {
-//				cMap->trackMapPoints(kfInsToAnchor[i], targetKfId);
-//			}
+
+			// Check whether we need local BA
+			kfInsToAnchor = cMap->getKeyFramesComeInto(kfAnchor);
+			if (std::find(kfInsToAnchor.begin(), kfInsToAnchor.end(), localBAAnchor)==kfInsToAnchor.end()) {
+				cout << "Local BA running\n";
+				auto vAnchors = cMap->getKeyFramesComeInto(lastAnchor);
+				local_bundle_adjustment(cMap, lastAnchor);
+				localBAAnchor = lastAnchor;
+			}
 
 			inputCallback(f);
 		}
