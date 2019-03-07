@@ -12,9 +12,11 @@ find_package(catkin REQUIRED COMPONENTS
         image_transport
         autoware_msgs
         tf
+        tf2_ros
         )
 
 find_package(OpenCV REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 catkin_package(
         CATKIN_DEPENDS
@@ -25,6 +27,7 @@ catkin_package(
         image_transport
         autoware_msgs
         tf
+        tf2_ros
 )
 
 include_directories(
@@ -32,6 +35,7 @@ include_directories(
         ${catkin_INCLUDE_DIRS}
         ${autoware_msgs_INCLUDE_DIRS}
         ${OpenCV_INCLUDE_DIRS}
+        ${EIGEN3_INCLUDE_DIR}
 )
 
 add_executable(calibration_publisher

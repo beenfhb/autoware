@@ -17,7 +17,15 @@
  * limitations under the License.
  *
  */
+
+#define EIGEN_MPL2_ONLY
+
 #include <ros/ros.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <Eigen/Core>
 
 class ProjectionMatrixPublisher
 {
@@ -25,8 +33,16 @@ public:
     ProjectionMatrixPublisher(ros::NodeHandle nh,ros::NodeHandle pnh);
     ~ProjectionMatrixPublisher();
 private:
+    void cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr msg);
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
+    tf2_ros::Buffer tf_buffer_;
+    tf2_ros::TransformListener tf_listener_;
+    ros::Subscriber camera_info_sub_;
+    std::string camera_info_topic_;
+    std::string lidar_frame_;
+    std::string camera_frame_;
+    void getRPY(const geometry_msgs::Quaternion &q,double &roll,double &pitch,double &yaw);
 };
 
 #endif  //CALIBRATION_PUBLISHER_PROJECTION_MATRIX_PUBLISHER_H_INCLUDED
