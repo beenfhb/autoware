@@ -28,6 +28,7 @@ catkin_package(
 )
 
 include_directories(
+        include
         ${catkin_INCLUDE_DIRS}
         ${autoware_msgs_INCLUDE_DIRS}
         ${OpenCV_INCLUDE_DIRS}
@@ -45,7 +46,20 @@ target_link_libraries(calibration_publisher
         ${catkin_LIBRARIES}
         )
 
-install(TARGETS calibration_publisher
+add_executable(projection_matrix_publisher
+        src/projection_matrix_publisher.cpp
+        src/projection_matrix_publisher_node.cpp
+        )
+
+add_dependencies(projection_matrix_publisher
+        ${catkin_EXPORTED_TARGETS}
+        )
+
+target_link_libraries(projection_matrix_publisher
+        ${catkin_LIBRARIES}
+        )
+
+install(TARGETS calibration_publisher projection_matrix_publisher
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
