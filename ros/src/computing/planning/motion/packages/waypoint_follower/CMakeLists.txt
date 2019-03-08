@@ -89,14 +89,25 @@ target_link_libraries(twist_gate ${catkin_LIBRARIES})
 add_dependencies(twist_gate
         ${catkin_EXPORTED_TARGETS})
 
+add_executable(trajectory_follwing_controller
+        nodes/trajectory_following_controller/trajectory_following_controller.cpp
+        nodes/trajectory_following_controller/trajectory_following_controller_node.cpp)
+target_link_libraries(trajectory_follwing_controller ${catkin_LIBRARIES})
+add_dependencies(trajectory_follwing_controller
+        ${catkin_EXPORTED_TARGETS})
+
 ## Install executables and/or libraries
 install(TARGETS libwaypoint_follower pure_pursuit wf_simulator twist_filter twist_gate
+        trajectory_follwing_controller
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 ## Install project namespaced headers
 install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(DIRECTORY include/trajectory_follwing_controller/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 install(DIRECTORY launch/
