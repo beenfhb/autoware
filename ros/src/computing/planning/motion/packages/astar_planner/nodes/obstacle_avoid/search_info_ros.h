@@ -21,26 +21,25 @@
 #include "autoware_msgs/Lane.h"
 #include "waypoint_follower/libwaypoint_follower.h"
 
-#include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <tf/transform_listener.h>
+#include <nav_msgs/OccupancyGrid.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
+#include <tf/transform_listener.h>
 
 #include <autoware_health_checker/health_checker/health_checker.h>
 #include <memory>
 
-namespace astar_planner
-{
-class SearchInfo
-{
+namespace astar_planner {
+class SearchInfo {
 public:
   SearchInfo();
   ~SearchInfo();
 
   // ROS Callback
   void mapCallback(const nav_msgs::OccupancyGridConstPtr &msg);
-  // void startCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg);
+  // void startCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr
+  // &msg);
   void goalCallback(const geometry_msgs::PoseStampedConstPtr &msg);
   void currentPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
   void currentVelocityCallback(const geometry_msgs::TwistStampedConstPtr &msg);
@@ -50,90 +49,33 @@ public:
   void stateCallback(const std_msgs::StringConstPtr &msg);
 
   // get method
-  bool getMapSet() const
-  {
-    return map_set_;
-  }
-  bool getStartSet() const
-  {
-    return start_set_;
-  }
-  bool getGoalSet() const
-  {
-    return goal_set_;
-  }
-  bool getPathSet() const
-  {
-    return path_set_;
-  }
-  nav_msgs::OccupancyGrid getMap() const
-  {
-    return map_;
-  }
-  geometry_msgs::PoseStamped getStartPose() const
-  {
-    return start_pose_local_;
-  }
-  geometry_msgs::PoseStamped getGoalPose() const
-  {
-    return goal_pose_local_;
-  }
-  geometry_msgs::PoseStamped getTransitPose() const
-  {
+  bool getMapSet() const { return map_set_; }
+  bool getStartSet() const { return start_set_; }
+  bool getGoalSet() const { return goal_set_; }
+  bool getPathSet() const { return path_set_; }
+  nav_msgs::OccupancyGrid getMap() const { return map_; }
+  geometry_msgs::PoseStamped getStartPose() const { return start_pose_local_; }
+  geometry_msgs::PoseStamped getGoalPose() const { return goal_pose_local_; }
+  geometry_msgs::PoseStamped getTransitPose() const {
     return transit_pose_local_;
   }
-  geometry_msgs::PoseStamped getCurrentPose() const
-  {
-    return current_pose_;
-  }
-  double getCurrentVelocity() const
-  {
-    return current_velocity_mps_;
-  }
-  autoware_msgs::Lane getSubscribedWaypoints() const
-  {
+  geometry_msgs::PoseStamped getCurrentPose() const { return current_pose_; }
+  double getCurrentVelocity() const { return current_velocity_mps_; }
+  autoware_msgs::Lane getSubscribedWaypoints() const {
     return subscribed_waypoints_;
   }
-  autoware_msgs::Lane getCurrentWaypoints() const
-  {
-    return current_waypoints_;
-  }
-  int getObstacleWaypointIndex() const
-  {
-    return obstacle_waypoint_index_;
-  }
-  int getClosestWaypointIndex() const
-  {
-    return closest_waypoint_index_;
-  }
-  int getStartWaypointIndex() const
-  {
-    return start_waypoint_index_;
-  }
-  int getGoalWaypointIndex() const
-  {
-    return goal_waypoint_index_;
-  }
-  double getUpperBoundDistance() const
-  {
-    return upper_bound_distance_;
-  }
-  double getAvoidVelocityLimitMPS() const
-  {
-    return avoid_velocity_limit_mps_;
-  }
-  bool getAvoidance() const
-  {
-    return avoidance_;
-  }
-  bool getChangePath() const
-  {
-    return change_path_;
-  }
+  autoware_msgs::Lane getCurrentWaypoints() const { return current_waypoints_; }
+  int getObstacleWaypointIndex() const { return obstacle_waypoint_index_; }
+  int getClosestWaypointIndex() const { return closest_waypoint_index_; }
+  int getStartWaypointIndex() const { return start_waypoint_index_; }
+  int getGoalWaypointIndex() const { return goal_waypoint_index_; }
+  double getUpperBoundDistance() const { return upper_bound_distance_; }
+  double getAvoidVelocityLimitMPS() const { return avoid_velocity_limit_mps_; }
+  bool getAvoidance() const { return avoidance_; }
+  bool getChangePath() const { return change_path_; }
 
   // set method
-  void setCurrentWaypoints(const autoware_msgs::Lane &waypoints)
-  {
+  void setCurrentWaypoints(const autoware_msgs::Lane &waypoints) {
     current_waypoints_ = waypoints;
   }
 
@@ -141,7 +83,8 @@ public:
   void reset();
 
 private:
-  double calcPathLength(const autoware_msgs::Lane &lane, const int start_waypoint_index,
+  double calcPathLength(const autoware_msgs::Lane &lane,
+                        const int start_waypoint_index,
                         const int goal_waypoint_index) const;
   std::shared_ptr<autoware_health_checker::HealthChecker> health_checker_ptr_;
   nav_msgs::OccupancyGrid map_;
@@ -151,7 +94,8 @@ private:
   geometry_msgs::PoseStamped start_pose_local_;
   geometry_msgs::PoseStamped goal_pose_local_;
   geometry_msgs::PoseStamped transit_pose_local_;
-  // Transform which converts global frame (/map in Autoware) to OccupancyGrid frame
+  // Transform which converts global frame (/map in Autoware) to OccupancyGrid
+  // frame
   tf::Transform ogm2map_;
   tf::TransformListener tf_listener_;
 
@@ -163,9 +107,9 @@ private:
 
   // ROS param
   std::string map_frame_;
-  int obstacle_detect_count_;        // 1 increment means 100ms
-  int avoid_distance_;               // the number of waypoint
-  double avoid_velocity_limit_mps_;  // m/s
+  int obstacle_detect_count_;       // 1 increment means 100ms
+  int avoid_distance_;              // the number of waypoint
+  double avoid_velocity_limit_mps_; // m/s
   double upper_bound_ratio_;
   bool avoidance_;
   bool change_path_;
@@ -185,6 +129,6 @@ private:
   double upper_bound_distance_;
 };
 
-}  // namespace astar_planner
+} // namespace astar_planner
 
-#endif  // SEARCH_INFO_ROS_H
+#endif // SEARCH_INFO_ROS_H
