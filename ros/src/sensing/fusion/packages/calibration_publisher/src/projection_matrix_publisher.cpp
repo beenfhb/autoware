@@ -22,9 +22,11 @@ ProjectionMatrixPublisher::ProjectionMatrixPublisher(ros::NodeHandle nh,ros::Nod
     nh_ = nh;
     pnh_ = pnh;
     pnh_.param<std::string>("camera_info_topic", camera_info_topic_, "camera_info");
-    pnh_.param<std::string>("camera_frame", camera_frame_, "camera");
+    pnh_.param<std::string>("projection_matrix_topic", projection_matrix_topic_, "/projection_matrix");
+    pnh_.param<std::string>("camera_optical_frame", camera_optical_frame_, "camera_optical");
     pnh_.param<std::string>("lidar_frame", lidar_frame_, "velodyne");
     camera_info_sub_ = nh_.subscribe(camera_info_topic_,1,&ProjectionMatrixPublisher::cameraInfoCallback,this);
+    proj_matrix_pub_ = nh_.advertise<autoware_msgs::ProjectionMatrix>(projection_matrix_topic_,1);
 }
 
 ProjectionMatrixPublisher::~ProjectionMatrixPublisher()
@@ -45,7 +47,7 @@ void ProjectionMatrixPublisher::cameraInfoCallback(const sensor_msgs::CameraInfo
     geometry_msgs::TransformStamped transform_stamped_;
     try
     {
-        transform_stamped_ = tf_buffer_.lookupTransform(camera_frame_, lidar_frame_, msg->header.stamp,ros::Duration(0.1));
+        transform_stamped_ = tf_buffer_.lookupTransform(camera_optical_frame_, lidar_frame_, msg->header.stamp,ros::Duration(0.1));
         //convert quat -> rpy
         double r,p,y;
         getRPY(transform_stamped_.transform.rotation,r,p,y);
@@ -59,6 +61,23 @@ void ProjectionMatrixPublisher::cameraInfoCallback(const sensor_msgs::CameraInfo
                 proj_mat(i,m) = rotation_matrix[i][m];
             }
         }
+        proj_mat(0,3) = transform_stamped_.transform.translation.x;
+        proj_mat(1,3) = transform_stamped_.transform.translation.y;
+        proj_mat(2,3) = transform_stamped_.transform.translation.z;
+        proj_mat(3,0) = 0.0;
+        proj_mat(3,1) = 0.0;
+        proj_mat(3,2) = 0.0;
+        proj_mat(3,3) = 1.0;
+        autoware_msgs::ProjectionMatrix proj_mat_msg;
+        for(int i=0;i<4;i++)
+        {
+            for(int m=0;m<4;m++)
+            {
+                proj_mat_msg.projection_matrix[i*4*m] = proj_mat(i,m);
+            }
+        }
+        proj_mat_msg.header = msg->header;
+        proj_matrix_pub_.publish(proj_mat_msg);
     }
     catch (tf2::TransformException &ex)
     {

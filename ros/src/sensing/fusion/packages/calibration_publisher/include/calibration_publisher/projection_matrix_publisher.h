@@ -20,12 +20,18 @@
 
 #define EIGEN_MPL2_ONLY
 
+//headers in ROS
 #include <ros/ros.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <sensor_msgs/CameraInfo.h>
+
+//headers in Eigen
 #include <Eigen/Core>
+
+//headers in Autoware
+#include <autoware_msgs/ProjectionMatrix.h>
 
 class ProjectionMatrixPublisher
 {
@@ -38,10 +44,12 @@ private:
     ros::NodeHandle pnh_;
     tf2_ros::Buffer tf_buffer_;
     tf2_ros::TransformListener tf_listener_;
+    ros::Publisher proj_matrix_pub_;
     ros::Subscriber camera_info_sub_;
     std::string camera_info_topic_;
     std::string lidar_frame_;
-    std::string camera_frame_;
+    std::string projection_matrix_topic_;
+    std::string camera_optical_frame_;
     void getRPY(const geometry_msgs::Quaternion &q,double &roll,double &pitch,double &yaw);
 };
 
