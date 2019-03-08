@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
   ros::init(argc, argv, "projection_matrix_publisher_node");
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
-  ProjectionMatrixPublisher publisher(nh,pnh);
+  ProjectionMatrixPublisher publisher(nh, pnh);
   ros::spin();
   return 0;
 }
