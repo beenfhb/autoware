@@ -16,48 +16,35 @@
 
 #include "velocity_set_info.h"
 
-void joinPoints(const pcl::PointCloud<pcl::PointXYZ>& points1, pcl::PointCloud<pcl::PointXYZ>* points2)
-{
-  for (const auto& p : points1)
-  {
+void joinPoints(const pcl::PointCloud<pcl::PointXYZ> &points1,
+                pcl::PointCloud<pcl::PointXYZ> *points2) {
+  for (const auto &p : points1) {
     points2->push_back(p);
   }
 }
 
 VelocitySetInfo::VelocitySetInfo()
-  : stop_range_(1.3),
-    deceleration_range_(0),
-    points_threshold_(10),
-    detection_height_top_(0.2),
-    detection_height_bottom_(-1.7),
-    stop_distance_obstacle_(10),
-    stop_distance_stopline_(5),
-    deceleration_obstacle_(0.8),
-    deceleration_stopline_(0.6),
-    velocity_change_limit_(2.77),
-    temporal_waypoints_size_(100),
-    set_pose_(false),
-    use_obstacle_sim_(false),
-    wpidx_detectionResultByOtherNodes_(-1)
-{
+    : stop_range_(1.3), deceleration_range_(0), points_threshold_(10),
+      detection_height_top_(0.2), detection_height_bottom_(-1.7),
+      stop_distance_obstacle_(10), stop_distance_stopline_(5),
+      deceleration_obstacle_(0.8), deceleration_stopline_(0.6),
+      velocity_change_limit_(2.77), temporal_waypoints_size_(100),
+      set_pose_(false), use_obstacle_sim_(false),
+      wpidx_detectionResultByOtherNodes_(-1) {
   ros::NodeHandle private_nh_("~");
   ros::NodeHandle nh;
   private_nh_.param<double>("remove_points_upto", remove_points_upto_, 2.3);
-  health_checker_ptr_ = std::make_shared<autoware_health_checker::HealthChecker>(nh,private_nh_);
+  health_checker_ptr_ =
+      std::make_shared<autoware_health_checker::HealthChecker>(nh, private_nh_);
   health_checker_ptr_->ENABLE();
 }
 
-VelocitySetInfo::~VelocitySetInfo()
-{
-}
+VelocitySetInfo::~VelocitySetInfo() {}
 
-void VelocitySetInfo::clearPoints()
-{
-  points_.clear();
-}
+void VelocitySetInfo::clearPoints() { points_.clear(); }
 
-void VelocitySetInfo::configCallback(const autoware_config_msgs::ConfigVelocitySetConstPtr &config)
-{
+void VelocitySetInfo::configCallback(
+    const autoware_config_msgs::ConfigVelocitySetConstPtr &config) {
   stop_distance_obstacle_ = config->stop_distance_obstacle;
   stop_distance_stopline_ = config->stop_distance_stopline;
   stop_range_ = config->detection_range;
@@ -71,14 +58,16 @@ void VelocitySetInfo::configCallback(const autoware_config_msgs::ConfigVelocityS
   temporal_waypoints_size_ = config->temporal_waypoints_size;
 }
 
-void VelocitySetInfo::pointsCallback(const sensor_msgs::PointCloud2ConstPtr &msg)
-{
+void VelocitySetInfo::pointsCallback(
+    const sensor_msgs::PointCloud2ConstPtr &msg) {
+  health_checker_ptr_->CHECK_RATE(
+      "topic_points_no_ground_subscribe_rate_slow_in_velocity_set", 8.0, 4.0,
+      2.0, "topic /points_raw subscribe rate in velocity_set node is slow.");
   pcl::PointCloud<pcl::PointXYZ> sub_points;
   pcl::fromROSMsg(*msg, sub_points);
 
   points_.clear();
-  for (const auto &v : sub_points)
-  {
+  for (const auto &v : sub_points) {
     if (v.x == 0 && v.y == 0)
       continue;
 
@@ -92,33 +81,34 @@ void VelocitySetInfo::pointsCallback(const sensor_msgs::PointCloud2ConstPtr &msg
     points_.push_back(v);
   }
 
-  if (use_obstacle_sim_)
-  {
+  if (use_obstacle_sim_) {
     joinPoints(obstacle_sim_points_, &points_);
     obstacle_sim_points_.clear();
   }
 }
 
-void VelocitySetInfo::detectionCallback(const std_msgs::Int32 &msg)
-{
-    wpidx_detectionResultByOtherNodes_ = msg.data;
+void VelocitySetInfo::detectionCallback(const std_msgs::Int32 &msg) {
+  wpidx_detectionResultByOtherNodes_ = msg.data;
 }
 
-void VelocitySetInfo::controlPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg)
-{
+void VelocitySetInfo::controlPoseCallback(
+    const geometry_msgs::PoseStampedConstPtr &msg) {
   control_pose_ = *msg;
   health_checker_ptr_->NODE_ACTIVATE();
   if (!set_pose_)
     set_pose_ = true;
 }
 
-void VelocitySetInfo::localizerPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg)
-{
+void VelocitySetInfo::localizerPoseCallback(
+    const geometry_msgs::PoseStampedConstPtr &msg) {
+  health_checker_ptr_->CHECK_RATE(
+      "topic_ndt_pose_subscribe_rate_slow_in_velocity_set", 8.0, 4.0, 2.0,
+      "topic ndt_pose subscribe rate in velocity_set node is slow.");
   localizer_pose_ = *msg;
 }
 
-void VelocitySetInfo::obstacleSimCallback(const sensor_msgs::PointCloud2ConstPtr &msg)
-{
+void VelocitySetInfo::obstacleSimCallback(
+    const sensor_msgs::PointCloud2ConstPtr &msg) {
   pcl::fromROSMsg(*msg, obstacle_sim_points_);
 
   use_obstacle_sim_ = true;

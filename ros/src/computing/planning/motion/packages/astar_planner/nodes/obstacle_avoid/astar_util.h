@@ -19,29 +19,20 @@
 
 #include <tf/transform_listener.h>
 
-namespace astar_planner
-{
-enum class STATUS : uint8_t
-{
-  NONE,
-  OPEN,
-  CLOSED,
-  OBS
+namespace astar_planner {
+enum class STATUS : uint8_t { NONE, OPEN, CLOSED, OBS };
+
+struct AstarNode {
+  double x, y, theta;           // Coordinate of each node
+  STATUS status = STATUS::NONE; // NONE, OPEN, CLOSED or OBS
+  double gc = 0;                // Actual cost
+  double hc = 0;                // heuristic cost
+  double move_distance = 0;     // actual move distance
+  bool back; // true if the current direction of the vehicle is back
+  AstarNode *parent = NULL; // parent node
 };
 
-struct AstarNode
-{
-  double x, y, theta;            // Coordinate of each node
-  STATUS status = STATUS::NONE;  // NONE, OPEN, CLOSED or OBS
-  double gc = 0;                 // Actual cost
-  double hc = 0;                 // heuristic cost
-  double move_distance = 0;      // actual move distance
-  bool back;                     // true if the current direction of the vehicle is back
-  AstarNode *parent = NULL;      // parent node
-};
-
-struct WaveFrontNode
-{
+struct WaveFrontNode {
   int index_x;
   int index_y;
   double hc;
@@ -50,8 +41,7 @@ struct WaveFrontNode
   WaveFrontNode(int x, int y, double cost);
 };
 
-struct NodeUpdate
-{
+struct NodeUpdate {
   double shift_x;
   double shift_y;
   double rotation;
@@ -62,29 +52,23 @@ struct NodeUpdate
 };
 
 // For open list and goal list
-struct SimpleNode
-{
+struct SimpleNode {
   int index_x;
   int index_y;
   int index_theta;
   double cost;
 
-  bool operator>(const SimpleNode &right) const
-  {
-    return cost > right.cost;
-  }
+  bool operator>(const SimpleNode &right) const { return cost > right.cost; }
 
   SimpleNode();
   SimpleNode(int x, int y, int theta, double gc, double hc);
 };
 
-inline double calcDistance(double x1, double y1, double x2, double y2)
-{
+inline double calcDistance(double x1, double y1, double x2, double y2) {
   return std::hypot(x2 - x1, y2 - y1);
 }
 
-inline double modifyTheta(double theta)
-{
+inline double modifyTheta(double theta) {
   if (theta < 0)
     return theta + 2 * M_PI;
   if (theta >= 2 * M_PI)
@@ -93,8 +77,8 @@ inline double modifyTheta(double theta)
   return theta;
 }
 
-inline geometry_msgs::Pose transformPose(geometry_msgs::Pose &pose, tf::Transform &tf)
-{
+inline geometry_msgs::Pose transformPose(geometry_msgs::Pose &pose,
+                                         tf::Transform &tf) {
   // Convert ROS pose to TF pose
   tf::Pose tf_pose;
   tf::poseMsgToTF(pose, tf_pose);
@@ -109,15 +93,14 @@ inline geometry_msgs::Pose transformPose(geometry_msgs::Pose &pose, tf::Transfor
   return ros_pose;
 }
 
-inline WaveFrontNode getWaveFrontNode(int x, int y, double cost)
-{
+inline WaveFrontNode getWaveFrontNode(int x, int y, double cost) {
   WaveFrontNode node(x, y, cost);
 
   return node;
 }
 
-inline geometry_msgs::Point calcRelativeCoordinate(geometry_msgs::Pose pose, tf::Point point)
-{
+inline geometry_msgs::Point calcRelativeCoordinate(geometry_msgs::Pose pose,
+                                                   tf::Point point) {
   tf::Transform transform;
   tf::poseMsgToTF(pose, transform);
   transform = transform.inverse();
@@ -129,8 +112,7 @@ inline geometry_msgs::Point calcRelativeCoordinate(geometry_msgs::Pose pose, tf:
   return point_msg;
 }
 
-inline double calcDiffOfRadian(double a, double b)
-{
+inline double calcDiffOfRadian(double a, double b) {
   double diff = std::fabs(a - b);
   if (diff < M_PI)
     return diff;
@@ -138,8 +120,7 @@ inline double calcDiffOfRadian(double a, double b)
     return 2 * M_PI - diff;
 }
 
-inline geometry_msgs::Pose xytToPoseMsg(double x, double y, double theta)
-{
+inline geometry_msgs::Pose xytToPoseMsg(double x, double y, double theta) {
   geometry_msgs::Pose p;
   p.position.x = x;
   p.position.y = y;
@@ -148,6 +129,6 @@ inline geometry_msgs::Pose xytToPoseMsg(double x, double y, double theta)
   return p;
 }
 
-}  // namespace astar_planner
+} // namespace astar_planner
 
 #endif
