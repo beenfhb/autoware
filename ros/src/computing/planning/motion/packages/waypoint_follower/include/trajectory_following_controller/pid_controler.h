@@ -1,3 +1,5 @@
+#ifndef WAYPOINT_FOLLWER_PID_CONTROLLER_H_INCLUDED
+#define WAYPOINT_FOLLWER_PID_CONTROLLER_H_INCLUDED
 /*
  * Copyright 2015-2019 Autoware Foundation. All rights reserved.
  *
@@ -14,15 +16,9 @@
  * limitations under the License.
  */
 
-// headers in this Autoware
-#include <trajectory_following_controller/trajectory_follwing_controller.h>
-
-TrajectoryFollowingController::TrajectoryFollowingController(ros::NodeHandle nh,ros::NodeHandle pnh)
+class PIDController
 {
 
-}
+};
 
-TrajectoryFollowingController::~TrajectoryFollowingController()
-{
-
-}
+#endif  //WAYPOINT_FOLLWER_PID_CONTROLLER_H_INCLUDED
