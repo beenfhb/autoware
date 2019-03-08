@@ -54,6 +54,7 @@ TEST_F(LaneBypassPlannerTestSuite, publishBypassLanetest) {
 
 TEST_F(LaneBypassPlannerTestSuite, forceLanenumChange) {
 
+  test_obj_.enableForceLaneSelect();
   test_obj_.publishTwist(5.0, 0.0);
   test_obj_.publishPose(0.0, 0.0, 0.0);
   test_obj_.publishCostmap(0.0);
@@ -72,7 +73,7 @@ TEST_F(LaneBypassPlannerTestSuite, forceLanenumChange) {
   ros::spinOnce();
   ros::WallDuration(0.5).sleep();
 
-  ASSERT_EQ(3, test_obj_.getBestLaneNum());
+  ASSERT_EQ(5, test_obj_.getBestLaneNum());
 
 }
 

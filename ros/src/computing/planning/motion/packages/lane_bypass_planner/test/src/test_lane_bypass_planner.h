@@ -41,7 +41,7 @@ public:
   ros::NodeHandle nh_;
   ros::Publisher pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped>("/current_velocity", 0);
   ros::Publisher pub_pose_ = nh_.advertise<geometry_msgs::PoseStamped>("/current_pose", 0);
-  ros::Publisher pub_costmap_ = nh_.advertise<geometry_msgs::TwistStamped>("/semantics/costmap_generator/occupancy_grid", 0);
+  ros::Publisher pub_costmap_ = nh_.advertise<nav_msgs::OccupancyGrid>("/semantics/costmap_generator/occupancy_grid", 0);
   ros::Publisher pub_lane_ = nh_.advertise<autoware_msgs::Lane>("/lane_bypass_planner/in_path", 0);
   ros::Publisher pub_num_ = nh_.advertise<std_msgs::Int32>("/force_lane_change_number", 0);
 
@@ -81,7 +81,7 @@ public:
     for (int i = 0; i < 100; ++i) {
       msg.data.push_back(all_cost);
     }
-    pub_pose_.publish(msg);
+    pub_costmap_.publish(msg);
   }
 
   void publisLane(int size) {
@@ -118,5 +118,6 @@ public:
 
   int getBestLaneNum() { return lbp_.best_lane_num_; }
   int getCenterLaneNum() { return lbp_.center_lane_num_; }
+  void enableForceLaneSelect() { lbp_.enable_force_lane_select_ = true; };
 };
 
