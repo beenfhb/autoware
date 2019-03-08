@@ -5,13 +5,19 @@
 # Generate lane from nearest waypoint (not recommended for lower following performance).
 enable_smooth_transition: false
 
+# use smooth transition lane for cost calculation and vizualize, but publish non-smooth lane for lower layer.
+# This is a temporary countermeasure against the deterioration of the trajectory tracking performance 
+# due to dynamically changing the lane shape.
 enable_smooth_transition_only_for_cost_calculation_and_vizualization: true
 
-# The length you want to make a transition smoothly
-smooth_transit_dist: 8.0
+# when the center lane is selected, do not change the lane unless the vehicle speed below the stop speed
+enable_replan_when_moving: false
 
 # An arbitrary path can be selected from the outside through topic
 enable_force_lane_select: false
+
+# The length you want to make a transition smoothly
+smooth_transit_dist: 8.0
 
 # must be odd number (you can put even, but changed to odd)
 sub_lane_num: 15
@@ -37,4 +43,4 @@ cost_weight_stay_there: 0.1
 # but after a while, I want the planner to choose back to the central lane .
 # This is to prevent from selecting the center lane when the obstacle is too close to the vehicle to visible.
 # Note: This parameter should be cared in the cost map, such as potential field.
-cost_weight_stay_there_while: 2.0
+cost_weight_stay_there_while: 5.0

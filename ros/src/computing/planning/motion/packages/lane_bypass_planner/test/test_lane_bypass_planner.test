@@ -1,0 +1,5 @@
+<launch>
+
+  <test test-name="test-lane_bypass_planner" pkg="lane_bypass_planner" type="test-lane_bypass_planner" name="test"/>
+
+</launch>

@@ -121,7 +121,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -138,7 +138,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(lane_bypass_planner_node src/lane_bypass_planner.cpp)
+add_executable(lane_bypass_planner_node src/lane_bypass_planner_node.cpp src/lane_bypass_planner.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -193,6 +193,17 @@ install(DIRECTORY config/
 #############
 ## Testing ##
 #############
+
+if (CATKIN_ENABLE_TESTING)
+    find_package(rostest REQUIRED)
+    add_rostest_gtest(test-lane_bypass_planner
+      test/test_lane_bypass_planner.test
+      test/src/test_lane_bypass_planner.cpp
+      src/lane_bypass_planner.cpp
+    )
+    add_dependencies(test-lane_bypass_planner ${catkin_EXPORTED_TARGETS})
+    target_link_libraries(test-lane_bypass_planner ${catkin_LIBRARIES})
+endif ()
 
 ## Add gtest based cpp test target and link libraries
 # catkin_add_gtest(${PROJECT_NAME}-test test/test_lane_bypass_planner.cpp)

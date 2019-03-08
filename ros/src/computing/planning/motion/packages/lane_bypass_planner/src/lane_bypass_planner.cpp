@@ -1,97 +1,20 @@
-#include <iostream>
-#include <memory>
-#include <ros/ros.h>
+/*
+ * Copyright 2018-2019 Autoware Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-#include <nav_msgs/OccupancyGrid.h>
-#include <autoware_msgs/Lane.h>
-
-#include <geometry_msgs/PoseArray.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <std_msgs/Int32.h>
-
-#include <tf2/transform_datatypes.h>
-#include <tf2/convert.h>
-#include <tf2/utils.h>
-#include <tf2/LinearMath/Transform.h>
-#include <tf2_ros/transform_listener.h>
-#include <tf2_ros/buffer.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <tf2_ros/transform_broadcaster.h>
-
-class LaneBypassPlanner
-{
-  public:
-    LaneBypassPlanner();
-    ~LaneBypassPlanner(){};
-
-  private:
-    ros::NodeHandle nh_;
-    ros::NodeHandle pnh_;
-
-    ros::Publisher lane_pub_;
-    ros::Subscriber cost_map_sub_, lane_sub_, selfpose_sub_, lane_num_sub_;
-    ros::Timer timer_;
-    tf2_ros::Buffer tf_buffer_;
-    tf2_ros::TransformListener tf_listener_;
-    tf2_ros::TransformBroadcaster tf_broadcaster_;
-    void costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
-    void laneCallback(const autoware_msgs::Lane::ConstPtr &msg);
-    void lanemunCallback(const std_msgs::Int32 &msg);
-    void selfposeCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
-    void timerCallback(const ros::TimerEvent &e);
-
-    bool coordinateTransformLane(const autoware_msgs::Lane &in_lane_ptr,
-                                 const std::string &target_frame, autoware_msgs::Lane &out_lane_ptr);
-    void generateSubLane(const autoware_msgs::Lane &base_lane, const int sub_lane_num,
-                         const double sub_lane_width, std::vector<autoware_msgs::Lane> &v_sub_lane);
-    void smoothingTransition(const geometry_msgs::PoseStamped &selfpose, const double &smooth_transit_dist,
-                             std::vector<autoware_msgs::Lane> &v_sub_lane);
-    bool calculateBypassLane(const std::vector<autoware_msgs::Lane> &v_sub_lane,
-                             const std::shared_ptr<nav_msgs::OccupancyGrid> current_costmap_ptr_,
-                             autoware_msgs::Lane &final_lane, std::vector<double> &v_cost, int &min_index);
-    void calculateLaneCost(const std::vector<autoware_msgs::Lane> &v_sub_lane,
-                           const std::shared_ptr<nav_msgs::OccupancyGrid> current_costmap_ptr_,
-                           const int check_num_max, std::vector<double> &costs);
-    bool transformRosPose(const geometry_msgs::PoseStamped &in_pose, const std::string &target_frame, geometry_msgs::PoseStamped &out_pose);
-
-    void debugPublishSubLane(const std::vector<autoware_msgs::Lane> &v_sub_lane, const std::vector<double> &v_cost);
-
-    std::shared_ptr<nav_msgs::OccupancyGrid> current_costmap_ptr_;
-    std::shared_ptr<autoware_msgs::Lane> current_lane_ptr_;
-    std::shared_ptr<geometry_msgs::PoseStamped> current_selfpose_ptr_;
-
-    int force_lane_change_num_;
-
-    /* params */
-    bool enable_smooth_transition_;
-    bool enable_force_lane_select_;
-    bool enable_replan_when_moving_;
-    bool enable_smooth_transition_only_for_cost_calculation_and_vizualization_;
-    int sub_lane_num_odd_;
-    int cost_check_num_max_;
-    double sub_lane_width_;
-    double smooth_transit_dist_;
-
-    const double INVALID_COST_;
-    const double COSTMAP_OBSTACLE_COST_;
-
-    /* cost function parameters*/
-    struct CostWeight
-    {
-        double be_center;
-        double stay_there;
-        double stay_there_while;
-    };
-    CostWeight cost_weight_;
-    int best_lane_num_;
-    int center_lane_num_;
-    ros::Time stay_start_time_;
-
-    /* debug */
-    ros::Publisher debug_sublane_pub_;
-};
+#include "lane_bypass_planner/lane_bypass_planner.h"
 
 LaneBypassPlanner::LaneBypassPlanner() : nh_(""), pnh_("~"), tf_listener_(tf_buffer_), INVALID_COST_(-1.0), COSTMAP_OBSTACLE_COST_(100.0)
 {
@@ -109,16 +32,18 @@ LaneBypassPlanner::LaneBypassPlanner() : nh_(""), pnh_("~"), tf_listener_(tf_buf
     pnh_.param<double>("cost_weight_stay_there", cost_weight_.stay_there, double(0.1));
     pnh_.param<double>("cost_weight_stay_there_while", cost_weight_.stay_there_while, double(0.5));
 
-    std::string input_path_name, output_path_name, input_selfpose_name, input_costmap_name;
-    pnh_.param<std::string>("input_path_name", input_path_name, std::string("in_path"));
-    pnh_.param<std::string>("output_path_name", output_path_name, std::string("out_path"));
+    std::string input_path_name, output_path_name, input_selfpose_name, input_selftwist_name, input_costmap_name;
+    pnh_.param<std::string>("input_path_name", input_path_name, std::string("/lane_bypass_planner/in_path"));
+    pnh_.param<std::string>("output_path_name", output_path_name, std::string("/lane_bypass_planner/out_path"));
     pnh_.param<std::string>("input_selfpose_name", input_selfpose_name, std::string("/current_pose"));
+    pnh_.param<std::string>("input_selftwist_name", input_selftwist_name, std::string("/current_velocity"));
     pnh_.param<std::string>("input_costmap_name", input_costmap_name, std::string("/semantics/costmap_generator/occupancy_grid"));
 
     cost_map_sub_ = nh_.subscribe(input_costmap_name, 1, &LaneBypassPlanner::costmapCallback, this);
     lane_sub_ = nh_.subscribe(input_path_name, 1, &LaneBypassPlanner::laneCallback, this);
     selfpose_sub_ = nh_.subscribe(input_selfpose_name, 1, &LaneBypassPlanner::selfposeCallback, this);
-    lane_num_sub_ = pnh_.subscribe("/force_lane_change_number", 1, &LaneBypassPlanner::lanemunCallback, this);
+    selftwist_sub_ = nh_.subscribe(input_selftwist_name, 1, &LaneBypassPlanner::selftwistCallback, this);
+    lane_num_sub_ = pnh_.subscribe("/force_lane_change_number", 1, &LaneBypassPlanner::lanenumCallback, this);
     lane_pub_ = nh_.advertise<autoware_msgs::Lane>(output_path_name, 1, true);
 
     double exec_rate;
@@ -137,10 +62,12 @@ LaneBypassPlanner::LaneBypassPlanner() : nh_(""), pnh_("~"), tf_listener_(tf_buf
 void LaneBypassPlanner::timerCallback(const ros::TimerEvent &e)
 {
     /* Guard */
-    if (current_costmap_ptr_ == nullptr || current_lane_ptr_ == nullptr || current_selfpose_ptr_ == nullptr)
+    if (current_costmap_ptr_ == nullptr || current_lane_ptr_ == nullptr ||
+        current_selfpose_ptr_ == nullptr || current_selftwist_ptr_ == nullptr)
     {
-        ROS_WARN_DELAYED_THROTTLE(1.0, "waiting topic... costmap:%d, lane:%d, selfpose:%d",
-                                  current_costmap_ptr_ != nullptr, current_lane_ptr_ != nullptr, current_selfpose_ptr_ != nullptr);
+        ROS_WARN_DELAYED_THROTTLE(3.0, "waiting topic... costmap:%d, lane:%d, selfpose:%d, selftwist:%d",
+                                  current_costmap_ptr_ != nullptr, current_lane_ptr_ != nullptr,
+                                  current_selfpose_ptr_ != nullptr, current_selftwist_ptr_ != nullptr);
         return;
     }
 
@@ -148,6 +75,14 @@ void LaneBypassPlanner::timerCallback(const ros::TimerEvent &e)
     autoware_msgs::Lane transformed_lane;
     if (!coordinateTransformLane(*current_lane_ptr_, current_costmap_ptr_->header.frame_id, transformed_lane))
         return;
+
+    /* if flag is false, don't plan sublane when following the original lane & velocity > 0 */
+    bool force_center = false;
+    if (!enable_replan_when_moving_ && std::fabs(current_selftwist_ptr_->twist.linear.x) > 1.0 &&
+        best_lane_num_ == center_lane_num_)
+    {
+        force_center = true;
+    }
 
     /* generate sublanes with parallel shift */
     std::vector<autoware_msgs::Lane> v_sub_lane, v_sub_lane_orig;
@@ -171,10 +106,19 @@ void LaneBypassPlanner::timerCallback(const ros::TimerEvent &e)
         bypass_lane = v_sub_lane.at(force_lane_change_num_);
         v_costs.at(force_lane_change_num_) = 0.0;
     }
+    else if (force_center)
+    {   
+        min_cost_index = center_lane_num_;
+        bypass_lane = v_sub_lane.at(center_lane_num_);
+        v_costs.at(center_lane_num_) = 0.0;
+    }
     else
     {
-        if (!calculateBypassLane(v_sub_lane, current_costmap_ptr_, bypass_lane, v_costs, min_cost_index))
-            return;
+        if (!calculateBypassLane(v_sub_lane, current_costmap_ptr_, bypass_lane, v_costs, min_cost_index)) {
+            min_cost_index = center_lane_num_;
+            bypass_lane = v_sub_lane.at(center_lane_num_);
+        }
+            
     }
     if (enable_smooth_transition_only_for_cost_calculation_and_vizualization_) {
         bypass_lane = v_sub_lane_orig.at(min_cost_index);
@@ -213,7 +157,9 @@ void LaneBypassPlanner::generateSubLane(const autoware_msgs::Lane &base_lane, co
     }
 }
 
-bool LaneBypassPlanner::transformRosPose(const geometry_msgs::PoseStamped &in_pose, const std::string &target_frame, geometry_msgs::PoseStamped &out_pose) {
+bool LaneBypassPlanner::transformRosPose(const geometry_msgs::PoseStamped &in_pose, const std::string &target_frame,
+                                         geometry_msgs::PoseStamped &out_pose)
+{
     geometry_msgs::Pose my_pose;
     tf2::Transform tf_in2out;
     try
@@ -412,7 +358,9 @@ void LaneBypassPlanner::calculateLaneCost(const std::vector<autoware_msgs::Lane>
         ++lane_num;
 
         /* take average cost fot lane */
-        if (evaluate_points_num != 0 && cost != INVALID_COST_)
+        if (evaluate_points_num = 0) 
+            cost = INVALID_COST_;
+        if (cost != INVALID_COST_)
             cost /= evaluate_points_num;
 
         v_cost.push_back(cost);
@@ -438,7 +386,12 @@ void LaneBypassPlanner::selfposeCallback(const geometry_msgs::PoseStamped::Const
     current_selfpose_ptr_ = std::make_shared<geometry_msgs::PoseStamped>(*msg);
 }
 
-void LaneBypassPlanner::lanemunCallback(const std_msgs::Int32 &msg)
+void LaneBypassPlanner::selftwistCallback(const geometry_msgs::TwistStamped::ConstPtr &msg)
+{
+    current_selftwist_ptr_ = std::make_shared<geometry_msgs::TwistStamped>(*msg);
+}
+
+void LaneBypassPlanner::lanenumCallback(const std_msgs::Int32 &msg)
 {
     if (msg.data > sub_lane_num_odd_ - 1) {
         ROS_INFO("received no.%d, but lane num is %d. set %d", msg.data, sub_lane_num_odd_, sub_lane_num_odd_ - 1);
@@ -529,17 +482,17 @@ void LaneBypassPlanner::debugPublishSubLane(const std::vector<autoware_msgs::Lan
         marker.color.b = 0.0f;
         float tmp = (float)(1.0 - 0.8 * v_cost.at(lane_num) / max_cost);
         marker.color.a = tmp;
-        if (v_cost.at(lane_num) == INVALID_COST_) {
-            marker.color.r = 0.6f;
-            marker.color.g = 0.6f;
-            marker.color.b = 0.6f;
-            marker.color.a = 0.5f;
-        }
         if (lane_num == best_lane_num_) {
             marker.color.r = 0.0f;
             marker.color.g = 1.0f;
             marker.color.b = 0.0f;
             marker.color.a = 1.0f;
+        }
+        if (v_cost.at(lane_num) == INVALID_COST_) {
+            marker.color.r = 0.6f;
+            marker.color.g = 0.6f;
+            marker.color.b = 0.6f;
+            marker.color.a = 0.5f;
         }
 
         for (int i = 0; i < lane_map.waypoints.size() && i < cost_check_num_max_; ++i) {
@@ -569,15 +522,4 @@ void LaneBypassPlanner::debugPublishSubLane(const std::vector<autoware_msgs::Lan
         ++lane_num;
     }
     debug_sublane_pub_.publish(marker_array);
-}
-
-
-int main(int argc, char *argv[])
-{
-    ros::init(argc, argv, "lane_bypass_planner");
-
-    LaneBypassPlanner node;
-    ros::spin();
-
-    return 0;
 }
