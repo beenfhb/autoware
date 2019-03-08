@@ -16,9 +16,25 @@
  * limitations under the License.
  */
 
+//headers in Boost
+#include <boost/circular_buffer.hpp>
+
+//headers in ROS
+#include <ros/ros.h>
+
 class PIDController
 {
-
+public:
+    PIDController(double p_gain,double i_gain,double d_gain);
+    ~PIDController();
+    double getInput(double cmd,double value,ros::Time now);
+    double getInput(double error,ros::Time now);
+    const double p_gain;
+    const double i_gain;
+    const double d_gain;
+private:
+    boost::circular_buffer<std::pair<double,ros::Time> > errors_;
+    double i_value_;
 };
 
 #endif  //WAYPOINT_FOLLWER_PID_CONTROLLER_H_INCLUDED
