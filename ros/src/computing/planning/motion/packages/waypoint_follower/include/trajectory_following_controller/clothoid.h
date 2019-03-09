@@ -17,6 +17,16 @@
  * limitations under the License.
  */
 
+//headers in STL
+#include <complex>
+#include <vector>
+
+//headers in ROS
+#include <geometry_msgs/Point.h>
+
+//headers in Autoware
+#include <trajectory_following_controller/slope.h>
+
 class Clothoid
 {
 public:
@@ -29,6 +39,9 @@ public:
     phiU : the incremental of the angle
     */
     void draw(double h,double phi0,double phiV,double phiU);
+private:
+    template <class T, class Real, class R>
+    void simpsonIntegral(T f, Real a, Real b, R *r);
 };
 
 #endif  //WAYPOINT_FOLLWER_CLOTHOID_H_INCLUDED

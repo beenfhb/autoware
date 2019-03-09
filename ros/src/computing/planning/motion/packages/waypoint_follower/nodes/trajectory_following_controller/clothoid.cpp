@@ -34,5 +34,26 @@ phiU : the incremental of the angle
 */
 void Clothoid::draw(double h,double phi0,double phiV,double phiU)
 {
+    int n = 1000;
+    float stepS = 1.0f / n;
+    std::vector<geometry_msgs::Point> points;
+    std::complex<float> P_Vector;
+    Slope slope(phi0,phiV,phiU);
+    for(int i = 0 ; i < n ; ++i)
+    {
+        float S = stepS * i;
+        std::complex<float> r;
+        simpsonIntegral(slope, S, S + stepS, &r);
+        P_Vector += r;
+        float x = P_Vector.real();
+        float y = P_Vector.imag();
+    }
+}
 
+template <class T, class Real, class R>
+void Clothoid::simpsonIntegral(T f, Real a, Real b, R *r)
+{
+    Real mul = (b - a) * static_cast<Real>(1.0 / 6.0);
+    *r = mul * (f(a) + static_cast<Real>(4.0) * f((a + b) * static_cast<Real>(0.5)) + f(b));
+    return;
 }

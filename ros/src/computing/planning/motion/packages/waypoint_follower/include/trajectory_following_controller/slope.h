@@ -1,5 +1,6 @@
-#ifndef WAYPOINT_FOLLWER_TRAJECTORY_FOLLWING_CONTROLLER_H_INCLUDED
-#define WAYPOINT_FOLLWER_TRAJECTORY_FOLLWING_CONTROLLER_H_INCLUDED
+#ifndef WAYPOINT_FOLLWER_SLOPE_H_INCLUDED
+#define WAYPOINT_FOLLWER_SLOPE_H_INCLUDED
+
 /*
  * Copyright 2015-2019 Autoware Foundation. All rights reserved.
  *
@@ -16,22 +17,23 @@
  * limitations under the License.
  */
 
-//headers in ROS
-#include <ros/ros.h>
+//headers in STL
+#include <complex>
 
-//headers in Autoware
-#include <trajectory_following_controller/clothoid.h>
-
-class TrajectoryFollowingController
+class Slope
 {
 public:
-    TrajectoryFollowingController(ros::NodeHandle nh,ros::NodeHandle pnh);
-    ~TrajectoryFollowingController();
+    Slope(float phi0, float phiV, float phiU) : phi0(phi0),phiV(phiV),phiU(phiU){};
+    const float phi0;
+    const float phiV;
+    const float phiU;
+    std::complex<float> operator()(float S)
+    {
+        std::complex<float> j(0.0f, 1.0f);
+        return std::exp(j * phi(S));
+    }
 private:
-    ros::NodeHandle nh;
-    ros::NodeHandle pnh;
-    ros::Subscriber waypoint_sub_;
-    std::string waypoint_topic_;
+    float inline phi(float S) {return phi0 + phiV * S + phiU * S * S;};
 };
 
-#endif  //WAYPOINT_FOLLWER_TRAJECTORY_FOLLWING_CONTROLLER_H_INCLUDED
+#endif  //WAYPOINT_FOLLWER_SLOPE_H_INCLUDED
