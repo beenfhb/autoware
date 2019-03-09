@@ -90,6 +90,7 @@ add_dependencies(twist_gate
         ${catkin_EXPORTED_TARGETS})
 
 add_executable(trajectory_follwing_controller
+        nodes/trajectory_following_controller/clothoid.cpp
         nodes/trajectory_following_controller/pid_controller.cpp
         nodes/trajectory_following_controller/trajectory_following_controller.cpp
         nodes/trajectory_following_controller/trajectory_following_controller_node.cpp)
