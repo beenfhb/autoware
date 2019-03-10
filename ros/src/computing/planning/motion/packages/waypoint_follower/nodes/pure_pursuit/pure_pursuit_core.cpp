@@ -54,6 +54,9 @@ void PurePursuitNode::initForROS()
   // ROS_INFO_STREAM("is_linear_interpolation : " << is_linear_interpolation_);
   private_nh_.param("publishes_for_steering_robot", publishes_for_steering_robot_, bool(false));
   nh_.param("vehicle_info/wheel_base", wheel_base_, double(2.7));
+  private_nh_.param("feedforward_ratio", feedforward_ratio_, double(0.0));
+  feedforward_ratio_ = std::max(std::min(feedforward_ratio_, 1.0), 0.0);
+  private_nh_.param("feedforward_curvature_points_dist", feedforward_curvature_points_dist_, int(2));
 
   // setup subscriber
   sub1_ = nh_.subscribe("final_waypoints", 10, &PurePursuitNode::callbackFromWayPoints, this);
@@ -71,6 +74,9 @@ void PurePursuitNode::initForROS()
   pub15_ = nh_.advertise<visualization_msgs::Marker>("trajectory_circle_mark", 0);
   pub16_ = nh_.advertise<std_msgs::Float32>("angular_gravity", 0);
   pub17_ = nh_.advertise<std_msgs::Float32>("deviation_of_current_position", 0);
+  pub18_ = private_nh_.advertise<std_msgs::Float32>("fb_curvature", 0);
+  pub19_ = private_nh_.advertise<std_msgs::Float32>("ff_curvature", 0);
+  pub20_ = private_nh_.advertise<std_msgs::Float32>("total_curvature", 0);
   // pub7_ = nh.advertise<std_msgs::Bool>("wf_stat", 0);
 }
 
@@ -81,7 +87,8 @@ void PurePursuitNode::run()
   while (ros::ok())
   {
     ros::spinOnce();
-    if (!is_pose_set_ || !is_waypoint_set_ || !is_velocity_set_ || !is_config_set_)
+
+    if (!is_pose_set_ || !is_config_set_)
     {
       ROS_WARN("Necessary topics are not subscribed yet ... ");
       loop_rate.sleep();
@@ -91,9 +98,15 @@ void PurePursuitNode::run()
     pp_.setLookaheadDistance(computeLookaheadDistance());
     pp_.setMinimumLookaheadDistance(minimum_lookahead_distance_);
 
-    double kappa = 0;
-    bool can_get_curvature = pp_.canGetCurvature(&kappa);
-    
+    double kappa_fb = 0.0;
+    bool can_get_curvature = pp_.canGetCurvature(&kappa_fb);
+  
+
+    double kappa_ff = 0.0;
+    pp_.calculateNearestCurvature(feedforward_curvature_points_dist_, &kappa_ff);
+
+    double kappa = feedforward_ratio_ * kappa_ff + (1.0 - feedforward_ratio_) * kappa_fb;
+
     publishTwistStamped(can_get_curvature, kappa);
     publishControlCommandStamped(can_get_curvature, kappa);
     node_status_publisher_ptr_->NODE_ACTIVATE();
@@ -113,6 +126,15 @@ void PurePursuitNode::run()
     is_pose_set_ = false;
     is_velocity_set_ = false;
     is_waypoint_set_ = false;
+
+    // debug
+    std_msgs::Float32 ff_k, fb_k, total_k;
+    ff_k.data = kappa_ff;
+    fb_k.data = kappa_fb;
+    total_k.data = kappa;
+    pub18_.publish(fb_k);
+    pub19_.publish(ff_k);
+    pub20_.publish(total_k);
 
     loop_rate.sleep();
   }

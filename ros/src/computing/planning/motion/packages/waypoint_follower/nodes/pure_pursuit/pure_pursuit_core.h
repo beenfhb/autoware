@@ -70,7 +70,7 @@ private:
   PurePursuit pp_;
 
   // publisher
-  ros::Publisher pub1_, pub2_, pub11_, pub12_, pub13_, pub14_, pub15_, pub16_, pub17_;
+  ros::Publisher pub1_, pub2_, pub11_, pub12_, pub13_, pub14_, pub15_, pub16_, pub17_, pub18_, pub19_, pub20_;
 
   // subscriber
   ros::Subscriber sub1_, sub2_, sub3_, sub4_;
@@ -83,6 +83,8 @@ private:
   bool is_waypoint_set_, is_pose_set_, is_velocity_set_, is_config_set_;
   double current_linear_velocity_, command_linear_velocity_;
   double wheel_base_;
+  double feedforward_ratio_;
+  int feedforward_curvature_points_dist_;
 
   int32_t param_flag_;               // 0 = waypoint, 1 = Dialog
   double const_lookahead_distance_;  // meter

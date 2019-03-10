@@ -265,4 +265,35 @@ bool PurePursuit::canGetCurvature(double *output_kappa)
   return true;
 }
 
+bool PurePursuit::calculateNearestCurvature(const int points_dist, double *kappa){
+
+  if (current_waypoints_.size() < 2 + points_dist + points_dist) {
+    *kappa = 0.0;
+    return false;
+  }
+    
+
+  geometry_msgs::Point p0 = current_waypoints_[1].pose.pose.position;
+  geometry_msgs::Point p1 = current_waypoints_[1 + points_dist].pose.pose.position;
+  geometry_msgs::Point p2 = current_waypoints_[1 + points_dist + points_dist].pose.pose.position;
+
+  auto dist = [](const geometry_msgs::Point &a, const geometry_msgs::Point &b) {
+    double dx = a.x - b.x;
+    double dy = a.y - b.y;
+    return std::sqrt(dx * dx + dy * dy);
+  };
+
+  auto squared_area = [](const geometry_msgs::Point &a, const geometry_msgs::Point &b, const geometry_msgs::Point &c) {
+    return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+  };
+
+  double den = dist(p0, p1) * dist(p1, p2) * dist(p2, p0);
+  const double epsilon = 1.0E-5;
+  if (std::fabs(den) < epsilon) 
+    den = den > 0 ? epsilon : -epsilon;
+  
+  *kappa = 2.0 * squared_area(p0, p1, p2) / den;
+  return true;
+}
+
 }  // waypoint_follower
