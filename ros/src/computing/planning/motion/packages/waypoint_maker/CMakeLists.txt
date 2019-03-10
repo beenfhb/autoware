@@ -37,6 +37,8 @@ catkin_package(
 
 SET(CMAKE_CXX_FLAGS "-O2 -g -Wall ${CMAKE_CXX_FLAGS}")
 
+catkin_python_setup()
+
 include_directories(
         ${catkin_INCLUDE_DIRS}
         ${vector_map_INCLUDE_DIRS}
@@ -92,3 +94,6 @@ install(TARGETS
 install(DIRECTORY launch/
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
         PATTERN ".svn" EXCLUDE)
+
+catkin_install_python(PROGRAMS nodes/waypoint_qp_speed_replanner/scripts/waypoint_qp_speed_replanner.py nodes/waypoint_qp_speed_replanner/scripts/utils.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
