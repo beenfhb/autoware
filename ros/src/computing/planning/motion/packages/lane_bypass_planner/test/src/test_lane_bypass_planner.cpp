@@ -14,27 +14,46 @@
  * limitations under the License.
  */
 
-/*
-テスト項目
-０．すべてトピックが来ていて、ちゃんとpathがpubされるか
-１．強制変更でちゃんと変わるか確かめる
-２．generateSubLaneで指定した本数分の軌道ができているか確認
-３．smoothTransitionで、開始点が全て同じ位置か確認
-４．すべて障害物コストorすべて0コストで、コストがちゃんと計算されるか確認
-*/
 #include <gtest/gtest.h>
 #include <ros/ros.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_ros/transform_broadcaster.h>
 
 #include "test_lane_bypass_planner.h"
 
 
 class LaneBypassPlannerTestSuite : public ::testing::Test {
 public:
-  LaneBypassPlannerTestSuite() {}
+  LaneBypassPlannerTestSuite() {
+    tf2_ros::TransformBroadcaster br;
+    geometry_msgs::TransformStamped transformStamped;
+    
+    transformStamped.header.stamp = ros::Time::now();
+    transformStamped.header.frame_id = "world";
+    transformStamped.child_frame_id = "map";
+    transformStamped.transform.translation.x = 0.0;
+    transformStamped.transform.translation.y = 0.0;
+    transformStamped.transform.translation.z = 0.0;
+    tf2::Quaternion q;
+    q.setRPY(0, 0, 0);
+    transformStamped.transform.rotation.x = q.x();
+    transformStamped.transform.rotation.y = q.y();
+    transformStamped.transform.rotation.z = q.z();
+    transformStamped.transform.rotation.w = q.w();
+
+    br.sendTransform(transformStamped);
+
+    transformStamped.header.frame_id = "map";
+    transformStamped.child_frame_id = "velodyne";
+    br.sendTransform(transformStamped);
+
+    transformStamped.header.frame_id = "velodyne";
+    transformStamped.child_frame_id = "base_link";
+    br.sendTransform(transformStamped);
+  }
   ~LaneBypassPlannerTestSuite() {}
 
   LaneBypassPlannerTestClass test_obj_;
-
 };
 
 TEST_F(LaneBypassPlannerTestSuite, publishBypassLanetest) {
@@ -43,10 +62,22 @@ TEST_F(LaneBypassPlannerTestSuite, publishBypassLanetest) {
   test_obj_.publishPose(0.0, 0.0, 0.0);
   test_obj_.publishCostmap(0.0);
   test_obj_.publisLane(100);
+
   ros::spinOnce();
-  ros::WallDuration(0.5).sleep();
+  ros::WallDuration(1.0).sleep();
   ros::spinOnce();
-  ros::WallDuration(0.5).sleep();
+  ros::WallDuration(1.0).sleep();
+  ros::spinOnce();
+    
+  std::shared_ptr<geometry_msgs::PoseStamped> p1 = test_obj_.getCurrentPose();
+  std::shared_ptr<geometry_msgs::TwistStamped> p2 = test_obj_.getCurrentTwist();
+  std::shared_ptr<nav_msgs::OccupancyGrid> p3 = test_obj_.getCurrentCostmap();
+  std::shared_ptr<autoware_msgs::Lane> p4 = test_obj_.getCurrentLane();
+  EXPECT_EQ(1, p1 != nullptr) << "pose ptr should not be null";
+  EXPECT_EQ(1, p2 != nullptr) << "twist ptr should not be null";
+  EXPECT_EQ(1, p3 != nullptr) << "costmap ptr should not be null";
+  EXPECT_EQ(1, p4 != nullptr) << "lane ptr should not be null";
+
 
   ASSERT_EQ(100, test_obj_.lbp_lane_.waypoints.size()) << "size should be same as received lane size";
 }
@@ -59,22 +90,16 @@ TEST_F(LaneBypassPlannerTestSuite, forceLanenumChange) {
   test_obj_.publishPose(0.0, 0.0, 0.0);
   test_obj_.publishCostmap(0.0);
   test_obj_.publisLane(100);
-  test_obj_.publisLaneNum(3);
-  ros::spinOnce();
-  ros::WallDuration(0.5).sleep();
-  ros::spinOnce();
-  ros::WallDuration(0.5).sleep();
-
-  ASSERT_EQ(3, test_obj_.getBestLaneNum());
-
   test_obj_.publisLaneNum(5);
+  test_obj_.enableForceLaneSelect();
+
   ros::spinOnce();
-  ros::WallDuration(0.5).sleep();
+  ros::WallDuration(1.0).sleep();
   ros::spinOnce();
-  ros::WallDuration(0.5).sleep();
+  ros::WallDuration(1.0).sleep();
+  ros::spinOnce();
 
   ASSERT_EQ(5, test_obj_.getBestLaneNum());
-
 }
 
 

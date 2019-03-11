@@ -18,7 +18,6 @@
 
 LaneBypassPlanner::LaneBypassPlanner() : nh_(""), pnh_("~"), tf_listener_(tf_buffer_), INVALID_COST_(-1.0), COSTMAP_OBSTACLE_COST_(100.0)
 {
-
     pnh_.param<bool>("enable_smooth_transition", enable_smooth_transition_, bool(false));
     pnh_.param<bool>("enable_force_lane_select", enable_force_lane_select_, bool(false));
     pnh_.param<bool>("enable_replan_when_moving", enable_replan_when_moving_, bool(true));
@@ -105,12 +104,14 @@ void LaneBypassPlanner::timerCallback(const ros::TimerEvent &e)
         min_cost_index = force_lane_change_num_;
         bypass_lane = v_sub_lane.at(force_lane_change_num_);
         v_costs.at(force_lane_change_num_) = 0.0;
+        best_lane_num_ = min_cost_index;
     }
     else if (force_center)
     {   
         min_cost_index = center_lane_num_;
         bypass_lane = v_sub_lane.at(center_lane_num_);
         v_costs.at(center_lane_num_) = 0.0;
+        best_lane_num_ = center_lane_num_;
     }
     else
     {
@@ -118,7 +119,6 @@ void LaneBypassPlanner::timerCallback(const ros::TimerEvent &e)
             min_cost_index = center_lane_num_;
             bypass_lane = v_sub_lane.at(center_lane_num_);
         }
-            
     }
     if (enable_smooth_transition_only_for_cost_calculation_and_vizualization_) {
         bypass_lane = v_sub_lane_orig.at(min_cost_index);

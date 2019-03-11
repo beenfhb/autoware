@@ -14,16 +14,6 @@
  * limitations under the License.
  */
 
-/*
-テスト項目
-０．すべてトピックが来ていて、ちゃんとpathがpubされるか
-１．強制変更でちゃんと変わるか確かめる
-２．generateSubLaneで指定した本数分の軌道ができているか確認
-３．smoothTransitionで、開始点が全て同じ位置か確認
-４．すべて障害物コストorすべて0コストで、コストがちゃんと計算されるか確認
-*/
-
-
 #include <gtest/gtest.h>
 #include <ros/connection_manager.h>
 #include <tf/transform_datatypes.h>
@@ -51,7 +41,7 @@ public:
   void publishTwist(double vx, double wz) {
     geometry_msgs::TwistStamped msg;
     msg.header.stamp = ros::Time::now();
-    msg.header.frame_id = "/base_link";
+    msg.header.frame_id = "base_link";
     msg.twist.linear.x = vx;
     msg.twist.angular.z = wz;
     pub_twist_.publish(msg);
@@ -59,7 +49,7 @@ public:
   void publishPose(double x, double y, double yaw) {
     geometry_msgs::PoseStamped msg;
     msg.header.stamp = ros::Time::now();
-    msg.header.frame_id = "/map";
+    msg.header.frame_id = "map";
     msg.pose.position.x = x;
     msg.pose.position.y = y;
     tf::Quaternion quaternion = tf::createQuaternionFromRPY(0, 0, yaw);
@@ -69,7 +59,7 @@ public:
   void publishCostmap(double all_cost) {
     nav_msgs::OccupancyGrid msg;
     msg.header.stamp = ros::Time::now();
-    msg.header.frame_id = "/velodyne";
+    msg.header.frame_id = "velodyne";
     msg.info.resolution = 1.0;
     msg.info.width = 10;
     msg.info.height = 10;
@@ -87,7 +77,7 @@ public:
   void publisLane(int size) {
     autoware_msgs::Lane lane;
     lane.header.stamp = ros::Time::now();
-    lane.header.frame_id = "/map";
+    lane.header.frame_id = "map";
     for (int idx = 0; idx < size; idx++) {
       static autoware_msgs::Waypoint wp;
       wp.gid = idx;
@@ -118,6 +108,11 @@ public:
 
   int getBestLaneNum() { return lbp_.best_lane_num_; }
   int getCenterLaneNum() { return lbp_.center_lane_num_; }
+  int getSubLaneNum() { return lbp_.sub_lane_num_odd_; }
   void enableForceLaneSelect() { lbp_.enable_force_lane_select_ = true; };
+  std::shared_ptr<nav_msgs::OccupancyGrid> getCurrentCostmap() {return lbp_.current_costmap_ptr_; };
+  std::shared_ptr<autoware_msgs::Lane> getCurrentLane() {return lbp_.current_lane_ptr_; };
+  std::shared_ptr<geometry_msgs::TwistStamped> getCurrentTwist() {return lbp_.current_selftwist_ptr_; };
+  std::shared_ptr<geometry_msgs::PoseStamped> getCurrentPose() {return lbp_.current_selfpose_ptr_; };
 };
 
