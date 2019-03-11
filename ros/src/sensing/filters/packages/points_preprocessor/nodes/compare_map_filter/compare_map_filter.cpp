@@ -61,11 +61,18 @@ private:
 
   pcl::KdTreeFLANN<pcl::PointXYZI> tree_;
 
+  std::string target_frame_;
+  std::string map_frame_;
+
   double distance_threshold_;
+  double min_clipping_length_;
+  double max_clipping_length_;
+  double min_clipping_width_;
+  double max_clipping_width_;
   double min_clipping_height_;
   double max_clipping_height_;
 
-  std::string map_frame_;
+  bool is_set_map_;
 
   void configCallback(const autoware_config_msgs::ConfigCompareMapFilter::ConstPtr& config_msg_ptr);
   void pointsMapCallback(const sensor_msgs::PointCloud2::ConstPtr& map_cloud_msg_ptr);
@@ -79,12 +86,24 @@ CompareMapFilter::CompareMapFilter()
   : nh_()
   , nh_private_("~")
   , tf_listener_(new tf::TransformListener)
-  , distance_threshold_(0.2)
-  , min_clipping_height_(-2.0)
-  , max_clipping_height_(0.5)
+  , target_frame_("/base_link")
   , map_frame_("/map")
+  , distance_threshold_(0.2)
+  , min_clipping_length_(-10.0)
+  , max_clipping_length_(100.0)
+  , min_clipping_width_(-20.0)
+  , max_clipping_width_(20.0)
+  , min_clipping_height_(-0.5)
+  , max_clipping_height_(2.0)
+  , is_set_map_(false)
 {
+  nh_private_.param("target_frame", target_frame_, target_frame_);
+
   nh_private_.param("distance_threshold", distance_threshold_, distance_threshold_);
+  nh_private_.param("min_clipping_length", min_clipping_length_, min_clipping_length_);
+  nh_private_.param("max_clipping_length", max_clipping_length_, max_clipping_length_);
+  nh_private_.param("min_clipping_width", min_clipping_width_, min_clipping_width_);
+  nh_private_.param("max_clipping_width", max_clipping_width_, max_clipping_width_);
   nh_private_.param("min_clipping_height", min_clipping_height_, min_clipping_height_);
   nh_private_.param("max_clipping_height", max_clipping_height_, max_clipping_height_);
 
@@ -98,6 +117,10 @@ CompareMapFilter::CompareMapFilter()
 void CompareMapFilter::configCallback(const autoware_config_msgs::ConfigCompareMapFilter::ConstPtr& config_msg_ptr)
 {
   distance_threshold_ = config_msg_ptr->distance_threshold;
+  min_clipping_length_ = config_msg_ptr->min_clipping_length;
+  max_clipping_length_ = config_msg_ptr->max_clipping_length;
+  min_clipping_width_ = config_msg_ptr->min_clipping_width;
+  max_clipping_width_ = config_msg_ptr->max_clipping_width;
   min_clipping_height_ = config_msg_ptr->min_clipping_height;
   max_clipping_height_ = config_msg_ptr->max_clipping_height;
 }
@@ -108,34 +131,66 @@ void CompareMapFilter::pointsMapCallback(const sensor_msgs::PointCloud2::ConstPt
   pcl::fromROSMsg(*map_cloud_msg_ptr, *map_cloud_ptr);
   tree_.setInputCloud(map_cloud_ptr);
 
-  map_frame_ = map_cloud_msg_ptr->header.frame_id;
+  map_frame_ = std::string(map_cloud_msg_ptr->header.frame_id);
+  is_set_map_ = true;
 }
 
 void CompareMapFilter::sensorPointsCallback(const sensor_msgs::PointCloud2::ConstPtr& sensorTF_cloud_msg_ptr)
 {
+  if(!is_set_map_) {
+    ROS_WARN("received sensor topic, but map topic yet.");
+  }
   const ros::Time sensor_time = sensorTF_cloud_msg_ptr->header.stamp;
   const std::string sensor_frame = sensorTF_cloud_msg_ptr->header.frame_id;
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr sensorTF_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
   pcl::fromROSMsg(*sensorTF_cloud_msg_ptr, *sensorTF_cloud_ptr);
 
-  pcl::PointCloud<pcl::PointXYZI>::Ptr sensorTF_clipping_height_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
-  sensorTF_clipping_height_cloud_ptr->header = sensorTF_cloud_ptr->header;
-  for (size_t i = 0; i < sensorTF_cloud_ptr->points.size(); ++i)
+  pcl::PointCloud<pcl::PointXYZI>::Ptr targetTF_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
+  if(target_frame_ != sensor_frame) {
+      try
+      {
+        tf_listener_->waitForTransform(target_frame_, sensor_frame, sensor_time, ros::Duration(3.0));
+        pcl_ros::transformPointCloud(target_frame_, sensor_time, *sensorTF_cloud_ptr, sensor_frame,
+                                     *targetTF_cloud_ptr, *tf_listener_);
+                                     std::cout << __LINE__ << std::endl;
+      }
+      catch (tf::TransformException& ex)
+      {
+        ROS_ERROR("Transform error: %s", ex.what());
+        return;
+      }
+  }
+  else {
+      targetTF_cloud_ptr = sensorTF_cloud_ptr;
+  }
+
+  pcl::PointCloud<pcl::PointXYZI>::Ptr targetTF_clipping_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
+  targetTF_clipping_cloud_ptr->header.frame_id = target_frame_;
+  for (size_t i = 0; i < targetTF_cloud_ptr->points.size(); ++i)
   {
-    if (sensorTF_cloud_ptr->points[i].z > min_clipping_height_ &&
-        sensorTF_cloud_ptr->points[i].z < max_clipping_height_)
+      if (targetTF_cloud_ptr->points[i].x > min_clipping_length_ &&
+          targetTF_cloud_ptr->points[i].x < max_clipping_length_ &&
+          targetTF_cloud_ptr->points[i].y > min_clipping_width_ &&
+          targetTF_cloud_ptr->points[i].y < max_clipping_width_ &&
+          targetTF_cloud_ptr->points[i].z > min_clipping_height_ &&
+          targetTF_cloud_ptr->points[i].z < max_clipping_height_)
     {
-      sensorTF_clipping_height_cloud_ptr->points.push_back(sensorTF_cloud_ptr->points[i]);
+      targetTF_clipping_cloud_ptr->points.push_back(targetTF_cloud_ptr->points[i]);
     }
+  }
+
+  if(targetTF_clipping_cloud_ptr->points.empty()) {
+    return;
   }
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr mapTF_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
   try
   {
-    tf_listener_->waitForTransform(map_frame_, sensor_frame, sensor_time, ros::Duration(3.0));
-    pcl_ros::transformPointCloud(map_frame_, sensor_time, *sensorTF_clipping_height_cloud_ptr, sensor_frame,
+    tf_listener_->waitForTransform(map_frame_, target_frame_, sensor_time, ros::Duration(3.0));
+    pcl_ros::transformPointCloud(map_frame_, sensor_time, *targetTF_clipping_cloud_ptr, target_frame_,
                                  *mapTF_cloud_ptr, *tf_listener_);
+                                 std::cout << __LINE__ << std::endl;
   }
   catch (tf::TransformException& ex)
   {

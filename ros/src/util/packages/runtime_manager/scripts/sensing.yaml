@@ -43,7 +43,7 @@ subs :
         probe:
         run  : roslaunch autoware_pointgrey_drivers ladybug.launch
         param: ladybug_params
-      
+
       - name : PointGrey Spinnaker
         desc : PointGrey Spinnaker desc sample
         probe:
@@ -244,30 +244,30 @@ subs :
         gui  :
           dialog_height : 400
           flags : [ SIGTERM, kill_children ]
-          lidar_address : 
+          lidar_address :
              user_category : 'Address'
              flags: [ expand ]
-          pc_address  : 
+          pc_address  :
              flags: [ expand, nl ]
-          lidar_frame_name  : 
+          lidar_frame_name  :
              user_category : 'PointCloud'
              flags: [ expand ]
-          lidar_topic_name  : 
+          lidar_topic_name  :
              flags: [ expand, nl ]
-          imu_frame_name  : 
+          imu_frame_name  :
              user_category : 'IMU'
              flags: [ expand ]
-          imu_topic_name  : 
+          imu_topic_name  :
              flags: [ expand, nl ]
           operation_mode :
              user_category : 'Advanced'
           pulse_mode : { prop: 0 }
           window_rejection : { flags: [ nl ] }
-          mode_xyzir : 
+          mode_xyzir :
              prop  : 0
              user_category : 'Misc.'
           replay : { prop  : 0 }
-          
+
   - name : Other Sensors
     desc : Other Sensors desc sample
     subs :
@@ -354,13 +354,12 @@ cmds:
       param: compare_map_filter
       gui  :
         dialog_height : 400
+        dialog_width : 500
         input_map_topic :
           flags : [ nl ]
-        input_point_topic :
-          flags : [ nl ]
-        output_match_topic :
-          flags : [ nl ]
         output_unmatch_topic :
+          flags : [ nl ]
+        target_frame :
           flags : [ nl ]
 
   - name : Fusion
@@ -490,7 +489,7 @@ params :
         dash : ''
         delim: ':='
         must : true
-        
+
   - name  : ouster_ros
     vars  :
     - name : lidar_address
@@ -1385,7 +1384,8 @@ params :
     - name  : input_map_topic
       desc  : Input Map PointCloud Topic name, i.e. /points_map
       label : input_map_topic
-      kind  : str
+      kind  : topic
+      topic_type : sensor_msgs/PointCloud2
       v     : /points_map
       cmd_param :
         dash        : ''
@@ -1393,7 +1393,8 @@ params :
     - name  : output_match_topic
       desc  : Output PointCloud Topic name
       label : output_match_topic
-      kind  : str
+      kind  : topic
+      topic_type : sensor_msgs/PointCloud2
       v     : /points_ground
       cmd_param :
         dash        : ''
@@ -1401,8 +1402,17 @@ params :
     - name  : output_unmatch_topic
       desc  : Output PointCloud Topic name
       label : output_unmatch_topic
-      kind  : str
+      kind  : topic
+      topic_type : sensor_msgs/PointCloud2
       v     : /points_no_ground
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name  : target_frame
+      desc  : target_frame
+      label : target_frame
+      kind  : str
+      v     : /base_link
       cmd_param :
         dash        : ''
         delim       : ':='
@@ -1412,6 +1422,42 @@ params :
       min   : 0.01
       max   : 100
       v     : 0.2
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name  : min_clipping_length
+      desc  : min_clipping_length
+      label : min_clipping_length
+      min   : -100
+      max   : 100
+      v     : -10.0
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name  : max_clipping_length
+      desc  : max_clipping_length
+      label : max_clipping_length
+      min   : -100
+      max   : 100
+      v     : 100.0
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name  : min_clipping_width
+      desc  : min_clipping_width
+      label : min_clipping_width
+      min   : -100
+      max   : 100
+      v     : -20.0
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name  : max_clipping_width
+      desc  : max_clipping_width
+      label : max_clipping_width
+      min   : -100
+      max   : 100
+      v     : 20.0
       cmd_param :
         dash        : ''
         delim       : ':='

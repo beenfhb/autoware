@@ -4,9 +4,15 @@
 	<arg name="output_match_topic" default="/match_points" />
 	<arg name="output_unmatch_topic" default="/unmatch_points" />
 
+	<arg name="target_frame" default="/base_link" />
+
 	<arg name="distance_threshold" default="0.2" />
-	<arg name="min_clipping_height" default="-2.0" />
-	<arg name="max_clipping_height" default="0.5" />
+	<arg name="min_clipping_lenght" default="-10.0" />
+	<arg name="max_clipping_lenght" default="100.0" />
+	<arg name="min_clipping_width" default="-20.0" />
+	<arg name="max_clipping_width" default="20.0" />
+	<arg name="min_clipping_height" default="-0.5" />
+	<arg name="max_clipping_height" default="2.0" />
 
 	<node pkg="points_preprocessor" type="compare_map_filter" name="compare_map_filter">
 		<remap from="/points_raw" to="$(arg input_point_topic)"/>
@@ -14,7 +20,13 @@
 		<remap from="/match_points" to="$(arg output_match_topic)"/>
 		<remap from="/unmatch_points" to="$(arg output_unmatch_topic)"/>
 
+		<param name="target_frame" value="$(arg target_frame)" />
+
 		<param name="distance_threshold" value="$(arg distance_threshold)" />
+		<param name="min_clipping_lenght" value="$(arg min_clipping_lenght)" />
+		<param name="max_clipping_lenght" value="$(arg max_clipping_lenght)" />
+		<param name="min_clipping_width" value="$(arg min_clipping_width)" />
+		<param name="max_clipping_width" value="$(arg max_clipping_width)" />
 		<param name="min_clipping_height" value="$(arg min_clipping_height)" />
 		<param name="max_clipping_height" value="$(arg max_clipping_height)" />
 	</node>
