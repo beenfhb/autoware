@@ -62,4 +62,6 @@ docker run -it --rm \
     --env="QT_X11_NO_MITSHM=1" \
     -u autoware \
     --net=host \
-$DOCKER_HUB_REPO:$TAG
+$DOCKER_HUB_REPO:$TAG \
+bash
+#/bin/bash -c 'roslaunch carla_autoware_bridge carla_autoware_bridge.launch'
