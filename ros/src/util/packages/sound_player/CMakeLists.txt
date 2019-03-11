@@ -5,13 +5,14 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  visualization_msgs
   sound_play
   autoware_build_flags
   autoware_msgs
 )
 
 catkin_package(
-  CATKIN_DEPENDS rospy std_msgs sound_play autoware_msgs
+  CATKIN_DEPENDS rospy std_msgs visualization_msgs sound_play autoware_msgs
 
 )
 
