@@ -66,6 +66,7 @@ class LaneBypassPlanner
     bool enable_force_lane_select_;
     bool enable_replan_when_moving_;
     bool enable_smooth_transition_only_for_cost_calculation_and_vizualization_;
+    bool prohibit_jump_to_opposite_;
     int sub_lane_num_odd_;
     int cost_check_num_max_;
     double sub_lane_width_;

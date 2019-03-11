@@ -44,3 +44,6 @@ cost_weight_stay_there: 0.1
 # This is to prevent from selecting the center lane when the obstacle is too close to the vehicle to visible.
 # Note: This parameter should be cared in the cost map, such as potential field.
 cost_weight_stay_there_while: 5.0
+
+# Prohibit selecting the right (left) side lane when selecting the left (right) side lane.
+prohibit_jump_to_opposite: true
