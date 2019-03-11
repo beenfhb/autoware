@@ -20,6 +20,8 @@
 #include <pcl/point_types.h>
 
 #include <g2o/types/sba/types_sba.h>
+#include <g2o/types/slam3d/se3quat.h>
+#include <g2o/types/sim3/sim3.h>
 
 #include "CameraPinholeParams.h"
 #include "utilities.h"
@@ -202,6 +204,8 @@ public:
 	const CameraPinholeParams &cameraParams);
 
 	g2o::SBACam forG2O () const;
+	g2o::Sim3 toSim3() const;
+	g2o::SE3Quat toSE3Quat() const;
 
 	Plane3 projectionPlane() const;
 

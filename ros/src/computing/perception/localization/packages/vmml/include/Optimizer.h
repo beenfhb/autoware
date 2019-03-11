@@ -21,6 +21,7 @@
 class Frame;
 
 
+/*
 class VertexCameraMono : public g2o::VertexSim3Expmap
 {
 public:
@@ -50,6 +51,7 @@ public:
 	static Vector3d transformWorldPointToFrame(const g2o::SE3Quat &framePose, const Vector3d &pointInWorld);
 	bool isDepthPositive() const;
 };
+*/
 
 
 void bundle_adjustment (VMap *orgMap);

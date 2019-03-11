@@ -180,7 +180,7 @@ g2o::SBACam
 BaseFrame::forG2O () const
 {
 	// XXX: Verify this
-	g2o::SBACam mycam(orientation(), position());
+	g2o::SBACam mycam(orientation(), -orientation().toRotationMatrix()*position());
 	mycam.setKcam(cameraParam.fx, cameraParam.fy, cameraParam.cx, cameraParam.cy, 0);
 
 	return mycam;
@@ -368,6 +368,9 @@ BaseFrame::extractKeypointsAndFeatures (const cv::Mat &mask, std::vector<cv::Key
 }
 
 
+/*
+ * XXX: Unfinished
+ */
 void
 BaseFrame::extractKeypointsAndFeatures (const cv::Mat &mask, std::vector<uint32_t> &keypointIds) const
 {
@@ -378,4 +381,18 @@ BaseFrame::extractKeypointsAndFeatures (const cv::Mat &mask, std::vector<uint32_
 			continue;
 		keypointIds.push_back(static_cast<uint32_t>(i));
 	}
+}
+
+
+g2o::Sim3
+BaseFrame::toSim3() const
+{
+//	g2o::
+}
+
+
+g2o::SE3Quat
+BaseFrame::toSE3Quat() const
+{
+	return g2o::SE3Quat(orientation(), -(orientation().toRotationMatrix())*position());
 }

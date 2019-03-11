@@ -88,11 +88,17 @@ protected:
 };
 
 
+/*
 VertexCameraMono::VertexCameraMono(KeyFrame &_f):
 	kf(_f),
 	g2o::VertexSim3Expmap()
 {
 	// Stub. set estimate here
+//	setEstimate()
+	_focal_length[0] = _f.getCameraParameters().fx;
+	_focal_length[1] = _f.getCameraParameters().fy;
+	_principle_point[0] = _f.getCameraParameters().cx;
+	_principle_point[1] = _f.getCameraParameters().cy;
 }
 
 
@@ -107,9 +113,10 @@ VertexMapPoint::VertexMapPoint(MapPoint &_p) :
 EdgeProjectMonocular::EdgeProjectMonocular():
 	g2o::EdgeSim3ProjectXYZ()
 {}
+*/
 
 
-Vector3d EdgeProjectMonocular::transformWorldPointToFrame(const g2o::SE3Quat &framePose, const Vector3d &pointInWorld)
+Vector3d transformWorldPointToFrame(const g2o::SE3Quat &framePose, const Vector3d &pointInWorld)
 {
 	Matrix4d ex = Matrix4d::Identity();
 	ex.block<3,3>(0,0) = framePose.rotation().toRotationMatrix().transpose();
@@ -117,6 +124,8 @@ Vector3d EdgeProjectMonocular::transformWorldPointToFrame(const g2o::SE3Quat &fr
 	return (ex * pointInWorld.homogeneous()).hnormalized();
 }
 
+
+/*
 bool EdgeProjectMonocular::isDepthPositive() const
 {
 	const g2o::VertexSBAPointXYZ &point = *static_cast<const g2o::VertexSBAPointXYZ*>(_vertices[0]);
@@ -127,6 +136,7 @@ bool EdgeProjectMonocular::isDepthPositive() const
 
 
 G2O_REGISTER_TYPE(EDGE_PROJECT_MONOCULAR, EdgeProjectMonocular);
+*/
 
 
 
@@ -604,8 +614,8 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 	int i = 0;
 	for (auto &kf: neighbourKfs) {
 		auto Kf = origMap->keyframe(kf);
-		auto localKfVertex = new g2o::VertexCam;
-		localKfVertex->setEstimate(Kf->forG2O());
+		auto localKfVertex = new g2o::VertexSE3Expmap;
+		localKfVertex->setEstimate(Kf->toSE3Quat());
 		localKfVertex->setId(vId);
 		localKfVertex->setFixed(vId==1);
 		optimizer.addVertex(localKfVertex);
@@ -620,8 +630,8 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 	i = 0;
 	for (auto &kf: fixedKfs) {
 		auto Kf = origMap->keyframe(kf);
-		auto fixedKfVertex = new g2o::VertexCam;
-		fixedKfVertex->setEstimate(Kf->forG2O());
+		auto fixedKfVertex = new g2o::VertexSE3Expmap;
+		fixedKfVertex->setEstimate(Kf->toSE3Quat());
 		fixedKfVertex->setId(vId);
 		fixedKfVertex->setFixed(true);
 		optimizer.addVertex(fixedKfVertex);
@@ -636,11 +646,17 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 	for (auto &mp: relatedMps)
 		numEdges += origMap->countRelatedKeyFrames(mp);
 
+	// Camera Parameter
+	auto Camera0 = origMap->getCameraParameter(0);
+	auto* myCamera = new g2o::CameraParameters(Camera0.f(), Camera0.principalPoints(), 0);
+	myCamera->setId(0);
+	optimizer.addParameter(myCamera);
+
 	const double thHuberDelta = sqrt(5.991);
 
 	// MapPoint Vertices
 //	vector<g2o::VertexSBAPointXYZ> relatedMpVertices(relatedMps.size());
-	vector<EdgeProjectMonocular*> edgesMpKf(numEdges);
+	vector<g2o::EdgeProjectXYZ2UV*> edgesMpKf(numEdges);
 	i = 0;
 	int j = 0;
 	for (auto &mp: relatedMps) {
@@ -658,7 +674,8 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 		// Create Edges
 		for (auto &kf: origMap->getRelatedKeyFrames(mp)) {
 
-			auto *edge = new EdgeProjectMonocular;
+			auto *edge = new g2o::EdgeProjectXYZ2UV;
+			edge->setParameterId(0, 0);
 			edgesMpKf[j] = edge;
 
 			auto kfTarget = origMap->keyframe(kf);
@@ -674,9 +691,6 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 			edge->setRobustKernel(robustKernel);
 			robustKernel->setDelta(thHuberDelta);
 
-			auto v0 = (const g2o::OptimizableGraph::Vertex*)edge->vertices()[0];
-			auto g = v0->graph();
-
 			optimizer.addEdge(edge);
 			j++;
 		}
@@ -691,8 +705,9 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 	// Check inliers
 	for (auto &edge: edgesMpKf) {
 		double c = edge->chi2();
-		bool b = edge->isDepthPositive();
-		if (c > 5.991 or !b) {
+		auto dp = static_cast<g2o::VertexSE3Expmap*>(edge->vertex(1))->estimate().map(
+			static_cast<g2o::VertexSBAPointXYZ*>(edge->vertex(0))->estimate());
+		if (c > 5.991 or !(dp.z()>=0.0)) {
 			edge->setLevel(1);
 		}
 
@@ -707,7 +722,7 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 	for (auto &kfl: neighbourKfs) {
 		auto curKeyframe = origMap->keyframe(kfl);
 		auto kfVtxId = vertexKfMapInv.at(kfl);
-		auto vKfSE3 = static_cast<g2o::VertexCam*> (optimizer.vertex(kfVtxId));
+		auto vKfSE3 = static_cast<g2o::VertexSE3Expmap*> (optimizer.vertex(kfVtxId));
 		g2o::SE3Quat kfPoseSE3 = vKfSE3->estimate();
 		fromSE3Quat(kfPoseSE3, *curKeyframe);
 	}

@@ -56,6 +56,9 @@ struct CameraPinholeParams
 
 	inline double f() const
 	{ return (fx+fy)/2; }
+
+	inline Eigen::Vector2d principalPoints() const
+	{ return Eigen::Vector2d(cx, cy); }
 };
 
 
