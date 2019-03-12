@@ -57,9 +57,9 @@ std::vector<BusStop> bus_stop_list = {
 };
 
 std::vector<PlaySoundTiming> play_sound_timing_list = {
-    {"A", "B", "TrunRight", makePoint(90185.6875, 94756.1875, 139.9627), false}, //Uturn
-    {"A", "C", "TrunRight", makePoint(90185.6875, 94756.1875, 139.9627), false}, //Uturn
-    {"A", "D", "TrunRight", makePoint(90185.6875, 94756.1875, 139.9627), false}, //Uturn
+    {"A", "B", "TrunRight", makePoint(90187.5234, 94757.0156, 139.9484), false}, //Uturn
+    {"A", "C", "TrunRight", makePoint(90187.5234, 94757.0156, 139.9484), false}, //Uturn
+    {"A", "D", "TrunRight", makePoint(90187.5234, 94757.0156, 139.9484), false}, //Uturn
     {"A", "B", "TrunRight", makePoint(90308.2266, 94866.7656, 144.8229), false}, //Uturn
     {"A", "B", "StoppingSoon", makePoint(90319.2969, 94866.5695, 144.8337), false},
     {"C", "B", "StoppingSoon", makePoint(90319.2969, 94866.5695, 144.8337), false},
