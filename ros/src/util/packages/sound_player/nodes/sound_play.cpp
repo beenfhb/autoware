@@ -83,8 +83,8 @@ std::vector<PlaySoundTiming> play_sound_timing_list = {
     {"D", "A", "StoppingSoon", makePoint(90194.9531, 94767.3047, 140.0714), false},
     {"C", "A", "TrunLeft", makePoint(90438.0859, 94868.2031, 144.2884), false},
     {"D", "A", "TrunLeft", makePoint(90438.0859, 94868.2031, 144.2884), false},
-    {"C", "B", "TrunLeft", makePoint(90319.8214, 94867.2045, 144.8254), false},
-    {"D", "B", "TrunLeft", makePoint(90319.8214, 94867.2045, 144.8254), false},
+    {"C", "B", "TrunLeft", makePoint(90438.0859, 94868.2031, 144.2884), false},
+    {"D", "B", "TrunLeft", makePoint(90438.0859, 94868.2031, 144.2884), false},
 };
 
 std::map<std::string, std::string> state_sound_list = {
