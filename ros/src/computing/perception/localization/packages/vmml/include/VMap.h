@@ -159,7 +159,7 @@ public:
 	inline std::set<kfid> getRelatedKeyFrames (const mpid &i) const
 	{ return pointAppearances.at(i); }
 
-	inline kpid getKeyPointId (const kfid k, const mpid p)
+	inline kpid getKeyPointId (const kfid k, const mpid p) const
 	{ return framePoints.at(k).at(p); }
 
 	inline mpid getMapPointByKeypoint (const kfid k, const kpid p)

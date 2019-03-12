@@ -53,6 +53,8 @@ public:
 	void setPose (const Eigen::Vector3d &p, const Eigen::Quaterniond &q)
 	{ mPose = Pose::from_Pos_Quat(p, q); }
 
+	void setPose (const g2o::SE3Quat &pq);
+
 	void setPose (const Pose &p)
 	{ mPose = p; }
 

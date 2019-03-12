@@ -81,6 +81,9 @@ public:
 	inline std::vector<cv::KeyPoint> getKeypoints() const
 	{ return fKeypoints; }
 
+	const VMap& getParent() const
+	{ return *parentMap; }
+
 	/*static void match (const KeyFrame &k1, const KeyFrame &k2,
 		cv::Ptr<cv::DescriptorMatcher> matcher,
 		std::vector<FeaturePair> &featurePairs

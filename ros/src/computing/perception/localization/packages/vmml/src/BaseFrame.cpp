@@ -31,6 +31,15 @@ BaseFrame::~BaseFrame()
 }
 
 
+void
+BaseFrame::setPose (const g2o::SE3Quat &pq)
+{
+	auto Q = pq.rotation().inverse();
+	auto P = -(Q * pq.translation());
+	setPose(P, Q);
+}
+
+
 Eigen::Vector2d
 BaseFrame::project (const Eigen::Vector3d &pt3) const
 {
@@ -394,5 +403,6 @@ BaseFrame::toSim3() const
 g2o::SE3Quat
 BaseFrame::toSE3Quat() const
 {
-	return g2o::SE3Quat(orientation(), -(orientation().toRotationMatrix())*position());
+	auto extMat = createExternalParamMatrix4(mPose);
+	return g2o::SE3Quat(extMat.block<3,3>(0,0), extMat.block<3,1>(0,3));
 }
