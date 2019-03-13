@@ -88,7 +88,7 @@ void PurePursuitNode::run()
   {
     ros::spinOnce();
 
-    if (!is_pose_set_ || !is_config_set_)
+    if (!is_pose_set_ || !is_waypoint_set_ || !is_velocity_set_ || !is_config_set_)
     {
       ROS_WARN("Necessary topics are not subscribed yet ... ");
       loop_rate.sleep();
