@@ -240,6 +240,40 @@ const
 }
 
 
+TQuaternion TQuaternion::operator * (const double &mul) const
+{
+	auto euler = quaternionToRPY(*this);
+	euler *= mul;
+
+	return fromRPY(euler.x(), euler.y(), euler.z());
+}
+
+
+TQuaternion TQuaternion::operator / (const double &div) const
+{
+	auto euler = quaternionToRPY(*this);
+	euler /= div;
+
+	return fromRPY(euler.x(), euler.y(), euler.z());
+}
+
+
+TTransform TTransform::operator / (const double &div) const
+{
+	auto qn = orientation() / div;
+	auto pn = position() / div;
+	return from_Pos_Quat(pn, qn);
+}
+
+
+TTransform TTransform::operator * (const double &mul) const
+{
+	auto qn = orientation() * mul;
+	auto pn = position() * mul;
+	return from_Pos_Quat(pn, qn);
+}
+
+
 
 using Eigen::VectorXd;
 

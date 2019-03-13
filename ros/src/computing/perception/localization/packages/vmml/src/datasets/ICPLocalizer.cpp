@@ -8,7 +8,7 @@
 #include <iostream>
 
 #include <pcl/io/pcd_io.h>
-#include "src/datasets/ICPLocalizer.h"
+#include "ICPLocalizer.h"
 
 using namespace std;
 using namespace Eigen;

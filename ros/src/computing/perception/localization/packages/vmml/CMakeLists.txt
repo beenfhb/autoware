@@ -120,7 +120,7 @@ add_library(
 		src/datasets/MeidaiLocalizerNDT.cpp
 		src/datasets/LidarScanBag.cpp
 		src/datasets/NdtLocalizer.cpp
-		src/datasets/ICPLocalizer.cpp
+		src/datasets/PclNdtLocalizer.cpp
 )
 
 

@@ -227,3 +227,5 @@ Trajectory::dump(const std::string &filename) const
 
 	return true;
 }
+
+

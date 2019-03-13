@@ -211,6 +211,8 @@ public:
 	inline double yaw() const
 	{ return quaternionToRPY(*this).z(); }
 
+	TQuaternion operator * (const double &mul) const;
+	TQuaternion operator / (const double &div) const;
 };
 
 
@@ -308,6 +310,20 @@ struct TTransform : public Eigen::Affine3d
 
 	TTransform rotate(const double roll, const double pitch=0, const double yaw=0) const;
 
+	// Used for `transformation per time unit' and multiplication of velocity against time
+	TTransform operator * (const double &div) const;
+	TTransform operator / (const double &div) const;
+
+	inline const TTransform operator * (const TTransform& other) const
+	{ return Eigen::Affine3d::operator*(other); }
+
+	inline const Eigen::Vector3d operator * (const Eigen::Vector3d &V) const
+	{ return Eigen::Affine3d::operator*(V); }
+
+/*
+	TTransform operator / (const tduration &td) const
+	{ return *this / toSeconds(td); }
+*/
 
 	BOOST_SERIALIZATION_SPLIT_MEMBER()
 };

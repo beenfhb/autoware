@@ -79,6 +79,8 @@ struct PoseStamped : public Pose
 
 
 
+
+
 class Trajectory : public std::vector<PoseStamped>
 {
 public:

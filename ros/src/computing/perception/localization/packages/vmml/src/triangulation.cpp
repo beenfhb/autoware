@@ -11,6 +11,7 @@
  */
 
 #include "triangulation.h"
+#include <opencv2/core/eigen.hpp>
 
 
 using namespace Eigen;
@@ -125,5 +126,20 @@ bool TriangulateDLT(const Matrix3x4d& projMat1,
 	JacobiSVD<Matrix4d,false> svd(design_matrix, Eigen::ComputeFullV);
 	triangulated_point = svd.matrixV().col(3);
 	triangulated_point = triangulated_point / (triangulated_point[3]);
+	return true;
+}
+
+
+bool TriangulateCV(
+		const Matrix3x4d& pose1,
+		const Matrix3x4d& pose2,
+		const Eigen::Vector2d& point1,
+		const Eigen::Vector2d& point2,
+		Eigen::Vector4d &triangulated_point)
+{
+	cv::Mat posecv1, posecv2;
+	cv::eigen2cv(pose1, posecv1);
+	cv::eigen2cv(pose2, posecv2);
+
 	return true;
 }
