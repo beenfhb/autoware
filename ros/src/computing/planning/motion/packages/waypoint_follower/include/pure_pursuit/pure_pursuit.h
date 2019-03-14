@@ -36,15 +36,15 @@ public:
   ~PurePursuit();
 
   // for setting data
-  void setLookaheadDistance(const double &ld)
+  void setLookaheadDistance(const double& ld)
   {
     lookahead_distance_ = ld;
   }
-  void setMinimumLookaheadDistance(const double &minld)
+  void setMinimumLookaheadDistance(const double& minld)
   {
     minimum_lookahead_distance_ = minld;
   }
-  void setCurrentVelocity(const double &cur_vel)
+  void setCurrentVelocity(const double& cur_vel)
   {
     current_linear_velocity_ = cur_vel;
   }
@@ -52,11 +52,11 @@ public:
   {
     current_waypoints_ = wps;
   }
-  void setCurrentPose(const geometry_msgs::PoseStampedConstPtr &msg)
+  void setCurrentPose(const geometry_msgs::PoseStampedConstPtr& msg)
   {
     current_pose_ = msg->pose;
   }
-  void setLinearInterpolationParameter(const bool &param)
+  void setLinearInterpolationParameter(const bool& param)
   {
     is_linear_interpolation_ = param;
   }
@@ -87,7 +87,7 @@ public:
     return minimum_lookahead_distance_;
   }
   // processing
-  bool canGetCurvature(double *output_kappa);
+  bool canGetCurvature(double* output_kappa);
 
 private:
   // constant
@@ -106,7 +106,7 @@ private:
 
   // functions
   double calcCurvature(geometry_msgs::Point target) const;
-  bool interpolateNextTarget(int next_waypoint, geometry_msgs::Point *next_target) const;
+  bool interpolateNextTarget(int next_waypoint, geometry_msgs::Point* next_target) const;
   void getNextWaypoint();
 };
 }  // waypoint_follower

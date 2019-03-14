@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "pure_pursuit_core_test.h"
 
-// ROS Includes
-#include <ros/ros.h>
-
-// User defined includes
-#include <pure_pursuit/pure_pursuit_core.h>
-
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "pure_pursuit");
-  waypoint_follower::PurePursuitNode ppn;
-  ppn.run();
-
-  return 0;
+  testing::InitGoogleTest(&argc, argv);
+  ros::init(argc, argv, "PurePursuitTest");
+  return RUN_ALL_TESTS();
 }

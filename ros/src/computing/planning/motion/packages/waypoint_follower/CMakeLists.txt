@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
         geometry_msgs
         pcl_ros
         pcl_conversions
+        rostest
+        roslaunch
         sensor_msgs
         autoware_msgs
         autoware_config_msgs
@@ -117,4 +119,12 @@ if (CATKIN_ENABLE_TESTING)
       ${catkin_EXPORTED_TARGETS})
     target_link_libraries(test-twist_gate
       ${catkin_LIBRARIES})
+
+    find_package(rostest REQUIRED)
+    add_rostest_gtest(pure_pursuit_test
+      test/pure_pursuit/pure_pursuit.test
+      test/pure_pursuit/src/pure_pursuit_test.cpp)
+      target_link_libraries(pure_pursuit_test
+      ${catkin_LIBRARIES}
+    )
 endif ()
