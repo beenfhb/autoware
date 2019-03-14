@@ -22,7 +22,7 @@ void CrossWalkManager::addRelevantCrossWalkIDs(const int &id)
 }
 
 void CrossWalkManager::findRelevantCrossWalks(const int closest_waypoint, const autoware_msgs::Lane &lane,
-                                              const int search_distance)
+                                              const int search_distance, const double search_skip_distance)
 {
     relevant_crosswalk_ids_.clear();
     if (closest_waypoint < 0)
@@ -36,10 +36,23 @@ void CrossWalkManager::findRelevantCrossWalks(const int closest_waypoint, const 
     }
 
     // Find nearest cross walk
+    double trajectory_length = 0;
+    geometry_msgs::Point prev_waypoint;
     for (int num = closest_waypoint; num < closest_waypoint + search_distance && num < (int)lane.waypoints.size(); num++)
     {
         geometry_msgs::Point waypoint = lane.waypoints.at(num).pose.pose.position;
         waypoint.z = 0.0; // ignore Z axis
+
+        if( num != closest_waypoint )
+        {
+          trajectory_length += sqrt(calcSquareOfLength(prev_waypoint, waypoint));
+        }
+        if( trajectory_length < search_skip_distance)
+        {
+          prev_waypoint = waypoint;
+          continue;
+        }
+
         for (auto &pair : crosswalks_)
         {
             CrossWalkHandler &crosswalk = pair.second;
@@ -56,6 +69,7 @@ void CrossWalkManager::findRelevantCrossWalks(const int closest_waypoint, const 
                 }
             }
         }
+        prev_waypoint = waypoint;
     }
 }
 

@@ -25,7 +25,7 @@ private:
 
 public:
     CrossWalkManager();
-    void findRelevantCrossWalks(const int closest_waypoint, const autoware_msgs::Lane &lane, const int search_distance);
+    void findRelevantCrossWalks(const int closest_waypoint, const autoware_msgs::Lane &lane, const int search_distance, const double search_skip_distance);
     std::vector<CrossWalkHandler> getRelevantCrossWalks(const int waypoint_id) const;
     std::vector<CrossWalkHandler> getRelevantCrossWalks() const;
     void setMultipleDetectionFlag(const bool _multiple_flag)

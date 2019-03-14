@@ -8,7 +8,7 @@
   <arg name="remove_points_upto" default="2.3" />
   <arg name="enable_multiple_crosswalk_detection" default="true" />
   <arg name="enablePlannerDynamicSwitch" default="false" />
-
+  <arg name="vehicle_length" default="2.0" />
 
   <group unless="$(arg use_autoware_map)">
     <node pkg="astar_planner" type="velocity_set" name="velocity_set" output="screen">
@@ -30,6 +30,7 @@
       <param name="decelerate_vel_min" value="$(arg decelerate_vel_min)" />
       <param name="remove_points_upto" value="$(arg remove_points_upto)" />
       <param name="enablePlannerDynamicSwitch" value="$(arg enablePlannerDynamicSwitch)" />
+      <param name="vehicle_length" value="$(arg vehicle_length)" />
     </node>
   </group>
 

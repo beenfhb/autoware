@@ -513,6 +513,10 @@ subs :
           enable_multiple_crosswalk_detection : { border : 4, flags : [ all ] }
           dialog_width  : 800
           dialog_height : 450
+          vehicle_length:
+            depend : use_autoware_map
+            depend_bool : 'lambda v : v == 1'
+
     - name : lattice_planner
       desc : lattice_planner desc sample
       subs :
@@ -1672,6 +1676,15 @@ params :
       min   : 0
       max   : 50
       v     : 5.0
+    - name  : vehicle_length
+      desc  : length of vehicle from base_link to head. (crosswalk will be ignored when head crosses virtual stopline)
+      label : vehicle length (m)
+      min   : 0
+      max   : 10
+      v     : 2.0
+      cmd_param:
+        dash     : ''
+        delim    : ':='
     - name  : detection_range
       desc  : detection_range desc sample
       label : Detection Range (m)
