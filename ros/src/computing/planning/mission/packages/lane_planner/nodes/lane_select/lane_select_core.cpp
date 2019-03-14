@@ -818,8 +818,13 @@ int32_t getClosestWaypointNumber(const autoware_msgs::Lane &current_lane, const 
     }
   }
 
-  if (idx_vec.empty())
+  if (idx_vec.empty()) {
+    if (static_cast<uint32_t>(previous_number+1) == current_lane.waypoints.size()
+      && distance_threshold > getTwoDimensionalDistance(current_lane.waypoints.at(previous_number).pose.pose.position, current_pose.position)) {
+          return previous_number;
+    }
     return -1;
+  }
 
   std::vector<double> dist_vec;
   dist_vec.reserve(idx_vec.size());
