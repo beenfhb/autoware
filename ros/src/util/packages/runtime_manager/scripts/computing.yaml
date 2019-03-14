@@ -1681,7 +1681,7 @@ params :
       label : vehicle length (m)
       min   : 0
       max   : 10
-      v     : 2.0
+      v     : 5.0
       cmd_param:
         dash     : ''
         delim    : ':='
