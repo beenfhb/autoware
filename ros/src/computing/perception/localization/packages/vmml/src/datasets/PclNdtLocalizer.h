@@ -27,7 +27,7 @@ public:
 
 	void putEstimation (const Pose &pEst);
 
-	Pose localize (pcl::PointCloud<pcl::PointXYZ>::ConstPtr scan, ptime curTime=getCurrentTime());
+	Pose localize (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &scan, ptime curTime=getCurrentTime());
 
 	struct Parameters
 	{

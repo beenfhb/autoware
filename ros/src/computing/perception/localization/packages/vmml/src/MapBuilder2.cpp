@@ -203,6 +203,10 @@ MapBuilder2::build ()
 
 	thread ba([this] {
 				cout << "Bundling...";
+
+// Currently, global bundle adjustment is disabled so that map can be finished faster.
+// Global BA may be run from vmml_cli separately after loading the map
+
 //				bundle_adjustment(cMap);
 //				bundle_adjustment_2(cMap);
 				cout << "BA Done\n";

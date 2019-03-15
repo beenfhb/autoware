@@ -5,9 +5,13 @@
  *      Author: sujiwo
  */
 
+#include <Eigen/Core>
+#include <bitset>
+#include <opencv2/calib3d.hpp>
+#include <opencv2/core/eigen.hpp>
+
 #include "KeyFrame.h"
 #include <exception>
-#include <bitset>
 #include "Frame.h"
 //#include "MapBuilder.h"
 #include "utilities.h"
@@ -80,22 +84,6 @@ KeyFrame::~KeyFrame()
 }
 
 
-/*void KeyFrame::match(const KeyFrame &k1, const KeyFrame &k2,
-	cv::Ptr<cv::DescriptorMatcher> matcher,
-	vector<FeaturePair> &featurePairs)
-{
-	vector<cv::DMatch> k12matches;
-	matcher->match(k2.fDescriptors, k1.fDescriptors, k12matches);
-
-	for (auto &m: k12matches) {
-		if (m.trainIdx < k1.fKeypoints.size() and m.queryIdx < k2.fKeypoints.size()) {
-			FeaturePair fp = {m.trainIdx, k1.fKeypoints[m.trainIdx].pt, m.queryIdx, k2.fKeypoints[m.queryIdx].pt};
-			featurePairs.push_back (fp);
-		}
-	}
-}*/
-
-
 Eigen::Vector2f
 convertToEigen (const cv::Point2f &P)
 {
@@ -120,92 +108,6 @@ void debugMatch (const cv::Mat &imgToDraw, const vector<cv::DMatch> &matches, co
 
 	cv::imwrite (filename, newColorImage);
 }
-
-
-/*
- * XXX: Observation results
- * false negatives due to missing projection
- */
-
-/*void
-KeyFrame::match (const KeyFrame &kf,
-		const Frame &frame,
-		std::vector<FeaturePair> &featurePairs,
-		cv::Ptr<cv::DescriptorMatcher> matcher)
-{
-	static bool doDebugMatch = false;
-	const int maxDebugMatchPair = 80;
-
-	featurePairs.clear();
-
-	// Matching itself
-	vector<cv::DMatch> kf2fMatches;
-	matcher->match(frame.fDescriptors, kf.fDescriptors, kf2fMatches);
-
-	// Sort descending based on distance
-	sort(kf2fMatches.begin(), kf2fMatches.end(),
-		[&](const cv::DMatch &m1, const cv::DMatch &m2) -> bool
-		{ return m1.distance < m2.distance; }
-	);
-
-	cv::Mat newColorImage;
-	if (doDebugMatch) {
-		cv::cvtColor(frame.getImage(), newColorImage, CV_GRAY2BGR);
-	}
-
-	// Projection check
-	int correctProjection = 0;
-	for (int i=0; i<kf2fMatches.size(); ++i) {
-		auto &m = kf2fMatches[i];
-
-		if (m.trainIdx >= kf.fKeypoints.size() or m.queryIdx >= frame.fKeypoints.size())
-			continue;
-
-		const cv::Point2f &frameKp = frame.fKeypoints[m.queryIdx].pt;
-
-		if (doDebugMatch) {
-			if (i<=maxDebugMatchPair)
-			cv::line(newColorImage, kf.fKeypoints[m.trainIdx].pt, frameKp, cv::Scalar(0,255,0));
-		}
-
-
-		 * XXX: We need an implementation of semi optical flow here
-
-		float projDev = (convertToEigen(frameKp) - convertToEigen(kf.fKeypoints[m.trainIdx].pt)).norm();
-		if (projDev >= pixelReprojectionError)
-			continue;
-
-		FeaturePair fp = {m.trainIdx, kf.fKeypoints[m.trainIdx].pt, m.queryIdx, frame.fKeypoints[m.queryIdx].pt};
-		featurePairs.push_back(fp);
-
-	}
-
-	if (doDebugMatch) {
-		cv::imwrite ("/tmp/match-1237-f.png", newColorImage);
-	}
-}
-
-
-void KeyFrame::matchSubset (
-	const KeyFrame &k1, const KeyFrame &k2,
-	cv::Ptr<cv::DescriptorMatcher> matcher,
-	std::vector<FeaturePair> &featurePairs,
-	const kpidField &kp1list, const kpidField &kp2list)
-{
-	assert (kp1list.size()==k1.fKeypoints.size());
-	assert (kp2list.size()==k2.fKeypoints.size());
-
-	cv::Mat mask = kpidField::createMask(kp1list, kp2list);
-	vector<cv::DMatch> k12matches;
-	matcher->match(k2.fDescriptors, k1.fDescriptors, k12matches, mask);
-
-	for (auto &m: k12matches) {
-		if (m.trainIdx < k1.fKeypoints.size() and m.queryIdx < k2.fKeypoints.size()) {
-			FeaturePair fp = {m.trainIdx, k1.fKeypoints[m.trainIdx].pt, m.queryIdx, k2.fKeypoints[m.queryIdx].pt};
-			featurePairs.push_back (fp);
-		}
-	}
-}*/
 
 
 void KeyFrame::triangulate (
@@ -263,6 +165,84 @@ void KeyFrame::triangulate (
 }
 
 
+void
+KeyFrame::triangulateCV (
+	const KeyFrame &KF1, const KeyFrame &KF2,
+	const std::vector<Matcher::KpPair> &kpPair,
+	std::vector<mpid> &newMapPointList,
+	std::map<mpid, kpid> &mapPointToKeyPointInKeyFrame1,
+	std::map<mpid, kpid> &mapPointToKeyPointInKeyFrame2,
+	VMap &parent)
+{
+	const int N = kpPair.size();
+	const poseMatrix
+		pm1 = KF1.projectionMatrix(),
+		pm2 = KF2.projectionMatrix();
+	cv::Mat projMat1, projMat2;
+	vector<cv::Point2f> pointsInFrame1(N), pointsInFrame2(N);
+	cv::Mat triangulationResults;
+
+
+	cv::eigen2cv(pm1, projMat1);
+	cv::eigen2cv(pm2, projMat2);
+
+	int i=0;
+	for (auto &pointPair: kpPair) {
+		pointsInFrame1[i] = KF1.keypoint(pointPair.first).pt;
+		pointsInFrame2[i] = KF2.keypoint(pointPair.second).pt;
+		++i;
+	}
+
+	cv::triangulatePoints(projMat1, projMat2, pointsInFrame1, pointsInFrame2, triangulationResults);
+	if (N!=triangulationResults.cols)
+		throw runtime_error("Unexpected number of points; should be "+to_string(kpPair.size()));
+
+	/*
+	 * Check triangulation results
+	 */
+	for (i=0; i<N; ++i) {
+		cv::Vec4f p = triangulationResults.col(i);
+		p /= p[3];
+		Vector3d pointm(p[0], p[1], p[2]);
+
+		auto
+			proj1 = KF1.keypointv(kpPair[i].first),
+			proj2 = KF2.keypointv(kpPair[i].second);
+		auto
+			e1 = KF1.keypoint(kpPair[i].first).octave * Matcher::circleOfConfusionDiameter,
+			e2 = KF2.keypoint(kpPair[i].second).octave * Matcher::circleOfConfusionDiameter;
+
+		// Check for Reprojection Errors
+		float pj1 = (KF1.project(pointm) - proj1).norm(),
+			pj2 = (KF2.project(pointm) - proj2).norm();
+		if (pj1 > e1 or pj2 > e2)
+			continue;
+
+		// checking for regularity of triangulation result
+		// 1: Point must be in front of camera
+		Vector3d v1 = pointm - KF1.position();
+		Vector3d trans1 = KF1.transform(pointm);
+		if (trans1.z() < 0)
+			continue;
+
+		Vector3d v2 = pointm - KF2.position();
+		Vector3d trans2 = KF2.transform(pointm);
+		if (trans2.z() < 0)
+			continue;
+
+		// 2: Must have enough parallax (ie. remove faraway points)
+		double cosParallax = (-v1).dot(-v2) / (v1.norm() * v2.norm());
+		if (cosParallax >= 0.999990481)
+			continue;
+
+		mpid newMp = parent.createMapPoint(pointm);
+		newMapPointList.push_back(newMp);
+		mapPointToKeyPointInKeyFrame1[newMp] = kpPair[i].first;
+		mapPointToKeyPointInKeyFrame2[newMp] = kpPair[i].second;
+	}
+}
+
+
 vector<Vector2d>
 KeyFrame::projectAllMapPoints() const
 {
@@ -294,57 +274,5 @@ KeyFrame::debugKeyPoints() const
 }
 
 
-/*void
-KeyFrame::matchMapPoints (
-	const BaseFrame &frame,
-	cv::Ptr<cv::DescriptorMatcher> matcher,
-	std::map<mpid, kpid> &featurePairs)
-const
-{
-	if (frame.pose().isValid()==false)
-		return;
-
-
-	 * Let's create matcher's mask first
-
-	cv::Mat mmask(frame.numOfKeyPoints(), parentMap->framePoints[id].size(), CV_8UC1, 0);
-	cv::Mat ones(parentMap->framePoints[id].size(), mmask.type(), 0xff);
-	for (auto mpIdPair: parentMap->framePoints[id]) {
-		mpid pointId = mpIdPair.first;
-		kpid pointIdKf = mpIdPair.second;
-		ones.copyTo(mmask.col(pointIdKf));
-	}
-
-	// Matching process
-	vector<cv::DMatch> matches;
-	matcher->match(frame.allDescriptors(), this->fDescriptors, matches, mmask);
-
-	// Projection check
-	uint matchCount=0;
-	for (auto &m: matches) {
-		mpid pointIdKf = parentMap->framePointsInv.at(this->id).at(m.trainIdx);
-		Vector2d kpf = frame.project(parentMap->mappoint(pointIdKf)->getPosition());
-		if ((kpf-frame.keypointv(m.queryIdx)).norm() > 4.0) {
-			continue;
-		}
-		featurePairs.insert(make_pair(pointIdKf, m.queryIdx));
-	}
-}*/
-
-
-/*void
-KeyFrame::matchExcludeMapPoints (
-	const BaseFrame &frame,
-	cv::Ptr<cv::DescriptorMatcher> matcher,
-	std::map<mpid, kpid> &featurePairs)
-const
-{
-
-	 * Let's create matcher's mask first
-
-	cv::Mat mmask(frame.numOfKeyPoints(), parentMap->framePoints[id].size(), CV_8UC1, 0);
-	cv::Mat ones(parentMap->framePoints[id].size(), mmask.type(), 0xff);
-
-}*/
 
 

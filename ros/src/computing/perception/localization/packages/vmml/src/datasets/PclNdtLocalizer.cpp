@@ -14,8 +14,11 @@
 #define PREDICT_POSE_THRESHOLD 0.5
 
 
-PclNdtLocalizer::PclNdtLocalizer() {
-}
+using namespace std;
+
+
+PclNdtLocalizer::PclNdtLocalizer()
+{}
 
 PclNdtLocalizer::~PclNdtLocalizer() {
 }
@@ -28,6 +31,13 @@ PclNdtLocalizer::loadMap (const std::string &filename)
 	pcl::PCDReader fReader;
 	fReader.read(filename, *pcMap);
 	mNdt.setInputTarget(pcMap);
+
+	mNdt.setMaximumIterations(mParams.maximum_iterations);
+	mNdt.setTransformationEpsilon(mParams.transformation_epsilon);
+	mNdt.setStepSize(mParams.step_size);
+	mNdt.setResolution(mParams.ndt_resolution);
+
+	cout << "Map loaded\n";
 }
 
 
@@ -43,16 +53,29 @@ void PclNdtLocalizer::putEstimation(const Pose &est)
 
 
 Pose
-PclNdtLocalizer::localize(pcl::PointCloud<pcl::PointXYZ>::ConstPtr currentScan, ptime curTime)
+PclNdtLocalizer::localize(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &currentScan, ptime curTime)
 {
 	pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-
-	mNdt.setMaximumIterations(mParams.maximum_iterations);
-	mNdt.setTransformationEpsilon(mParams.transformation_epsilon);
-	mNdt.setStepSize(mParams.step_size);
-	mNdt.setResolution(mParams.ndt_resolution);
 	mNdt.setInputSource(currentScan);
 
+	double dt = toSeconds(curTime - lastLocalizationTime);
+	prev_pose = current_pose;
+
+	if (estimationReset==false) {
+		currentEstimation = prev_pose * current_velocity * dt;
+	}
+
+	mNdt.align(*output_cloud, currentEstimation.matrix().cast<float>());
+	current_pose = mNdt.getFinalTransformation().cast<double>();
+	started = true;
+
+	lastLocalizationTime = curTime;
+	current_velocity = prev_pose.inverse() * current_pose;
+	current_velocity = current_velocity / dt;
+
+	return current_pose;
+
+/*
 	if (!started) {
 		mNdt.align(*output_cloud, currentEstimation.matrix().cast<float>());
 		Pose localizerPose = mNdt.getFinalTransformation().cast<double>();
@@ -62,7 +85,6 @@ PclNdtLocalizer::localize(pcl::PointCloud<pcl::PointXYZ>::ConstPtr currentScan, 
 		started = true;
 		lastLocalizationTime = curTime;
 		estimationReset = false;
-		return localizerPose;
 	}
 
 	else {
@@ -93,8 +115,13 @@ PclNdtLocalizer::localize(pcl::PointCloud<pcl::PointXYZ>::ConstPtr currentScan, 
 
 		velocityIsSet = true;
 		lastLocalizationTime = curTime;
-		return current_pose;
 	}
+
+	if (mNdt.hasConverged()==false)
+		cerr << "Not converged\n";
+
+	return current_pose;
+*/
 }
 
 
@@ -113,24 +140,34 @@ createTrajectoryFromPclNdt
 		Pose cNdtPose;
 		PoseStamped gnssPose;
 
-		auto cscan = bagsrc.at(ip);
-		auto scanTime = bagsrc.timeAt(ip).toBoost();
+		ptime scanTime;
+		auto cscan = bagsrc.at(ip, &scanTime);
+
+		try {
+			gnssPose = gnssTrack.at(scanTime);
+		} catch (std::out_of_range &e) {
+			gnssPose = gnssTrack.extrapolate(scanTime);
+		}
 
 		if (!lidarLocalizer.isStarted()) {
-			try {
-				gnssPose = gnssTrack.at(scanTime);
-			} catch (std::out_of_range &e) {
-				gnssPose = gnssTrack.extrapolate(scanTime);
-			}
 			lidarLocalizer.putEstimation(gnssPose);
-			cNdtPose = lidarLocalizer.localize(cscan);
 		}
 
-		else {
-			cNdtPose = lidarLocalizer.localize(cscan);
+		cNdtPose = lidarLocalizer.localize(cscan, scanTime);
+
+/*
+		double drot, dtrans;
+		gnssPose.displacement(cNdtPose, dtrans, drot);
+		if (dtrans>=15.0) {
+			cerr << "\nResetting to GNSS in " << ip << endl;
+			exit(1);
+			lidarLocalizer.putEstimation(gnssPose);
 		}
+*/
 
 		PoseStamped tpose(cNdtPose, scanTime);
 		resultTrack.push_back(tpose);
+
+		cerr << ip << " / " << N << "\r";
 	}
 }

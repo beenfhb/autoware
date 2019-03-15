@@ -172,7 +172,7 @@ void VMap::estimateStructure (const kfid &kfid1, const kfid &kfid2, double trans
 
 	vector<mpid> newMapPointList;
 
-	KeyFrame::triangulate(kf1, kf2, validKpPairs, newMapPointList, framePoints[kfid1], framePoints[kfid2], *this);
+	KeyFrame::triangulateCV(kf1, kf2, validKpPairs, newMapPointList, framePoints[kfid1], framePoints[kfid2], *this);
 
 	framePointsInv[kfid1] = reverseMap(framePoints[kfid1]);
 	framePointsInv[kfid2] = reverseMap(framePoints[kfid2]);
@@ -246,7 +246,7 @@ VMap::estimateAndTrack (const kfid &kfid1, const kfid &kfid2, const double metri
 
 	// Estimate new mappoints that are visible in KF1 & KF2
 	vector<mpid> newMapPointList;
-	KeyFrame::triangulate(KF1, KF2, newMapPointPairs, newMapPointList, framePoints[kfid1], framePoints[kfid2], *this);
+	KeyFrame::triangulateCV(KF1, KF2, newMapPointPairs, newMapPointList, framePoints[kfid1], framePoints[kfid2], *this);
 
 	// Update inverse map from map points to keypoints
 	framePointsInv[kfid1] = reverseMap(framePoints[kfid1]);

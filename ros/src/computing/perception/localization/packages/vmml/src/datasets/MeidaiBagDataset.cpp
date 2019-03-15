@@ -349,7 +349,7 @@ MeidaiBagDataset::createTrajectories(ptime startTimep, ptime stopTimep, bool use
 		if (doCompensateTime)
 			velodyneBag->setTimeConstraint(startTime, stopTime);
 
-		createTrajectoryFromPclNdt(*velodyneBag, ndtTrack, gnssTrack, pcdMapFilePath);
+		createTrajectoryFromNDT(*velodyneBag, ndtTrack, gnssTrack, pcdMapFilePath);
 		trajectorySrc = &ndtTrack;
 		cameraTrackSource = CameraTrackSource::NDT;
 		// XXX: Check this value
