@@ -47,6 +47,7 @@ std::map<std::string, std::string> sound_list = {
     {"TrunRight", "/home/autoware/Downloads/voice/TrunRight.ogg"},
     {"TrunLeft", "/home/autoware/Downloads/voice/TrunLeft.ogg"},
     {"TryAvoid", "/home/autoware/Downloads/voice/TryAvoid.ogg"},
+    {"Alert", "/home/autoware/Downloads/voice/Alert.ogg"},
 };
 
 std::vector<BusStop> bus_stop_list = {
@@ -235,6 +236,17 @@ void soundnameCallback(const std_msgs::String::ConstPtr &msg)
   }
 }
 
+void obstacleCallback(const visualization_msgs::Marker::ConstPtr &msg)
+{
+  ros::Time now = ros::Time::now();
+  static ros::Time prev = ros::Time(0);
+  if((now - prev).toSec() >= 3.0) {
+    playSound(state_sound_list["Alert"]);
+    prev = now;
+  }
+}
+
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "sound_player");
@@ -245,6 +257,7 @@ int main(int argc, char **argv)
     ros::Subscriber sub2 = node.subscribe("/current_pose", 1, currentposeCallback);
     ros::Subscriber sub3 = node.subscribe("/decision_maker/state", 3, stateCallback);
     ros::Subscriber sub4 = node.subscribe("/sound_name", 1, soundnameCallback);
+    ros::Subscriber sub5 = node.subscribe("/obstacle", 1, obstacleCallback);
 
     marker_pub = node.advertise<visualization_msgs::MarkerArray>("sound_play_marker", 1, true);
 
