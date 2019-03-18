@@ -214,17 +214,17 @@ void currentposeCallback(const geometry_msgs::PoseStamped::ConstPtr &msg)
     }
 }
 
+std_msgs::String state_msg;
 void stateCallback(const std_msgs::String::ConstPtr &msg)
 {
-  static std_msgs::String msg_;
-  if(msg_.data == msg->data) {
+  if(state_msg.data == msg->data) {
     return;
   }
 
-  msg_ = *msg;
+  state_msg = *msg;
 
-  if(state_sound_list.count(msg_.data) != 0) {
-      playSound(state_sound_list[msg_.data]);
+  if(state_sound_list.count(state_msg.data) != 0) {
+      playSound(state_sound_list[state_msg.data]);
   }
 
 }
@@ -240,6 +240,11 @@ void obstacleCallback(const visualization_msgs::Marker::ConstPtr &msg)
 {
   ros::Time now = ros::Time::now();
   static ros::Time prev = ros::Time(0);
+
+  if(state_msg.data != "VehicleReady\nDriving\nDrive\nLaneArea\nCruise\nStraight\nGo\n") {
+    return;
+  }
+
   if((now - prev).toSec() >= 3.0) {
     playSound(state_sound_list["Alert"]);
     prev = now;
