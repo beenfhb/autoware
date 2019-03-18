@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   op_planner
 )
 
-set(CMAKE_CXX_FLAGS "-O2 -Wall ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS " -o0 -g -Wall ${CMAKE_CXX_FLAGS}")
 
 catkin_package(
  INCLUDE_DIRS include
@@ -30,7 +30,9 @@ include_directories(
 add_library( autoware_map lib/autoware_map/autoware_map.cpp 
 							lib/autoware_map/util.cpp lib/autoware_map/visualization.cpp
                 			lib/autoware_map/opendrive2autoware_converter_core.cpp
-                			lib/autoware_map/odrSpiral.cpp)
+                			lib/autoware_map/odrSpiral.cpp
+                			lib/autoware_map/opendrive_road.cpp
+                			lib/autoware_map/opendrive_objects.cpp)
 add_dependencies( autoware_map ${catkin_EXPORTED_TARGETS} )
 target_link_libraries( autoware_map ${catkin_LIBRARIES} )
 

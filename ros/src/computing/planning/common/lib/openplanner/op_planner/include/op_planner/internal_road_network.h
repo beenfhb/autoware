@@ -86,13 +86,13 @@ public:
 	int right_wp_id;
 	int left_lane_id;
 	int right_lane_id;
-	std::shared_ptr<Lane> p_lane;
-	std::shared_ptr<WayPoint> p_left_wp;
-	std::shared_ptr<WayPoint> p_right_wp;
+	std::weak_ptr<Lane> p_lane;
+	std::weak_ptr<WayPoint> p_left_wp;
+	std::weak_ptr<WayPoint> p_right_wp;
 	std::vector<int> 	to_wps;
 	std::vector<int> 	from_wps;
-	std::vector<std::shared_ptr<WayPoint> > p_to_wps;
-	std::vector<std::shared_ptr<WayPoint> > p_from_wps;
+	std::vector<std::weak_ptr<WayPoint> > p_to_wps;
+	std::vector<std::weak_ptr<WayPoint> > p_from_wps;
 	std::vector<std::pair<ACTION_TYPE, double> > action_cost;
 
 	WayPoint()
@@ -153,11 +153,11 @@ public:
 
 	std::vector<WayPoint> points;
 
-	std::vector<std::shared_ptr<Lane> > p_to_lanes;
-	std::vector<std::shared_ptr<Lane> > p_from_lanes;
+	std::vector<std::weak_ptr<Lane> > p_to_lanes;
+	std::vector<std::weak_ptr<Lane> > p_from_lanes;
 
-	std::shared_ptr<Lane> p_left_lane;
-	std::shared_ptr<Lane> p_right_lane;
+	std::weak_ptr<Lane> p_left_lane;
+	std::weak_ptr<Lane> p_right_lane;
 
 	Lane()
 	{

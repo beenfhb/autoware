@@ -23,7 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
   autoware_map 
 )
 
-
+set(CMAKE_CXX_FLAGS "-g -Wall ${CMAKE_CXX_FLAGS}")
 
 ###################################
 ## catkin specific configuration ##
