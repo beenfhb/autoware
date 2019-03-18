@@ -18,6 +18,7 @@
 #include "g2o/core/optimization_algorithm_levenberg.h"
 #include "g2o/solvers/eigen/linear_solver_eigen.h"
 #include "g2o/solvers/dense/linear_solver_dense.h"
+#include "g2o/solvers/structure_only/structure_only_solver.h"
 #include "g2o/types/sba/types_six_dof_expmap.h"
 #include "g2o/core/robust_kernel_impl.h"
 #include "g2o/core/factory.h"
@@ -602,6 +603,7 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 	auto solverPtr = new g2o::BlockSolver_6_3(linearSolver);
 	g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solverPtr);
 	optimizer.setAlgorithm(solver);
+	optimizer.setVerbose(true);
 
 	map<int, kfid> vertexKfMap;
 	map<kfid, int> vertexKfMapInv;

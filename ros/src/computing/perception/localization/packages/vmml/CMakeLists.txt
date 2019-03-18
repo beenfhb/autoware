@@ -32,6 +32,7 @@ find_package(catkin REQUIRED COMPONENTS
 	
 	# Test offline NDT localization
 	ndt_tku
+	pcl_omp_registration
 	velodyne_pointcloud
 )
 
@@ -44,7 +45,7 @@ find_package (PythonLibs REQUIRED)
 find_package (G2O REQUIRED)
 
 # Shell-like interface for testing image-based recognition and localization
-find_package (Libedit REQUIRED)	
+find_package (Libedit REQUIRED)
 
 find_package (Qt5Widgets CONFIG REQUIRED)
 

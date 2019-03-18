@@ -8,11 +8,13 @@
 #ifndef _PCLNDTLOCALIZER_H_
 #define _PCLNDTLOCALIZER_H_
 
+#include <memory>
 #include <string>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/registration/ndt.h>
+#include <pcl_omp_registration/ndt.h>
 
 #include "utilities.h"
 #include "datasets/MeidaiBagDataset.h"
@@ -28,6 +30,8 @@ public:
 	void putEstimation (const Pose &pEst);
 
 	Pose localize (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &scan, ptime curTime=getCurrentTime());
+
+	Pose localize2 (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &scan, ptime curTime);
 
 	struct Parameters
 	{
@@ -51,7 +55,8 @@ public:
 
 protected:
 
-	pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> mNdt;
+//	pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> mNdt;
+	pcl_omp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> mNdt;
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr pcMap = nullptr;
 
