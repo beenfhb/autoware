@@ -22,7 +22,8 @@ find_package(catkin REQUIRED COMPONENTS
         autoware_config_msgs
         tablet_socket_msgs
         autoware_health_checker
-        gazebo_msgs
+        rostest
+        rosunit
         )
 
 ################################################
@@ -58,6 +59,7 @@ SET(CMAKE_CXX_FLAGS "-O2 -g -Wall ${CMAKE_CXX_FLAGS}")
 
 include_directories(
         include
+        include/twist_gate
         ${autoware_config_msgs_INCLUDE_DIRS}
         ${autoware_msgs_INCLUDE_DIRS}
         ${tablet_socket_msgs_INCLUDE_DIRS}
@@ -88,7 +90,7 @@ target_link_libraries(twist_filter ${catkin_LIBRARIES})
 add_dependencies(twist_filter
         ${catkin_EXPORTED_TARGETS})
 
-add_executable(twist_gate nodes/twist_gate/twist_gate.cpp)
+add_executable(twist_gate nodes/twist_gate/twist_gate_node.cpp nodes/twist_gate/twist_gate.cpp)
 target_link_libraries(twist_gate ${catkin_LIBRARIES})
 add_dependencies(twist_gate
         ${catkin_EXPORTED_TARGETS})
@@ -135,13 +137,24 @@ install(DIRECTORY launch/
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
         PATTERN ".svn" EXCLUDE)
 
-install(DIRECTORY config/
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-        PATTERN ".svn" EXCLUDE)
 
 ## TESTS
-# if(CATKIN_ENABLE_TESTING)
+if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   add_rostest_gtest(test-mpc nodes/mpc_follower/test/test_mpc.test nodes/mpc_follower/test/src/test_mpc.cpp ${MPC_FOLLOWER_SRC})
   target_link_libraries(test-mpc ${catkin_LIBRARIES})
-# endif()
+endif()
+
+if (CATKIN_ENABLE_TESTING)
+    find_package(rostest REQUIRED)
+    add_rostest_gtest(test-twist_gate
+      test/test_twist_gate.test
+      test/src/test_twist_gate.cpp
+      nodes/twist_gate/twist_gate.cpp
+    )
+    add_dependencies(test-twist_gate
+      ${catkin_EXPORTED_TARGETS})
+    target_link_libraries(test-twist_gate
+      ${catkin_LIBRARIES})
+endif ()
+
