@@ -142,7 +142,10 @@ bool MPCFollower::calculateMPC(double &vel_cmd, double &steer_cmd)
   double nearest_yaw_error = std::numeric_limits<double>::max();
   double nearest_dist_error = std::numeric_limits<double>::max();
   double nearest_traj_time(0.0), nearest_ref_k(0.0);
-  MPCUtils::calcNearestPoseInterp(ref_traj_, vehicle_status_.pose, nearest_pose, nearest_index, nearest_dist_error, nearest_yaw_error, nearest_traj_time);
+  if (!MPCUtils::calcNearestPoseInterp(ref_traj_, vehicle_status_.pose, nearest_pose, nearest_index, nearest_dist_error, nearest_yaw_error, nearest_traj_time)) {
+    ROS_WARN("[calculateMPC] error in calculating nearest pose. stop mpc.");
+    return false;
+  };
   DEBUG_INFO("[calculateMPC] selfpose.x = %f, y = %f, yaw = %f", vehicle_status_.pose.position.x, vehicle_status_.pose.position.y, current_yaw);
   DEBUG_INFO("[calculateMPC] nearpose.x = %f, y = %f, yaw = %f", nearest_pose.position.x, nearest_pose.position.y, tf2::getYaw(nearest_pose.orientation));
   DEBUG_INFO("[calculateMPC] nearest_index = %d, nearest_dist_error = %f", nearest_index, nearest_dist_error);
@@ -213,9 +216,9 @@ bool MPCFollower::calculateMPC(double &vel_cmd, double &steer_cmd)
 
   /* resample ref_traj with mpc sampling time */
   std::vector<double> mpc_time_v;
-  for (double t = mpc_start_time; t < mpc_end_time; t += mpc_param_.dt)
+  for (int i = 0; i < N; ++i)
   {
-    mpc_time_v.push_back(t);
+    mpc_time_v.push_back(mpc_start_time + i * mpc_param_.dt);
   }
   MPCTrajectory mpc_resampled_ref_traj;
   if (!MPCUtils::interp1dMPCTraj(ref_traj_.relative_time, ref_traj_, mpc_time_v, mpc_resampled_ref_traj)) {
@@ -445,9 +448,13 @@ void MPCFollower::callbackRefPath(const autoware_msgs::Lane::ConstPtr &msg)
   {
     for (int i = 0; i < path_smoothing_times_; ++i)
     {
-      MoveAverageFilter::filt_vector(path_filter_moving_ave_num_, traj.x);
-      MoveAverageFilter::filt_vector(path_filter_moving_ave_num_, traj.y);
-      MoveAverageFilter::filt_vector(path_filter_moving_ave_num_, traj.yaw);
+      if (!MoveAverageFilter::filt_vector(path_filter_moving_ave_num_, traj.x) ||
+          !MoveAverageFilter::filt_vector(path_filter_moving_ave_num_, traj.y) ||
+          !MoveAverageFilter::filt_vector(path_filter_moving_ave_num_, traj.yaw))
+      {
+        ROS_WARN("[path callback] filtering error. stop filtering");
+        return;
+      }
     }
   }
 

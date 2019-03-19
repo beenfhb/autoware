@@ -72,6 +72,6 @@ void calcNearestPose(const MPCTrajectory &traj, const geometry_msgs::Pose &self_
                      unsigned int &nearest_index, double &min_dist_error, double &nearest_yaw_error, double &nearest_time);
 
 /* Calculate neareset pose on path with interpolation */
-void calcNearestPoseInterp(const MPCTrajectory &traj, const geometry_msgs::Pose &self_pose, geometry_msgs::Pose &nearest_pose,
+bool calcNearestPoseInterp(const MPCTrajectory &traj, const geometry_msgs::Pose &self_pose, geometry_msgs::Pose &nearest_pose,
                            unsigned int &nearest_index, double &min_dist_error, double &nearest_yaw_error, double &nearest_time);
 }; // namespace MPCUtils

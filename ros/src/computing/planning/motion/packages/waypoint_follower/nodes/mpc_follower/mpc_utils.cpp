@@ -83,7 +83,7 @@ bool MPCUtils::interp1dX(const T1 &index, const T2 &values, const double &ref, d
   {
     if (!(index[i] > index[i - 1]))
     {
-      printf("index must be monotonically increasing, return false. index[i] = %f, but index[i - 1] = %f\n", index[i], index[i - 1]);
+      printf("index must be monotonically increasing, return false. index[%d] = %f, but index[%d] = %f\n", i, index[i], i-1, index[i - 1]);
       return false;
     }
   }
@@ -121,7 +121,7 @@ bool MPCUtils::interp1dMPCTraj(const std::vector<double> &index, const MPCTrajec
   {
     if (!(index[i] > index[i - 1]))
     {
-      printf("index must be monotonically increasing, return false. index[i] = %f, but index[i - 1] = %f\n", index[i], index[i - 1]);
+      printf("index must be monotonically increasing, return false. index[%d] = %f, but index[%d] = %f\n", i, index[i], i-1, index[i - 1]);
       return false;
     }
   }
@@ -130,7 +130,7 @@ bool MPCUtils::interp1dMPCTraj(const std::vector<double> &index, const MPCTrajec
   {
     if (!(ref_time[i] > ref_time[i - 1]))
     {
-      printf("reference point must be monotonically increasing, return false. ref_time[i] = %f, but ref_time[i - 1] = %f\n", ref_time[i], ref_time[i - 1]);
+      printf("reference point must be monotonically increasing, return false. ref_time[%d] = %f, but ref_time[%d] = %f\n", i, ref_time[i], i-1, ref_time[i - 1]);
       return false;
     }
   }
@@ -356,20 +356,20 @@ void MPCUtils::calcNearestPose(const MPCTrajectory &traj, const geometry_msgs::P
   nearest_pose.orientation = getQuaternionFromYaw(traj.yaw[nearest_index]);
 };
 
-void MPCUtils::calcNearestPoseInterp(const MPCTrajectory &traj, const geometry_msgs::Pose &self_pose, geometry_msgs::Pose &nearest_pose,
+bool MPCUtils::calcNearestPoseInterp(const MPCTrajectory &traj, const geometry_msgs::Pose &self_pose, geometry_msgs::Pose &nearest_pose,
                                      unsigned int &nearest_index, double &min_dist_error, double &nearest_yaw_error, double &nearest_time)
 {
 
   if (traj.size() == 0)
   {
     ROS_WARN("[calcNearestPoseInterp] trajectory size is zero");
-    return;
+    return false;
   }
   const double my_x = self_pose.position.x;
   const double my_y = self_pose.position.y;
   const double my_yaw = tf2::getYaw(self_pose.orientation);
 
-  nearest_index = 0;
+  nearest_index = 1;
   double min_dist_squared = std::numeric_limits<double>::max();
   for (uint i = 0; i < traj.size(); ++i)
   {
@@ -389,6 +389,11 @@ void MPCUtils::calcNearestPoseInterp(const MPCTrajectory &traj, const geometry_m
       }
     }
   }
+  if (nearest_index == -1)
+  {
+    ROS_WARN("[calcNearestPoseInterp] yaw error is over PI/2 for all waypoints. no closest waypoint found.");
+    return false;
+  }
 
   if (traj.size() == 1)
   {
@@ -400,7 +405,7 @@ void MPCUtils::calcNearestPoseInterp(const MPCTrajectory &traj, const geometry_m
     nearest_time = traj.relative_time[nearest_index];
     min_dist_error = std::sqrt(min_dist_squared);
     nearest_yaw_error = intoSemicircle(my_yaw - traj.yaw[nearest_index]);
-    return;
+    return true;
   }
 
   /* get second nearest index = next to nearest_index */
@@ -447,7 +452,7 @@ void MPCUtils::calcNearestPoseInterp(const MPCTrajectory &traj, const geometry_m
     nearest_time = traj.relative_time[nearest_index];
     min_dist_error = std::sqrt(min_dist_squared);
     nearest_yaw_error = intoSemicircle(my_yaw - traj.yaw[nearest_index]);
-    return;
+    return true;
   }
 
   /* linear interpolation */
@@ -461,5 +466,5 @@ void MPCUtils::calcNearestPoseInterp(const MPCTrajectory &traj, const geometry_m
   nearest_time = alpha * traj.relative_time[nearest_index] + (1 - alpha) * traj.relative_time[second_nearest_index];
   min_dist_error = std::sqrt(b_sq - c_sq * alpha * alpha);
   nearest_yaw_error = intoSemicircle(my_yaw - nearest_yaw);
-  return;
+  return true;
 }
