@@ -17,7 +17,8 @@
 #include <opencv2/calib3d.hpp>
 #include <opencv2/core/eigen.hpp>
 
-#include <pcl/registration/ndt.h>
+//#include <pcl/registration/ndt.h>
+#include <pcl_omp_registration/ndt.h>
 
 using namespace std;
 using namespace Eigen;
@@ -646,11 +647,12 @@ Matcher::matchLidarScans(const MeidaiDataItem &frame1, const MeidaiDataItem &fra
 	pcscan1 = LidarScanBag::VoxelGridFilter(pcscan1);
 	pcscan2 = LidarScanBag::VoxelGridFilter(pcscan2);
 
-	pcl::NormalDistributionsTransform<LidarScanBag::point3_t, LidarScanBag::point3_t> ndt;
+//	pcl::NormalDistributionsTransform<LidarScanBag::point3_t, LidarScanBag::point3_t> ndt;
+	pcl_omp::NormalDistributionsTransform<LidarScanBag::point3_t, LidarScanBag::point3_t> ndt;
 	ndt.setTransformationEpsilon(0.01);
 	ndt.setStepSize(0.1);
 	ndt.setResolution(1.0);
-	ndt.setMaximumIterations(10);
+	ndt.setMaximumIterations(30);
 	ndt.setInputSource(pcscan1);
 	ndt.setInputTarget(pcscan2);
 

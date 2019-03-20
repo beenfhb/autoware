@@ -25,6 +25,44 @@
 //#include "g2o/types/sim3/types_seven_dof_expmap.h"
 
 
+/*
+ * ROS Melodic/Kinetic handler
+ */
+#include <ros/ros.h>
+#include <ros/common.h>
+
+
+#if ROS_VERSION_MINIMUM(1,14,0)
+
+template<typename LinearSolverT, typename BlockSolverT, typename OptimizationAlgorithmT>
+OptimizationAlgorithmT*
+createSolverAlgorithm()
+{
+	typename BlockSolverT::LinearSolverType* ls = new LinearSolverT();
+	auto lsptr = std::unique_ptr<typename BlockSolverT::LinearSolverType>(ls);
+	auto solver = std::unique_ptr<g2o::Solver>(new BlockSolverT(std::move(lsptr)));
+	return new OptimizationAlgorithmT(std::move(solver));
+}
+
+
+#else
+#if ROS_VERSION_MINIMUM(1,12,0)
+
+template<typename LinearSolverType, typename BlockSolverType, typename OptimizationAlgorithmType>
+OptimizationAlgorithmType*
+createSolverAlgorithm()
+{
+	auto ls = static_cast<BlockSolverType::LinearSolverType>(new LinearSolverType);
+	auto solver = new BlockSolverType(ls);
+	return new OptimizationAlgorithmType(solver);
+}
+
+#else
+#error "Unsupported G2O version"
+#endif
+#endif
+
+
 using namespace std;
 using namespace Eigen;
 
@@ -202,10 +240,16 @@ void bundle_adjustment (VMap *orgMap)
 
 	g2o::SparseOptimizer optimizer;
 	optimizer.setVerbose(true);
+/*
 	g2o::BlockSolver_6_3::LinearSolverType * linearSolver;
 	linearSolver = new g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>();
 	g2o::BlockSolver_6_3 * solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
 	g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+*/
+	auto solver = createSolverAlgorithm<
+			g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>,
+			g2o::BlockSolver_6_3,
+			g2o::OptimizationAlgorithmLevenberg>();
 	optimizer.setAlgorithm(solver);
 
 	// XXX: This routine does not support multiple camera
@@ -301,10 +345,16 @@ void bundle_adjustment_2 (VMap *orgMap)
 
 	g2o::SparseOptimizer optimizer;
 	optimizer.setVerbose(true);
+/*
 	g2o::BlockSolver_6_3::LinearSolverType * linearSolver;
 	linearSolver = new g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>();
 	g2o::BlockSolver_6_3 * solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
 	g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+*/
+	auto solver = createSolverAlgorithm<
+			g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>,
+			g2o::BlockSolver_6_3,
+			g2o::OptimizationAlgorithmLevenberg >();
 	optimizer.setAlgorithm(solver);
 
 	// XXX: This routine does not support multiple camera
@@ -447,13 +497,16 @@ void bundle_adjustment_2 (VMap *orgMap)
 int optimize_pose (const Frame &frame, Pose &initPose, const VMap *vmap)
 {
 	g2o::SparseOptimizer optimizer;
+/*
 	g2o::BlockSolver_6_3::LinearSolverType * linearSolver;
-
 	linearSolver = new g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>();
-
 	g2o::BlockSolver_6_3 * solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
-
 	g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+*/
+	auto solver = createSolverAlgorithm<
+			g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>,
+			g2o::BlockSolver_6_3,
+			g2o::OptimizationAlgorithmLevenberg >();
 	optimizer.setAlgorithm(solver);
 
 	int nInitialCorrespondences=0;
@@ -599,9 +652,15 @@ void local_bundle_adjustment (VMap *origMap, const kfid &targetKf)
 
 	// Setup optimizer
 	g2o::SparseOptimizer optimizer;
+/*
 	auto *linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>;
 	auto solverPtr = new g2o::BlockSolver_6_3(linearSolver);
 	g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solverPtr);
+*/
+	auto solver = createSolverAlgorithm<
+			g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>,
+			g2o::BlockSolver_6_3,
+			g2o::OptimizationAlgorithmLevenberg >();
 	optimizer.setAlgorithm(solver);
 	optimizer.setVerbose(true);
 
