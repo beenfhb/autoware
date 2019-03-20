@@ -48,13 +48,13 @@ createSolverAlgorithm()
 #else
 #if ROS_VERSION_MINIMUM(1,12,0)
 
-template<typename LinearSolverType, typename BlockSolverType, typename OptimizationAlgorithmType>
-OptimizationAlgorithmType*
+template<typename LinearSolverT, typename BlockSolverT, typename OptimizationAlgorithmT>
+OptimizationAlgorithmT*
 createSolverAlgorithm()
 {
-	auto ls = static_cast<BlockSolverType::LinearSolverType>(new LinearSolverType);
-	auto solver = new BlockSolverType(ls);
-	return new OptimizationAlgorithmType(solver);
+	auto ls = new LinearSolverT;
+	auto solver = new BlockSolverT(ls);
+	return new OptimizationAlgorithmT(solver);
 }
 
 #else
