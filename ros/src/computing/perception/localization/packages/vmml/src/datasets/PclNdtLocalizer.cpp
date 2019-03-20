@@ -43,45 +43,8 @@ PclNdtLocalizer::loadMap (const std::string &filename)
 
 void PclNdtLocalizer::putEstimation(const Pose &est)
 {
-	currentEstimation = est;
-	if (started==false) {
-		prev_pose = currentEstimation;
-		current_pose = currentEstimation;
-	}
-	estimationReset = true;
-}
-
-
-Pose
-PclNdtLocalizer::localize2(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &currentScan, ptime curTime)
-{
-	pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-	mNdt.setInputSource(currentScan);
-
-	double dt = toSeconds(curTime - lastLocalizationTime);
-	prev_pose = current_pose;
-
-	Pose priorEstimation;
-
-	if (estimationReset==true) {
-		priorEstimation = currentEstimation;
-		estimationReset = false;
-	}
-	else {
-		priorEstimation = prev_pose * (current_velocity * dt);
-	}
-
-	mNdt.align(*output_cloud, priorEstimation.matrix().cast<float>());
-	current_pose = mNdt.getFinalTransformation().cast<double>();
-	current_velocity = prev_pose.inverse() * current_pose;
-	current_velocity = current_velocity / dt;
-
-	lastLocalizationTime = curTime;
-
-	if (mNdt.hasConverged()==false)
-		cerr << "Not converged\n";
-
-	return current_pose;
+	prev_pose = est;
+	prev_pose2 = prev_pose;
 }
 
 
@@ -91,52 +54,21 @@ PclNdtLocalizer::localize(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &curren
 	pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 	mNdt.setInputSource(currentScan);
 
-	double dt = toSeconds(curTime - lastLocalizationTime);
-	prev_pose = current_pose;
+	// Calculate offset
+	Pose npose_offset = prev_pose2.inverse() * prev_pose;
 
-	if (!started) {
-		mNdt.align(*output_cloud, currentEstimation.matrix().cast<float>());
-		Pose localizerPose = mNdt.getFinalTransformation().cast<double>();
-		current_pose = localizerPose;
-		prev_pose = current_pose;
+	// Calculate estimation
+	Pose moveEstimate = prev_pose * npose_offset;
 
-		started = true;
-		lastLocalizationTime = curTime;
-		estimationReset = false;
-	}
+	// Registration
+	mNdt.align(*output_cloud, moveEstimate.matrix().cast<float>());
 
-	else {
-
-		if (velocityIsSet==false) {
-			// Estimate velocity for next scan
-			if (estimationReset==true) {
-				mNdt.align(*output_cloud, currentEstimation.matrix().cast<float>());
-				estimationReset = false;
-			}
-			else {
-				mNdt.align(*output_cloud, current_pose.matrix().cast<float>());
-			}
-		}
-
-		else {
-			if (estimationReset==false)
-				currentEstimation = prev_pose * (current_velocity * dt);
-			estimationReset = false;
-			mNdt.align(*output_cloud, currentEstimation.matrix().cast<float>());
-		}
-
-		current_pose = mNdt.getFinalTransformation().cast<double>();
-		current_velocity = prev_pose.inverse() * current_pose;
-		current_velocity = current_velocity / dt;
-
-		velocityIsSet = true;
-		lastLocalizationTime = curTime;
-	}
-
-	if (mNdt.hasConverged()==false)
-		cerr << "Not converged\n";
-
-	return current_pose;
+	// Localizer output
+	Pose cpose = mNdt.getFinalTransformation().cast<double>();
+	prev_pose2 = prev_pose;
+	prev_pose = cpose;
+	lastLocalizationTime = curTime;
+	return cpose;
 }
 
 
@@ -164,11 +96,11 @@ createTrajectoryFromPclNdt
 			gnssPose = gnssTrack.extrapolate(scanTime);
 		}
 
-		if (!lidarLocalizer.isStarted()) {
+		if (ip==0) {
 			lidarLocalizer.putEstimation(gnssPose);
 		}
 
-		cNdtPose = lidarLocalizer.localize2(cscan, scanTime);
+		cNdtPose = lidarLocalizer.localize(cscan, scanTime);
 
 /*
 		double drot, dtrans;

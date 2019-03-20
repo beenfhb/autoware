@@ -29,9 +29,7 @@ public:
 
 	void putEstimation (const Pose &pEst);
 
-	Pose localize (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &scan, ptime curTime=getCurrentTime());
-
-	Pose localize2 (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &scan, ptime curTime);
+	Pose localize (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &scan, ptime curTime);
 
 	struct Parameters
 	{
@@ -55,12 +53,11 @@ public:
 
 protected:
 
-//	pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> mNdt;
 	pcl_omp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> mNdt;
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr pcMap = nullptr;
 
-	Pose current_pose, prev_pose, currentEstimation;
+	Pose prev_pose, prev_pose2, currentEstimation;
 
 	bool started = false;
 	bool estimationReset = false;
