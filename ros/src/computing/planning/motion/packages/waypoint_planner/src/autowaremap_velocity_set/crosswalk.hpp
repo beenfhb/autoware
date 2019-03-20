@@ -5,12 +5,13 @@
 #include <waypoint_follower/libwaypoint_follower.h>
 
 class CrossWalkHandler {
-private:
+private: 
     const int id_;
     const std::vector<geometry_msgs::Point> vertices_; //vertices of crosswalk area
     std::vector<int> stopping_waypoint_ids_; //waypoint where vehicle must stop
     std::vector<geometry_msgs::Point> stopping_points_; //position where vehicle must stop (first point of the lane with crosswalk attribute)
-
+    bool has_obstacle_;
+    std::vector<int> prev_stopping_ids_;
 public:
     CrossWalkHandler(int id, std::vector<geometry_msgs::Point> vertices);
 
@@ -19,11 +20,14 @@ public:
     std::vector<geometry_msgs::Point> getStoppingPoints() const;
     std::vector<geometry_msgs::Point> getVertices() const;
     std::vector<int> getStoppingIds() const;
-
+    std::vector<int> getPrevStoppingIds() const;
+    bool hasObstacle() const;
     //setters
     void addStoppingWaypointId(const int id);
     void clearStoppingWaypointIds();
     void addStoppingPoint(const geometry_msgs::Point stopping_point);
+    void setObstacleFlag(bool has_obstacle);
+    void updatePrevStoppingIds();
 };
 
 //adds angles. result stays within (M_PI, -M_PI]

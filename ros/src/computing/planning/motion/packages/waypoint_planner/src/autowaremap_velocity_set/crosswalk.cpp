@@ -1,7 +1,7 @@
 #include "crosswalk.hpp"
 
 CrossWalkHandler::CrossWalkHandler(int id, std::vector<geometry_msgs::Point> vertices) :
-    id_(id),vertices_(vertices)
+    id_(id),vertices_(vertices), has_obstacle_(false)
 {
 }
 
@@ -39,6 +39,22 @@ void CrossWalkHandler::clearStoppingWaypointIds()
 void CrossWalkHandler::addStoppingPoint(const geometry_msgs::Point stopping_point)
 {
     stopping_points_.push_back(stopping_point);
+}
+
+void CrossWalkHandler::setObstacleFlag(bool has_obstacle){
+    has_obstacle_ = has_obstacle;
+}
+
+void CrossWalkHandler::updatePrevStoppingIds(){
+    prev_stopping_ids_ = stopping_waypoint_ids_;
+}
+
+std::vector<int> CrossWalkHandler::getPrevStoppingIds() const{
+  return prev_stopping_ids_;
+}
+
+bool CrossWalkHandler::hasObstacle() const{
+  return has_obstacle_;
 }
 
 double addAngles(double angle1, double angle2)

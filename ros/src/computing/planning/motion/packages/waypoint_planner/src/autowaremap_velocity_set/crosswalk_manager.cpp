@@ -61,7 +61,7 @@ void CrossWalkManager::findRelevantCrossWalks(const int closest_waypoint, const 
             {
                 if( calcSquareOfLength(stopping_point, waypoint) <= matching_distance_thresh) {
                     crosswalk.addStoppingWaypointId(num);
-                    relevant_crosswalk_ids_.push_back(crosswalk.getId());
+                    addRelevantCrossWalkIDs(crosswalk.getId());
                     if (!useMultipleDetection())
                     {
                         return;
@@ -70,6 +70,18 @@ void CrossWalkManager::findRelevantCrossWalks(const int closest_waypoint, const 
             }
         }
         prev_waypoint = waypoint;
+    }
+    //set crosswalk to relevant crosswalks as long as there is obstacle in crosswalk
+    //even if the vehicle has passed stopping waypoint due to lack of deceleration
+    for (auto &pair : crosswalks_)
+    {
+        CrossWalkHandler &crosswalk = pair.second;
+        //check if vehicle has surpassed stoppoing waypoint from previous loop from number of registered stopping waypoint ids
+        if (crosswalk.hasObstacle() && crosswalk.getPrevStoppingIds().size() > crosswalk.getStoppingIds().size() ){
+            crosswalk.addStoppingWaypointId(closest_waypoint);
+            addRelevantCrossWalkIDs(crosswalk.getId());
+        }
+        crosswalk.updatePrevStoppingIds();
     }
 }
 
@@ -97,6 +109,18 @@ std::vector<CrossWalkHandler> CrossWalkManager::getRelevantCrossWalks() const
     return relevant_crosswalks;
 }
 
+void CrossWalkManager::setObstacleFlags(const int waypoint_id, const bool flag)
+{
+    for(const auto &crosswalk_id : relevant_crosswalk_ids_)
+    {
+        for( const auto &stopping_id : crosswalks_.at(crosswalk_id).getStoppingIds())
+        {
+            if(stopping_id == waypoint_id) {
+                crosswalks_.at(crosswalk_id).setObstacleFlag(flag);
+            }
+        }
+    }
+}
 
 
 void CrossWalkManager::autowareMapCallback(const std_msgs::UInt64::ConstPtr &available_category)

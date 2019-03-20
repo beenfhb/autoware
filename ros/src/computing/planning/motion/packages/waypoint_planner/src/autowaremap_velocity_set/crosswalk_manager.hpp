@@ -28,6 +28,7 @@ public:
     void findRelevantCrossWalks(const int closest_waypoint, const autoware_msgs::Lane &lane, const int search_distance, const double search_skip_distance);
     std::vector<CrossWalkHandler> getRelevantCrossWalks(const int waypoint_id) const;
     std::vector<CrossWalkHandler> getRelevantCrossWalks() const;
+    void setObstacleFlags(const int waypoint_id, const bool flag);
     void setMultipleDetectionFlag(const bool _multiple_flag)
     {
         enable_multiple_crosswalk_detection_ = _multiple_flag;
