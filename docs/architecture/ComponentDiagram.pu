@@ -32,6 +32,14 @@ folder sensing {
     gnss --> nmea_sentence
 }
 
+() "/actuation/vehicle_status" as vehicle_status
+
+folder actuation {
+    [vehicle_interface]
+    'outputs
+    vehicle_interface --> vehicle_status
+}
+
 () "autoware_detection_msgs::ObjectArray\n/detection/objects" as detection_result
 '() "autoware_detection_msgs::TrafficLight\n/detection/traffic_light_color" as traffic_light_color
 
@@ -108,9 +116,13 @@ folder detection {
 () "geometry_msgs::TwistStamped\n/localization/velocity" as current_velocity
 
 folder localization {
-    () "geometry_msgs::PoseStamped\n/localization/gnss_pose" as gnss_pose
-    () "geometry_msgs::TwistStamped\n/localization/estimate_twist" as estimate_twist
-    () "geometry_msgs::PoseStamped\n/localization/ndt_pose" as ndt_pose
+    () "geometry_msgs::PoseWithCovarianceStamped\n/localization/gnss_localizer/pose" as gnss_pose
+    () "geometry_msgs::TwistWithCovarianceStamped\n/localization/lidar_localizer/velocity" as estimate_twist
+    () "geometry_msgs::PoseWithCovarianceStamped\n/localization/lidar_localizer/pose" as ndt_pose
+    () "geometry_msgs::TwistWithCovarianceStamped\n/localization/vision_localizer/velocity" as vision_velocity
+    () "geometry_msgs::PoseWithCovarianceStamped\n/localization/vision_localizer/pose" as vision_pose
+    () "geometry_msgs::TwistWithCovarianceStamped\n/localization/twist_generator/can_twist" as can_twist
+    () "geometry_msgs::TwistWithCovarianceStamped\n/localization/twist_generator/imu_twist" as imu_twist
 
     [gnss_localizer]
     'inputs
@@ -118,23 +130,41 @@ folder localization {
     'outputs
     gnss_localizer --> gnss_pose
 
+    [vision_localizer]
+    'inputs
+    image_raw --> vision_localizer
+    'outputs
+    vision_localizer --> vision_pose
+    vision_localizer --> vision_velocity
+
     [lidar_localizer]
     'inputs
-    gnss_pose --> lidar_localizer
     filtered_points --> lidar_localizer
     points_map --> lidar_localizer
-    imu_raw --> lidar_localizer
     'outputs
     lidar_localizer --> estimate_twist
     lidar_localizer --> ndt_pose
 
-    [autoware_connector\n(vel_pose_connect)] as vel_pose_connect
+    [twist_generator]
     'inputs
-    estimate_twist --> vel_pose_connect
-    ndt_pose --> vel_pose_connect
+    vehicle_status --> twist_generator
+    imu_raw --> twist_generator
     'outputs
-    vel_pose_connect --> current_pose
-    vel_pose_connect --> current_velocity
+    twist_generator --> can_twist
+    twist_generator --> imu_twist
+
+    [fusion_localizer]
+    'inputs
+    gnss_pose --> fusion_localizer
+    ndt_pose --> fusion_localizer
+    estimate_twist --> fusion_localizer
+    vision_pose --> fusion_localizer
+    vision_velocity --> fusion_localizer
+    can_twist --> fusion_localizer
+    imu_twist --> fusion_localizer
+    'outputs
+    fusion_localizer --> current_pose
+    fusion_localizer --> current_velocity
 
     '[dead_reckoner] @ Autoware v2.0
 }
