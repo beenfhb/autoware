@@ -32,7 +32,7 @@ folder sensing {
     gnss --> nmea_sentence
 }
 
-() "/actuation/vehicle_status" as vehicle_status
+() "autoware_motion_msgs::Motion\n/actuation/vehicle_status" as vehicle_status
 
 folder actuation {
     [vehicle_interface]
@@ -116,13 +116,11 @@ folder detection {
 () "geometry_msgs::TwistStamped\n/localization/velocity" as current_velocity
 
 folder localization {
-    () "geometry_msgs::PoseWithCovarianceStamped\n/localization/gnss_localizer/pose" as gnss_pose
-    () "geometry_msgs::TwistWithCovarianceStamped\n/localization/lidar_localizer/velocity" as estimate_twist
-    () "geometry_msgs::PoseWithCovarianceStamped\n/localization/lidar_localizer/pose" as ndt_pose
-    () "geometry_msgs::TwistWithCovarianceStamped\n/localization/vision_localizer/velocity" as vision_velocity
-    () "geometry_msgs::PoseWithCovarianceStamped\n/localization/vision_localizer/pose" as vision_pose
-    () "geometry_msgs::TwistWithCovarianceStamped\n/localization/twist_generator/can_twist" as can_twist
-    () "geometry_msgs::TwistWithCovarianceStamped\n/localization/twist_generator/imu_twist" as imu_twist
+    () "geometry_msgs::PoseStamped\n/localization/gnss_localizer/pose" as gnss_pose
+    () "geometry_msgs::PoseStamped\n/localization/lidar_localizer/pose" as ndt_pose
+    () "geometry_msgs::Posetamped\n/localization/vision_localizer/pose" as vision_pose
+    () "geometry_msgs::TwistStamped\n/localization/twist_generator/can_twist" as can_twist
+    () "geometry_msgs::TwistStamped\n/localization/twist_generator/imu_twist" as imu_twist
 
     [gnss_localizer]
     'inputs
@@ -135,21 +133,19 @@ folder localization {
     image_raw --> vision_localizer
     'outputs
     vision_localizer --> vision_pose
-    vision_localizer --> vision_velocity
 
     [lidar_localizer]
     'inputs
     filtered_points --> lidar_localizer
     points_map --> lidar_localizer
     'outputs
-    lidar_localizer --> estimate_twist
     lidar_localizer --> ndt_pose
 
     [twist_generator]
     'inputs
     vehicle_status --> twist_generator
     imu_raw --> twist_generator
-    'outputs
+    '
     twist_generator --> can_twist
     twist_generator --> imu_twist
 
@@ -157,9 +153,7 @@ folder localization {
     'inputs
     gnss_pose --> fusion_localizer
     ndt_pose --> fusion_localizer
-    estimate_twist --> fusion_localizer
     vision_pose --> fusion_localizer
-    vision_velocity --> fusion_localizer
     can_twist --> fusion_localizer
     imu_twist --> fusion_localizer
     'outputs
