@@ -34,14 +34,14 @@ folder sensing {
 
 () "autoware_motion_msgs::Motion\n/actuation/vehicle_status" as vehicle_status
 
-'() "autoware_detection_msgs::TrafficLight\n/detection/traffic_light_color" as traffic_light_color
-() "autoware_detection_msgs::DynamicObjectArray\n/detection/objects" as objects_fused
+'() "autoware_perception_msgs::TrafficLight\n/detection/traffic_light_color" as traffic_light_color
+() "autoware_perception_msgs::DynamicObjectArray\n/detection/objects" as objects_fused
 
 folder detection {
-    () "autoware_detection_msgs::DynamicObjectArray\n/detection/image_detector/objects" as detected_objects_vision
-    () "autoware_detection_msgs::DynamicObjectArray\n/detection/lidar_detector/objects" as detected_objects_lidar
-    () "autoware_detection_msgs::DynamicObjectArray\n/detection/fusion_tools/objects" as detected_objects_combined
-    () "autoware_detection_msgs::DynamicObjectArray\n/detection/fusion_detector/objects" as detected_objects_fused
+    () "autoware_perception_msgs::DynamicObjectArray\n/detection/image_detector/objects" as detected_objects_vision
+    () "autoware_perception_msgs::DynamicObjectArray\n/detection/lidar_detector/objects" as detected_objects_lidar
+    () "autoware_perception_msgs::DynamicObjectArray\n/detection/fusion_tools/objects" as detected_objects_combined
+    () "autoware_perception_msgs::DynamicObjectArray\n/detection/fusion_detector/objects" as detected_objects_fused
 
     [image_detector]
     'inputs
@@ -84,7 +84,7 @@ folder detection {
     'trafficlight_recognizer --> traffic_light_color
 }
 
-() "autoware_detection_msgs::DynamicObjectArray\n/tracking/objects" as objects_tracked
+() "autoware_perception_msgs::DynamicObjectArray\n/tracking/objects" as objects_tracked
 
 
 folder tracking {
@@ -95,7 +95,7 @@ folder tracking {
     object_tracker --> objects_tracked
 }
 
-() "autoware_detection_msgs::DynamicObjectArray\n/prediction/objects" as objects_predicted
+() "autoware_perception_msgs::DynamicObjectArray\n/prediction/objects" as objects_predicted
 
 folder prediction {
     [object_predictor]
