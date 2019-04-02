@@ -34,36 +34,20 @@ folder sensing {
 
 () "autoware_motion_msgs::Motion\n/actuation/vehicle_status" as vehicle_status
 
-folder actuation {
-    [vehicle_interface]
-    'outputs
-    vehicle_interface --> vehicle_status
-}
-
-() "autoware_detection_msgs::ObjectArray\n/detection/objects" as detection_result
 '() "autoware_detection_msgs::TrafficLight\n/detection/traffic_light_color" as traffic_light_color
+() "autoware_detection_msgs::DynamicObjectArray\n/detection/objects" as objects_fused
 
 folder detection {
-    () "autoware_detection_msgs::ObjectArray\n/detection/image_detector/objects" as detected_objects_vision
-    () "autoware_detection_msgs::ObjectArray\n/detection/image_tracker/objects" as image_objects_tracked
-    () "or" as image_objects
-    () "autoware_detection_msgs::ObjectArray\n/detection/lidar_detector/objects" as detected_objects_lidar
-    () "autoware_detection_msgs::ObjectArray\n/detection/fusion_tools/objects" as detected_objects_combined
-    () "autoware_detection_msgs::ObjectArray\n/detection/fusion_detector/objects" as detected_objects_fused
-    () "or" as objects_fused
-    () "autoware_detection_msgs::ObjectArray\n/detection/object_tracker/objects" as objects_tracked
+    () "autoware_detection_msgs::DynamicObjectArray\n/detection/image_detector/objects" as detected_objects_vision
+    () "autoware_detection_msgs::DynamicObjectArray\n/detection/lidar_detector/objects" as detected_objects_lidar
+    () "autoware_detection_msgs::DynamicObjectArray\n/detection/fusion_tools/objects" as detected_objects_combined
+    () "autoware_detection_msgs::DynamicObjectArray\n/detection/fusion_detector/objects" as detected_objects_fused
 
     [image_detector]
     'inputs
     image_raw --> image_detector
     'outputs
     image_detector --> detected_objects_vision
-
-    [image_tracker]
-    'inputs
-    detected_objects_vision --> image_tracker
-    'outputs
-    image_tracker --> image_objects_tracked
 
     [lidar_detector]
     'inputs
@@ -80,32 +64,45 @@ folder detection {
 
     [fusion_tools (might be renamed)] as fusion_tools
     'inputs
-    image_objects --> fusion_tools
+    detected_objects_vision --> fusion_tools
     detected_objects_lidar --> fusion_tools
     'outputs
     fusion_tools --> detected_objects_combined
 
     'connection
-    detected_objects_vision --> image_objects
-    image_objects_tracked --> image_objects
 
     detected_objects_lidar --> objects_fused
     detected_objects_combined --> objects_fused
     detected_objects_fused --> objects_fused
 
-    [object_tracker]
-    'inputs
-    objects_fused --> object_tracker
-    'outputs
-    object_tracker --> objects_tracked
 
-    objects_tracked --> detection_result
 
     '[trafficlight_recognizer]
     'inputs
     'image_raw --> trafficlight_recognizer
     'outputs
     'trafficlight_recognizer --> traffic_light_color
+}
+
+() "autoware_detection_msgs::DynamicObjectArray\n/tracking/objects" as objects_tracked
+
+
+folder tracking {
+    [object_tracker]
+    'inputs
+    objects_fused --> object_tracker
+    'outputs
+    object_tracker --> objects_tracked
+}
+
+() "autoware_detection_msgs::DynamicObjectArray\n/prediction/objects" as objects_predicted
+
+folder prediction {
+    [object_predictor]
+    'inputs
+    objects_tracked --> object_predictor
+    'outputs
+    object_predictor --> objects_predicted
 }
 
 'lidar_localizer
@@ -179,7 +176,7 @@ folder motion {
 
     [velocity_planner and trajectory_planner] as motion_planner
     'inputs
-    detection_result --> motion_planner
+    objects_predicted --> motion_planner
     current_pose --> motion_planner
     current_velocity --> motion_planner
     'outputs
