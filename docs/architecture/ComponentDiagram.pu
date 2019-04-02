@@ -38,17 +38,17 @@ folder sensing {
 () "autoware_perception_msgs::DynamicObjectArray\n/detection/objects" as objects_fused
 
 folder detection {
-    () "autoware_perception_msgs::DynamicObjectArray\n/detection/image_detector/objects" as detected_objects_vision
+    () "autoware_perception_msgs::DynamicObjectArray\n/detection/vision_detector/objects" as detected_objects_vision
     () "autoware_perception_msgs::DynamicObjectArray\n/detection/lidar_detector/objects" as detected_objects_lidar
     () "autoware_perception_msgs::DynamicObjectArray\n/detection/fusion_detector/objects" as detected_objects_fused
     () "autoware_perception_msgs::DynamicObjectArray\n/detection/shape_estimator/objects" as shape_estimated_objects
 
 
-    [image_detector]
+    [vision_detector]
     'inputs
-    image_raw --> image_detector
+    image_raw --> vision_detector
     'outputs
-    image_detector --> detected_objects_vision
+    vision_detector --> detected_objects_vision
 
     [lidar_detector]
     'inputs
