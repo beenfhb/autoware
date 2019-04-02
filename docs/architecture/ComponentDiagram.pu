@@ -40,8 +40,9 @@ folder sensing {
 folder detection {
     () "autoware_perception_msgs::DynamicObjectArray\n/detection/image_detector/objects" as detected_objects_vision
     () "autoware_perception_msgs::DynamicObjectArray\n/detection/lidar_detector/objects" as detected_objects_lidar
-    () "autoware_perception_msgs::DynamicObjectArray\n/detection/fusion_tools/objects" as detected_objects_combined
     () "autoware_perception_msgs::DynamicObjectArray\n/detection/fusion_detector/objects" as detected_objects_fused
+    () "autoware_perception_msgs::DynamicObjectArray\n/detection/shape_estimator/objects" as shape_estimated_objects
+
 
     [image_detector]
     'inputs
@@ -59,23 +60,19 @@ folder detection {
     'inputs
     image_raw --> fusion_detector
     points_raw --> fusion_detector
+    detected_objects_vision --> fusion_detector
+    detected_objects_lidar --> fusion_detector
     'outputs
     fusion_detector --> detected_objects_fused
 
-    [fusion_tools (might be renamed)] as fusion_tools
+    [shape_estimator]
     'inputs
-    detected_objects_vision --> fusion_tools
-    detected_objects_lidar --> fusion_tools
+    detected_objects_fused --> shape_estimator
     'outputs
-    fusion_tools --> detected_objects_combined
+    shape_estimator --> shape_estimated_objects
 
     'connection
-
-    detected_objects_lidar --> objects_fused
-    detected_objects_combined --> objects_fused
-    detected_objects_fused --> objects_fused
-
-
+    shape_estimated_objects --> objects_fused
 
     '[trafficlight_recognizer]
     'inputs
