@@ -160,7 +160,10 @@ folder localization {
 
 () "autoware_motion_msgs::VehicleCmd\n/motion/vehicle_cmd" as twist
 
-'folder motion {
+folder planning {
+    'inputs
+    current_pose --> planning
+    current_velocity --> planning
 '    () "autoware_planning_msgs::Lane\n/motion/planner/waypoints" as final_waypoints
 '    () "geometry_msgs::TwistStamped\n/motion/waypoint_follower/twist" as twist_cmd
 '    () "geometry_msgs::TwistStamped\n/motion/motion_filter/twist" as twist_filtered
@@ -205,7 +208,7 @@ folder localization {
 '    pedal --> motion_gateway
 '    'outputs
 '    motion_gateway --> twist
-'}
+}
 
 () "CAN, Socket, Serial, etc" as vehicle_communication
 () "autoware_actuation_msgs::VehicleStatus\n/actuation/vehicle_status" as vehicle_status
