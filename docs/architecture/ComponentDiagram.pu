@@ -29,6 +29,9 @@ folder sensing {
 
 '() "autoware_perception_msgs::TrafficLight\n/detection/traffic_light_color" as traffic_light_color
 () "autoware_perception_msgs::DynamicObjectArray\n/detection/objects" as objects_fused
+note right of objects_fused
+    - The fields XX, YY, and ZZ shall be fulfilled
+end note
 
 folder detection {
     () "autoware_perception_msgs::DynamicObjectArray\n/detection/vision_detector/objects" as detected_objects_vision
@@ -36,8 +39,10 @@ folder detection {
     () "autoware_perception_msgs::DynamicObjectArray\n/detection/fusion_detector/objects" as detected_objects_fused
     () "autoware_perception_msgs::DynamicObjectArray\n/detection/shape_estimator/objects" as shape_estimated_objects
 
-
     [vision_detector]
+    note right of vision_detector
+        - optional if lidar_detector classifies objects
+    end note
     'inputs
     image_raw --> vision_detector
     'outputs
@@ -50,6 +55,9 @@ folder detection {
     lidar_detector --> detected_objects_lidar
 
     [fusion_detector]
+    note left of fusion_detector
+        - inputs either {image,points}_raw or {vision,lidar}_detector/objects
+    end note
     'inputs
     image_raw --> fusion_detector
     points_raw --> fusion_detector
@@ -59,8 +67,13 @@ folder detection {
     fusion_detector --> detected_objects_fused
 
     [shape_estimator]
+    note right of shape_estimator
+        - inputs either {lidar,fusion}_detector/objects
+        - might be nothing if shape is estimated in *_detector
+    end note
     'inputs
     detected_objects_fused --> shape_estimator
+    detected_objects_lidar --> shape_estimator
     'outputs
     shape_estimator --> shape_estimated_objects
 
@@ -75,7 +88,9 @@ folder detection {
 }
 
 () "autoware_perception_msgs::DynamicObjectArray\n/tracking/objects" as objects_tracked
-
+note right of objects_tracked
+    - The fields XX, YY, and ZZ shall be fulfilled
+end note
 
 folder tracking {
     [object_tracker]
@@ -86,6 +101,9 @@ folder tracking {
 }
 
 () "autoware_perception_msgs::DynamicObjectArray\n/prediction/objects" as objects_predicted
+note right of objects_predicted
+    - The fields XX, YY, and ZZ shall be fulfilled
+end note
 
 folder prediction {
     [object_predictor]
@@ -163,6 +181,7 @@ folder localization {
 
 folder planning {
     'inputs
+    objects_predicted --> planning
     current_pose --> planning
     current_velocity --> planning
 '    () "autoware_planning_msgs::Lane\n/motion/planner/waypoints" as final_waypoints
