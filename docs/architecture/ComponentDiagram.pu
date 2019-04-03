@@ -109,32 +109,34 @@ folder localization {
     () "geometry_msgs::TwistStamped\n/localization/twist_generator/can_twist" as can_twist
     () "geometry_msgs::TwistStamped\n/localization/twist_generator/imu_twist" as imu_twist
 
-    [gnss_localizer]
-    'inputs
-    nmea_sentence --> gnss_localizer
-    'outputs
-    gnss_localizer --> gnss_pose
+    folder pose_estimator {
+        [gnss_localizer]
+        'inputs
+        nmea_sentence --> gnss_localizer
+        'outputs
+        gnss_localizer --> gnss_pose
 
-    [vision_localizer]
-    'inputs
-    image_raw --> vision_localizer
-    'outputs
-    vision_localizer --> vision_pose
+        [vision_localizer]
+        'inputs
+        image_raw --> vision_localizer
+        'outputs
+        vision_localizer --> vision_pose
 
-    [lidar_localizer]
-    'inputs
-    points_raw --> lidar_localizer
-    points_map --> lidar_localizer
-    'outputs
-    lidar_localizer --> ndt_pose
+        [lidar_localizer]
+        'inputs
+        points_raw --> lidar_localizer
+        points_map --> lidar_localizer
+        'outputs
+        lidar_localizer --> ndt_pose
+    }
 
-    [twist_generator]
+    [twist_estimator]
     'inputs
-    vehicle_status --> twist_generator
-    imu_raw --> twist_generator
-    '
-    twist_generator --> can_twist
-    twist_generator --> imu_twist
+    vehicle_status --> twist_estimator
+    imu_raw --> twist_estimator
+    'outputs
+    twist_estimator --> can_twist
+    twist_estimator --> imu_twist
 
     [fusion_localizer]
     'inputs
