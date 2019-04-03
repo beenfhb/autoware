@@ -100,7 +100,7 @@ folder prediction {
 
 'vel_pose_connect
 () "geometry_msgs::PoseStamped\n/localization/pose" as current_pose
-() "geometry_msgs::TwistStamped\n/localization/velocity" as current_velocity
+() "geometry_msgs::TwistStamped\n/localization/twist" as current_velocity
 
 folder localization {
     frame "world frame" {
@@ -130,13 +130,15 @@ folder localization {
         lidar_localizer --> ndt_pose
     }
     note bottom of pose_estimator
-        - one of pose_estimators is mandatory
+        - one of pose_estimators (sensors) is mandatory
         - might input /localization/{pose,velocity} only for initial guess
     end note
 
     [fusion_localizer]
     note right of fusion_localizer
-        shall output pose and velocity in 100Hz
+        - one of the pose_estimators' outputs is mandatory
+        - imu and can(vehicle_status) is both optional when velocity
+        - shall output /localization/{pose,velocity} in 100Hz
     end note
     'inputs
     gnss_pose --> fusion_localizer
