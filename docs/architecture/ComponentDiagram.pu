@@ -148,7 +148,6 @@ folder localization {
     vision_pose --> fusion_localizer
     vehicle_status --> fusion_localizer
     imu_raw --> fusion_localizer
-    current_pose --> fusion_localizer
     'outputs
     fusion_localizer --> current_pose
     fusion_localizer --> current_velocity
