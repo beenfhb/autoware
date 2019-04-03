@@ -140,7 +140,7 @@ folder localization {
         Filters pose and twist, e.g. Kalman Filter
         - one of the pose_estimators' outputs is mandatory
         - imu and can(vehicle_status) is both optional when
-          twist is calculated from /localization/pose
+          twist is calculated from series of /localization/pose
         - should output /localization/{pose,velocity} in 100Hz
     end note
     'inputs
