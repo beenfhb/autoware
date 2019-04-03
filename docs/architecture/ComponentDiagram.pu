@@ -129,9 +129,9 @@ folder localization {
         'outputs
         lidar_localizer --> ndt_pose
     }
-    note left of pose_estimator
-        - One of pose_estimators is mandatory
-        - /localization/{pose,velocity} is only for initial guess
+    note bottom of pose_estimator
+        - one of pose_estimators is mandatory
+        - might input /localization/{pose,velocity} only for initial guess
     end note
 
     [fusion_localizer]
