@@ -108,10 +108,7 @@ folder localization {
         () "geometry_msgs::PoseStamped\n/localization/lidar_localizer/pose" as ndt_pose
         () "geometry_msgs::PoseStamped\n/localization/vision_localizer/pose" as vision_pose
     }
-    frame "base_link frame" {
-        () "geometry_msgs::TwistStamped\n/localization/twist_estimator/can_twist" as can_twist
-        () "geometry_msgs::TwistStamped\n/localization/twist_estimator/imu_twist" as imu_twist
-    }
+
     folder pose_estimator {
         'inputs
         current_pose --> pose_estimator
@@ -136,22 +133,10 @@ folder localization {
         'outputs
         lidar_localizer --> ndt_pose
     }
-    note right of pose_estimator
+    note left of pose_estimator
         - One of pose_estimators is mandatory
         - /localization/{pose,velocity} is only for initial guess
     end note
-
-    [twist_estimator]
-    note right of twist_estimator
-        One of the inputs is mandatory
-    end note
-    'inputs
-    vehicle_status --> twist_estimator
-    imu_raw --> twist_estimator
-    current_pose --> twist_estimator
-    'outputs
-    twist_estimator --> can_twist
-    twist_estimator --> imu_twist
 
     [fusion_localizer]
     note right of fusion_localizer
@@ -161,8 +146,9 @@ folder localization {
     gnss_pose --> fusion_localizer
     ndt_pose --> fusion_localizer
     vision_pose --> fusion_localizer
-    can_twist --> fusion_localizer
-    imu_twist --> fusion_localizer
+    vehicle_status --> fusion_localizer
+    imu_raw --> fusion_localizer
+    current_pose --> fusion_localizer
     'outputs
     fusion_localizer --> current_pose
     fusion_localizer --> current_velocity
