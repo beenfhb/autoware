@@ -129,16 +129,23 @@ folder localization {
         'outputs
         lidar_localizer --> ndt_pose
     }
+    note bottom of pose_estimator
+        one of pose_estimators is mandatory
+    end note
 
     [twist_estimator]
     'inputs
     vehicle_status --> twist_estimator
     imu_raw --> twist_estimator
+    current_pose --> twist_estimator
     'outputs
     twist_estimator --> can_twist
     twist_estimator --> imu_twist
 
     [fusion_localizer]
+    note right of fusion_localizer
+        shall output pose and velocity in 100Hz
+    end note
     'inputs
     gnss_pose --> fusion_localizer
     ndt_pose --> fusion_localizer
@@ -148,8 +155,6 @@ folder localization {
     'outputs
     fusion_localizer --> current_pose
     fusion_localizer --> current_velocity
-
-    '[dead_reckoner] @ Autoware v2.0
 }
 
 '() "autoware_msgs::ControlCommandStamped\n/ctrl_cmd" as ctrl_cmd
