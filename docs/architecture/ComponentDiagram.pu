@@ -110,10 +110,6 @@ folder localization {
     }
 
     folder pose_estimator {
-        'inputs
-        current_pose --> pose_estimator
-        current_velocity --> pose_estimator
-
         [gnss_localizer]
         'inputs
         nmea_sentence --> gnss_localizer
