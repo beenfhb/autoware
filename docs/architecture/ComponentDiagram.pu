@@ -103,13 +103,20 @@ folder prediction {
 () "geometry_msgs::TwistStamped\n/localization/velocity" as current_velocity
 
 folder localization {
-    () "geometry_msgs::PoseStamped\n/localization/gnss_localizer/pose" as gnss_pose
-    () "geometry_msgs::PoseStamped\n/localization/lidar_localizer/pose" as ndt_pose
-    () "geometry_msgs::PoseStamped\n/localization/vision_localizer/pose" as vision_pose
-    () "geometry_msgs::TwistStamped\n/localization/twist_estimator/can_twist" as can_twist
-    () "geometry_msgs::TwistStamped\n/localization/twist_estimator/imu_twist" as imu_twist
-
+    frame "world frame" {
+        () "geometry_msgs::PoseStamped\n/localization/gnss_localizer/pose" as gnss_pose
+        () "geometry_msgs::PoseStamped\n/localization/lidar_localizer/pose" as ndt_pose
+        () "geometry_msgs::PoseStamped\n/localization/vision_localizer/pose" as vision_pose
+    }
+    frame "base_link frame" {
+        () "geometry_msgs::TwistStamped\n/localization/twist_estimator/can_twist" as can_twist
+        () "geometry_msgs::TwistStamped\n/localization/twist_estimator/imu_twist" as imu_twist
+    }
     folder pose_estimator {
+        'inputs
+        current_pose --> pose_estimator
+        current_velocity --> pose_estimator
+
         [gnss_localizer]
         'inputs
         nmea_sentence --> gnss_localizer
@@ -129,11 +136,15 @@ folder localization {
         'outputs
         lidar_localizer --> ndt_pose
     }
-    note bottom of pose_estimator
-        one of pose_estimators is mandatory
+    note right of pose_estimator
+        - One of pose_estimators is mandatory
+        - /localization/{pose,velocity} is only for initial guess
     end note
 
     [twist_estimator]
+    note right of twist_estimator
+        One of the inputs is mandatory
+    end note
     'inputs
     vehicle_status --> twist_estimator
     imu_raw --> twist_estimator
