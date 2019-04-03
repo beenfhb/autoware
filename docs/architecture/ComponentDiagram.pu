@@ -4,7 +4,6 @@ title Autoware Component Dependencies (v2.0)
 
 () "sensor_msgs::Image\n/image_raw" as image_raw
 () "sensor_msgs::PointCloud2\n/points_raw" as points_raw
-() "sensor_msgs::PointCloud2\n/filtered_points" as filtered_points
 () "sensor_msgs::Imu\n/imu_raw" as imu_raw 
 () "nmea_msgs::Sentence\n/nmea_sentence" as nmea_sentence
 
@@ -16,12 +15,6 @@ folder sensing {
     [lidar]
     'outputs
     lidar --> points_raw
-
-    [filters]
-    'inputs
-    points_raw --> filters
-    'outputs
-    filters --> filtered_points
 
     [imu]
     'outputs
@@ -130,7 +123,7 @@ folder localization {
 
     [lidar_localizer]
     'inputs
-    filtered_points --> lidar_localizer
+    points_raw --> lidar_localizer
     points_map --> lidar_localizer
     'outputs
     lidar_localizer --> ndt_pose
