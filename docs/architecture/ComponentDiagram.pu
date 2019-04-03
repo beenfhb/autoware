@@ -130,16 +130,18 @@ folder localization {
         lidar_localizer --> ndt_pose
     }
     note bottom of pose_estimator
+        Estimates pose from sensor data
         - one of pose_estimators (sensors) is mandatory
         - might input /localization/{pose,velocity} only for initial guess
     end note
 
     [fusion_localizer]
     note right of fusion_localizer
+        Filters pose and twist, e.g. Kalman Filter
         - one of the pose_estimators' outputs is mandatory
         - imu and can(vehicle_status) is both optional when
           twist is calculated from /localization/pose
-        - shall output /localization/{pose,velocity} in 100Hz
+        - should output /localization/{pose,velocity} in 100Hz
     end note
     'inputs
     gnss_pose --> fusion_localizer
