@@ -106,8 +106,8 @@ folder localization {
     () "geometry_msgs::PoseStamped\n/localization/gnss_localizer/pose" as gnss_pose
     () "geometry_msgs::PoseStamped\n/localization/lidar_localizer/pose" as ndt_pose
     () "geometry_msgs::PoseStamped\n/localization/vision_localizer/pose" as vision_pose
-    () "geometry_msgs::TwistStamped\n/localization/twist_generator/can_twist" as can_twist
-    () "geometry_msgs::TwistStamped\n/localization/twist_generator/imu_twist" as imu_twist
+    () "geometry_msgs::TwistStamped\n/localization/twist_estimator/can_twist" as can_twist
+    () "geometry_msgs::TwistStamped\n/localization/twist_estimator/imu_twist" as imu_twist
 
     folder pose_estimator {
         [gnss_localizer]
